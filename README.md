@@ -18,24 +18,29 @@
 -   binarylibs：依赖的第三方开源软件，你可以直接编译openGauss-third_party代码获取，也可以从开源社区下载已经编译好的并上传的一个副本。
 
 ##### 2、操作系统和软件依赖要求
+
 支持以下操作系统：
 -   CentOS 8.2（x86）
+
 适配其他系统，可参照openGauss数据库编译指导
 当前Cantian依赖第三方软件有securec、zlib、lz4、zstd、openssl、protobuf、protubuf-c;
+
 ##### 3、下载Cantian及依赖组件
-pcre2-10.40：https://github.com/PCRE2Project/pcre2.git
-openssl-1.1.1n：https://github.com/openssl/openssl
-lz4-1.9.3：https://github.com/lz4/lz4
-zstd-1.5.2：https://github.com/facebook/zstd.git
-protobuf-3.13.0：https://github.com/protocolbuffers/protobuf.git
+- pcre2-10.40：https://github.com/PCRE2Project/pcre2.git
+- openssl-1.1.1n：https://github.com/openssl/openssl
+- lz4-1.9.3：https://github.com/lz4/lz4
+- zstd-1.5.2：https://github.com/facebook/zstd.git
+- protobuf-3.13.0：https://github.com/protocolbuffers/protobuf.git
 安装完成后需要执行ldconfig命令，否则提示
-protoc: error while loading shared libraries: libprotoc.so.24: cannot open shared object file: No such file or directory
-protobuf-c.1.4.1：https://github.com/protobuf-c/protobuf-c.git
-zlib-1.2.11：https://github.com/madler/zlib.git
-huawei安全函数库：https://gitee.com/Janisa/huawei_secure_c
-securec
+`protoc: error while loading shared libraries: libprotoc.so.24: cannot open shared object file: No such file or directory`
+
+- protobuf-c.1.4.1：https://github.com/protobuf-c/protobuf-c.git
+- zlib-1.2.11：https://github.com/madler/zlib.git
+- huawei安全函数库：https://gitee.com/Janisa/huawei_secure_c
+
 ##### 4、编译第三方软件
 在编译Cantian之前，需要先编译依赖的开源及第三方软件。
+
 ##### 5、代码编译
 Debug:sh build_cantian.sh
 Release:修改bash Makefile.sh package为bash Makefile.sh package-release后执行sh build_cantian.sh
@@ -57,7 +62,8 @@ NAS共享网络：用作共享存储NAS共享
 ```angular2html
 [root@host ~]# mkdir /home/regress
 [root@host ~]# chmod 755 /home/regress
-[root@host ~]# cd /home/regress/[root@host regress]# tar -zxvf cantian_connector_x86_64_RELEASE_*.tgz
+[root@host ~]# cd /home/regress/
+[root@host regress]# tar -zxvf cantian_connector_x86_64_RELEASE_*.tgz
 ```
 2. 修改配置文件config_params.json，配置文件所在路径为/home/regress/cantian_connector/action/config_params.json，相关参数说明:
 ```angular2html
