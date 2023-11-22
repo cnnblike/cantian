@@ -29,7 +29,6 @@ function packageTarget() {
   mkdir -p /opt/cantian/image
   mv -f cantian.tar.gz /opt/cantian/image/
   bash ${CURRENT_PATH}/rpm_build_cantian.sh
-  cd -
 }
 
 function buildCtOmPackage() {
