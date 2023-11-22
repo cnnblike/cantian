@@ -85,8 +85,8 @@ if (UNIX)
             OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     if (OS_ARCH STREQUAL "x86_64")
-        set(CMAKE_C_COMPILER "/usr/local/bin/gcc")
-        set(CMAKE_CXX_COMPILER "/usr/local/bin/g++")
+        set(CMAKE_C_COMPILER "/usr/bin/gcc")
+        set(CMAKE_CXX_COMPILER "/usr/bin/g++")
     endif()
 
     message(${CMAKE_BUILD_TYPE})
