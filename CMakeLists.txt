@@ -19,7 +19,6 @@ include_directories(
         "${PROJECT_SOURCE_DIR}/open_source/Zstandard/include"
 
         "${PROJECT_SOURCE_DIR}/platform/huawei_security/include"
-        "${PROJECT_SOURCE_DIR}/library/kmc"
 
         "${PROJECT_SOURCE_DIR}/build_dependence/unixODBC/include"
         "${PROJECT_SOURCE_DIR}/build_dependence/libaio/include" 
@@ -297,7 +296,6 @@ set(Z_LIB_PATH "${CANTIANDB_LIBRARY}/zlib/lib")
 set(ODBC_LIB_PATH "${CANTIANDB_LIBRARY}/odbc/lib")
 set(LZ4_LIB_PATH "${CANTIANDB_LIBRARY}/lz4/lib")
 set(ZSTD_LIB_PATH "${CANTIANDB_LIBRARY}/Zstandard/lib")
-set(ZSTD_LIB_PATH "${CANTIANDB_LIBRARY}/kmc/lib")
 
 set(VPP_LIB_PATH "${SECUREC_LIB_PATH}")
 
@@ -407,9 +405,6 @@ set(vpp_libsecurec "libsecurec.a")
 set(vpp_libipsi_crypto "libcrypto.a")
 set(vpp_libipsi_ssl "libssl.a")
 
-set(hw_kmc_lib "libkmc.a")
-set(hw_sdp_lib "libsdp.a")
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -g -ldl -pthread")
 add_compile_options(-fno-common)
 add_compile_options(-Wtrampolines)
@@ -421,7 +416,7 @@ if (UNIX)
 endif()
 
 link_directories(${CANTIANDB_LIB} "${CANTIANDB_LIBRARY}/protobuf/lib" ${CANTIANDB_LIBRARY} ${OPENSSL_LIB_PATH} ${PCRE_LIB_PATH} ${Z_LIB_PATH} ${ODBC_LIB_PATH} ${VPP_LIB_PATH}
-         ${ZSTD_LIB_PATH} ${KMC_LIB_PATH} ${LZ4_LIB_PATH} ${AES_LIB_PATH})
+         ${ZSTD_LIB_PATH} ${LZ4_LIB_PATH} ${AES_LIB_PATH})
 
 # add subdir, this should be the last line!!
 add_subdirectory(pkg)

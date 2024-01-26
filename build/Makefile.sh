@@ -689,7 +689,7 @@ func_making_package()
         func_pkg_run
     fi
 
-    func_toolkit
+    # func_toolkit
 
     rm -rf ${CANTIANDB_HOME}/../${ALL_PACK_DIR_NAME}
     rm -rf ${CANTIANDB_BIN}/${ALL_PACK_DIR_NAME}
