@@ -748,7 +748,7 @@ class Installer:
     CTSQL_CONF_FILE = "ctsql.ini"
     CMS_CONF_FILE = "cms.ini"
     CLUSTER_CONF_FILE = "cluster.ini"
-    CANTIAND_HBA_FILE = "cthba.conf"
+    CANTIAND_HBA_FILE = "cthba.cnf"
     DEFAULT_INSTANCE_NAME = "cantian"
     # backup cantiand install log dir
     backup_log_dir = ""
