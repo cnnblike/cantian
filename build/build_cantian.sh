@@ -53,7 +53,6 @@ function newPackageTarget() {
   cp -arf "${CTDB_CODE_PATH}"/pkg/deploy/config/* ${pkg_real_path}/config/
   cp -arf "${CTDB_CODE_PATH}"/common/* ${pkg_real_path}/common/
   cp -arf "${CTDB_CODE_PATH}"/CI/script/for_mysql_official ${pkg_real_path}
-  cp -arf "${CTDB_CODE_PATH}"/pkg/src/zlogicrep/build ${pkg_real_path}/zlogicrep/
 
   sed -i "/main \$@/i CSTOOL_TYPE=${BUILD_TYPE}" ${pkg_real_path}/action/dbstor/check_usr_pwd.sh
   sed -i "/main \$@/i CSTOOL_TYPE=${BUILD_TYPE}" ${pkg_real_path}/action/inspection/inspection_scripts/kernal/check_link_cnt.sh
