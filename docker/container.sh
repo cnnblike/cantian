@@ -256,7 +256,7 @@ function parse_params()
 
 function main()
 {
-    mode=debug
+    mode=dev
     docker_name="cantian_${mode}"
     network_name="mynetwork"
     core_dir="/home/core"
