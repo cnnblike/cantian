@@ -4,7 +4,7 @@ import shlex
 from pathlib import Path
 
 from task_obj import TASK
-from log_tool.om_log import LOGGER, DEPLOY_LOG, TASK_LOG
+from log_tool.om_log import  DEPLOY_LOG, TASK_LOG
 from common.output_tool import CommonResult
 from common.common_tool import TimeTool
 
