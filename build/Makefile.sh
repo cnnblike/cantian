@@ -153,6 +153,14 @@ func_prepare_release()
     func_prepare_no_clean_release
 }
 
+fun_kmc_shared_lib() {
+    mkdir -p ${CANTIANDB_BIN}/${RUN_PACK_DIR_NAME}/kmc_shared
+    local build_mode=$1
+    tar -zxvf ${CANTIANDB_HOME}/../library/shared_lib/*${OS_ARCH}*${build_mode}* -C ${CANTIANDB_HOME}/../library/shared_lib
+    cp -rfd ${CANTIANDB_HOME}/../library/shared_lib/lib/* ${CANTIANDB_BIN}/${RUN_PACK_DIR_NAME}/kmc_shared
+    chmod 500 ${CANTIANDB_BIN}/${RUN_PACK_DIR_NAME}/kmc_shared/*
+}
+
 func_all()
 {
     ## download dependency:
@@ -377,6 +385,7 @@ func_make_debug()
     echo "make debug"
     func_all Debug
     func_prepare_pkg_name
+    fun_kmc_shared_lib 'debug'
     func_pkg_run
 }
 
@@ -385,7 +394,8 @@ func_make_release()
     echo "make release"
     func_all Release
     func_prepare_pkg_name
-    func_release_symbol   
+    func_release_symbol
+    fun_kmc_shared_lib 'release'
     func_pkg_run
 }
 
