@@ -12,7 +12,6 @@ TMP_PKG_PATH=${CTDB_CODE_PATH}/package
 CTDB_TARGET_PATH=${CURRENT_PATH}/${BUILD_TARGET_NAME}/CantianKernel
 MYSQL_CODE_PATH=${MYSQL_SERVER_PATH}/mysql-source
 MYSQL_BIN_NAME="Cantian_connector_mysql"
-MYSQL_DIR="mysql_bin"
 
 mkdir -p ${TMP_PKG_PATH}
 source "${CURRENT_PATH}"/common.sh
@@ -64,11 +63,11 @@ function newPackageTarget() {
   echo "Start pkg ${pkg_dir_name}.tgz..."
   cd ${TMP_PKG_PATH}
   tar -zcf "${pkg_name}" ${pkg_dir_name}
-  mkdir -p ${MYSQL_DIR}
-  cp -arf /usr/local/mysql ${MYSQL_DIR}
+  mkdir -p ${MYSQL_BIN_NAME}
+  cp -arf /usr/local/mysql ${MYSQL_BIN_NAME}
   echo "Start pkg ${mysql_pkg_name}..."
-  tar -zcf "${mysql_pkg_name}" ${MYSQL_DIR}
-  rm -rf ${MYSQL_DIR}
+  tar -zcf "${mysql_pkg_name}" ${MYSQL_BIN_NAME}
+  rm -rf ${MYSQL_BIN_NAME}
   rm -rf ${pkg_dir_name}
   echo "Packing ${pkg_name} success"
 }
