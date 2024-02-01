@@ -22,7 +22,7 @@ else
 fi
 CI_PACKAGE_PATH=${CTDB_CODE_PATH}/package_out
 BUILD_TARGET_NAME="cantian_connector"
-BUILD_PACK_NAME="Cantian_Database_Storage_Engine_3.0.0"
+BUILD_PACK_NAME="Cantian_24.03"
 SYMBOL_TARGET_NAME="Cantian_connector_symbol"
 MYSQL_SOURCE_BIN_TARGET_NAME="Cantian_connector_mysql"
 MYSQL_SOURCE_BIN_TARGET_PATH=${CI_PACKAGE_PATH}/${MYSQL_SOURCE_BIN_TARGET_NAME}
