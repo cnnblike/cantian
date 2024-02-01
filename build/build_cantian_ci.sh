@@ -55,6 +55,8 @@ function newPackageTarget() {
   cp -arf "${CTDB_CODE_PATH}"/pkg/deploy/action/* ${pkg_real_path}/action/
   cp -arf "${CTDB_CODE_PATH}"/pkg/deploy/config/* ${pkg_real_path}/config/
   cp -arf "${CTDB_CODE_PATH}"/common/* ${pkg_real_path}/common/
+  sed -i "s/#MYSQL_PKG_PREFIX_NAME#/${mysql_pkg_name}/g" ${CTDB_CODE_PATH}/CI/script/for_mysql_official/patch.sh
+  sed -i "s/## BUILD_TYPE ENV_TYPE ##/${BUILD_TYPE} ${ENV_TYPE}/g" ${CTDB_CODE_PATH}/CI/script/for_mysql_official/patch.sh
   cp -arf "${CTDB_CODE_PATH}"/CI/script/for_mysql_official ${pkg_real_path}
 
   sed -i "/main \$@/i CSTOOL_TYPE=${BUILD_TYPE}" ${pkg_real_path}/action/dbstor/check_usr_pwd.sh
@@ -95,6 +97,7 @@ function collectMysqlTarget() {
   cp "${MYSQL_CODE_PATH}"/daac_lib/libctc_proxy.so  "${CURRENT_PATH}"/cantian-connector-mysql/daac_lib
   cp "${CANTIANDB_LIBRARY}"/huawei_security/lib/libsecurec.a "${CURRENT_PATH}"/cantian-connector-mysql/daac_lib
   cp "${CANTIANDB_LIBRARY}"/huawei_security/lib/libsecurec.so "${CURRENT_PATH}"/cantian-connector-mysql/daac_lib
+  cp "${MYSQL_SERVER_PATH}"/scripts/my.cnf "${CURRENT_PATH}"/cantian-connector-mysql/scripts
 }
 
 function buildMysql() {
