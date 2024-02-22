@@ -35,13 +35,13 @@ function buildCtOmPackage() {
   bash "${CURRENT_PATH}"/rpm_build_ct_om.sh
   if [ $? -ne 0 ]; then
       echo "build ct_om fail"
-      retrun 1
+      return 1
   fi
 }
 
 function packageSymbol() {
   if [[ ${BUILD_TYPE} != "release" ]]; then
-    retrun
+    return
   fi
 
   echo "Start package symbol"
