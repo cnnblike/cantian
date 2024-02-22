@@ -17,6 +17,7 @@ source "${CURRENT_PATH}"/common.sh
 
 function packageTarget() {
   echo "Start packageTarget..."
+  cd "${CANTIANDB_BIN}"/"${BUILD_TARGET_NAME}"
   tar -zcf cantian.tar.gz ${BUILD_TARGET_NAME}/
   if [ -d /opt/cantian/image ]; then
     rm -rf /opt/cantian/image
