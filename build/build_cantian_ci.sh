@@ -72,7 +72,7 @@ function newPackageTarget() {
 
   mkdir -p ${pkg_real_path}/{action,repo,config,common,zlogicrep}
   mkdir -p ${pkg_real_path}/zlogicrep/build/Cantian_PKG/file
-  B_VERSION=$(grep -oP '<Bversion>\K[^<]+' "${CTDB_CODE_PATH}"/../ProductComm_DoradoAA/CI/conf/cmc/dbstore/archive_cmc_versions.xml | sed 's/Cantian //g')
+  B_VERSION=$(grep -oP '<Bversion>\K[^<]+' "${ }"/../ProductComm_DoradoAA/CI/conf/cmc/dbstore/archive_cmc_versions.xml | sed 's/Cantian //g')
   echo "B_VERSION: ${B_VERSION}"
   if [[ x"${B_VERSION}" != x"" ]];then
       sed -i "s/Version: [^ ]*/Version: ${B_VERSION}/" "${CURRENT_PATH}"/versions.yml
@@ -127,7 +127,7 @@ function collectMysqlTarget() {
   cp "${MYSQL_CODE_PATH}"/daac_lib/libctc_proxy.so  "${CANTIANDB_BIN}"/cantian-connector-mysql/daac_lib
   cp "${CANTIANDB_LIBRARY}"/huawei_security/lib/libsecurec.a "${CANTIANDB_BIN}"/cantian-connector-mysql/daac_lib
   cp "${CANTIANDB_LIBRARY}"/huawei_security/lib/libsecurec.so "${CANTIANDB_BIN}"/cantian-connector-mysql/daac_lib
-  cp "${MYSQL_SERVER_PATH}"/scripts/my.cnf "${CURRENT_PATH}"/cantian-connector-mysql/scripts
+  cp "${MYSQL_SERVER_PATH}"/scripts/my.cnf "${CANTIANDB_BIN}"/cantian-connector-mysql/scripts
 }
 
 function seperateSymbol() {
@@ -164,7 +164,7 @@ function buildMysql() {
     seperateSymbol ${MYSQL_CODE_PATH}/bld_debug/plugin_output_directory/ha_ctc.so
     mv ${MYSQL_CODE_PATH}/bld_debug/plugin_output_directory/ha_ctc.so.symbol ${CANTIANDB_BIN}/mysql-server-symbol/meta
   fi
-  cp "${MYSQL_CODE_PATH}"/bld_debug/plugin_output_directory/ha_ctc.so "${CURRENT_PATH}"/cantian-connector-mysql/mysql_bin/mysql/lib/plugin/meta
+  cp "${MYSQL_CODE_PATH}"/bld_debug/plugin_output_directory/ha_ctc.so "${CANTIANDB_BIN}"/cantian-connector-mysql/mysql_bin/mysql/lib/plugin/meta
   collectMysqlTarget
 }
 

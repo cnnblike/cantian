@@ -146,7 +146,7 @@ function buildMysql() {
     seperateSymbol ${MYSQL_CODE_PATH}/bld_debug/plugin_output_directory/ha_ctc.so
     mv ${MYSQL_CODE_PATH}/bld_debug/plugin_output_directory/ha_ctc.so.symbol ${CANTIANDB_BIN}/mysql-server-symbol/meta
   fi
-  cp "${MYSQL_CODE_PATH}"/bld_debug/plugin_output_directory/ha_ctc.so "${CURRENT_PATH}"/cantian-connector-mysql/mysql_bin/mysql/lib/plugin/meta
+  cp "${MYSQL_CODE_PATH}"/bld_debug/plugin_output_directory/ha_ctc.so "${CANTIANDB_BIN}"/cantian-connector-mysql/mysql_bin/mysql/lib/plugin/meta
   collectMysqlTarget
 }
 
