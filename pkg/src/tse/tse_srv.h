@@ -623,6 +623,7 @@ int tse_update_mysql_dd_cache(char *sql_str);
 int tse_set_cluster_role_by_cantian(bool is_slave);
 
 int ctc_record_sql_for_cantian(tianchi_handler_t *tch, tse_ddl_broadcast_request *broadcast_req, bool allow_fail);
+int tse_query_cluster_role(bool *is_slave, bool *cantian_cluster_ready);
 #ifdef __cplusplus
 }
 #endif

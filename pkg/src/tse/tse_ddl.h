@@ -133,5 +133,4 @@ int tse_ddl_execute_and_broadcast(tianchi_handler_t *tch, tse_ddl_broadcast_requ
     bool allow_fail, knl_session_t *knl_session);
 int tse_update_mysql_ddcache_and_broadcast(char *sql_str, knl_session_t *knl_session);
 int tse_invalidate_all_ddcache_and_broadcast(knl_session_t *knl_sess);
-int tse_query_cluster_role(bool *is_slave, bool *cantian_cluster_ready);
 #endif //__TSE_DDL_H__
