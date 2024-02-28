@@ -93,6 +93,7 @@ class UNDeploy(object):
         dbstore_fs_info = self.dr_deploy_opt.storage_opt.query_filesystem_info(storage_dbstore_fs,
                                                                                dbstore_fs_vstore_id)
         if not dbstore_fs_info:
+            LOG.info("Filesystem[%s] is not exist.", storage_dbstore_fs)
             return
         # 双活文件系统id
         dbstore_fs_id = dbstore_fs_info.get("ID")
