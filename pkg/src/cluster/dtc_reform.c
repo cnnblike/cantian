@@ -59,7 +59,6 @@ status_t init_dtc_rc(void)
     init_st.callback.finished = (rc_cb_finished)rc_finished;
     init_st.callback.stop_cur_reform = (rc_cb_stop_cur_reform)rc_stop_cur_reform;
     init_st.callback.rc_reform_cancled = (rc_cb_reform_canceled)rc_reform_cancled;
-    init_st.callback.rc_promote_role = (rc_cb_promote_role)rc_promote_role;
     init_st.callback.rc_start_lrpl_proc = (rc_cb_start_lrpl_proc)rc_start_lrpl_proc;
 
     return init_cms_rc(&g_dtc->rf_ctx, &init_st);
@@ -1212,23 +1211,6 @@ bool32 rc_reform_cancled(void)
         return CT_TRUE;
     }
     return CT_FALSE;
-}
-
-status_t rc_promote_role(knl_session_t *session)
-{
-    lrpl_context_t *lrpl = &session->kernel->lrpl_ctx;
-    status_t status = CT_SUCCESS;
-
-    if (g_rc_ctx->info.master_changed && rc_is_master() && lrpl->is_promoting) {
-        DbsRoleInfo info;
-        info.lastRole = DBS_DISASTER_RECOVERY_SLAVE;
-        info.curRole = DBS_DISASTER_RECOVERY_MASTER;
-        status_t status = db_switch_role(info);
-        if (status != CT_SUCCESS) {
-            CM_ABORT_REASONABLE(0, "[RC] refomer promote failed");
-        }
-    }
-    return status;
 }
 
 status_t rc_start_lrpl_proc(knl_session_t *session)
