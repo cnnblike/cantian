@@ -58,6 +58,9 @@ class Constant:
     QUERY_TASK_PROCESS = "/api/v2/task/{id}"
     CREATE_REMOTE_REPLICATION_FILESYSTEM_PAIR = "/api/v2/task/protection/nas"
 
+    # cdp操作
+    DELETE_FS_CDP_SCHEDULE = '/deviceManager/rest/{deviceId}/filesystem/remove_associate'
+
 
 SUPPORT_VERSION = ["6.1.8RC1"]
 CANTIAN_DOMAIN_PREFIX = "CantianDomain_%s%s"
