@@ -533,11 +533,11 @@ void knl_set_repl_timeout(knl_handle_t handle, uint32 val)
     }
 }
 
-status_t knl_set_session_trans(knl_handle_t session, isolation_level_t level, bool32 is_select)
+status_t knl_set_session_trans(knl_handle_t session, isolation_level_t level)
 {
     knl_session_t *se = (knl_session_t *)session;
 
-    if (DB_IS_READONLY(se) && (is_select == CT_FALSE)) {
+    if (DB_IS_READONLY(se)) {
         CT_THROW_ERROR(ERR_CAPABILITY_NOT_SUPPORT, "operation on read only mode");
         return CT_ERROR;
     }
@@ -15562,6 +15562,26 @@ uint8 knl_get_initrans(void)
 void knl_set_sql_server_initializing_status(knl_handle_t session, bool32 status)
 {
     ((knl_session_t *)session)->kernel->is_sql_server_initializing = status;
+}
+
+void knl_lock_info_log_put4mysql(knl_handle_t session, void *lock_info)
+{
+    knl_session_t *se = (knl_session_t *)session;
+    rd_lock_info_4mysql_ddl *info = (rd_lock_info_4mysql_ddl *)lock_info;
+    uint32 total_buf_len = info->db_name_len + info->table_name_len;
+    log_put(se, RD_LOGIC_OPERATION, lock_info, sizeof(rd_lock_info_4mysql_ddl), LOG_ENTRY_FLAG_NONE);
+    log_append_data(se, info->buff, total_buf_len);
+    if (info->op_type == RD_UNLOCK_TABLE_FOR_MYSQL_DDL) {
+        tx_copy_logic_log(se);
+    }
+}
+
+void knl_invalid_dd_log_put4mysql(knl_handle_t session, void *invalid_info)
+{
+    knl_session_t *se = (knl_session_t *)session;
+    rd_invalid_dd_4mysql_ddl *info = (rd_invalid_dd_4mysql_ddl*)invalid_info;
+    log_put(se, RD_LOGIC_OPERATION, invalid_info, sizeof(rd_invalid_dd_4mysql_ddl), LOG_ENTRY_FLAG_NONE);
+    log_append_data(se, info->buff, info->buff_len);
 }
 
 #ifdef __cplusplus

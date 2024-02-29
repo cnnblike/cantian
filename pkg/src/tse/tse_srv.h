@@ -251,12 +251,12 @@ typedef union {
         uint32_t primary : 1;            // if it is a primary key (主键)
         uint32_t unique : 1;             // 是否唯一
         uint32_t is_serial : 1;          // 自增
-        uint32_t is_check : 1;           // 检查列(取值范围)约束  http://c.biancheng.net/view/2446.html
+        uint32_t is_check : 1;           // 检查列(取值范围)约束
         uint32_t is_ref : 1;             // 指定外键 参考sql_parse_column_ref
         uint32_t is_default : 1;         // 是否有默认值 通过is_default_null default_text来设置默认值
         uint32_t is_update_default : 1;  // sql_parse_column_default
         uint32_t is_comment : 1;         // 是否有注释  sql_parse_column_comment 通过 column->comment 存储注释
-        uint32_t is_collate : 1;         // sql_parse_collate 字符串排序用的 跟字符集有关系 https://www.cnblogs.com/jpfss/p/11548826.html
+        uint32_t is_collate : 1;         // sql_parse_collate 字符串排序用的 跟字符集有关系
         uint32_t has_null : 1;           // not null sql_parse_column_not_null
         uint32_t has_quote : 1;          // if column name wrapped with double quotation 如果列名用双引号括起来
         uint32_t is_dummy : 1;           // if it is a dummy column for index  目前在daac代码中暂未使用
@@ -531,7 +531,7 @@ int tse_release_inst_id(uint32_t inst_id);
 int tse_open_table(tianchi_handler_t *tch, const char *table_name, const char *user_name);
 int tse_close_table(tianchi_handler_t *tch);
 
-int tse_close_session(tianchi_handler_t *tch);
+int tse_close_session(tianchi_handler_t *tch, uint64_t *cursors, int32_t csize);
 void tse_kill_session(tianchi_handler_t *tch);
 
 uint8_t *tse_alloc_buf(tianchi_handler_t *tch, uint32_t buf_size);
@@ -628,9 +628,7 @@ int tse_check_db_table_exists(const char *db, const char *name, bool *is_exists)
 int tse_search_metadata_status(bool *cantian_metadata_switch, bool *cantian_cluster_ready);
 
 int tse_invalidate_mysql_dd_cache(tianchi_handler_t *tch, tse_invalidate_broadcast_request *broadcast_req, int *err_code);
-int tse_invalidate_all_dd_cache();
 int tse_broadcast_mysql_dd_invalidate(tianchi_handler_t *tch, tse_invalidate_broadcast_request *broadcast_req);
-int tse_update_mysql_dd_cache(char *sql_str);
  
 /* Disaster Recovery Related Interface*/
 int tse_set_cluster_role_by_cantian(bool is_slave);

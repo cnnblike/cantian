@@ -54,6 +54,8 @@ struct register_instance_request {
 struct close_session_request {
     tianchi_handler_t tch;
     int result;
+    int32_t csize;
+    uint64_t *cursors;
 };
 
 struct open_table_request {
@@ -430,17 +432,6 @@ struct invalidate_mysql_dd_request {
     tse_invalidate_broadcast_request broadcast_req;
     tianchi_handler_t tch;
     int err_code;
-    int result;
-};
-
-struct invalidate_all_dd_cache_request {
-    int result;
-};
- 
-struct update_mysql_dd_cache_request {
-    char sql_str[MAX_DDL_SQL_LEN];
-    uint32_t inst_id;
-    uint32_t thd_id;
     int result;
 };
 
