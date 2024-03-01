@@ -1630,6 +1630,11 @@ EXTER_ATTACK int tse_trx_begin(tianchi_handler_t *tch, tianchi_trx_context_t trx
         return CT_SUCCESS;
     }
 
+    if (!knl_db_is_primary(knl_session) && tch->sql_command == SQLCOM_END) {
+        CT_LOG_DEBUG_INF("tse_trx_begin: select operation on read only mode.");
+        return CT_SUCCESS;
+    }
+
     if (knl_set_session_trans(knl_session, (isolation_level_t)trx_context.isolation_level) != CT_SUCCESS) {
         int err = tse_get_and_reset_err();
         CT_LOG_RUN_ERR("tse_trx begin: knl_set_session_trans failed, thd_id=%u, err=%d",
