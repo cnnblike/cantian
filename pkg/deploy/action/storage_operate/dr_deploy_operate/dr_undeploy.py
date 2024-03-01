@@ -61,11 +61,19 @@ class UNDeploy(object):
             if not fs_info:
                 LOG.info("Filesystem[%s] is not exist.", fs_name)
                 return
+            if fs_info.get("scheduleName") != "--":
+                # schedule cdp 存在，先删除
+                LOG.info("Delete schedule[%s]", fs_info.get("scheduleName"))
+                self.dr_deploy_opt.storage_opt.delete_fs_cdp_schedule(fs_info.get("ID"),
+                                                                      fs_info.get("TIMINGSNAPSHOTSCHEDULEID"),
+                                                                      fs_info.get("scheduleName"),
+                                                                      fs_info.get("vstoreId"))
+                LOG.info("Delete schedule[%s] success!", fs_info.get("scheduleName"))
             fs_id = fs_info.get("ID")
-            nfs_share_info = self.storage_opt.query_nfs_info(fs_id=fs_id, vstore_id=0)
+            nfs_share_info = self.storage_opt.query_nfs_info(fs_id=fs_id, vstore_id=vstore_id)
             if nfs_share_info:
                 nfs_share_id = nfs_share_info[0].get("ID")
-                self.storage_opt.delete_nfs_share(nfs_share_id=nfs_share_id, vstore_id=0)
+                self.storage_opt.delete_nfs_share(nfs_share_id=nfs_share_id, vstore_id=vstore_id)
                 LOG.info("Delete file system %s nfs share success!", fs_name)
             self.storage_opt.delete_file_system(fs_id)
             LOG.info("Delete file system %s success!", fs_name)
@@ -84,6 +92,9 @@ class UNDeploy(object):
             return
         dbstore_fs_info = self.dr_deploy_opt.storage_opt.query_filesystem_info(storage_dbstore_fs,
                                                                                dbstore_fs_vstore_id)
+        if not dbstore_fs_info:
+            LOG.info("Filesystem[%s] is not exist.", storage_dbstore_fs)
+            return
         # 双活文件系统id
         dbstore_fs_id = dbstore_fs_info.get("ID")
         # 通过双活文件系统id查询双活文件系统pair id
