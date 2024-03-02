@@ -221,8 +221,13 @@ static status_t tse_ddl_reentrant_lock_user(session_t *session, dc_user_t *user,
     }
 
     if (knl_session->user_locked_lst == NULL) {
-        CT_RETURN_IFERR(sql_alloc_mem(stmt->context, sizeof(uint32) * (KNL_MAX_USER_LOCK + 1),
-                                      (pointer_t *)&(knl_session->user_locked_lst)));
+        errno_t ret = memset_s(knl_session->user_locked_lst, sizeof(uint32) * (KNL_MAX_USER_LOCK + 1),
+                               0, sizeof(uint32) * (KNL_MAX_USER_LOCK + 1));
+        if (ret != EOK) {
+            CM_FREE_PTR(knl_session->user_locked_lst);
+            CT_THROW_ERROR(ERR_SYSTEM_CALL, ret);
+            return CT_ERROR;
+        }
     }
 
     uint32 *user_num = knl_session->user_locked_lst;

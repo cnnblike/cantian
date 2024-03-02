@@ -5282,7 +5282,7 @@ status_t knl_unlock_users4mysql(knl_handle_t session)
     }
 
     knl_panic_log(*(se->user_locked_lst) == 0, "user locked lst size is %u", *(se->user_locked_lst));
-    se->user_locked_lst = NULL;
+    CM_FREE_PTR(se->user_locked_lst);
     return CT_SUCCESS;
 }
 
