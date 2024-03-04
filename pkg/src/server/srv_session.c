@@ -106,7 +106,7 @@ void srv_reset_session(session_t *session, cs_pipe_t *pipe)
     session->cursor_sharing = PARAM_INIT;
     session->knl_session.dtc_session_type = DTC_TYPE_NONE;
     session->knl_session.user_locked_ddl = CT_FALSE;
-    session->knl_session.user_locked_lst = NULL;
+    CM_FREE_PTR(session->knl_session.user_locked_lst);
     MEMS_RETVOID_IFERR(memset_s(session->challenge, 2 * CT_MAX_CHALLENGE_LEN, 0, 2 * CT_MAX_CHALLENGE_LEN));
 
     CT_INIT_SPIN_LOCK(session->dbg_ctl_lock);
@@ -740,7 +740,7 @@ void srv_deinit_session(session_t *session)
     session->knl_session.autotrace = CT_FALSE;
     session->knl_session.interactive_altpwd = CT_FALSE;
     session->knl_session.user_locked_ddl = CT_FALSE;
-    session->knl_session.user_locked_lst = NULL;
+    CM_FREE_PTR(session->knl_session.user_locked_lst);
     for (uint16 file_id = 0; file_id < CT_MAX_DATA_FILES; file_id++) {
         datafile_t *df = &session->knl_session.kernel->db.datafiles[file_id];
         cm_close_device(df->ctrl->type, &session->knl_session.datafiles[file_id]);
