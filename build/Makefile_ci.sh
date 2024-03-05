@@ -1075,6 +1075,7 @@ main()
         'no_shm=1')
             echo "build with out shm"
             COMPILE_OPTS="${COMPILE_OPTS} -DNO_SHM=ON"
+            MYSQL_BUILD_MODE="single"
             ;;
         'DAAC_READ_WRITE=1')
             echo "build with DAAC_READ_WRITE"
