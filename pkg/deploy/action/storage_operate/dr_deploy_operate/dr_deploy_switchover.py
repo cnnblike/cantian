@@ -7,7 +7,8 @@ from logic.common_func import read_json_config, get_status, exec_popen, retry
 from logic.storage_operate import StorageInf
 from storage_operate.dr_deploy_operate.dr_deploy_common import DRDeployCommon
 from om_log import LOGGER as LOG
-from utils.config.rest_constant import DomainAccess, MetroDomainRunningStatus, VstorePairRunningStatus, HealthStatus
+from utils.config.rest_constant import DomainAccess, MetroDomainRunningStatus, VstorePairRunningStatus, HealthStatus, \
+    ConfigRole
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 DR_DEPLOY_CONFIG = os.path.join(CURRENT_PATH, "../../../config/dr_deploy_param.json")
@@ -112,8 +113,13 @@ class SwitchOver(object):
         self.check_cluster_status(node_id)
         self.init_storage_opt()
         domain_info = self.dr_deploy_opt.query_hyper_metro_domain_info(self.hyper_domain_id)
+        vstore_pair_info = self.dr_deploy_opt.query_hyper_metro_vstore_pair_info(vstore_pair_id)
+        running_status = vstore_pair_info.get("RUNNINGSTATUS")
+        if running_status == VstorePairRunningStatus.Unsynchronized:
+            LOG.error("vstore running status is unsynchronized, can not exec switchover.")
+            raise Exception("vstore running status is unsynchronized, can not exec switchover.")
         config_role = domain_info.get("CONFIGROLE")
-        if config_role != "1":
+        if config_role != ConfigRole.Primary:
             self.dr_deploy_opt.split_filesystem_hyper_metro_domain(self.hyper_domain_id)
             self.dr_deploy_opt.change_fs_hyper_metro_domain_second_access(
                 self.hyper_domain_id, DomainAccess.ReadAndWrite)
@@ -178,7 +184,7 @@ class DRRecover(SwitchOver):
 
         domain_info = self.dr_deploy_opt.query_hyper_metro_domain_info(self.hyper_domain_id)
         config_role = domain_info.get("CONFIGROLE")
-        if config_role != "1":
+        if config_role != ConfigRole.Primary:
             self.standby_cms_res_opt()
         LOG.info("Active/standby switchover success.")
 
@@ -192,7 +198,7 @@ class CancelStandbyResPro(SwitchOver):
         self.init_storage_opt()
         domain_info = self.dr_deploy_opt.query_hyper_metro_domain_info(self.hyper_domain_id)
         config_role = domain_info.get("CONFIGROLE")
-        if config_role != "1":
+        if config_role != ConfigRole.Primary:
             self.dr_deploy_opt.change_fs_hyper_metro_domain_second_access(
                 self.hyper_domain_id, DomainAccess.ReadAndWrite)
         LOG.info("Cancel secondary resource protection success.")
