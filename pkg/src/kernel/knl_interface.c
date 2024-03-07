@@ -10923,6 +10923,8 @@ status_t knl_analyze_table_dynamic(knl_handle_t session, knl_analyze_tab_def_t *
 
 status_t knl_analyze_table(knl_handle_t session, knl_analyze_tab_def_t *def)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_COLLECT_SAMPLED_DATA_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     knl_session_t *se = (knl_session_t *)session;
 
     if (knl_ddl_enabled(session, CT_FALSE) != CT_SUCCESS) {
