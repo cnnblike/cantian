@@ -161,3 +161,9 @@ class DomainAccess:
 class ConfigRole:
     Secondary = "0"     # 从端
     Primary = "1"       # 主端
+
+
+class RepFileSystemNameRule:
+    NamePrefix = "ct_"
+    NameSuffix = "_rep"
+

@@ -19,7 +19,6 @@ from logic.common_func import read_json_config
 from logic.common_func import write_json_config
 from logic.common_func import exec_popen
 from logic.common_func import retry
-from logic.common_func import file_reader
 from logic.common_func import get_status
 from om_log import DR_DEPLOY_LOG as LOG
 
@@ -438,26 +437,30 @@ class DRDeploy(object):
             self.record_deploy_process("sync_metro_fs_pair", sync_progress + "%")
         return False
 
-    def do_create_remote_replication_filesystem_pair(self, dbstore_page_fs_id):
+    def do_create_remote_replication_filesystem_pair(self, page_fs_id):
         """
         创建远程复制pair对
-        :param dbstore_page_fs_id:
+        :param page_fs_id:
         :return:
         """
         remote_device_id = self.dr_deploy_info.get("remote_device_id")
         remote_pool_id = self.dr_deploy_info.get("remote_pool_id")
+        name_suffix = self.dr_deploy_info.get("name_suffix", "")
+        remote_name_rule = 2 if name_suffix else 1
         remote_replication_pair_info = self.dr_deploy_opt.query_remote_replication_pair_info(
-            filesystem_id=dbstore_page_fs_id)
+            filesystem_id=page_fs_id)
         if remote_replication_pair_info is None:
             rep_filesystem_pair_task_info = self.dr_deploy_opt.create_remote_replication_filesystem_pair(
                 remote_device_id=remote_device_id,
                 remote_pool_id=remote_pool_id,
-                local_fs_id=dbstore_page_fs_id
+                local_fs_id=page_fs_id,
+                remote_name_rule=remote_name_rule,
+                name_suffix=name_suffix
             )
             rep_filesystem_pair_task_id = rep_filesystem_pair_task_info.get("taskId")
             self.dr_deploy_opt.query_omtask_process(rep_filesystem_pair_task_id, timeout=120)
             remote_replication_pair_info = self.dr_deploy_opt.query_remote_replication_pair_info(
-                filesystem_id=dbstore_page_fs_id)
+                filesystem_id=page_fs_id)
         return remote_replication_pair_info
 
     @retry(retry_times=3, wait_times=20, log=LOG, task="do_sync_remote_replication_filesystem_pair")
@@ -1137,7 +1140,9 @@ class DRDeploy(object):
             encrypted_pwd = KmcResolve.kmc_resolve_password("encrypted", self.dm_passwd)
             self.record_disaster_recovery_info("dm_pwd", encrypted_pwd)
             os.chmod(os.path.join(CURRENT_PATH, "../../../config/dr_deploy_param.json"), mode=0o644)
-            shutil.copy(os.path.join(CURRENT_PATH, "../../../config/dr_deploy_param.json"), "/opt/cantian/config/")
+            shutil.copyfile(os.path.join(CURRENT_PATH, "../../../config/dr_deploy_param.json"), "/opt/cantian/config/")
+            share_path = f"/mnt/dbdata/metadata_{self.dr_deploy_info.get("storage_metadata_fs")}"
+            shutil.copyfile(os.path.join(CURRENT_PATH, "../../../config/dr_deploy_param.json"), share_path)
             self.restart_cantian_exporter()
         try:
             _execute()
