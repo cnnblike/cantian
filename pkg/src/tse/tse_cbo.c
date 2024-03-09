@@ -60,12 +60,17 @@ static void fill_cbo_stats_column(cbo_stats_column_t *cbo_column, tse_cbo_stats_
         tse_column->column_hist[i].ep_number = cbo_column->column_hist[i]->ep_number;
         knl_cache_cbo_text2variant(entity,
                                    col_id, &cbo_column->column_hist[i]->ep_value, &tse_column->column_hist[i].ep_value);
+        CT_LOG_RUN_INF("column_id:%d,num_buckets:%d,ep_value:",
+                       col_id,
+                       cbo_column->column_hist[i]->ep_number,
+                       &cbo_column->column_hist[i]->ep_value);
     }
 }
 
 static void fill_cbo_stats_table_t(knl_handle_t handle, dc_entity_t *entity, tianchi_cbo_stats_t *stats,
                                    cbo_stats_table_t *table_stats)
 {
+
     for (uint32 col_id = 0; col_id <= table_stats->max_col_id; col_id++) {
         cbo_stats_column_t *column = knl_get_cbo_column(handle, entity, col_id);
         if (column != NULL) {
@@ -79,6 +84,7 @@ static void fill_cbo_stats_table_t(knl_handle_t handle, dc_entity_t *entity, tia
 static void fill_part_table_cbo_stats_table_t(knl_handle_t handle, dc_entity_t *entity, tianchi_cbo_stats_t *stats,
                                               cbo_stats_table_t *table_stats, uint32 stats_idx)
 {
+    CT_LOG_RUN_INF("table_id:%d",table_stats->table_id);
     stats->tse_cbo_stats_part_table[stats_idx].estimate_rows = table_stats->rows;
     uint32 total_parts_cnt = knl_get_part_count(entity);
     for (uint32 col_id = 0; col_id <= table_stats->max_col_id; col_id++) {
@@ -95,6 +101,7 @@ static void fill_sub_part_table_cbo_stats_table_t(knl_handle_t handle, dc_entity
                                                   cbo_stats_table_t *table_stats, uint32 part_id, uint32 subpart_id,
                                                   uint32 stats_idx)
 {
+    CT_LOG_RUN_INF("table_id:%d",table_stats->table_id);
     stats->tse_cbo_stats_part_table[stats_idx].estimate_rows = table_stats->rows;
     for (uint32 col_id = 0; col_id <= table_stats->max_col_id; col_id++) {
         cbo_stats_column_t *column = knl_get_cbo_subpart_column(handle, entity, part_id, col_id, subpart_id);
