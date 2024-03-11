@@ -4438,7 +4438,6 @@ status_t stats_gather_indexes(knl_session_t *session, knl_dictionary_t *dc, stat
 static status_t stats_update_sys_column(knl_session_t *session, stats_col_handler_t *column_handler,
                                         bool32 is_dynamic)
 {
-
     knl_cursor_t *cursor = column_handler->stats_cur;
     row_assist_t ra;
     knl_scan_key_t *key = NULL;
