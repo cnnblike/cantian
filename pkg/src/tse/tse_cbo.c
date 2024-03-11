@@ -95,7 +95,6 @@ static void fill_sub_part_table_cbo_stats_table_t(knl_handle_t handle, dc_entity
                                                   cbo_stats_table_t *table_stats, uint32 part_id, uint32 subpart_id,
                                                   uint32 stats_idx)
 {
-    CT_LOG_RUN_INF("[Histgram ep_value Print]table_id:%d",table_stats->table_id);
     stats->tse_cbo_stats_part_table[stats_idx].estimate_rows = table_stats->rows;
     for (uint32 col_id = 0; col_id <= table_stats->max_col_id; col_id++) {
         cbo_stats_column_t *column = knl_get_cbo_subpart_column(handle, entity, part_id, col_id, subpart_id);
