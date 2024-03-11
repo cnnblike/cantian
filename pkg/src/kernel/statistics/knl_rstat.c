@@ -3142,6 +3142,8 @@ static void stats_sample_ratio_init(knl_session_t *session, knl_dictionary_t *dc
 status_t stats_create_global_mtrl_table(knl_session_t *session, knl_dictionary_t *dc, mtrl_context_t *temp_ctx,
                                         uint32 seg_id, stats_table_t *table_stats)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_CREATE_TEMP_TABLE_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     knl_cursor_t *cursor = NULL;
     stats_sampler_t stats_sample;
     errno_t ret;
@@ -3186,6 +3188,8 @@ status_t stats_create_global_mtrl_table(knl_session_t *session, knl_dictionary_t
 
 status_t stats_create_mtrl_table(knl_session_t *session, knl_dictionary_t *dc, stats_tab_context_t *tab_ctx)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_CREATE_TEMP_TABLE_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     mtrl_context_t *temp_ctx = tab_ctx->mtrl_tab_ctx;
     uint32 seg_id = tab_ctx->mtrl_tab_seg;
     stats_table_t *table_stats = tab_ctx->table_stats;
@@ -4217,6 +4221,8 @@ void stats_calc_index_empty_size(knl_session_t *session, dc_entity_t *entity, in
 
 static status_t stats_persist_index_stats(knl_session_t *session, stats_index_t *stats_idx, stats_table_t *table_stats)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_PERSISTENCE_THROUGH_RESULT_TABLE_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     bool8 is_report = table_stats->stats_option.is_report;
     dc_entity_t *entity = stats_idx->btree->index->entity;
     index_t *idx = stats_idx->btree->index;
@@ -4369,6 +4375,8 @@ static status_t stats_persist_empty_index_stats(knl_session_t *session, stats_in
 status_t stats_gather_indexes(knl_session_t *session, knl_dictionary_t *dc, stats_table_t *table_stats,
                               mtrl_context_t *mtrl_tab_ctx, uint32 temp_seg)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_INDEX_TABLE_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     table_t          *table;
     dc_entity_t      *entity = DC_ENTITY(dc);
     index_t          *index = NULL;
@@ -4430,6 +4438,7 @@ status_t stats_gather_indexes(knl_session_t *session, knl_dictionary_t *dc, stat
 static status_t stats_update_sys_column(knl_session_t *session, stats_col_handler_t *column_handler,
                                         bool32 is_dynamic)
 {
+
     knl_cursor_t *cursor = column_handler->stats_cur;
     row_assist_t ra;
     knl_scan_key_t *key = NULL;
@@ -5428,6 +5437,8 @@ static status_t stats_persit_histgram(knl_session_t *session, stats_col_handler_
 static status_t stats_persist_column_stats(knl_session_t *session, stats_col_handler_t *column_handler,
                                            stats_table_t *table_stats, dc_entity_t *entity)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_PERSISTENCE_THROUGH_RESULT_TABLE_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     bool32 is_report = table_stats->stats_option.is_report;
     stats_hist_rowids_t hist_rowids;
     errno_t ret;
@@ -6534,6 +6545,8 @@ void stats_init_part_index_info(stats_index_t *stats_idx, index_t *idx)
 
 status_t stats_gather_part_index(knl_session_t *session, knl_dictionary_t *dc, stats_tab_context_t *tab_ctx)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_INDEX_TABLE_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     stats_table_t *table_stats = tab_ctx->table_stats;
     mtrl_context_t *mtrl_tab_ctx = tab_ctx->mtrl_tab_ctx;
     uint32 mtrl_tab_seg = tab_ctx->mtrl_tab_seg;
@@ -7394,6 +7407,8 @@ status_t stats_update_global_tablestats(knl_session_t *session, knl_dictionary_t
 static status_t stats_update_sys_table(knl_session_t *session, stats_table_t *tab_stats,
                                        knl_dictionary_t *dc)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_PERSISTENCE_THROUGH_RESULT_TABLE_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     knl_cursor_t *cursor = NULL;
     row_assist_t ra;
     knl_scan_key_t *key = NULL;

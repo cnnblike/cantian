@@ -13832,6 +13832,8 @@ static status_t db_analyze_check_dc(knl_dictionary_t *dc, text_t *user, text_t *
 
 status_t db_analyze_table_part(knl_session_t *session, knl_analyze_tab_def_t *def, bool32 is_dynamic)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_ANALYZED_DATA_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     text_t user = def->owner;
     text_t name = def->name;
     stats_option_t stats_option;
@@ -14053,6 +14055,8 @@ status_t db_analyze_normal_table(knl_session_t *session, knl_dictionary_t *dc, s
 
 status_t db_analyze_table(knl_session_t *session, knl_analyze_tab_def_t *def, bool32 is_dynamic)
 {
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_ANALYZED_DATA_FAIL,NULL,0);
+    SYNC_POINT_GLOBAL_END;
     text_t user = def->owner;
     text_t name = def->name;
     stats_option_t stats_option;
