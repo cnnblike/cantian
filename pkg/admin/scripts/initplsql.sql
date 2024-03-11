@@ -231,7 +231,7 @@ BEGIN
     --flush modification to table
     DBE_STATS.FLUSH_DB_STATS_INFO();
     --(1)gather the new table
-    insert into ltt_analyze_job1 SELECT OWNER, TABLE_NAME FROM ADM_TABLES WHERE TABLE_TYPE in ('HEAP', 'NOLOGGING') AND LAST_ANALYZED is NULL AND OWNER != 'SYS';
+    insert into ltt_analyze_job1 SELECT OWNER, TABLE_NAME FROM ADM_TABLES WHERE TABLE_TYPE in ('HEAP', 'NOLOGGING') AND LAST_ANALYZED is NULL AND OWNER NOT IN ('SYS', 'mysql', 'sys');
     LOOP
         is_finish := false;
         BEGIN
@@ -268,7 +268,7 @@ BEGIN
     --(2)gather the new partition
     insert into ltt_analyze_job2 SELECT U.NAME AS OWNER, T.NAME AS TABLE_NAME, TP.NAME AS PARTITION_NAME
            FROM SYS.SYS_USERS U JOIN SYS.SYS_TABLES T ON U.ID = T.USER# 
-           JOIN SYS.SYS_TABLE_PARTS TP ON T.USER# = TP.USER# AND T.ID = TP.TABLE# AND TP.ANALYZETIME IS NULL AND U.NAME != 'SYS';
+           JOIN SYS.SYS_TABLE_PARTS TP ON T.USER# = TP.USER# AND T.ID = TP.TABLE# AND TP.ANALYZETIME IS NULL AND U.NAME NOT IN ('SYS', 'mysql', 'sys');
     LOOP
         is_finish := false;
         
@@ -309,7 +309,7 @@ BEGIN
            FROM SYS.SYS_USERS U JOIN SYS.SYS_TABLES T ON U.ID = T.USER#
            JOIN SYS.SYS_TABLE_PARTS TP ON T.USER# = TP.USER# AND T.ID = TP.TABLE#
            JOIN SYS.SYS_DML_STATS MO ON T.USER# = MO.USER# AND T.ID = MO.TABLE# AND MO.PART# = TP.PART# 
-           WHERE MO.PARTED = 1 AND MO.PART# <> -1 AND TP.ANALYZETIME < start_time AND U.NAME != 'SYS' AND
+           WHERE MO.PARTED = 1 AND MO.PART# <> -1 AND TP.ANALYZETIME < start_time AND U.NAME NOT IN ('SYS', 'mysql', 'sys') AND
            ((NVL(MO.INSERTS, 0) + NVL(MO.UPDATES, 0) + NVL(MO.DELETES, 0))>= (CHANGE_PERCENT * TP.ROWCNT/100))
            ORDER BY TP.ANALYZETIME;
     LOOP
@@ -350,7 +350,7 @@ BEGIN
     --(4)gather the table changed
     insert into ltt_analyze_job4 SELECT U.NAME AS OWNER, T.NAME AS TABLE_NAME, T.ANALYZETIME FROM SYS.SYS_USERS U join SYS.SYS_TABLES T on T.USER# = U.ID
             JOIN SYS.SYS_DML_STATS MO ON T.USER# = MO.USER# AND T.ID = MO.TABLE# where T.RECYCLED = 0 AND T.type = 0 AND
-            (MO.PARTED = 0 OR (MO.PARTED = 1 AND MO.PART#=-1)) AND T.ANALYZETIME < start_time AND U.NAME != 'SYS' AND
+            (MO.PARTED = 0 OR (MO.PARTED = 1 AND MO.PART#=-1)) AND T.ANALYZETIME < start_time AND U.NAME NOT IN ('SYS', 'mysql', 'sys') AND
             ((NVL(MO.INSERTS, 0) + NVL(MO.UPDATES, 0) + NVL(MO.DELETES, 0))>= (CHANGE_PERCENT * T.NUM_ROWS/100))
             ORDER BY T.ANALYZETIME;
     LOOP
