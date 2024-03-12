@@ -470,7 +470,8 @@ static status_t cm_parse_config(config_t *config, char *buf, uint32 buf_len, boo
         cm_text_upper(&name);  // Case insensitive
         cm_trim_text(&name);
         
-        if (!cm_text_str_equal_ins(&name, "SHM_CPU_GROUP_INFO") && !cm_text_str_equal_ins(&name, "SHM_MYSQL_CPU_GROUP_INFO")) {
+        if (!cm_text_str_equal_ins(&name, "SHM_CPU_GROUP_INFO") 
+        && !cm_text_str_equal_ins(&name, "SHM_MYSQL_CPU_GROUP_INFO")) {
             if (line.len >= CT_MAX_CONFIG_LINE_SIZE) {
                 CT_THROW_ERROR(ERR_LINE_SIZE_TOO_LONG, line_no);
                 return CT_ERROR;
