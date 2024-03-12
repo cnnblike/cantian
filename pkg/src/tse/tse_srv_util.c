@@ -752,17 +752,8 @@ void tse_init_index_scan(knl_cursor_t *cursor, bool32 is_equal, bool32 *need_ini
     if (*need_init_index == CT_TRUE) {
         knl_init_index_scan(cursor, is_equal);
         *need_init_index = CT_FALSE;
-    } else {
-        cursor->scan_range.is_equal = CT_FALSE;
     }
     return;
-}
-
-static inline void tse_set_scan_range_flag(knl_cursor_t *cursor, const index_profile_t *profile)
-{
-    if (profile->primary == CT_TRUE || profile->unique == CT_TRUE) {
-        cursor->scan_range.is_equal = CT_TRUE;
-    }
 }
 
 int tse_set_index_scan_key(knl_cursor_t *cursor, uint32 col_id, bool32 *need_init_index, uint32_t column_count,
@@ -782,11 +773,9 @@ int tse_set_index_scan_key(knl_cursor_t *cursor, uint32 col_id, bool32 *need_ini
     knl_scan_key_t *r_border = &cursor->scan_range.r_key;
 
     tse_init_index_scan(cursor, CT_FALSE, need_init_index);
-    bool32 is_tse_ha_read_prefix_last = CT_FALSE;
     switch ((tse_ha_rkey_function_t)index_key_info->find_flag) {
         case TSE_HA_READ_PREFIX_LAST:
             cursor->index_dsc = CT_TRUE;
-            is_tse_ha_read_prefix_last = CT_TRUE;
             // go through
         case TSE_HA_READ_KEY_EXACT:
             if (index_key_info->key_info[col_id].is_key_null) {
@@ -802,9 +791,6 @@ int tse_set_index_scan_key(knl_cursor_t *cursor, uint32 col_id, bool32 *need_ini
                                  index_key_info->key_info[col_id].left_key_len, col_id);
                 knl_set_scan_key(desc, r_border, index_column_type, index_key_info->key_info[col_id].left_key,
                                  index_key_info->key_info[col_id].left_key_len, col_id);
-                if (is_tse_ha_read_prefix_last == CT_FALSE) {
-                    tse_set_scan_range_flag(cursor, &profile);
-                }
             }
             break;
         case TSE_HA_READ_KEY_OR_NEXT:
