@@ -2493,6 +2493,22 @@ bool32 is_min_batch_lsn(uint64 batch_lsn)
     return CT_TRUE;
 }
 
+void dtc_standby_update_lrp(knl_session_t *session, uint32 idx)
+{
+    log_batch_t *batch = (log_batch_t *)g_replay_paral_mgr.buf_list[idx].aligned_buf;
+    dtc_node_ctrl_t *ctrl = dtc_get_ctrl(session, g_replay_paral_mgr.node_id[idx]);
+    if (ctrl->lrp_point.lsn < batch->head.point.lsn) {
+        ctrl->lrp_point = batch->head.point;
+        ctrl->scn = DB_CURR_SCN(session);
+        ctrl->lsn = batch->head.point.lsn;
+        ctrl->lfn = batch->head.point.lfn;
+        if (dtc_save_ctrl(session, g_replay_paral_mgr.node_id[idx]) != CT_SUCCESS) {
+            CM_ABORT(0, "ABORT INFO: save core control file failed when update standby cluster ctrl");
+        }
+    }
+    return;
+}
+
 void dtc_update_standby_cluster_scn(knl_session_t *session, uint32 idx)
 {
     if (DB_IS_PRIMARY(&session->kernel->db)) {
@@ -2517,7 +2533,7 @@ void dtc_update_standby_cluster_scn(knl_session_t *session, uint32 idx)
             tx_scn_broadcast(session);
         }
     }
-    
+    dtc_standby_update_lrp(session, idx);
     log_context_t *ctx = &session->kernel->redo_ctx;
     log_point_t curr_point = dtc_get_ctrl(session, g_replay_paral_mgr.node_id[idx])->rcy_point;
     log_point_t lrp_point = dtc_get_ctrl(session, g_replay_paral_mgr.node_id[idx])->lrp_point;
@@ -2538,22 +2554,6 @@ void dtc_rcy_atomic_dec_group_num(knl_session_t *session, uint32 idx, int32 val)
     }
 }
 
-void dtc_standby_update_lrp(knl_session_t *session, uint32 idx)
-{
-    log_batch_t *batch = (log_batch_t *)g_replay_paral_mgr.buf_list[idx].aligned_buf;
-    dtc_node_ctrl_t *ctrl = dtc_get_ctrl(session, g_replay_paral_mgr.node_id[idx]);
-    if (ctrl->lrp_point.lsn < batch->head.point.lsn) {
-        ctrl->lrp_point = batch->head.point;
-        ctrl->scn = DB_CURR_SCN(session);
-        ctrl->lsn = batch->head.point.lsn;
-        ctrl->lfn = batch->head.point.lfn;
-        if (dtc_save_ctrl(session, g_replay_paral_mgr.node_id[idx]) != CT_SUCCESS) {
-            CM_ABORT(0, "ABORT INFO: save core control file failed when update standby cluster ctrl");
-        }
-    }
-    return;
-}
-
 static void dtc_rcy_paral_replay_batch(knl_session_t *session, log_cursor_t *cursor, uint32 idx)
 {
     knl_instance_t *kernel = session->kernel;
@@ -2570,7 +2570,6 @@ static void dtc_rcy_paral_replay_batch(knl_session_t *session, log_cursor_t *cur
     g_replay_paral_mgr.group_num[idx] = DTC_RCY_GROUP_NUM_BASE;
     g_replay_paral_mgr.batch_scn[idx] = 0;
     g_replay_paral_mgr.batch_rpl_start_time[idx] = cm_now();
-    dtc_standby_update_lrp(session, idx);
     for (;;) {
         group = log_fetch_group(ctx, cursor);
         if (group == NULL) {
