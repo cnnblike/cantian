@@ -1540,7 +1540,6 @@ EXTER_ATTACK int tse_index_read(tianchi_handler_t *tch, record_info_t *record_in
     if (!index_info->need_init) { // no alloc cursor
         knl_inc_session_ssn(knl_session);
         cursor->ssn = knl_session->ssn;
-        cursor->scan_range.is_equal = CT_FALSE;
     }
 
     CT_LOG_DEBUG_INF("tse_index_read: tbl=%s, thd_id=%u", tse_context->table.str, tch->thd_id);
