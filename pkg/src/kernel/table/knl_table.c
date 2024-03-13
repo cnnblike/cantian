@@ -13832,8 +13832,6 @@ static status_t db_analyze_check_dc(knl_dictionary_t *dc, text_t *user, text_t *
 
 status_t db_analyze_table_part(knl_session_t *session, knl_analyze_tab_def_t *def, bool32 is_dynamic)
 {
-    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_ANALYZED_DATA_FAIL,NULL,0);
-    SYNC_POINT_GLOBAL_END;
     text_t user = def->owner;
     text_t name = def->name;
     stats_option_t stats_option;
@@ -13842,8 +13840,18 @@ status_t db_analyze_table_part(knl_session_t *session, knl_analyze_tab_def_t *de
     stats_load_info_t load_info;
 
     stats_init_stats_option(&stats_option, def);
-
-    if (db_analyze_check_sample(stats_option.sample_ratio, stats_option.sample_level) != CT_SUCCESS) {
+     /**
+     * 注释检查审视无误后删除
+     * 验证收集统计信息过程中分析统计数据失败场景-设置统计分区表分析统计数据故障点
+     * 故障点思路：分析采样数据是返回失败
+     * 当故障点使能时，db_analyze_check_sample返回ERROR
+     * 有疑问
+    */
+    status_t ret = CT_SUCCESS;
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_ANALYZED_DATA_FAIL, &ret, CT_ERROR);
+    ret = db_analyze_check_sample(stats_option.sample_ratio, stats_option.sample_level);
+    SYNC_POINT_GLOBAL_END;
+    if (ret != CT_SUCCESS) {
         return CT_ERROR;
     }
 
@@ -14055,8 +14063,6 @@ status_t db_analyze_normal_table(knl_session_t *session, knl_dictionary_t *dc, s
 
 status_t db_analyze_table(knl_session_t *session, knl_analyze_tab_def_t *def, bool32 is_dynamic)
 {
-    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_ANALYZED_DATA_FAIL,NULL,0);
-    SYNC_POINT_GLOBAL_END;
     text_t user = def->owner;
     text_t name = def->name;
     stats_option_t stats_option;
@@ -14066,8 +14072,17 @@ status_t db_analyze_table(knl_session_t *session, knl_analyze_tab_def_t *def, bo
     status_t status = CT_SUCCESS;
 
     stats_init_stats_option(&stats_option, def);
-
-    if (db_analyze_check_sample(stats_option.sample_ratio, stats_option.sample_level) != CT_SUCCESS) {
+    /**
+     * 注释检查审视无误后删除
+     * 验证收集统计信息过程中分析统计数据失败场景-设置统普通表分析统计数据故障点
+     * 故障点思路：分析采样数据是返回失败
+     * 当故障点使能时，db_analyze_check_sample返回ERROR
+     * 
+    */
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_ANALYZED_DATA_FAIL,&ret,CT_ERROR);
+    ret = db_analyze_check_sample(stats_option.sample_ratio, stats_option.sample_level);
+    SYNC_POINT_GLOBAL_END;
+    if (ret != CT_SUCCESS) {
         return CT_ERROR;
     }
 
