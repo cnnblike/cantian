@@ -10927,8 +10927,18 @@ status_t knl_analyze_table_dynamic(knl_handle_t session, knl_analyze_tab_def_t *
 status_t knl_analyze_table(knl_handle_t session, knl_analyze_tab_def_t *def)
 {
     knl_session_t *se = (knl_session_t *)session;
+     /**
+     * 注释检查审视无误后删除
+     * 验证统计信息过程中手机采样数据失败场景 - 设置故障点
+     * 故障点思路：过程失败。knl_ddl_enabled？
+     * 当故障点使能时：过程终止，返回ERROR
+    */
+    status_t ret = CT_SUCCESS;
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_COLLECT_SAMPLED_DATA_FAIL, &ret, CT_ERROR);
+    ret = knl_ddl_enabled(session, CT_FALSE) ;
+    SYNC_POINT_GLOBAL_END;
 
-    if (knl_ddl_enabled(session, CT_FALSE) != CT_SUCCESS) {
+    if (ret != CT_SUCCESS) {
         return CT_ERROR;
     }
 
