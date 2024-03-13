@@ -288,8 +288,11 @@ status_t buf_load_page_from_disk(knl_session_t *session, buf_ctrl_t *ctrl, page_
         CT_THROW_ERROR(ERR_PAGE_CORRUPTED, page_id.file, page_id.page);
         return CT_ERROR;
     }
-
-    knl_panic(lsn <= ctrl->page->lsn || DAAC_SESSION_IN_RECOVERY(session));
+    if (!DB_IS_PRIMARY(&session->kernel->db) && lsn > ctrl->page->lsn && !DAAC_SESSION_IN_RECOVERY(session)) {
+        CT_LOG_RUN_WAR("[BUFFER] page_id %u-%u, lsn(%llu) > ctrl->page->lsn(%llu)",
+                       (uint32)page_id.file, (uint32)page_id.page, lsn, ctrl->page->lsn);       
+    }
+    knl_panic(lsn <= ctrl->page->lsn || DAAC_SESSION_IN_RECOVERY(session) || !DB_IS_PRIMARY(&session->kernel->db));
 
     return CT_SUCCESS;
 }
