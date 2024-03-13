@@ -14079,6 +14079,7 @@ status_t db_analyze_table(knl_session_t *session, knl_analyze_tab_def_t *def, bo
      * 当故障点使能时，db_analyze_check_sample返回ERROR
      * 
     */
+    status_t ret = CT_SUCCESS;
     SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_ANALYZED_DATA_FAIL,&ret,CT_ERROR);
     ret = db_analyze_check_sample(stats_option.sample_ratio, stats_option.sample_level);
     SYNC_POINT_GLOBAL_END;
