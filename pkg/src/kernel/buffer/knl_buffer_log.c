@@ -116,6 +116,9 @@ void rd_enter_page(knl_session_t *session, log_entry_t *log)
         curr_page_head = (page_head_t *)session->curr_page;
         need_skip = (!(options & ENTER_PAGE_NO_READ) && (session->curr_lsn <= curr_page_head->lsn));
         curr_page_lsn = curr_page_head->lsn;
+        if (need_skip) {
+            dtc_add_dirtypage_for_recovery(session, page_id);
+        }
     } else {
         need_skip = (cm_get_error_code() == ERR_PAGE_CORRUPTED && (session->curr_page_ctrl != NULL) &&
                      PAGE_IS_HARD_DAMAGE(session->curr_page_ctrl->page));
