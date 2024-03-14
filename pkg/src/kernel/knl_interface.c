@@ -10932,7 +10932,6 @@ status_t knl_analyze_table(knl_handle_t session, knl_analyze_tab_def_t *def)
     SYNC_POINT_GLOBAL_END;
     if(CT_SUCCESS == ret){
         knl_session_t *se = (knl_session_t *)session;
-
         if (knl_ddl_enabled(session, CT_FALSE) != CT_SUCCESS) {
             return CT_ERROR;
         }
