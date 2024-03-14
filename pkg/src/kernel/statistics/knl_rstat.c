@@ -3237,7 +3237,6 @@ status_t stats_create_mtrl_table(knl_session_t *session, knl_dictionary_t *dc, s
     knl_close_cursor(session, cursor);
     CM_RESTORE_STACK(session->stack);
 
-    
     SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_CREATE_TEMP_TABLE_FAIL, &result, 0);
     SYNC_POINT_GLOBAL_END;
     return result;
