@@ -10920,18 +10920,24 @@ status_t knl_analyze_table_dynamic(knl_handle_t session, knl_analyze_tab_def_t *
 
 status_t knl_analyze_table(knl_handle_t session, knl_analyze_tab_def_t *def)
 {
+    status_t ret = CT_SUCCESS;
     knl_session_t *se = (knl_session_t *)session;
+        if (knl_ddl_enabled(session, CT_FALSE) != CT_SUCCESS) {
+            return CT_ERROR;
+        }
 
-    if (knl_ddl_enabled(session, CT_FALSE) != CT_SUCCESS) {
-        return CT_ERROR;
-    }
-
-    if (def->part_name.len > 0 ||
-       (((session_t *)session)->is_tse && (def->part_no != CT_INVALID_ID32))) {
-        return db_analyze_table_part(se, def, CT_FALSE);
-    } else {
-        return db_analyze_table(se, def, CT_FALSE);
-    }
+        if (def->part_name.len > 0 ||
+        (((session_t *)session)->is_tse && (def->part_no != CT_INVALID_ID32))) {
+            ret = db_analyze_table_part(se, def, CT_FALSE);
+            SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_COLLECT_SAMPLED_DATA_FAIL, &ret, 1);
+            SYNC_POINT_GLOBAL_END;
+            return ret;
+        } else {
+            ret = db_analyze_table(se, def, CT_FALSE);
+            SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_COLLECT_SAMPLED_DATA_FAIL, &ret, 1);
+            SYNC_POINT_GLOBAL_END;
+            return ret;
+        }
 }
 
 status_t knl_analyze_index_dynamic(knl_handle_t session, knl_analyze_index_def_t *def)

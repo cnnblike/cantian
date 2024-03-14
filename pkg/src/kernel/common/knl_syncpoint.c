@@ -103,6 +103,34 @@ void knl_syncpoint_inject_delay(int32 *user_param, int32 ret)
     cm_sleep(ret); // 10000, smon request timeout
     CT_LOG_DEBUG_INF("[SYNCPOINT] inject time delay %d ms", ret);
 }
+void knl_syncpoint_create_temp_table_inject_abort(int32 *user_param, int32 ret)
+{
+    if (user_param == NULL) {
+        CT_LOG_DEBUG_ERR("[SYNCPOINT] inject code err param");
+        return;
+    }
+    *user_param = CT_ERROR;
+    switch (ret)
+    {
+    case 0://创建临时表失败
+      CT_LOG_RUN_ERR("[SYNCPOINT] statistic: create temp table inject abort");
+      break;
+    case 1://收集采样数据失败
+      CT_LOG_RUN_ERR("[SYNCPOINT] statistic: collect sample inject abort");
+      break;
+    case 2://分析统计数据失败
+      CT_LOG_RUN_ERR("[SYNCPOINT] statistic: analyze table inject abort");
+      break;
+    case 3://索引统计失败
+      CT_LOG_RUN_ERR("[SYNCPOINT] statistic: index inject abort");
+      break;
+    case 4://持久化结果失败
+      CT_LOG_RUN_ERR("[SYNCPOINT] statistic: persistence inject abort");
+      break;
+    }
+}
+
+
 
 #define SYNCPOINT_WAIT_REFORM_TIMEOUT (20)
 #define SYNCPOINT_WAIT_REFORM_SLEEP_TIME (1000)
@@ -608,6 +636,16 @@ knl_global_syncpoint_def g_knl_syncpoint[] = {
       knl_syncpoint_inject_errcode, 0 },
     { CANTIAN_CKPT_CHECKSUM_VERIFY_FAIL, CT_FALSE, "CANTIAN_CKPT_CHECKSUM_VERIFY_FAIL", 0,
       knl_syncpoint_inject_errcode, 0 },
+    { COLLECT_STATISTICS_CREATE_TEMP_TABLE_FAIL, CT_FALSE, "COLLECT_STATISTICS_CREATE_TEMP_TABLE_FAIL", 0,
+      knl_syncpoint_create_temp_table_inject_abort, 0 },
+    { COLLECT_STATISTICS_COLLECT_SAMPLED_DATA_FAIL, CT_FALSE, "COLLECT_STATISTICS_COLLECT_SAMPLED_DATA_FAIL", 0,
+      knl_syncpoint_create_temp_table_inject_abort, 0 },
+    { COLLECT_STATISTICS_ANALYZED_DATA_FAIL, CT_FALSE, "COLLECT_STATISTICS_ANALYZED_DATA_FAIL", 0,
+      knl_syncpoint_create_temp_table_inject_abort, 0 },
+    { COLLECT_STATISTICS_INDEX_FAIL, CT_FALSE, "COLLECT_STATISTICS_INDEX_FAIL", 0,
+      knl_syncpoint_create_temp_table_inject_abort, 0 },
+    { COLLECT_STATISTICS_PERSISTENCE_THROUGH_RESULT_FAIL, CT_FALSE, "COLLECT_STATISTICS_PERSISTENCE_THROUGH_RESULT_FAIL", 0,//
+      knl_syncpoint_create_temp_table_inject_abort, 0 },
 };
 
 #define KNL_SYNCPOINT_COUNT (sizeof(g_knl_syncpoint) / sizeof(g_knl_syncpoint[0]))
