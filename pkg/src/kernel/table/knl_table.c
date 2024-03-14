@@ -13884,7 +13884,7 @@ status_t db_analyze_table_part(knl_session_t *session, knl_analyze_tab_def_t *de
         return CT_ERROR;
     }
     stats_flush_logic_log(session, &dc, &load_info);
-    status_t result = stats_refresh_dc(session, &dc, load_info) 
+    status_t result = stats_refresh_dc(session, &dc, load_info); 
     if (result != CT_SUCCESS) {
         unlock_tables_directly(session);
         stats_dc_invalidate(session, &dc);
