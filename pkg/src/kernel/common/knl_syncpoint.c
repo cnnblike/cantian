@@ -105,6 +105,11 @@ void knl_syncpoint_inject_delay(int32 *user_param, int32 ret)
 }
 void knl_syncpoint_create_temp_table_inject_abort(int32 *user_param, int32 ret)
 {
+    if (user_param == NULL) {
+        CT_LOG_DEBUG_ERR("[SYNCPOINT] inject code err param");
+        return;
+    }
+    *user_param = CT_ERROR;
     switch (ret)
     {
     case 0://创建临时表失败

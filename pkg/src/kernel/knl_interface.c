@@ -10926,9 +10926,8 @@ status_t knl_analyze_table_dynamic(knl_handle_t session, knl_analyze_tab_def_t *
 
 status_t knl_analyze_table(knl_handle_t session, knl_analyze_tab_def_t *def)
 {
-    status_t ret = CT_ERROR;
-    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_COLLECT_SAMPLED_DATA_FAIL, NULL, 1);
-    ret = CT_SUCCESS;
+    status_t ret = CT_SUCCESS;
+    SYNC_POINT_GLOBAL_START(COLLECT_STATISTICS_COLLECT_SAMPLED_DATA_FAIL, &ret, 1);
     SYNC_POINT_GLOBAL_END;
     if(CT_SUCCESS == ret){
         knl_session_t *se = (knl_session_t *)session;
@@ -10943,7 +10942,7 @@ status_t knl_analyze_table(knl_handle_t session, knl_analyze_tab_def_t *def)
             return db_analyze_table(se, def, CT_FALSE);
         }
     }else{
-        return CT_SUCCESS;
+        return CT_ERROR;
     }
 }
 
