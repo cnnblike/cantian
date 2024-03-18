@@ -1504,7 +1504,7 @@ Cantian引擎已正确安装且正常运行。
     巡检结果查询如下：
 
     ![输入图片说明](https://foruda.gitee.com/images/1707301648920644690/22c0aa8b_1686238.png "zh-cn_image_0000001690293749.png")
-# 六、参天云主机开发编译部署
+# 六、Cantian云主机开发编译部署
 
 ## 6.1 环境准备
 
@@ -1582,7 +1582,7 @@ echo "/home/core/core-%e-%p-%t" > /proc/sys/kernel/core_pattern
 echo 2 > /proc/sys/fs/suid_dumpable
 ulimit -c unlimited
 ```
-##### 单节点部署参天
+##### 单节点部署Cantian
 
 ```shell
 cd /home/regress/CantianKernel/Cantian-DATABASE-CENTOS-64bit
@@ -1591,7 +1591,7 @@ mkdir -p /home/cantiandba/logs
 # 如果需要部署非元数据归一版本，则需要加参数-Z MYSQL_METADATA_IN_CANTIAN=FALSE
 python3 install.py -U cantiandba:cantiandba -R /home/cantiandba/install -D /home/cantiandba/data -l /home/cantiandba/logs/install.log -Z _LOG_LEVEL=255 -g withoutroot -d -M cantiand -c -Z _SYS_PASSWORD=Huawei@123 -Z SESSIONS=1000
 ```
-##### 双节点部署参天
+##### 双节点部署Cantian
 node0
 ```shell
 cd /home/regress/CantianKernel/Cantian-DATABASE-CENTOS-64bit
@@ -1614,7 +1614,7 @@ ctsql / as sysdba -q -c 'SELECT NAME, STATUS, OPEN_STATUS FROM DV_DATABASE'
 
 ### 6.2.3 卸载cantian
 **需要使用gaussdba用户执行卸载命令**
-如果存在与参天相连的mysqld进程，执行以下指令，先停止mysqld进程再停止cantiand:
+如果存在与cantiand相连的mysqld进程，执行以下指令，先停止mysqld进程再停止cantiand:
 ```shell
 /usr/local/mysql/bin/mysql -uroot -e "shutdown;"
 ```
