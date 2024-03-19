@@ -191,6 +191,7 @@ class SwitchOver(object):
 class DRRecover(SwitchOver):
     def __init__(self):
         super(DRRecover, self).__init__()
+        self.repl_success_flag = False
 
     def execute_replication_steps(self, running_status, pair_id):
         if running_status != ReplicationRunningStatus.Synchronizing:
@@ -210,6 +211,16 @@ class DRRecover(SwitchOver):
             time.sleep(10)
         self.dr_deploy_opt.split_remote_replication_filesystem_pair(pair_id)
         self.dr_deploy_opt.remote_replication_filesystem_pair_cancel_secondary_write_lock(pair_id)
+    
+    def standby_cms_purge_backup(self):
+        LOG.info("Standby purge backup by cms command.")
+        cmd = "source ~/.bashrc && su -s /bin/bash - cantian -c " \
+              "\"ctbackup --purge-logs\""
+        return_code, output, stderr = exec_popen(cmd, timeout=600)
+        if return_code:
+            err_msg = "Execute command[cms stat] failed, details::%s." % output + stderr
+            LOG.info(err_msg)
+        LOG.info("Standby purge backup by cms command success.")
 
     def rep_pair_recover(self, pair_id: str) -> None:
         pair_info = self.dr_deploy_opt.query_remote_replication_pair_info_by_pair_id(
@@ -304,6 +315,8 @@ class DRRecover(SwitchOver):
             self.standby_cms_res_stop()
             time.sleep(10)
             self.standby_cms_res_start()
+            if self.repl_success_flag:
+                self.standby_cms_purge_backup()
             self.check_cluster_status()
         LOG.info("DR recovery complete")
 
