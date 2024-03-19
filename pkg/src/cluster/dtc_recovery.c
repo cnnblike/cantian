@@ -138,7 +138,7 @@ static inline void dtc_rcy_add_to_bucket(rcy_set_bucket_t *bucket, rcy_set_item_
 status_t dtc_rcy_set_item_update_need_replay(rcy_set_bucket_t *bucket, page_id_t page_id, bool8 need_replay)
 {
     rcy_set_item_t *item = bucket->first;
-    uint64 curr_page_lsn = INVALID_VALUE64;
+    uint64 curr_page_lsn = CT_INVALID_ID64;
     knl_session_t *session = g_instance->kernel.sessions[SESSION_ID_KERNEL];
     if (!DB_IS_PRIMARY(&session->kernel->db)) {
         // TODO: this is only for 2 nodes cluster, need change
