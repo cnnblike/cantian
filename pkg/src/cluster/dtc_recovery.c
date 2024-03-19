@@ -1685,7 +1685,7 @@ void dtc_standby_update_lrp(knl_session_t *session, uint32 idx, uint32 size_read
         ctrl->lrp_point = tail->point;
         ctrl->scn = DB_CURR_SCN(session);
         ctrl->lsn = tail->point.lsn;
-        ctrl->lfn = tail->point.lfn;
+        ctrl->lfn = (uint64)tail->point.lfn;
         if (dtc_save_ctrl(session, idx) != CT_SUCCESS) {
             CM_ABORT(0, "ABORT INFO: save core control file failed when update standby cluster ctrl");
         }
