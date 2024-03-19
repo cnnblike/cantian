@@ -266,7 +266,7 @@ void rd_tx_begin(knl_session_t *session, log_entry_t *log)
     if (XID_INST_ID(*xid) != session->kernel->id) {
         return;
     }
-    if (!DB_IS_PRIMARY(&session->kernel->db) && !DB_NOT_READY(session)) {
+    if (!DB_IS_PRIMARY(&session->kernel->db) && !DB_NOT_READY(session) && g_rc_ctx->status >= REFORM_OPEN) {
         tx_id_t tx_id = tx_xmap_get_txid(session, xid->xmap);
         undo_t *undo = &session->kernel->undo_ctx.undos[tx_id.seg_id];
         tx_item_t *tx_item = &undo->items[tx_id.item_id];
@@ -347,7 +347,7 @@ void rd_tx_end(knl_session_t *session, log_entry_t *log)
     }
 
     if (XMAP_INST_ID(redo->xmap) == session->kernel->id && !is_skip && !DB_IS_PRIMARY(&session->kernel->db) &&
-        !DB_NOT_READY(session)) {
+        !DB_NOT_READY(session) && g_rc_ctx->status >= REFORM_OPEN) {
         cm_spin_lock(&tx_item->lock, &session->stat->spin_stat.stat_txn);
         tx_item->rmid = CT_INVALID_ID16;
         cm_spin_unlock(&tx_item->lock);
