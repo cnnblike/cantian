@@ -1680,12 +1680,12 @@ void dtc_standby_update_lrp(knl_session_t *session, uint32 idx, uint32 size_read
     }
 
     dtc_node_ctrl_t *ctrl = dtc_get_ctrl(session, idx);
-    CT_LOG_RUN_INF("[LCM DEBUG] ctrl lsn %llu lfn %llu ,log end lsn %llu, lfn %llu", ctrl->lsn, ctrl->lfn, tail->point.lsn, tail->point.lfn);
+    CT_LOG_RUN_INF("[LCM DEBUG] ctrl lsn %llu lfn %llu ,log end lsn %llu, lfn %llu", ctrl->lsn, ctrl->lfn, tail->point.lsn, (uint64)tail->point.lfn);
     if (ctrl->lrp_point.lsn < tail->point.lsn) {
         ctrl->lrp_point = tail->point;
         ctrl->scn = DB_CURR_SCN(session);
         ctrl->lsn = tail->point.lsn;
-        ctrl->lfn = tail->point.lfn;
+        ctrl->lfn = (uint64)tail->point.lfn;
         if (dtc_save_ctrl(session, idx) != CT_SUCCESS) {
             CM_ABORT(0, "ABORT INFO: save core control file failed when update standby cluster ctrl");
         }
