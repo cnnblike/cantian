@@ -1675,7 +1675,7 @@ void dtc_standby_update_lrp(knl_session_t *session, uint32 idx, uint32 size_read
     dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[idx];
     // find last lsn in log
     log_batch_t *batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx);
-    log_batch_t *tmp_batch;
+    log_batch_t *tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx);;
     uint32 left_size;
     for (;;)
     {
@@ -1688,7 +1688,7 @@ void dtc_standby_update_lrp(knl_session_t *session, uint32 idx, uint32 size_read
         rcy_node->read_pos += batch->space_size;
         tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx);
     }
-
+    rcy_node->read_pos = 0;
     dtc_node_ctrl_t *ctrl = dtc_get_ctrl(session, idx);
     CT_LOG_RUN_INF("[LCM DEBUG] ctrl lsn %llu lfn %llu ,log end lsn %llu, lfn %llu", ctrl->lsn, ctrl->lfn, batch->head.point.lsn, batch->head.point.lfn);
     if (ctrl->lrp_point.lsn < batch->head.point.lsn) {
