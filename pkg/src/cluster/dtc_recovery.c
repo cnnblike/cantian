@@ -151,7 +151,7 @@ status_t dtc_rcy_set_item_update_need_replay(rcy_set_bucket_t *bucket, page_id_t
             curr_page_lsn = 0;
             cm_spin_unlock(&buf_bucket->lock);
         } else {
-            curr_page_lsn = (page_head_t *)(ctrl->page)->lsn;        
+            curr_page_lsn = ctrl->page->lsn;        
             cm_spin_unlock(&buf_bucket->lock);
         }
     }
