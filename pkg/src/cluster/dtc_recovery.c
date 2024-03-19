@@ -1672,20 +1672,30 @@ void dtc_standby_update_lrp(knl_session_t *session, uint32 idx, uint32 size_read
     }
     
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
+    dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[idx];
     // find last lsn in log
-    log_batch_tail_t *tail = (log_batch_tail_t *)(dtc_rcy->rcy_nodes[idx].read_buf.aligned_buf + size_read - sizeof(log_batch_tail_t));
-    if (tail->magic_num != LOG_MAGIC_NUMBER)
+    log_batch_t *batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx);
+    log_batch_t *tmp_batch;
+    uint32 left_size;
+    for (;;)
     {
-         CM_ABORT(0, "ABORT INFO: batch tail magic %llx is invalid", tail->magic_num);
+        left_size = rcy_node->write_pos - rcy_node->read_pos;
+        if (left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size)
+        {
+           break;
+        }
+        batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx);
+        rcy_node->read_pos += batch->space_size;
+        tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx);
     }
 
     dtc_node_ctrl_t *ctrl = dtc_get_ctrl(session, idx);
-    CT_LOG_RUN_INF("[LCM DEBUG] ctrl lsn %llu lfn %llu ,log end lsn %llu, lfn %llu", ctrl->lsn, ctrl->lfn, tail->point.lsn, (uint64)tail->point.lfn);
-    if (ctrl->lrp_point.lsn < tail->point.lsn) {
-        ctrl->lrp_point = tail->point;
+    CT_LOG_RUN_INF("[LCM DEBUG] ctrl lsn %llu lfn %llu ,log end lsn %llu, lfn %llu", ctrl->lsn, ctrl->lfn, batch->head.point.lsn, batch->head.point.lfn);
+    if (ctrl->lrp_point.lsn < batch->head.point.lsn) {
+        ctrl->lrp_point = batch->head.point;
         ctrl->scn = DB_CURR_SCN(session);
-        ctrl->lsn = tail->point.lsn;
-        ctrl->lfn = (uint64)tail->point.lfn;
+        ctrl->lsn = batch->head.point.lsn;
+        ctrl->lfn = batch->head.point.lfn;
         if (dtc_save_ctrl(session, idx) != CT_SUCCESS) {
             CM_ABORT(0, "ABORT INFO: save core control file failed when update standby cluster ctrl");
         }
