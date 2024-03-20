@@ -5951,6 +5951,7 @@ static status_t heap_fetch_chain_rows(knl_session_t *session, knl_cursor_t *curs
 
             if (!is_found) {
                 CT_THROW_ERROR(ERR_INVALID_ROWID);
+                knl_panic(0);
                 CM_RESTORE_STACK(session->stack);
                 return CT_ERROR;
             }
@@ -6501,6 +6502,7 @@ static status_t heap_read_by_rowid(knl_session_t *session, knl_cursor_t *cursor,
         if ((uint16)cursor->rowid.slot >= page->dirs) {
             buf_leave_page(session, CT_FALSE);
             CT_THROW_ERROR(ERR_INVALID_ROWID);
+            knl_panic(0);
             return CT_ERROR;
         }
 
@@ -7707,6 +7709,7 @@ static status_t heap_check_restart(knl_session_t *session, knl_cursor_t *cursor)
     if ((uint16)cursor->rowid.slot >= page->dirs) {
         buf_leave_page(session, CT_FALSE);
         CT_THROW_ERROR(ERR_INVALID_ROWID);
+        knl_panic(0);
         return CT_ERROR;
     }
 
