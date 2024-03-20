@@ -66,6 +66,20 @@ mkdir -p /home/cantiandba/logs
 # 如果需要部署非元数据归一版本，则需要加参数-Z MYSQL_METADATA_IN_CANTIAN=FALSE
 python3 install.py -U cantiandba:cantiandba -R /home/cantiandba/install -D /home/cantiandba/data -l /home/cantiandba/logs/install.log -Z _LOG_LEVEL=255 -g withoutroot -d -M cantiand -c -Z _SYS_PASSWORD=Huawei@123 -Z SESSIONS=1000
 ```
+### 双节点cantian部署
+```shell
+#节点0，在容器内执行以下命令
+# -Z SESSIONS=1000方便调试，需运行MTR时需要去掉此参数
+cd /home/regress/CantianKernel/Cantian-DATABASE-CENTOS-64bit
+mkdir -p /home/cantiandba/logs
+python3 install.py -U cantiandba:cantiandba -R /home/cantiandba/install -D /home/cantiandba/data -l /home/cantiandba/logs/install.log -M cantiand_in_cluster -Z _LOG_LEVEL=255 -N 0 -W 192.168.0.1 -g withoutroot -d -c -Z _SYS_PASSWORD=Huawei@123 -Z SESSIONS=1000
+```
+```shell
+#节点1，在容器内执行以下命令
+cd /home/regress/CantianKernel/Cantian-DATABASE-CENTOS-64bit
+mkdir -p /home/cantiandba/logs
+python3 install.py -U cantiandba:cantiandba -R /home/cantiandba/install -D /home/cantiandba/data -l /home/cantiandba/logs/install.log -M cantiand_in_cluster -Z _LOG_LEVEL=255 -N 1 -W 192.168.0.1 -g withoutroot -d -c -Z _SYS_PASSWORD=Huawei@123 -Z SESSIONS=1000
+```
 
 #### 验证cantian状态是否正常
 
@@ -129,7 +143,7 @@ rm -rf /home/regress/mydata/*
 ```
 
 ```shell
-/usr/local/mysql/bin/mysqld --defaults-file=/home/regress/cantian-connector-mysql/scripts/my.cnf --initialize-insecure --datadir=/home/regress/mydata --early-plugin-load="ha_ctc.so" --core-file
+/usr/local/mysql/bin/mysqld --defaults-file=/home/regress/cantian-connector-mysql/scripts/my.cnf --initialize-insecure --datadir=/home/regress/mydata --early-plugin-load="ha_ctc.so" --core-file >> /data/data/mysql.log 2>&1 &
 ```
 
 部署：
@@ -143,7 +157,7 @@ mkdir -p /home/regress/mydata/mysql
 
 部署命令为：
 ```shell
-/usr/local/mysql/bin/mysqld --defaults-file=/home/regress/cantian-connector-mysql/scripts/my.cnf  --datadir=/home/regress/mydata --user=root --early-plugin-load="ha_ctc.so" --core-file
+/usr/local/mysql/bin/mysqld --defaults-file=/home/regress/cantian-connector-mysql/scripts/my.cnf  --datadir=/home/regress/mydata --user=root --core-file --early-plugin-load="ha_ctc.so" --skip-innodb --core-file >> /data/data/mysql.log 2>&1 &
 ```
 
 #### 元数据归一/非归一（脚本）
