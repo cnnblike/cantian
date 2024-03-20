@@ -1248,7 +1248,7 @@ void dtc_rcy_next_file(knl_session_t *session, uint32 idx, bool32 *need_more_log
         point->asn++;
         point->block_id = 0;
         *need_more_log = CT_TRUE;
-        if (rcy_node->latest_rcy_end_lsn != point->lsn) {
+        if (rcy_node->latest_rcy_end_lsn != rcy_node->recovery_read_end_point.lsn) {
             CT_LOG_RUN_INF("[DTC RCY] Move log point to [%u-%u/%u/%llu]",
                 (uint32)point->rst_id, point->asn, point->block_id, (uint64)point->lfn);
         }
@@ -1256,7 +1256,7 @@ void dtc_rcy_next_file(knl_session_t *session, uint32 idx, bool32 *need_more_log
         point->asn++;
         point->block_id = 0;
         *need_more_log = CT_TRUE;
-        if (rcy_node->latest_rcy_end_lsn != point->lsn) {
+        if (rcy_node->latest_rcy_end_lsn != rcy_node->recovery_read_end_point.lsn) {
             CT_LOG_RUN_INF("[DTC RCY] Move log point to [%u-%u/%u/%llu]",
                 (uint32)point->rst_id, point->asn, point->block_id, (uint64)point->lfn);
         }
