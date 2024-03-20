@@ -574,12 +574,14 @@ static status_t temp_heap_read_by_rowid(knl_session_t *session, knl_cursor_t *cu
     if (!temp_heap_check_page(session, cursor, page, PAGE_TYPE_TEMP_HEAP)) {
         buf_leave_temp_page_nolock(session, CT_FALSE);
         CT_THROW_ERROR(ERR_INVALID_ROWID);
+        knl_panic(0);
         return CT_ERROR;
     }
 
     if (cursor->rowid.vm_slot >= page->dirs) {
         buf_leave_temp_page_nolock(session, CT_FALSE);
         CT_THROW_ERROR(ERR_INVALID_ROWID);
+        knl_panic(0);
         return CT_ERROR;
     }
 
@@ -775,6 +777,7 @@ status_t temp_heap_fetch_by_rowid(knl_session_t *session, knl_cursor_t *cursor)
 {
     if (!temp_rowid_valid((knl_session_t *)session, &cursor->rowid)) {
         CT_THROW_ERROR(ERR_INVALID_ROWID);
+        knl_panic(0);
         return CT_ERROR;
     }
 

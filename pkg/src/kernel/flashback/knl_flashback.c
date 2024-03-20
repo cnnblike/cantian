@@ -469,6 +469,7 @@ static status_t fb_scan_cr_page(knl_session_t *session, knl_cursor_t *cursor, ch
             return CT_SUCCESS;
         } else if (cursor->rowid.slot > curr_page->dirs) {
             CT_THROW_ERROR(ERR_INVALID_ROWID);
+            knl_panic(0);
             return CT_ERROR;
         }
 

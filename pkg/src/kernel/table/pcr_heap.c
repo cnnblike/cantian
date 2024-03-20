@@ -735,6 +735,7 @@ static status_t pcrh_check_restart(knl_session_t *session, knl_cursor_t *cursor)
     if (cursor->rowid.slot >= page->dirs) {
         pcrh_leave_current_page(session, cursor);
         CT_THROW_ERROR(ERR_INVALID_ROWID);
+        knl_panic(0);
         return CT_ERROR;
     }
 
