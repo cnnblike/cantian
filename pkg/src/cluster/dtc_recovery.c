@@ -151,7 +151,7 @@ status_t dtc_rcy_set_item_update_need_replay(rcy_set_bucket_t *bucket, page_id_t
             curr_page_lsn = 0;
             cm_spin_unlock(&buf_bucket->lock);
         } else {
-            curr_page_lsn = (ctrl->page)->lsn;        
+            curr_page_lsn = (ctrl->page)->lsn;
             cm_spin_unlock(&buf_bucket->lock);
         }
     }
@@ -1248,14 +1248,18 @@ void dtc_rcy_next_file(knl_session_t *session, uint32 idx, bool32 *need_more_log
         point->asn++;
         point->block_id = 0;
         *need_more_log = CT_TRUE;
-        CT_LOG_RUN_INF("[DTC RCY] Move log point to [%u-%u/%u/%llu]",
-            (uint32)point->rst_id, point->asn, point->block_id, (uint64)point->lfn);
+        if (rcy_node->latest_rcy_end_lsn != point->lsn) {
+            CT_LOG_RUN_INF("[DTC RCY] Move log point to [%u-%u/%u/%llu]",
+                (uint32)point->rst_id, point->asn, point->block_id, (uint64)point->lfn);
+        }
     } else {
         point->asn++;
         point->block_id = 0;
         *need_more_log = CT_TRUE;
-        CT_LOG_RUN_INF("[DTC RCY] Move log point to [%u-%u/%u/%llu]",
-            (uint32)point->rst_id, point->asn, point->block_id, (uint64)point->lfn);
+        if (rcy_node->latest_rcy_end_lsn != point->lsn) {
+            CT_LOG_RUN_INF("[DTC RCY] Move log point to [%u-%u/%u/%llu]",
+                (uint32)point->rst_id, point->asn, point->block_id, (uint64)point->lfn);
+        }
     }
     rcy_node->curr_file_length = 0;
 }
@@ -1954,12 +1958,13 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
                         (uint64)rcy_node->analysis_read_end_point.rst_id, (uint64)rcy_node->analysis_read_end_point.lfn,
                         rcy_node->analysis_read_end_point.lsn);
                 }
-                if (dtc_rcy->phase == PHASE_RECOVERY) {
+                if (dtc_rcy->phase == PHASE_RECOVERY && (rcy_node->latest_rcy_end_lsn != rcy_node->recovery_read_end_point.lsn)) {
                     CT_LOG_RUN_INF(
                         "[DTC RCY] recovery read end point[asn(%u)-block_id(%u)-rst_id(%llu)-lfn(%llu)-lsn(%llu)]",
                         rcy_node->recovery_read_end_point.asn, rcy_node->recovery_read_end_point.block_id,
                         (uint64)rcy_node->recovery_read_end_point.rst_id, (uint64)rcy_node->recovery_read_end_point.lfn,
                         rcy_node->recovery_read_end_point.lsn);
+                    rcy_node->latest_rcy_end_lsn = rcy_node->recovery_read_end_point.lsn;
                 }
             }
         }
