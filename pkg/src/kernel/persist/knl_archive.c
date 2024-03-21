@@ -2366,9 +2366,16 @@ static void arch_proc(thread_t *thread)
 
     cm_set_thread_name("arch_proc");
     KNL_SESSION_SET_CURR_THREADID(session, cm_get_current_thread_id());
-
+    repl_role_t last_role = session->kernel->db.ctrl.core.db_role;
     while (!thread->closed) {
-        if (DB_NOT_READY(session) || !proc_ctx->enabled) {
+        if (last_role != REPL_ROLE_PRIMARY && DB_IS_PRIMARY(&session->kernel->db)) {
+            last_role = REPL_ROLE_PRIMARY;
+            proc_ctx->last_archived_log_record.start_lsn = dtc_my_ctrl(session)->rcy_point.lsn;
+            proc_ctx->last_archived_log_record.end_lsn = dtc_my_ctrl(session)->rcy_point.lsn;
+            proc_ctx->last_archived_log_record.cur_lsn = dtc_my_ctrl(session)->rcy_point.lsn;
+            CT_LOG_RUN_INF("[ARCH] swtich role to pirmary, set start_lsn %llu.", proc_ctx->last_archived_log_record.start_lsn);
+        }
+        if (!DB_IS_PRIMARY(&session->kernel->db) || DB_NOT_READY(session) || !proc_ctx->enabled) {
             cm_sleep(200);
             continue;
         }
