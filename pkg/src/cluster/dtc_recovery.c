@@ -2513,17 +2513,30 @@ static void dtc_rcy_analyze_paral_proc(thread_t *thread)
     CT_LOG_RUN_INF("[DTC RCY] dtc_rcy_analyze_paral_proc finish, rcy_set ref num=%u", dtc_rcy->rcy_set_ref_num);
 }
 
-bool32 is_min_batch_lsn(uint64 batch_lsn)
+bool32 is_min_batch_lsn(knl_session_t *session, uint64 batch_lsn)
 {
     log_batch_t *batch = NULL;
+    bool32 has_batch = CT_FALSE;
+    knl_scn_t batch_scn = 0;
     for (uint32 idx = 0; idx < DTC_RCY_PARAL_BUF_LIST_SIZE; idx++) {
+        batch_scn = MAX(session->kernel->scn, g_replay_paral_mgr.batch_scn[idx]);
         if (g_replay_paral_mgr.group_num[idx] == 0) {
             continue;
         }
+        has_batch = CT_TRUE;
         batch = (log_batch_t *)g_replay_paral_mgr.buf_list[idx].aligned_buf;
         if (batch_lsn > batch->lsn) {
             CT_LOG_DEBUG_INF("batch_lsn %llu is not min, batch->lsn %llu", batch_lsn, batch->lsn);
             return CT_FALSE;
+        }
+    }
+    if (!has_batch) {
+        CT_LOG_DEBUG_INF("update scn, old scn %llu, new scn %llu", session->kernel->scn, batch_scn);
+        if (batch_scn > session->kernel->scn) {
+            KNL_SET_SCN(&session->kernel->scn, batch_scn);
+            if (session->kernel->attr.enable_boc) {
+                tx_scn_broadcast(session);
+            }
         }
     }
     return CT_TRUE;
@@ -2542,7 +2555,7 @@ void dtc_update_standby_cluster_scn(knl_session_t *session, uint32 idx)
         lrpl_ctx->lrpl_speed = (double)(batch->space_size) * MICROSECS_PER_SECOND / SIZE_M(1)
                                          / ((double)rcy_time);
     }
-    if (!is_min_batch_lsn(batch->lsn)) {
+    if (!is_min_batch_lsn(session, batch->lsn)) {
         return;
     }
     knl_scn_t batch_scn = MAX(session->kernel->scn, g_replay_paral_mgr.batch_scn[idx]);
