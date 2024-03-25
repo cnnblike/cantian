@@ -2446,12 +2446,12 @@ status_t dtc_bak_get_logfile_by_asn_file(knl_session_t *session, bak_arch_files_
         CT_LOG_RUN_ERR("[BACKUP] failed to read ctrl page for crashed node=%u", inst_id);
         return CT_ERROR;
     }
-    if (knl_compress_alloc(DEFAULT_ARCH_COMPRESS_ALGO, &compress_ctx, CT_TRUE) != CT_SUCCESS) {
+    if (knl_compress_alloc(bak->record.attr.compress, &compress_ctx, CT_TRUE) != CT_SUCCESS) {
         CT_LOG_RUN_ERR("[BACKUP] Failed to alloc compress context");
         return CT_ERROR;
     }
     if (bak_get_arch_from_redo_prepare(session, &session_bak, &file_info, &rcy_node, &local_file_set) != CT_SUCCESS) {
-        knl_compress_free(DEFAULT_ARCH_COMPRESS_ALGO, &compress_ctx, CT_TRUE);
+        knl_compress_free(bak->record.attr.compress, &compress_ctx, CT_TRUE);
         return CT_ERROR;
     }
     uint32 rst_id = session_bak.kernel->db.ctrl.core.resetlogs.rst_id;
@@ -2480,7 +2480,7 @@ status_t dtc_bak_get_logfile_by_asn_file(knl_session_t *session, bak_arch_files_
         }
         tmp_asn += 1;
     }
-    knl_compress_free(DEFAULT_ARCH_COMPRESS_ALGO, &compress_ctx, CT_TRUE);
+    knl_compress_free(bak->record.attr.compress, &compress_ctx, CT_TRUE);
     bak_get_arch_from_redo_free(&compress_ctx, &session_bak, &file_info, &rcy_node, &local_file_set);
     CT_LOG_RUN_INF("[BACKUP] backup logfile from file finished, status %u, end_asn %u.", status, tmp_asn);
     return CT_SUCCESS;
@@ -2819,6 +2819,13 @@ status_t bak_get_logfile_dbstor(knl_session_t *session, arch_file_info_t *file_i
 status_t bak_get_logfile_file(knl_session_t *session, knl_session_t *session_bak, arch_file_info_t *file_info,
                               log_file_t *logfile, knl_compress_t *compress_ctx)
 {
+    bak_attr_t *attr = &session->kernel->backup_ctx.bak.record.attr;
+    if (attr->compress == COMPRESS_LZ4) {
+        logfile->head.cmp_algorithm = COMPRESS_LZ4;
+        log_calc_head_checksum(session_bak, &logfile->head);
+        session_bak->kernel->attr.enable_arch_compress = CT_TRUE;
+        CT_LOG_DEBUG_INF("[BACKUP] the logfile %s should be compressed.", logfile->ctrl->name);
+    }
     bak_set_tmp_archfile_name(session_bak, file_info->tmp_file_name);
     CT_LOG_DEBUG_INF("[BACKUP] set tmp_archfile_name %s.", file_info->tmp_file_name);
     if (arch_archive_file(session_bak, file_info->read_buf, logfile, file_info->tmp_file_name, compress_ctx) != CT_SUCCESS) {
