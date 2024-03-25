@@ -61,6 +61,18 @@ if [ -f "${FS_CONFIG_FILE}" ];then
     auto_create_fs="true"
 fi
 
+# 查看当前系统语言和SElonux的enforcement的状态
+seccomp_status=$(getenforce)
+language=$(localectl | grep "System Locale" |awk -F"=" '{print $2}')
+if [[ ${seccomp_status} == "Enforcing" ]]; then
+    logAndEchoError "The current system selinux is Enforcing. Please switch to Permissive or Disabled and reinstall."
+    exit 1
+fi
+if [[ ${language} == "zh_CN.UTF-8" ]]; then
+    logAndEchoError "The current system language is Chinese. Please switch to English and reinstall."
+    exit 1
+fi
+
 function correct_files_mod() {
     for file_path in "${!FILE_MODE_MAP[@]}"; do
         if [ ! -e ${file_path} ]; then
@@ -283,13 +295,6 @@ function check_deploy_param() {
         cp -rf "${CONFIG_PATH}"/deploy_param.json /mnt/dbdata/remote/metadata_"${storage_metadata_fs}"/
         chmod 600 /mnt/dbdata/remote/metadata_"${storage_metadata_fs}"/deploy_param.json
         chown "${cantian_user}":"${cantian_group}" /mnt/dbdata/remote/metadata_"${storage_metadata_fs}"/deploy_param.json
-    else
-        su -s /bin/bash - "${cantian_user}" -c "python3 -B ${CURRENT_PATH}/implement/check_deploy_param.py"
-        if [ $? -ne 0 ];then
-            logAndEchoError "Check params failed."
-            uninstall
-            exit 1
-        fi
     fi
 }
 
@@ -298,7 +303,8 @@ function install_dbstor(){
     local dbstor_path="${CURRENT_PATH}"/../repo
     local dbstor_package_file=$(ls "${dbstor_path}"/DBStor_Client*_"${arrch}"*.tgz)
     if [ ! -f "${dbstor_package_file}" ];then
-        logAndEchoError "${dbstor_package_file} is not exist."
+        logAndEchoError "DBstor client package is not exist, \
+        please check  the current system architecture is compatible with ${arrch}"
         return 1
     fi
 
