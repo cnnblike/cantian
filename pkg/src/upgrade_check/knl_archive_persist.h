@@ -35,6 +35,7 @@ typedef struct st_force_archive_param {
     uint64 end_lsn;
     bool32 failed;
     bool32 wait;
+    uint32 end_file_id;
 } force_archive_param_t;
 typedef struct st_archived_info {
     uint32 recid;

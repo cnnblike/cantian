@@ -162,16 +162,33 @@ bool32 arch_need_archive_dbstor(arch_proc_context_t *proc_ctx, log_context_t *re
     return CT_TRUE;
 }
 
-bool32 arch_need_archive_file(arch_proc_context_t *proc_ctx, log_context_t *redo_ctx)
+void arch_need_force_archive_file(arch_proc_context_t *proc_ctx, log_context_t *redo_ctx,uint32 last_file_id)
 {
     knl_session_t *session = proc_ctx->session;
     arch_context_t *arch_ctx = &session->kernel->arch_ctx;
     if (arch_ctx->force_archive_param.force_archive == CT_TRUE) {
-        proc_ctx->is_force_archive = CT_TRUE;
+        if (proc_ctx->is_force_archive == CT_FALSE) {
+            proc_ctx->is_force_archive = CT_TRUE;
+            arch_ctx->force_archive_param.end_file_id = redo_ctx->curr_file;
+        } else {
+            if (arch_ctx->force_archive_param.end_file_id >= last_file_id) {
+                cm_spin_lock(&arch_ctx->dest_lock, NULL);
+                arch_ctx->force_archive_param.force_archive = CT_FALSE;
+                cm_spin_unlock(&arch_ctx->dest_lock);
+                proc_ctx->is_force_archive = CT_FALSE;
+            }
+        }
     }
+}
+
+bool32 arch_need_archive_file(arch_proc_context_t *proc_ctx, log_context_t *redo_ctx)
+{
+    knl_session_t *session = proc_ctx->session;
     log_file_t *file = NULL;
     uint32 file_id = proc_ctx->last_file_id;
     uint32 ori_file_id = proc_ctx->last_file_id;
+
+    arch_need_force_archive_file(proc_ctx, redo_ctx, file_id);
 
     proc_ctx->next_file_id = CT_INVALID_ID32;
 
