@@ -2433,7 +2433,7 @@ void dtc_bak_init_file_info(arch_file_info_t *file_info, uint32 inst_id, log_fil
     file_info->arch_file_type = cm_device_type(bak->record.path);
 }
 
-status_t dtc_bak_get_logfile_conpress_init(bak_t *bak, knl_compress_t *compress_ctx;)
+status_t dtc_bak_get_logfile_conpress_init(bak_t *bak, knl_compress_t *compress_ctx)
 {
     if (knl_compress_alloc(bak->record.attr.compress, compress_ctx, CT_TRUE) != CT_SUCCESS) {
         CT_LOG_RUN_ERR("[BACKUP] Failed to alloc compress context");
