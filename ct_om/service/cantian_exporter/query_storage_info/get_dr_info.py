@@ -229,7 +229,7 @@ class DRStatusCheck(object):
                     self.opt_init()
                 except Exception as err:
                     return data
-            if "Connection timed out" in str(err):
+            else:
                 return data
         try:
             local_system_status = self.query_storage_system_info()
