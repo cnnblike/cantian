@@ -335,6 +335,7 @@ class DRRecover(SwitchOver):
         self.hyper_metro_status_check(running_status, config_role)
         if running_status == MetroDomainRunningStatus.Split:
             if config_role == ConfigRole.Primary:
+                self.standby_cms_res_stop()
                 self.dr_deploy_opt.change_fs_hyper_metro_domain_second_access(
                     self.hyper_domain_id, DomainAccess.ReadAndWrite)
                 self.dr_deploy_opt.swap_role_fs_hyper_metro_domain(self.hyper_domain_id)
