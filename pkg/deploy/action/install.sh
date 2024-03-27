@@ -65,7 +65,7 @@ fi
 seccomp_status=$(getenforce)
 language=$(localectl | grep "System Locale" |awk -F"=" '{print $2}')
 if [[ ${seccomp_status} == "Enforcing" ]]; then
-    logAndEchoError "The current system seccomp_status is Enforcing. Please switch to Permissive or Disabled and reinstall."
+    logAndEchoError "The current system selinux is Enforcing. Please switch to Permissive or Disabled and reinstall."
     exit 1
 fi
 if [[ ${language} == "zh_CN.UTF-8" ]]; then
