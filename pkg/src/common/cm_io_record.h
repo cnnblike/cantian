@@ -134,20 +134,25 @@ status_t record_io_stat_init(void);
 void record_io_stat_begin(timeval_t *tv_begin, atomic_t *start);
 static inline void cantian_record_io_stat_begin(io_record_event_t event, timeval_t *tv_begin)
 {
-#ifdef DB_DEBUG_VERSION
+    if (!g_cm_io_record_open) {
+        return;
+    }
     atomic_t *start = &(g_io_record_event_wait[event].detail.start);
     record_io_stat_begin(tv_begin, start);
-#endif
 }
 
 void record_io_stat_end(timeval_t *tv_begin, int stat, io_record_detail_t *detail);
 
 static inline void cantian_record_io_stat_end(io_record_event_t event, timeval_t *tv_begin, io_record_stat_t stat)
 {
-#ifdef DB_DEBUG_VERSION
+    if (!g_cm_io_record_open) {
+        return;
+    }
     io_record_detail_t *detail = &(g_io_record_event_wait[event].detail);
+    if (cm_atomic_get(&(detail->start)) == 0) {
+        return;
+    }
     record_io_stat_end(tv_begin, stat, detail);
-#endif
 }
 
 void record_io_stat_print(void);

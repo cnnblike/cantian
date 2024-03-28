@@ -38,18 +38,23 @@ extern io_record_event_desc_t g_tse_io_record_event_desc[TSE_FUNC_TYPE_NUMBER];
 
 EXTER_ATTACK static inline void mysql_record_io_stat_begin(enum TSE_FUNC_TYPE type, timeval_t *tv_begin)
 {
-#ifdef DB_DEBUG_VERSION
+    if (!g_cm_io_record_open) {
+        return;
+    }
     atomic_t *start = &g_tse_io_record_event_wait[type].detail.start;
     record_io_stat_begin(tv_begin, start);
-#endif
 }
 
 EXTER_ATTACK static inline void mysql_record_io_stat_end(enum TSE_FUNC_TYPE event, timeval_t *tv_begin, int stat)
 {
-#ifdef DB_DEBUG_VERSION
+    if (!g_cm_io_record_open) {
+        return;
+    }
     io_record_detail_t *detail = &(g_tse_io_record_event_wait[event].detail);
+    if (cm_atomic_get(&(detail->start)) == 0) {
+        return;
+    }
     record_io_stat_end(tv_begin, stat, detail);
-#endif
 }
 void tse_record_io_state_reset(void);
 #ifdef __cplusplus
