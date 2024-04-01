@@ -151,6 +151,12 @@ class UNDeploy(object):
             self.dr_deploy_opt.delete_filesystem_hyper_metro_domain(hyper_domain_id)
         except Exception as err:
             self.dr_deploy_opt.delete_filesystem_hyper_metro_domain(hyper_domain_id, is_local_del=True)
+        share_dr_deploy_path = f"/mnt/dbdata/remote/metadata_{self.dr_deploy_info.get('storage_metadata_fs')}"
+        share_dr_deploy_config = os.path.join(share_dr_deploy_path, "config/dr_deploy_param.json")
+        if os.path.exists(DR_DEPLOY_CONFIG):
+            os.remove(DR_DEPLOY_CONFIG)
+        if os.path.exists(share_dr_deploy_config):
+            os.remove(share_dr_deploy_config)
         LOG.info("Delete hyper metro domain[id:%s] success", hyper_domain_id)
 
     def delete_replication(self):
