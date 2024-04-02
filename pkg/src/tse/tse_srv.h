@@ -159,7 +159,6 @@ typedef struct {
 typedef struct {
     uint32_t estimate_rows;
     tse_cbo_stats_column_t *columns;
-    uint32_t *ndv_keys;
 } tse_cbo_stats_table_t;
 
 /*
@@ -175,6 +174,7 @@ typedef struct {
     bool is_updated;
     tse_cbo_stats_table_t tse_cbo_stats_table;
     tse_cbo_stats_table_t *tse_cbo_stats_part_table;
+    uint32_t *ndv_keys;
 } tianchi_cbo_stats_t;
 #pragma pack()
 
