@@ -1,0 +1,1351 @@
+
+
+SQL> drop table if exists tbl_index_scan;
+
+Succeed.
+
+SQL> drop table if exists refer;
+
+Succeed.
+
+SQL> create table tbl_index_scan(a int, b varchar(256), c double, d clob, e bool, f number(8,6), g timestamp(6));
+
+Succeed.
+
+SQL> create index tbl_full_scan_idx_a_b on tbl_index_scan(a,b);
+
+Succeed.
+
+SQL> 
+SQL> create table refer(a int, b varchar(256));
+
+Succeed.
+
+SQL> insert into refer values(1,'abc');
+
+1 rows affected.
+
+SQL> insert into refer values(2,'bbc');
+
+1 rows affected.
+
+SQL> insert into refer values(3,'abcd');
+
+1 rows affected.
+
+SQL> insert into refer values(4,'abe');
+
+1 rows affected.
+
+SQL> insert into refer select * from refer;
+
+4 rows affected.
+
+SQL> insert into refer select * from refer;
+
+8 rows affected.
+
+SQL> insert into refer select * from refer;
+
+16 rows affected.
+
+SQL> insert into refer select * from refer;
+
+32 rows affected.
+
+SQL> 
+SQL> create or replace PROCEDURE GEN_DATA_TBL_INDEX_SCAN(min_b IN INTEGER, max_b IN  INTEGER)
+  2 as
+  3     i  INTEGER := 0;
+  4 begin
+  5     FOR i IN min_b..max_b LOOP
+  6 	BEGIN
+  7 		IF (i % 10 = 0) THEN
+  8 		  insert into tbl_index_scan values(i, 'abc', 32.22228938, 'XXXXXXXXXXXXXXXXXXXXXXXXXYYYYYYYYYYYYYYYYYYYYYYYYY', true,  1.023, '2019-03-10 12:02:32.02832');
+  9 		ELSIF (i % 10 = 1) THEN
+ 10 		  insert into tbl_index_scan values(i, 'abcabcabcabc', 32.22228939, 'AAAAAAAAAAAAAAAAAA', false, 2.289, '2019-03-10 12:02:32.02832');
+ 11 		ELSIF (i % 10 = 2) THEN
+ 12 		  insert into tbl_index_scan values(i, 'abcabcabcabcabcabcabc', 32.22228948, 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD', true,  3.998, '2019-03-10 12:02:32.02832');
+ 13 		ELSIF (i % 10 = 3) THEN
+ 14 		  insert into tbl_index_scan values(i, 'abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc', 32.2222858, 'ABC', false, 4.231, '2019-03-10 12:02:32.02832');
+ 15 		ELSIF (i % 10 = 4) THEN
+ 16 		  insert into tbl_index_scan values(i, 'abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc', 32.2224938, 'ABCDEFGH', true,  5.2332, '2019-03-10 12:02:32.02832');
+ 17 		ELSIF (i % 10 = 5) THEN
+ 18 		  insert into tbl_index_scan values(i, 'abcabcabc', 32.22228938, 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD', false, 5.111, '2019-03-10 12:02:32.02832');
+ 19 		ELSIF (i % 10 = 6) THEN
+ 20 		  insert into tbl_index_scan values(i, 'abc', 32.22228938, 'aaaaaaaaaaaaaaaaaaaaaaaaaaa......aaaaaaaaaaaaaaaaaaa', true,  6.2222, '2019-03-10 12:02:32.02832');
+ 21 		ELSIF (i % 10 = 7) THEN
+ 22 		  insert into tbl_index_scan values(i, 'abcabcabc', 32.22228938, '33392739472946296439163946192346912364', false, 7.298982, '2019-03-10 12:02:32.02832');
+ 23 		ELSIF (i % 10 = 8) THEN
+ 24 		  insert into tbl_index_scan values(i, 'abcabcabcabcabc', 32.22228938, '7942739847982374982374927394690547akshdfohwioehofiqhiowehfoiashdf', true,  9.298, '2019-03-10 12:02:32.02832');
+ 25 		ELSIF (i % 10 = 9) THEN
+ 26 		  insert into tbl_index_scan values(i, 'abcabcabcabc', 32.22228938, 'asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash', false, 0.2324, '2019-03-10 12:02:32.02832');
+ 27 		ELSE
+ 28 		  insert into tbl_index_scan values(i, 'abcabcabc', 32.22228938, 'A', true,  1.2342342, '2019-03-10 12:02:32.02832');
+ 29 		END IF;
+ 30 	END;
+ 31     END LOOP;
+ 32     commit;
+ 33     RETURN;
+ 34 END ;
+ 35 /
+
+Succeed.
+
+SQL> CALL gen_data_tbl_index_scan(1, 2000);
+
+PL/SQL procedure successfully completed.
+
+SQL> select a from tbl_index_scan where a > 100 and a < 10001 order by a limit 2;
+
+A           
+------------
+101         
+102         
+
+2 rows fetched.
+
+SQL> select /*+parallel(4)*/ a from tbl_index_scan where a > 100 and a < 10001 order by a limit 2;
+
+A           
+------------
+101         
+102         
+
+2 rows fetched.
+
+SQL> select a,c from tbl_index_scan where a > 100 and a < 10001 order by c limit 2;
+
+A            C                   
+------------ --------------------
+103          32.2222858          
+113          32.2222858          
+
+2 rows fetched.
+
+SQL> select /*+parallel(4)*/ a,c from tbl_index_scan where a > 100 and a < 10001 order by c limit 2;
+
+A            C                   
+------------ --------------------
+103          32.2222858          
+113          32.2222858          
+
+2 rows fetched.
+
+SQL> select * from tbl_index_scan where a > 100 and a < 10001 and f < 1 order by a,b,c limit 10;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+109          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+119          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+129          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+139          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+149          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+159          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+169          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+179          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+189          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+199          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+
+10 rows fetched.
+
+SQL> select /*+parallel(4)*/ * from tbl_index_scan where a > 100 and a < 10001 and f < 1 order by a,b,c limit 10;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+109          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+119          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+129          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+139          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+149          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+159          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+169          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+179          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+189          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+199          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+
+10 rows fetched.
+
+SQL> 
+SQL> select max(a) from tbl_index_scan;
+
+MAX(A)      
+------------
+2000        
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ max(a) from tbl_index_scan;
+
+MAX(A)      
+------------
+2000        
+
+1 rows fetched.
+
+SQL> select count(a),min(b) from tbl_index_scan;
+
+COUNT(A)             MIN(B)                                                          
+-------------------- ----------------------------------------------------------------
+2000                 abc                                                             
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ count(a),min(b) from tbl_index_scan;
+
+COUNT(A)             MIN(B)                                                          
+-------------------- ----------------------------------------------------------------
+2000                 abc                                                             
+
+1 rows fetched.
+
+SQL> -- no index scan
+SQL> select count(a),CAST(avg(c) AS DECIMAL(10,3)) from tbl_index_scan;
+
+COUNT(A)             CAST(AVG(C) AS DECIMAL(10,3))           
+-------------------- ----------------------------------------
+2000                 32.222                                  
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ count(a),CAST(avg(c) AS DECIMAL(10,3)) from tbl_index_scan;
+
+COUNT(A)             CAST(AVG(C) AS DECIMAL(10,3))           
+-------------------- ----------------------------------------
+2000                 32.222                                  
+
+1 rows fetched.
+
+SQL> select CAST(avg(c) AS DECIMAL(10,3)) from tbl_index_scan;
+
+CAST(AVG(C) AS DECIMAL(10,3))           
+----------------------------------------
+32.222                                  
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ CAST(avg(c) AS DECIMAL(10,3)) from tbl_index_scan;
+
+CAST(AVG(C) AS DECIMAL(10,3))           
+----------------------------------------
+32.222                                  
+
+1 rows fetched.
+
+SQL> 
+SQL> --subquery and multi table, not supported
+SQL> select /*+ parallel(4) */ count(1) from (select count(*) from tbl_index_scan);
+
+COUNT(1)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(1) from (select * from tbl_index_scan);
+
+COUNT(1)            
+--------------------
+2000                
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(1) from (select * from tbl_index_scan where a > 100 and a < 10001);
+
+COUNT(1)            
+--------------------
+1900                
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(*) from tbl_index_scan t inner join refer r on t.a = r.a;
+
+COUNT(*)            
+--------------------
+64                  
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ a,(select count(*) from tbl_index_scan) from refer order by a limit 10;
+
+A            (SELECT COUNT(*) FROM TBL_INDEX_SCAN)
+------------ -------------------------------------
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ avg(a) from tbl_index_scan where a in (select a from refer);
+
+AVG(A)                                  
+----------------------------------------
+2.5                                     
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ avg(a) from refer where a in (select a from tbl_index_scan);
+
+AVG(A)                                  
+----------------------------------------
+2.5                                     
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ avg(a) from refer where (a,b) in (select a,b from tbl_index_scan);
+
+AVG(A)                                  
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> (select /*+ parallel(4) */ count(a) from tbl_index_scan) union all
+  2 (select avg(a) from tbl_index_scan) order by 1;
+
+COUNT(A)                                
+----------------------------------------
+1000.5                                  
+2000                                    
+
+2 rows fetched.
+
+SQL> 
+SQL> -- parallel partition full scan
+SQL> drop table if exists tbl_index_scan;
+
+Succeed.
+
+SQL> CREATE TABLE tbl_index_scan(a int, b varchar(256), c double, d clob, e bool, f number(8,6), g timestamp(6))
+  2 PARTITION BY RANGE(a)
+  3 (
+  4 PARTITION training1 VALUES LESS than(100),
+  5 PARTITION training2 VALUES LESS than(200),
+  6 PARTITION training3 VALUES LESS than(300),
+  7 PARTITION training4 VALUES LESS than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> CALL gen_data_tbl_index_scan(1, 2000);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select a from tbl_index_scan where a > 100 and a < 10001 order by a limit 2;
+
+A           
+------------
+101         
+102         
+
+2 rows fetched.
+
+SQL> select /*+parallel(4)*/ a from tbl_index_scan where a > 100 and a < 10001 order by a limit 2;
+
+A           
+------------
+101         
+102         
+
+2 rows fetched.
+
+SQL> select a,c from tbl_index_scan where a > 100 and a < 10001 order by c limit 2;
+
+A            C                   
+------------ --------------------
+103          32.2222858          
+113          32.2222858          
+
+2 rows fetched.
+
+SQL> select /*+parallel(4)*/ a,c from tbl_index_scan where a > 100 and a < 10001 order by c limit 2;
+
+A            C                   
+------------ --------------------
+103          32.2222858          
+113          32.2222858          
+
+2 rows fetched.
+
+SQL> select * from tbl_index_scan where a > 100 and a < 10001 and f < 1 order by a,b,c limit 10;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+109          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+119          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+129          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+139          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+149          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+159          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+169          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+179          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+189          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+199          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+
+10 rows fetched.
+
+SQL> select /*+parallel(4)*/ * from tbl_index_scan where a > 100 and a < 10001 and f < 1 order by a,b,c limit 10;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+109          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+119          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+129          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+139          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+149          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+159          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+169          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+179          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+189          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+199          abcabcabcabc                                                     32.22228938          asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash                FALSE  .2324                                    2019-03-10 12:02:32.028320      
+
+10 rows fetched.
+
+SQL> 
+SQL> select max(a) from tbl_index_scan;
+
+MAX(A)      
+------------
+2000        
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ max(a) from tbl_index_scan;
+
+MAX(A)      
+------------
+2000        
+
+1 rows fetched.
+
+SQL> select count(a),min(b) from tbl_index_scan;
+
+COUNT(A)             MIN(B)                                                          
+-------------------- ----------------------------------------------------------------
+2000                 abc                                                             
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ count(a),min(b) from tbl_index_scan;
+
+COUNT(A)             MIN(B)                                                          
+-------------------- ----------------------------------------------------------------
+2000                 abc                                                             
+
+1 rows fetched.
+
+SQL> -- no index scan
+SQL> select count(a),CAST(avg(c) AS DECIMAL(10,3)) from tbl_index_scan;
+
+COUNT(A)             CAST(AVG(C) AS DECIMAL(10,3))           
+-------------------- ----------------------------------------
+2000                 32.222                                  
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ count(a),CAST(avg(c) AS DECIMAL(10,3)) from tbl_index_scan;
+
+COUNT(A)             CAST(AVG(C) AS DECIMAL(10,3))           
+-------------------- ----------------------------------------
+2000                 32.222                                  
+
+1 rows fetched.
+
+SQL> select CAST(avg(c) AS DECIMAL(10,3)) from tbl_index_scan;
+
+CAST(AVG(C) AS DECIMAL(10,3))           
+----------------------------------------
+32.222                                  
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ CAST(avg(c) AS DECIMAL(10,3)) from tbl_index_scan;
+
+CAST(AVG(C) AS DECIMAL(10,3))           
+----------------------------------------
+32.222                                  
+
+1 rows fetched.
+
+SQL> 
+SQL> --subquery and multi table, not supported
+SQL> select /*+ parallel(4) */ count(1) from (select count(*) from tbl_index_scan);
+
+COUNT(1)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(1) from (select * from tbl_index_scan);
+
+COUNT(1)            
+--------------------
+2000                
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(1) from (select * from tbl_index_scan where a > 100 and a < 10001);
+
+COUNT(1)            
+--------------------
+1900                
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(*) from tbl_index_scan t inner join refer r on t.a = r.a;
+
+COUNT(*)            
+--------------------
+64                  
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ a,(select count(*) from tbl_index_scan) from refer order by a limit 10;
+
+A            (SELECT COUNT(*) FROM TBL_INDEX_SCAN)
+------------ -------------------------------------
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+1            2000                                 
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ avg(a) from tbl_index_scan where a in (select a from refer);
+
+AVG(A)                                  
+----------------------------------------
+2.5                                     
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ avg(a) from refer where a in (select a from tbl_index_scan);
+
+AVG(A)                                  
+----------------------------------------
+2.5                                     
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ avg(a) from refer where (a,b) in (select a,b from tbl_index_scan);
+
+AVG(A)                                  
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> (select /*+ parallel(4) */ count(a) from tbl_index_scan) union all
+  2 (select avg(a) from tbl_index_scan) order by 1;
+
+COUNT(A)                                
+----------------------------------------
+1000.5                                  
+2000                                    
+
+2 rows fetched.
+
+SQL> 
+SQL> -- group by(not supported)
+SQL> drop table if exists tbl_group;
+
+Succeed.
+
+SQL> create table tbl_group(a int, b int, c double);
+
+Succeed.
+
+SQL> create index tbl_group_idx_a_b on tbl_group(a,b);
+
+Succeed.
+
+SQL> create or replace PROCEDURE gen_data_tbl_group(a IN  INTEGER, min_b IN INTEGER, max_b IN  INTEGER)
+  2 as
+  3     i  INTEGER := 0;
+  4     j  INTEGER := 0;
+  5 begin
+  6     FOR i IN min_b..max_b LOOP
+  7             BEGIN
+  8                 FOR j IN 0..3 LOOP
+  9                     BEGIN
+ 10                         insert into tbl_group values((a+i) % 10, (i+j+1) % 4, (a+i)*1.2);
+ 11                     END;
+ 12                 END LOOP;
+ 13             END;
+ 14     END LOOP;
+ 15     commit;
+ 16     RETURN;
+ 17 END ;
+ 18 /
+
+Succeed.
+
+SQL> call gen_data_tbl_group(1,1,500);
+
+PL/SQL procedure successfully completed.
+
+SQL> select a, max(b) from tbl_group group by a;
+
+A            MAX(B)      
+------------ ------------
+7            3
+5            3
+9            3
+0            3
+4            3
+6            3
+2            3
+1            3
+8            3
+3            3
+
+10 rows fetched.
+
+SQL> select /*+parallel(4)*/ a, max(b) from tbl_group group by a;
+
+A            MAX(B)      
+------------ ------------
+7            3
+5            3
+9            3
+0            3
+4            3
+6            3
+2            3
+1            3
+8            3
+3            3
+
+10 rows fetched.
+
+SQL> select a,b, max(c) from tbl_group group by a,b order by a,b;
+
+A            B            MAX(C)              
+------------ ------------ --------------------
+0            0            600                 
+0            1            600                 
+0            2            600                 
+0            3            600                 
+1            0            601.2               
+1            1            601.2               
+1            2            601.2               
+1            3            601.2               
+2            0            590.4               
+2            1            590.4               
+2            2            590.4               
+2            3            590.4               
+3            0            591.6               
+3            1            591.6               
+3            2            591.6               
+3            3            591.6               
+4            0            592.8               
+4            1            592.8               
+4            2            592.8               
+4            3            592.8               
+5            0            594                 
+5            1            594                 
+5            2            594                 
+5            3            594                 
+6            0            595.2               
+6            1            595.2               
+6            2            595.2               
+6            3            595.2               
+7            0            596.4               
+7            1            596.4               
+7            2            596.4               
+7            3            596.4               
+8            0            597.6               
+8            1            597.6               
+8            2            597.6               
+8            3            597.6               
+9            0            598.8               
+9            1            598.8               
+9            2            598.8               
+9            3            598.8               
+
+40 rows fetched.
+
+SQL> select /*+parallel(4)*/ a,b, max(c) from tbl_group group by a,b order by a,b;
+
+A            B            MAX(C)              
+------------ ------------ --------------------
+0            0            600                 
+0            1            600                 
+0            2            600                 
+0            3            600                 
+1            0            601.2               
+1            1            601.2               
+1            2            601.2               
+1            3            601.2               
+2            0            590.4               
+2            1            590.4               
+2            2            590.4               
+2            3            590.4               
+3            0            591.6               
+3            1            591.6               
+3            2            591.6               
+3            3            591.6               
+4            0            592.8               
+4            1            592.8               
+4            2            592.8               
+4            3            592.8               
+5            0            594                 
+5            1            594                 
+5            2            594                 
+5            3            594                 
+6            0            595.2               
+6            1            595.2               
+6            2            595.2               
+6            3            595.2               
+7            0            596.4               
+7            1            596.4               
+7            2            596.4               
+7            3            596.4               
+8            0            597.6               
+8            1            597.6               
+8            2            597.6               
+8            3            597.6               
+9            0            598.8               
+9            1            598.8               
+9            2            598.8               
+9            3            598.8               
+
+40 rows fetched.
+
+SQL> --other situations
+SQL> select /*+ parallel(4) */ count(1) from (select count(*) from tbl_group group by a);
+
+COUNT(1)            
+--------------------
+10                  
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(1) from (select * from tbl_group) group by a order by 1;
+
+COUNT(1)            
+--------------------
+200                 
+200                 
+200                 
+200                 
+200                 
+200                 
+200                 
+200                 
+200                 
+200                 
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(*) from tbl_group t inner join refer r on t.a = r.a group by t.a order by 1;
+
+COUNT(*)            
+--------------------
+3200                
+3200                
+3200                
+3200                
+
+4 rows fetched.
+
+SQL> select /*+ parallel(4) */ count(a),(select count(a) from tbl_group group by a limit 1) from refer group by a order by 1,2;
+
+COUNT(A)             (SELECT COUNT(A) FROM TBL_GROUP GROUP BY A LIMIT 1)
+-------------------- ---------------------------------------------------
+16                   200                                                
+16                   200                                                
+16                   200                                                
+16                   200                                                
+
+4 rows fetched.
+
+SQL> select /*+ parallel(4) */ avg(a) from tbl_group where a in (select a from refer) group by a order by 1;
+
+AVG(A)                                  
+----------------------------------------
+1                                       
+2                                       
+3                                       
+4                                       
+
+4 rows fetched.
+
+SQL> select /*+ parallel(4) */ avg(a) from refer where not exists (select a,b,count(b) from tbl_group group by a,b);
+
+AVG(A)                                  
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> (select /*+ parallel(4) */ count(a) from tbl_group group by a) union all
+  2 (select avg(b) from tbl_group group by a) order by 1;
+
+COUNT(A)                                
+----------------------------------------
+1.5                                     
+1.5                                     
+1.5                                     
+1.5                                     
+1.5                                     
+1.5                                     
+1.5                                     
+1.5                                     
+1.5                                     
+1.5                                     
+200                                     
+200                                     
+200                                     
+200                                     
+200                                     
+200                                     
+200                                     
+200                                     
+200                                     
+200                                     
+
+20 rows fetched.
+
+SQL> drop table if exists tbl_index_scan;
+
+Succeed.
+
+SQL> drop table if exists refer;
+
+Succeed.
+
+SQL> drop table if exists tbl_group;
+
+Succeed.
+
+SQL> drop table if exists tbl_index_scan;
+
+Succeed.
+
+SQL> 
+SQL> -- create index parallel
+SQL> drop table if exists tbl_paral;
+
+Succeed.
+
+SQL> CREATE TABLE tbl_paral(id int, b int);
+
+Succeed.
+
+SQL> drop table if exists test_paral_part;
+
+Succeed.
+
+SQL> create table test_paral_part(f1 int, f2 real, f3 number)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(40)
+  8 );
+
+Succeed.
+
+SQL> drop table if exists test_paral_subpart;
+
+Succeed.
+
+SQL> create table test_paral_subpart(f1 int, f2 real, f3 number) partition BY HASH(f1) SUBPARTITION BY hash(f2) PARTITIONS 4 subpartitions 4;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 6000 loop
+  5         execute immediate 'insert into tbl_paral values(1, ' || i || ')';
+  6     end loop;
+  7     commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> insert into test_paral_part values (1, 9.1, 0.2);
+
+1 rows affected.
+
+SQL> insert into test_paral_part values (12, 9.1, 0.2);
+
+1 rows affected.
+
+SQL> insert into test_paral_part values (22, 9.1, 0.2);
+
+1 rows affected.
+
+SQL> insert into test_paral_part values (32, 9.1, 0.2);
+
+1 rows affected.
+
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 10 loop
+  5         execute immediate 'insert into test_paral_part select * from test_paral_part';
+  6     end loop;
+  7     commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> insert into test_paral_subpart select * from test_paral_part;
+
+4096 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create index idx_paral_1 on tbl_paral(b) parallel 0;
+
+CT-00601, [1:42]Sql syntax error: parallel must between 1 and 48 
+SQL> create index idx_paral_2 on tbl_paral(b) parallel 32;
+
+Succeed.
+
+SQL> create index idx_paral_2 on tbl_paral(upper(b)) parallel 13;
+
+CT-00753, The object index IDX_PARAL_2 already exists.
+SQL> create index idx_paral_1 on tbl_paral(id) parallel 4 crmode row;
+
+Succeed.
+
+SQL> create index idx_paral_3 on tbl_paral(case when b>100 then b else trunc(b) end);
+
+Succeed.
+
+SQL> drop index if exists idx_paral_1 on tbl_paral;
+
+Succeed.
+
+SQL> create index idx_paral_1 on tbl_paral(id) parallel 4 crmode page;
+
+Succeed.
+
+SQL> 
+SQL> create index idx_part_paral_1 on test_paral_part(f1) local parallel 0;
+
+CT-00601, [1:60]Sql syntax error: parallel must between 1 and 48 
+SQL> create index idx_part_paral_1 on test_paral_part(f1) local parallel 64;
+
+CT-00601, [1:60]Sql syntax error: parallel must between 1 and 48 
+SQL> create index idx_part_paral_1 on test_paral_part(f2, f1) local parallel 26 crmode row;
+
+Succeed.
+
+SQL> drop index if exists idx_part_paral_1 on test_paral_part;
+
+Succeed.
+
+SQL> create index idx_part_paral_1 on test_paral_part(f1, f3) local parallel 3 crmode page;
+
+Succeed.
+
+SQL> create index idx_part_paral_2 on test_paral_part(f1, f3) parallel 1 crmode page;
+
+CT-00726, The column has been indexed by IDX_PART_PARAL_1.
+SQL> 
+SQL> create index idx_subpart_paral_1 on test_paral_subpart(f2, f1) local parallel 14 crmode row;
+
+Succeed.
+
+SQL> drop index if exists idx_subpart_paral_1 on test_paral_subpart;
+
+Succeed.
+
+SQL> create index idx_subpart_paral_1 on test_paral_subpart(f1, f3) local parallel 6 crmode page;
+
+Succeed.
+
+SQL> create index idx_subpart_paral_2 on test_paral_subpart(f1) parallel 2 crmode page;
+
+Succeed.
+
+SQL> 
+SQL> alter index idx_paral_3 on tbl_paral rebuild parallel 38;
+
+CT-00130, Operation rebuild index parallel is not supported on functional index
+SQL> alter index idx_subpart_paral_1 on test_paral_subpart rebuild parallel 64;
+
+Succeed.
+
+SQL> alter index idx_subpart_paral_2 on test_paral_subpart rebuild parallel 68;
+
+CT-00601, [1:63]Sql syntax error: parallel must between 1 and 64 
+SQL> -- AR.20210330161103.001
+SQL> alter index idx_part_paral_1 on test_paral_part rebuild partition p1,p2,p3;
+
+Succeed.
+
+SQL> alter index idx_part_paral_1 on test_paral_part rebuild partition p1;
+
+Succeed.
+
+SQL> alter index idx_part_paral_1 on test_paral_part rebuild partition p2,p3,p4;
+
+Succeed.
+
+SQL> alter index idx_part_paral_1 on test_paral_part rebuild partition p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4,p2,p3,p4;
+
+CT-01121, (SUB)PARTITION count out of range, it must be less than 33.
+SQL> 
+SQL> alter index idx_part_paral_1 on test_paral_part rebuild partition p1,p2,p3 parallel 32;
+
+Succeed.
+
+SQL> alter index idx_part_paral_1 on test_paral_part rebuild partition p1 parallel 6;
+
+Succeed.
+
+SQL> alter index idx_part_paral_1 on test_paral_part rebuild partition p2,p3,p4 parallel 1;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE test_paral_subpart2(NUM INT,C_ID INT) PARTITION BY RANGE(NUM) SUBPARTITION BY HASH(C_ID) (PARTITION P1 VALUES LESS THAN (5) (SUBPARTITION P11,SUBPARTITION P12),PARTITION P2 VALUES LESS THAN (11) (SUBPARTITION P21,SUBPARTITION P22));
+
+Succeed.
+
+SQL> create index idx_subpart_paral_3 on test_paral_subpart2(NUM, C_ID) local parallel 14;
+
+Succeed.
+
+SQL> alter index idx_subpart_paral_3 on test_paral_subpart2 rebuild partition p1;
+
+Succeed.
+
+SQL> alter index idx_subpart_paral_3 on test_paral_subpart2 rebuild partition p2,p3 parallel 2;
+
+CT-01110, The operation rebuild multiple parent partition indexes was not allowed
+SQL> 
+SQL> alter table tbl_paral add primary key (b) parallel 10;
+
+Succeed.
+
+SQL> delete from tbl_paral;
+
+6000 rows affected.
+
+SQL> delete from test_paral_part;
+
+4096 rows affected.
+
+SQL> delete from test_paral_subpart;
+
+4096 rows affected.
+
+SQL> delete from test_paral_subpart2;
+
+0 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> 
+SQL> drop index if exists idx_part_paral_1 on test_paral_part;
+
+Succeed.
+
+SQL> drop index if exists idx_part_paral_2 on test_paral_part;
+
+Succeed.
+
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 2, index idx_part_paral_2 on test_paral_part(f2, f1) local parallel 2);
+
+Succeed.
+
+SQL> delete from test_paral_part;
+
+4096 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> drop index if exists idx_part_paral_1 on test_paral_part;
+
+Succeed.
+
+SQL> drop index if exists idx_part_paral_2 on test_paral_part;
+
+Succeed.
+
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 0, index idx_part_paral_2 on test_paral_part(f2, f1) local parallel 2);
+
+CT-00601, [1:74]Sql syntax error: parallel must between 1 and 48 
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 2, index idx_part_paral_2 on test_paral_part(f2, f1) local parallel 22);
+
+CT-01110, The operation create indexes with different parallelism in one SQL statement was not allowed
+SQL> drop index if exists idx_subpart_paral_1 on test_paral_subpart;
+
+Succeed.
+
+SQL> drop index if exists idx_subpart_paral_2 on test_paral_subpart;
+
+Succeed.
+
+SQL> create indexcluster (index idx_subpart_paral_1 on test_paral_subpart(f1) local parallel 8, index idx_subpart_paral_2 on test_paral_subpart(f2, f1) local parallel 8);
+
+Succeed.
+
+SQL> create indexcluster (index idx_subpart_paral_31 on test_paral_subpart(f1, f3) parallel 8, index idx_subpart_paral_41 on test_paral_subpart(f3) parallel 8);
+
+Succeed.
+
+SQL> delete from test_paral_subpart;
+
+4096 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> drop index if exists idx_subpart_paral_1 on test_paral_subpart;
+
+Succeed.
+
+SQL> drop index if exists idx_subpart_paral_2 on test_paral_subpart;
+
+Succeed.
+
+SQL> create indexcluster (index idx_subpart_paral_1 on test_paral_subpart(f1) local parallel 8, index idx_part_paral_1 on test_paral_part(f1) local parallel 8);
+
+CT-01110, The operation create indexcluster for different tables in one SQL statement was not allowed
+SQL> delete from test_paral_part;
+
+4096 rows affected.
+
+SQL> delete from test_paral_subpart;
+
+4096 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> alter table test_paral_part truncate partition p1;
+
+Succeed.
+
+SQL> alter table test_paral_part truncate partition p2;
+
+Succeed.
+
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 6, index idx_part_paral_2 on test_paral_part(f2, f1) local parallel 6, index idx_part_paral_3 on test_paral_part(f3) local parallel 6);
+
+Succeed.
+
+SQL> drop index if exists idx_part_paral_1 on test_paral_part;
+
+Succeed.
+
+SQL> drop index if exists idx_part_paral_2 on test_paral_part;
+
+Succeed.
+
+SQL> drop index if exists idx_part_paral_3 on test_paral_part;
+
+Succeed.
+
+SQL> delete from test_paral_part;
+
+2048 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(upper(f1)) local parallel 6, index idx_part_paral_2 on test_paral_part(to_char(f2), f1) local parallel 6, index idx_part_paral_3 on test_paral_part(f3)  parallel 6);
+
+CT-01110, The operation create function indexes in create indexcluster SQL statement was not allowed
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local, index idx_part_paral_2 on test_paral_part(f2, f1) local, index idx_part_paral_3 on test_paral_part(f3));
+
+CT-01110, The operation create indexes without specify parallelism value was not allowed
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 6, index idx_part_paral_2 on test_paral_part(f2, f1) local, index idx_part_paral_3 on test_paral_part(f3));
+
+CT-01110, The operation create indexes with different parallelism in one SQL statement was not allowed
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 6, index idx_part_paral_2 on test_paral_part(f2, f1) local parallel 6, index idx_part_paral_3 on test_paral_part(f3)  parallel 6);
+
+CT-01110, The operation create different type indexes in create indexcluster statement was not allowed
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 6, index idx_part_paral_2 on test_paral_part(f2, f1) local parallel 6, index idx_part_paral_3 on test_paral_part(f3) local parallel 6);
+
+Succeed.
+
+SQL> delete from test_paral_subpart;
+
+4096 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create indexcluster (index idx_subpart_paral_1 on test_paral_subpart(f1) local parallel 8, index idx_subpart_paral_2 on test_paral_subpart(f2, f1) local parallel 8);
+
+Succeed.
+
+SQL> drop table if exists tbl_paral;
+
+Succeed.
+
+SQL> drop table if exists test_paral_part;
+
+Succeed.
+
+SQL> drop table if exists test_paral_subpart;
+
+Succeed.
+
+SQL> drop table if exists test_paral_subpart2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_paral_part;
+
+Succeed.
+
+SQL> create table test_paral_part(f1 int, f2 real, f3 number, f4 int, f5 int, f6 int)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(40)
+  8 );
+
+Succeed.
+
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 6, index idx_part_paral_2 on test_paral_part(f2) local parallel 6, index idx_part_paral_3 on test_paral_part(f3) local parallel 6, index idx_part_paral_4 on test_paral_part(f4) local parallel 6, index idx_part_paral_5 on test_paral_part(f5) local parallel 6, index idx_part_paral_6 on test_paral_part(f6) local parallel 6, index idx_part_paral_7 on test_paral_part(f1, f2) local parallel 6, index idx_part_paral_8 on test_paral_part(f1, f3) local parallel 6, index idx_part_paral_9 on test_paral_part(f1, f5) local parallel 6);
+
+CT-01110, The operation create more than eight indexes in one SQL statement was not allowed
+SQL> 
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1) local parallel 6, index idx_part_paral_2 on test_paral_part(f2) local parallel 6, index idx_part_paral_3 on test_paral_part(f3) local parallel 6, index idx_part_paral_4 on test_paral_part(f4) local parallel 6, index idx_part_paral_5 on test_paral_part(f5) local parallel 6, index idx_part_paral_6 on test_paral_part(f6) local parallel 6, index idx_part_paral_7 on test_paral_part(f1, f2) local parallel 6, index idx_part_paral_8 on test_paral_part(f1, f3) local parallel 6);
+
+Succeed.
+
+SQL> 
+SQL> drop index idx_part_paral_1 on test_paral_part;drop index idx_part_paral_2 on test_paral_part;drop index idx_part_paral_3 on test_paral_part;drop index idx_part_paral_4 on test_paral_part;
+
+Succeed.
+
+
+Succeed.
+
+
+Succeed.
+
+
+Succeed.
+
+SQL> drop index idx_part_paral_5 on test_paral_part;drop index idx_part_paral_6 on test_paral_part;drop index idx_part_paral_7 on test_paral_part;drop index idx_part_paral_8 on test_paral_part;
+
+Succeed.
+
+
+Succeed.
+
+
+Succeed.
+
+
+Succeed.
+
+SQL> insert into test_paral_part values (1, 9.1, 0.2,1,1,1);
+
+1 rows affected.
+
+SQL> insert into test_paral_part values (12, 9.1, 0.2,1,1,1);
+
+1 rows affected.
+
+SQL> insert into test_paral_part values (22, 9.1, 0.2,1,1,1);
+
+1 rows affected.
+
+SQL> insert into test_paral_part values (32, 9.1, 0.2,1,1,1);
+
+1 rows affected.
+
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 10 loop
+  5         execute immediate 'insert into test_paral_part select * from test_paral_part';
+  6     end loop;
+  7     commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1)  parallel 6, index idx_part_paral_2 on test_paral_part(f2)  parallel 6, index idx_part_paral_3 on test_paral_part(f3)  parallel 6, index idx_part_paral_4 on test_paral_part(f4)  parallel 6, index idx_part_paral_5 on test_paral_part(f5)  parallel 6, index idx_part_paral_6 on test_paral_part(f6)  parallel 6, index idx_part_paral_7 on test_paral_part(f1, f2)  parallel 6, index idx_part_paral_8 on test_paral_part(f1, f3)  parallel 6);
+
+Succeed.
+
+SQL> delete from test_paral_part;
+
+4096 rows affected.
+
+SQL> drop table if exists test_paral_part;
+
+Succeed.
+
+SQL> create table test_paral_part(f1 int, f2 real, f3 number, f4 int, f5 int, f6 int)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(40)
+  8 );
+
+Succeed.
+
+SQL> create indexcluster (index idx_part_paral_1 on test_paral_part(f1)  parallel 6, index idx_part_paral_2 on test_paral_part(f2)  parallel 6, index idx_part_paral_3 on test_paral_part(f3)  parallel 6, index idx_part_paral_4 on test_paral_part(f4)  parallel 6, index idx_part_paral_5 on test_paral_part(f5)  parallel 6, index idx_part_paral_6 on test_paral_part(f6)  parallel 6, index idx_part_paral_7 on test_paral_part(f1, f2)  parallel 6, index idx_part_paral_8 on test_paral_part(f1, f3)  parallel 6);
+
+Succeed.
+
+SQL> delete from test_paral_part;
+
+0 rows affected.
+
+SQL> drop table if exists test_paral_part;
+Succeed.
+
+
+
+

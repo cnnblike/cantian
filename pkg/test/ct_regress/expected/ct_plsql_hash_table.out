@@ -1,0 +1,4462 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_plsql_hash_table cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_hash_table identified by Cantian_234;
+
+Succeed.
+
+SQL> grant all privileges to gs_plsql_hash_table;
+
+Succeed.
+
+SQL> conn gs_plsql_hash_table/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by integer;
+  3        p_idList ListType;
+  4         p_key int;
+  5 begin
+  6        DBE_OUTPUT.PRINT_LINE('ok');
+  7 end;
+  8 /
+
+ok
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by integer;
+  3        p_idList ListType:=ListType(1,2);
+  4         p_key int;
+  5 begin
+  6        DBE_OUTPUT.PRINT_LINE('ok');
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+PLC-00916 PL/SQL:syntax error(associative arrays do not support constructor)
+
+SQL> 
+SQL> --delete
+SQL> DECLARE
+  2     TYPE aa_type_str IS TABLE OF INTEGER INDEX BY VARCHAR2(10);
+  3     p_key aa_type_str;
+  4     i VARCHAR2(10);
+  5     BEGIN
+  6         p_key('M') := 13;
+  7         p_key('Z') := 26;
+  8         p_key('C') := 3;
+  9 
+ 10         i := p_key.FIRST;
+ 11         IF i IS NULL THEN
+ 12             DBE_OUTPUT.PRINT_LINE('p_key is empty');
+ 13         ELSE
+ 14             WHILE i IS NOT NULL LOOP
+ 15                 DBE_OUTPUT.PRINT('p_key.(' || i || ') = ' || p_key(i));
+ 16                 i := p_key.NEXT(i);
+ 17             END LOOP;
+ 18         END IF;
+ 19         DBE_OUTPUT.PRINT_LINE('------');
+ 20 
+ 21         p_key.DELETE;
+ 22         i := p_key.FIRST;
+ 23         IF i IS NULL THEN
+ 24             DBE_OUTPUT.PRINT_LINE('p_key is empty');
+ 25         ELSE
+ 26             WHILE i IS NOT NULL LOOP
+ 27                 DBE_OUTPUT.PRINT('p_key.(' || i || ') = ' || p_key(i));
+ 28                 i := p_key.NEXT(i);
+ 29             END LOOP;
+ 30         END IF;
+ 31         DBE_OUTPUT.PRINT_LINE('------');
+ 32 
+ 33         p_key('M') := 13;
+ 34         p_key('Z') := 260;
+ 35         p_key('C') := 30;
+ 36         p_key('W') := 23;
+ 37         p_key('J') := 10;
+ 38         p_key('N') := 14;
+ 39         p_key('P') := 16;
+ 40         p_key('W') := 23;
+ 41         p_key('J') := 10;
+ 42         i := p_key.FIRST;
+ 43         IF i IS NULL THEN
+ 44             DBE_OUTPUT.PRINT_LINE('p_key is empty');
+ 45         ELSE
+ 46             WHILE i IS NOT NULL LOOP
+ 47                 DBE_OUTPUT.PRINT('p_key.(' || i || ') = ' || p_key(i));
+ 48                 i := p_key.NEXT(i);
+ 49             END LOOP;
+ 50         END IF;
+ 51         DBE_OUTPUT.PRINT_LINE('------');
+ 52 
+ 53 
+ 54         p_key.DELETE('C');
+ 55         i := p_key.FIRST;
+ 56         IF i IS NULL THEN
+ 57             DBE_OUTPUT.PRINT_LINE('p_key is empty');
+ 58         ELSE
+ 59             WHILE i IS NOT NULL LOOP
+ 60                 DBE_OUTPUT.PRINT('p_key.(' || i || ') = ' || p_key(i));
+ 61                 i := p_key.NEXT(i);
+ 62             END LOOP;
+ 63         END IF;
+ 64         DBE_OUTPUT.PRINT_LINE('------');
+ 65 
+ 66         p_key.DELETE('N','W');
+ 67         i := p_key.FIRST;
+ 68         IF i IS NULL THEN
+ 69             DBE_OUTPUT.PRINT_LINE('p_key is empty');
+ 70         ELSE
+ 71             WHILE i IS NOT NULL LOOP
+ 72                 DBE_OUTPUT.PRINT('p_key.(' || i || ') = ' || p_key(i));
+ 73                 i := p_key.NEXT(i);
+ 74             END LOOP;
+ 75         END IF;
+ 76         DBE_OUTPUT.PRINT_LINE('------');
+ 77 
+ 78 
+ 79         p_key.DELETE('Z','M');
+ 80         i := p_key.FIRST;
+ 81         IF i IS NULL THEN
+ 82             DBE_OUTPUT.PRINT_LINE('p_key is empty');
+ 83         ELSE
+ 84             WHILE i IS NOT NULL LOOP
+ 85                 DBE_OUTPUT.PRINT('p_key.(' || i || ') = ' || p_key(i));
+ 86                 i := p_key.NEXT(i);
+ 87             END LOOP;
+ 88         END IF;
+ 89         DBE_OUTPUT.PRINT_LINE('------');
+ 90 
+ 91     END;
+ 92 /
+
+p_key.(C) = 3
+p_key.(M) = 13
+p_key.(Z) = 26
+------
+p_key is empty
+------
+p_key.(C) = 30
+p_key.(J) = 10
+p_key.(M) = 13
+p_key.(N) = 14
+p_key.(P) = 16
+p_key.(W) = 23
+p_key.(Z) = 260
+------
+p_key.(J) = 10
+p_key.(M) = 13
+p_key.(N) = 14
+p_key.(P) = 16
+p_key.(W) = 23
+p_key.(Z) = 260
+------
+p_key.(J) = 10
+p_key.(M) = 13
+p_key.(Z) = 260
+------
+p_key.(J) = 10
+p_key.(M) = 13
+p_key.(Z) = 260
+------
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --array error
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> declare
+  2        type ListType is table of int[10] index by integer;
+  3        p_idList ListType;
+  4         p_key int;
+  5 begin
+  6        DBE_OUTPUT.PRINT_LINE('ok');
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:34] PLC-01304 Data type 'ARRAY' is not supported
+
+SQL> 
+SQL> --test null
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3        p_idList ListType;
+  4         p_key int;
+  5 begin
+  6        if p_idList is null then
+  7        DBE_OUTPUT.PRINT_LINE('null ');
+  8        else
+  9        DBE_OUTPUT.PRINT_LINE('ok' );
+ 10        end if;
+ 11        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.count);
+ 12 end;
+ 13 /
+
+ok
+count: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3        p_idList ListType;
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.count);
+  6        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.limit);
+  7        DBE_OUTPUT.PRINT_LINE('p_idList.first: ' ||p_idList.first);
+  8        DBE_OUTPUT.PRINT_LINE('p_idList.last: ' ||p_idList.last);
+  9        DBE_OUTPUT.PRINT_LINE('p_idList.exists(2): ' ||p_idList.exists(2));
+ 10        DBE_OUTPUT.PRINT_LINE('p_idList.prior(2): ' ||p_idList.prior(2));
+ 11        DBE_OUTPUT.PRINT_LINE('p_idList.next(2): ' ||p_idList.next(2));
+ 12        p_idList.delete(2);
+ 13        p_idList.delete(3, 5);
+ 14        p_idList.delete;
+ 15        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.count);
+ 16 end;
+ 17 /
+
+count: 0
+count: 
+p_idList.first: 
+p_idList.last: 
+p_idList.exists(2): FALSE
+p_idList.prior(2): 
+p_idList.next(2): 
+count: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --count limit first last
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3        p_idList ListType;
+  4         p_key int;
+  5 begin
+  6        p_idList(4):=3;
+  7        p_idList(6):=7;
+  8        p_idList(1):=9;
+  9        p_key := p_idList.first;
+ 10        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.count);
+ 11        DBE_OUTPUT.PRINT_LINE('p_idList.first: ' || p_key);
+ 12        p_key := p_idList.limit;
+ 13        DBE_OUTPUT.PRINT_LINE('p_idList.limit: ' || p_key);
+ 14        p_key := p_idList.last;
+ 15        DBE_OUTPUT.PRINT_LINE('p_idList.last: ' || p_key);
+ 16 end;
+ 17 /
+
+count: 3
+p_idList.first: 1
+p_idList.limit: 
+p_idList.last: 6
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --exists prior next
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3        p_idList ListType;
+  4 begin
+  5        p_idList(1):=1;
+  6        p_idList(3):=1;
+  7        if p_idList.exists(1) then
+  8        DBE_OUTPUT.PRINT_LINE('prior: '||p_idList.prior(1));
+  9        DBE_OUTPUT.PRINT_LINE('next: '||p_idList.next(1));
+ 10        else
+ 11        DBE_OUTPUT.PRINT_LINE('no' );
+ 12        end if;
+ 13        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.count);
+ 14 end;
+ 15 /
+
+prior: 
+next: 3
+count: 2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --argument null test
+SQL> declare
+  2        type ListType is table of int index by varchar(5);
+  3        p_idList ListType;
+  4 begin
+  5        p_idList('a'):=1;
+  6        p_idList('b'):=1;
+  7        if p_idList.exists(null) then
+  8        DBE_OUTPUT.PRINT_LINE('prior: '||p_idList.prior(1));
+  9        else
+ 10        DBE_OUTPUT.PRINT_LINE('no' );
+ 11        DBE_OUTPUT.PRINT_LINE('prior: '||p_idList.prior(null));
+ 12        DBE_OUTPUT.PRINT_LINE('next: '||p_idList.next(null));
+ 13        end if;
+ 14        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.count);
+ 15 end;
+ 16 /
+
+no
+prior: 
+next: 
+count: 2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --extend error
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3         p_key ListType;
+  4 begin
+  5        p_key.extend;
+  6        DBE_OUTPUT.PRINT_LINE('count: ' || p_key.count);
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:8] PLC-00916 PL/SQL:syntax error(associative arrays do not support extend method)
+
+SQL> 
+SQL> --trim error
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3         p_key ListType;
+  4         i binary_integer;
+  5 begin
+  6        p_key.trim;
+  7        DBE_OUTPUT.PRINT_LINE('count: ' || p_key.count);
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[6:8] PLC-00916 PL/SQL:syntax error(associative arrays do not support trim method)
+
+SQL> 
+SQL> --cover
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3        p_key ListType;
+  4 begin
+  5        p_key(2) := 1;
+  6        p_key(2) := 2;
+  7        DBE_OUTPUT.PRINT_LINE('p_key(2): '||p_key(2));
+  8        DBE_OUTPUT.PRINT_LINE('count: '||p_key.count);
+  9 end;
+ 10 /
+
+p_key(2): 2
+count: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --no data found
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3        p_key ListType;
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE(p_key(2));
+  6 end;
+  7 /
+
+CT-00932, [5:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> --clone
+SQL> set serveroutput on;
+
+ON
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3         p_key ListType;
+  4         new_key ListType;
+  5 begin
+  6        p_key(2):= 2;
+  7        new_key:=p_key;
+  8        p_key(1) := 1;
+  9        DBE_OUTPUT.PRINT_LINE('first: ' || new_key.first);
+ 10        DBE_OUTPUT.PRINT_LINE('first: ' || p_key.first);
+ 11 end;
+ 12 /
+
+first: 2
+first: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --error
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3        type tableType is table of varchar(10) index by binary_integer;
+  4         p_key ListType;
+  5         new_key tableType;
+  6 begin
+  7        p_key(2):= 2;
+  8        new_key:=p_key;
+  9        DBE_OUTPUT.PRINT_LINE('first: ' || new_key.first);
+ 10 end;
+ 11 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[8:17] PLC-00965 Expression is of wrong type
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3        p_key ListType;
+  4 begin
+  5        p_key('aa') := 1;
+  6        p_key(1) := 2;
+  7        DBE_OUTPUT.PRINT_LINE('ok '|| p_key.first);
+  8 end;
+  9 /
+
+CT-00932, [5:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:8] CT-00636, Invalid number -- unexpected character
+
+SQL> 
+SQL> --select into
+SQL> drop table if exists test_table1;
+
+Succeed.
+
+SQL> create table test_table1(id int,name varchar(10));
+
+Succeed.
+
+SQL> insert into test_table1 values(1, 'ss');
+
+1 rows affected.
+
+SQL> insert into test_table1 values(2, 'sd');
+
+1 rows affected.
+
+SQL> insert into test_table1 values(3, 'as');
+
+1 rows affected.
+
+SQL> insert into test_table1 values(4, 'As');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> declare
+  2        type ListType is table of int index by varchar(10);
+  3         p_key ListType;
+  4         i test_table1.name%type;
+  5         j int;
+  6 begin
+  7        for j in 1..4
+  8        loop
+  9        select name into i from test_table1 where id = j;
+ 10        select id into p_key(i) from test_table1 where name = i;
+ 11        end loop;
+ 12        i := p_key.FIRST;
+ 13        WHILE i IS NOT NULL LOOP
+ 14        DBE_OUTPUT.PRINT_LINE
+ 15        ('index: ' || i || ' is ' || p_key(i));
+ 16        i := p_key.NEXT(i);
+ 17        END LOOP;
+ 18 end;
+ 19 /
+
+index: As is 4
+index: as is 3
+index: sd is 2
+index: ss is 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --error
+SQL> drop table if exists test_table2;
+
+Succeed.
+
+SQL> create table test_table2(id float,name varchar(10));
+
+Succeed.
+
+SQL> insert into test_table2 values(1.1, 'ss');
+
+1 rows affected.
+
+SQL> insert into test_table2 values(2.2, 'sd');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> declare
+  2        type ListType is table of int index by test_table2.id%type;
+  3         p_key ListType;
+  4 begin
+  5   DBE_OUTPUT.PRINT_LINE('ok ');
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:66] PLC-02609 associative array's index of type must be integer or varchar
+
+SQL> drop table test_table2;
+
+Succeed.
+
+SQL> 
+SQL> --%type
+SQL> declare
+  2        type ListType is table of int index by test_table1.name%type;
+  3        p_key ListType;
+  4 begin
+  5        p_key('bb') := 1;
+  6        p_key('aa') := 1;
+  7        DBE_OUTPUT.PRINT_LINE('ok '|| p_key.first);
+  8 end;
+  9 /
+
+ok aa
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --error
+SQL> declare
+  2        type ListType is table of int index by test_table1%rowtype;
+  3         p_key ListType;
+  4         i test_table1.name%type;
+  5         j int;
+  6 begin
+  7   DBE_OUTPUT.PRINT_LINE('ok ');
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:66] PLC-02609 associative array's index of type must be integer or varchar
+
+SQL> 
+SQL> --bulk collect
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3         p_key ListType;
+  4         i binary_integer;
+  5 begin
+  6        p_key(2):= 'AA';
+  7        p_key(8):= 'ww';
+  8        DBE_OUTPUT.PRINT_LINE('count: ' || p_key.count);
+  9        select name bulk collect into p_key from test_table1 where id>4;
+ 10        DBE_OUTPUT.PRINT_LINE('count: ' || p_key.count);
+ 11        select name bulk collect into p_key from test_table1;
+ 12        DBE_OUTPUT.PRINT_LINE('count: ' || p_key.count);
+ 13        i := p_key.FIRST;
+ 14        WHILE i IS NOT NULL LOOP
+ 15        DBE_OUTPUT.PRINT_LINE
+ 16        ('index: ' || i || ' is ' || p_key(i));
+ 17        i := p_key.NEXT(i);
+ 18        END LOOP;
+ 19 end;
+ 20 /
+
+count: 2
+count: 0
+count: 4
+index: 1 is ss
+index: 2 is sd
+index: 3 is as
+index: 4 is As
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of varchar(10) index by varchar(10);
+  3         p_key ListType;
+  4         i binary_integer;
+  5 begin
+  6        select name bulk collect into p_key from test_table1;
+  7        DBE_OUTPUT.PRINT_LINE('count: ' || p_key.count);
+  8 end;
+  9 /
+
+CT-00932, [6:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[6:8] CT-00922, PL/SQL: illegal line(associative array's index of type must be integer in bulk sql)
+
+SQL> drop table test_table1;
+
+Succeed.
+
+SQL> 
+SQL> --error
+SQL> create or replace TYPE my_aa IS TABLE OF int INDEX BY binary_INTEGER;
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_HASH_TABLE.MY_AA) terminated with compiling errors
+[1:46] PLC-00601 Sql syntax error: ; expected
+
+
+SQL> drop type if exists my_aa;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by number(10);
+  3         p_key ListType;
+  4 begin
+  5 p_key(1):=1;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:57] PLC-02609 associative array's index of type must be integer or varchar
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by clob;
+  3         p_key ListType;
+  4 begin
+  5 p_key('a'):=1;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:51] PLC-02609 associative array's index of type must be integer or varchar
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by char(10);
+  3        p_key ListType;
+  4 begin
+  5 p_key('a'):=1;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:55] PLC-02609 associative array's index of type must be integer or varchar
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE My_Types IS
+  2 TYPE My_AA IS TABLE OF VARCHAR2(20) INDEX BY INTEGER;
+  3 FUNCTION Init_My_AA RETURN My_AA;
+  4 END My_Types;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_HASH_TABLE.MY_TYPES) terminated with compiling errors
+[2:1] PLC-00958 Unsupported feature
+
+
+SQL> drop package if exists My_Types;
+
+Succeed.
+
+SQL> 
+SQL> --order
+SQL> declare
+  2        type ListType is table of int index by varchar(10);
+  3         p_key ListType;
+  4 begin
+  5        p_key('A') := 2;
+  6        p_key('a') := 1;
+  7        p_key('!') := 5;
+  8        DBE_OUTPUT.PRINT_LINE('p_key.first: ' || p_key.first);
+  9        DBE_OUTPUT.PRINT_LINE('p_key.first: ' || p_key(p_key.first));
+ 10        DBE_OUTPUT.PRINT_LINE('count: ' || p_key.count);
+ 11 end;
+ 12 /
+
+p_key.first: !
+p_key.first: 5
+count: 3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3         p_key ListType;
+  4 begin
+  5        p_key(1) := 2;
+  6        p_key(-1) := 1;
+  7        p_key(0) := 5;
+  8        DBE_OUTPUT.PRINT_LINE('p_key.first: ' || p_key.first);
+  9        DBE_OUTPUT.PRINT_LINE('p_key.first: ' || p_key(p_key.first));
+ 10        DBE_OUTPUT.PRINT_LINE('count: ' || p_key.count);
+ 11 end;
+ 12 /
+
+p_key.first: -1
+p_key.first: 1
+count: 3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --internal
+SQL> drop procedure if exists procedure_002;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE procedure_002(a in int, b out int) IS
+  2   TYPE my_aa IS TABLE OF int INDEX BY INTEGER;
+  3   p_key my_aa;
+  4   i int;
+  5 BEGIN
+  6   p_key(1):= 2;
+  7   p_key(4):= 6;
+  8   i:=p_key.last;
+  9   DBE_OUTPUT.PRINT_LINE(i);
+ 10   b:= a * i * 3;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> DECLARE
+  2 a int;
+  3 b int;
+  4 BEGIN
+  5  a := 2;
+  6  procedure_002(a, b);
+  7  dbe_output.print_line(b);
+  8 END;
+  9 /
+
+4
+24
+
+PL/SQL procedure successfully completed.
+
+SQL> drop procedure procedure_002;
+
+Succeed.
+
+SQL> 
+SQL> drop function if exists function_002;
+
+Succeed.
+
+SQL> drop type if exists my_aa;
+
+Succeed.
+
+SQL> CREATE OR REPLACE FUNCTION function_002 (a my_aa) RETURN INT
+  2   AS
+  3   TYPE my_aa IS TABLE OF int INDEX BY INTEGER;
+  4   p_key my_aa;
+  5   i int;
+  6   b int;
+  7 BEGIN
+  8   p_key(1):= 2;
+  9   p_key(4):= 6;
+ 10   i:=p_key.last;
+ 11   DBE_OUTPUT.PRINT_LINE(i);
+ 12   b:= a * i * 3;
+ 13   RETURN b;
+ 14 END;
+ 15 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_HASH_TABLE.FUNCTION_002) terminated with compiling errors
+[1:44] PLC-00601 Sql syntax error: datatype expected, but got 'my_aa'
+
+
+SQL> drop function if exists function_002;
+
+Succeed.
+
+SQL> 
+SQL> --null
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3        p_idList ListType;
+  4         p_key int;
+  5 begin
+  6        p_idList(1):=null;
+  7        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.count);
+  8        DBE_OUTPUT.PRINT_LINE('value: ' || p_idList(1));
+  9 end;
+ 10 /
+
+count: 1
+value: 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --error
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3        p_idList ListType;
+  4         p_key int;
+  5 begin
+  6        p_idList(null):=1;
+  7        DBE_OUTPUT.PRINT_LINE('count: ' || p_idList.count);
+  8 end;
+  9 /
+
+CT-00932, [6:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[6:8] CT-00512, subscript is null
+
+SQL> 
+SQL> --cursor
+SQL> DROP TABLE IF EXISTS EMPLOYEES_UDT;
+
+Succeed.
+
+SQL> CREATE TABLE EMPLOYEES_UDT
+  2    (EMPLOYEE_ID NUMBER(6,0),
+  3     FIRST_NAME VARCHAR2(20),
+  4     LAST_NAME VARCHAR2(25) CONSTRAINT "EMP_LAST_NAME_NN" NOT NULL,
+  5     EMAIL VARCHAR2(25) CONSTRAINT "EMP_EMAIL_NN" NOT NULL,
+  6     PHONE_NUMBER VARCHAR2(20),
+  7     HIRE_DATE DATE CONSTRAINT "EMP_HIRE_DATE_NN" NOT NULL,
+  8     JOB_ID VARCHAR2(10) CONSTRAINT "EMP_JOB_NN" NOT NULL,
+  9     SALARY NUMBER(8,2),
+ 10     COMMISSION_PCT NUMBER(2,2),
+ 11     MANAGER_ID NUMBER(6,0),
+ 12     DEPARTMENT_ID NUMBER(4,0)
+ 13    );
+
+Succeed.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (198, 'Donald', 'OConnell', 'DOCONNEL', '650.507.9833', to_date('21-06-1999', 'dd-mm-yyyy'), 'SH_CLERK', 2600.00, null, 124, 50);
+
+1 rows affected.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (199, 'Douglas', 'Grant', 'DGRANT', '650.507.9844', to_date('13-01-2000', 'dd-mm-yyyy'), 'SH_CLERK', 2600.00, null, 124, 50);
+
+1 rows affected.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (200, 'Jennifer', 'Whalen', 'JWHALEN', '515.123.4444', to_date('17-09-1987', 'dd-mm-yyyy'), 'AD_ASST', 4400.00, null, 101, 10);
+
+1 rows affected.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (201, 'Michael', 'Hartstein', 'MHARTSTE', '515.123.5555', to_date('17-02-1996', 'dd-mm-yyyy'), 'MK_MAN', 13000.00, null, 100, 20);
+
+1 rows affected.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (202, 'Pat', 'Fay', 'PFAY', '603.123.6666', to_date('17-08-1997', 'dd-mm-yyyy'), 'MK_REP', 6000.00, null, 201, 20);
+
+1 rows affected.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (203, 'Susan', 'Mavris', 'SMAVRIS', '515.123.7777', to_date('07-06-1994', 'dd-mm-yyyy'), 'SH_CLERK', 6500.00, null, 101, 40);
+
+1 rows affected.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (204, 'Hermann', 'Baer', 'HBAER', '515.123.8888', to_date('07-06-1994', 'dd-mm-yyyy'), 'PR_REP', 10000.00, null, 101, 70);
+
+1 rows affected.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (205, 'Shelley', 'Higgins', 'SHIGGINS', '515.123.8080', to_date('07-06-1994', 'dd-mm-yyyy'), 'SH_CLERK', 12000.00, null, 101, 110);
+
+1 rows affected.
+
+SQL> insert into EMPLOYEES_UDT (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB_ID, SALARY, COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+  2 values (206, 'William', 'Gietz', 'WGIETZ', '515.123.8181', to_date('07-06-1994', 'dd-mm-yyyy'), 'AC_ACCOUNT', 8300.00, null, 205, 110);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS JOBS;
+
+Succeed.
+
+SQL> CREATE TABLE JOBS
+  2 (    JOB_ID VARCHAR2(10),
+  3     JOB_TITLE VARCHAR2(35) CONSTRAINT "JOB_TITLE_NN" NOT NULL,
+  4     MIN_SALARY NUMBER(6,0),
+  5     MAX_SALARY NUMBER(6,0),
+  6     CONSTRAINT "JOB_ID_PK" PRIMARY KEY ("JOB_ID")
+  7    );
+
+Succeed.
+
+SQL> insert into JOBS (job_id, job_title, min_salary, max_salary) values ('AC_MGR', 'Accounting Manager', 8200, 16000);
+
+1 rows affected.
+
+SQL> insert into JOBS (job_id, job_title, min_salary, max_salary) values ('AC_ACCOUNT', 'Public Accountant', 4200, 9000);
+
+1 rows affected.
+
+SQL> insert into JOBS (job_id, job_title, min_salary, max_salary) values ('SA_MAN', 'Sales Manager', 10000, 20000);
+
+1 rows affected.
+
+SQL> insert into JOBS (job_id, job_title, min_salary, max_salary) values ('SA_REP', 'Sales Representative', 6000, 12000);
+
+1 rows affected.
+
+SQL> insert into JOBS (job_id, job_title, min_salary, max_salary) values ('ST_MAN', 'Stock Manager', 5500, 8500);
+
+1 rows affected.
+
+SQL> insert into JOBS (job_id, job_title, min_salary, max_salary) values ('ST_CLERK', 'Stock Clerk', 2000, 5000);
+
+1 rows affected.
+
+SQL> insert into JOBS (job_id, job_title, min_salary, max_salary) values ('SH_CLERK', 'Shipping Clerk', 2500, 5500);
+
+1 rows affected.
+
+SQL> insert into JOBS (job_id, job_title, min_salary, max_salary) values ('IT_PROG', 'Programmer', 4000, 10000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2  TYPE empcurtyp IS REF CURSOR;
+  3  TYPE namelist IS TABLE OF VARCHAR(25) index by binary_integer;
+  4  TYPE sallist IS TABLE OF NUMBER(8, 2) index by binary_integer;
+  5  emp_cv empcurtyp;
+  6  names  namelist;
+  7  sals   sallist;
+  8 BEGIN
+  9  OPEN emp_cv FOR
+ 10   SELECT last_name, salary
+ 11     FROM EMPLOYEES_UDT
+ 12    WHERE job_id = 'SH_CLERK'
+ 13    ORDER BY salary DESC;
+ 14  FETCH emp_cv BULK COLLECT
+ 15  INTO names, sals;
+ 16  CLOSE emp_cv;
+ 17  FOR i IN names.FIRST .. names.LAST LOOP
+ 18   DBE_OUTPUT.PRINT_LINE('Name = ' || names(i) || ', salary = ' || sals(i));
+ 19  END LOOP;
+ 20 END;
+ 21 /
+
+Name = Higgins, salary = 12000
+Name = Mavris, salary = 6500
+Name = OConnell, salary = 2600
+Name = Grant, salary = 2600
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2  CURSOR c1 IS
+  3   SELECT last_name, job_id
+  4     FROM EMPLOYEES_UDT
+  5    WHERE REGEXP_LIKE(job_id, 'S[HT]_CLERK')
+  6    ORDER BY last_name;
+  7  lastname EMPLOYEES_UDT.last_name%TYPE; -- variable for last_name
+  8  jobid    EMPLOYEES_UDT.job_id%TYPE; -- variable for job_id
+  9  CURSOR c2 IS
+ 10   SELECT *
+ 11     FROM EMPLOYEES_UDT
+ 12    WHERE REGEXP_LIKE(job_id, '[ACADFIMKSA]_M[ANGR]')
+ 13    ORDER BY job_id;
+ 14   TYPE namelist IS TABLE OF EMPLOYEES_UDT%ROWTYPE INDEX BY PLS_INTEGER;
+ 15    v_EMPLOYEES_UDT namelist;
+ 16 BEGIN
+ 17  OPEN c1;
+ 18  LOOP
+ 19   FETCH c1
+ 20   INTO lastname, jobid;
+ 21   EXIT WHEN c1%NOTFOUND;
+ 22   DBE_OUTPUT.PRINT_LINE(RPAD(lastname, 15, ' ') || jobid);
+ 23  END LOOP;
+ 24  CLOSE c1;
+ 25  DBE_OUTPUT.PRINT_LINE('NEXT LOOP:');
+ 26  OPEN c2;
+ 27  LOOP
+ 28   FETCH c2
+ 29   INTO v_EMPLOYEES_UDT(1);
+ 30   EXIT WHEN c2%NOTFOUND;
+ 31   DBE_OUTPUT.PRINT_LINE(RPAD(v_EMPLOYEES_UDT(1).last_name, 25, ' ') ||
+ 32                        v_EMPLOYEES_UDT(1).job_id);
+ 33  END LOOP;
+ 34  CLOSE c2;
+ 35 END;
+ 36 /
+
+Grant          SH_CLERK
+Higgins        SH_CLERK
+Mavris         SH_CLERK
+OConnell       SH_CLERK
+NEXT LOOP:
+Hartstein                MK_MAN
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2  CURSOR c IS
+  3   SELECT e.job_id, j.job_title
+  4     FROM EMPLOYEES_UDT e, jobs j
+  5    WHERE e.job_id = j.job_id
+  6      AND e.manager_id = 100
+  7    ORDER BY last_name;
+  8  TYPE namelist IS TABLE OF c%ROWTYPE INDEX BY PLS_INTEGER;
+  9  job1 namelist;
+ 10  i int :=1;
+ 11 BEGIN
+ 12  OPEN c;
+ 13  LOOP
+ 14  FETCH c INTO job1(i);
+ 15   EXIT WHEN c%NOTFOUND;
+ 16  DBE_OUTPUT.PRINT_LINE(job1(i).job_title || ' (' || job1(i).job_id || ')');
+ 17  i:=i+1;
+ 18  end loop;
+ 19  CLOSE c;
+ 20 END;
+ 21 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2   x varchar(100) := 'SH_CLERK';
+  3   y integer;
+  4   query VARCHAR2(4000) := 'SELECT first_name, last_name, hire_date
+  5     FROM EMPLOYEES_UDT
+  6    WHERE job_id = :x and rownum <= :y
+  7    ORDER BY hire_date';
+  8   var_s1 EMPLOYEES_UDT.first_name%type;
+  9   var_s2 EMPLOYEES_UDT.last_name%type;
+ 10   var_s3 EMPLOYEES_UDT.hire_date%type;
+ 11   cursor cv IS
+ 12   SELECT first_name, last_name, hire_date
+ 13     FROM EMPLOYEES_UDT
+ 14    WHERE job_id = 'ST_MAN'
+ 15    ORDER BY hire_date;
+ 16    var_rec cv%rowtype;
+ 17    TYPE c_r IS TABLE OF cv%rowtype INDEX BY PLS_INTEGER;
+ 18    var_c_r c_r;
+ 19    type c_1 is table of EMPLOYEES_UDT.first_name%type INDEX BY PLS_INTEGER;
+ 20    type c_2 is table of EMPLOYEES_UDT.last_name%type INDEX BY PLS_INTEGER;
+ 21    type c_3 is table of EMPLOYEES_UDT.hire_date%type INDEX BY PLS_INTEGER;
+ 22    var_c_1 c_1;
+ 23    var_c_2 c_2;
+ 24    var_c_3 c_3;
+ 25 
+ 26 BEGIN
+ 27   EXECUTE IMMEDIATE query INTO var_s1, var_s2, var_s3 USING x, 1;
+ 28   DBE_OUTPUT.PRINT_LINE('------------------------------------');
+ 29   DBE_OUTPUT.PRINT_LINE('Employee first_name = ' || var_s1 || ' last_name = ' || var_s2 || ' hire_date =' || var_s3);
+ 30   EXECUTE IMMEDIATE query INTO var_rec USING x, 1;
+ 31   DBE_OUTPUT.PRINT_LINE('Employee first_name = ' || var_rec.first_name || ' last_name = ' || var_rec.last_name || ' hire_date =' || var_rec.hire_date);
+ 32   DBE_OUTPUT.PRINT_LINE('------------------------------------');
+ 33   EXECUTE IMMEDIATE query BULK COLLECT INTO var_c_r USING x, 10;
+ 34   FOR i IN 1 .. var_c_r.COUNT LOOP
+ 35    DBE_OUTPUT.PRINT_LINE('Employee first_name: ' || var_c_r(i).first_name || ' Employee last_name: '|| var_c_r(i).last_name|| ' Employee hire_date: '|| var_c_r(i).hire_date);
+ 36   END LOOP;
+ 37   DBE_OUTPUT.PRINT_LINE('------------------------------------');
+ 38 
+ 39   EXECUTE IMMEDIATE query BULK COLLECT INTO var_c_1, var_c_2, var_c_3 USING x, 100000000;
+ 40   FOR i IN 1 .. var_c_1.COUNT LOOP
+ 41    DBE_OUTPUT.PRINT_LINE('Employee first_name: ' || var_c_1(i) || ' Employee last_name: '|| var_c_2(i)|| ' Employee hire_date: '|| var_c_3(i));
+ 42   END LOOP;
+ 43 END;
+ 44 /
+
+------------------------------------
+Employee first_name = Donald last_name = OConnell hire_date =1999-06-21 00:00:00
+Employee first_name = Donald last_name = OConnell hire_date =1999-06-21 00:00:00
+------------------------------------
+Employee first_name: Susan Employee last_name: Mavris Employee hire_date: 1994-06-07 00:00:00
+Employee first_name: Shelley Employee last_name: Higgins Employee hire_date: 1994-06-07 00:00:00
+Employee first_name: Donald Employee last_name: OConnell Employee hire_date: 1999-06-21 00:00:00
+Employee first_name: Douglas Employee last_name: Grant Employee hire_date: 2000-01-13 00:00:00
+------------------------------------
+Employee first_name: Susan Employee last_name: Mavris Employee hire_date: 1994-06-07 00:00:00
+Employee first_name: Shelley Employee last_name: Higgins Employee hire_date: 1994-06-07 00:00:00
+Employee first_name: Donald Employee last_name: OConnell Employee hire_date: 1999-06-21 00:00:00
+Employee first_name: Douglas Employee last_name: Grant Employee hire_date: 2000-01-13 00:00:00
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists t_objects;
+
+Succeed.
+
+SQL> create table t_objects as select * from EMPLOYEES_UDT limit 5;
+
+Succeed.
+
+SQL> declare
+  2   type nt_object is table of t_objects%rowtype index by binary_integer;
+  3   vnt_object_bulk nt_object;
+  4   vnt_object      nt_object;
+  5   c_big_number    number := power(2, 31);
+  6   l_start_time    number;
+  7   cursor cur_object is
+  8     select * from t_objects;
+  9 begin
+ 10   dbe_output.print_line('========BULK COLLECT LIMIT==========');
+ 11   l_start_time := dbe_util.get_date_time;
+ 12   open cur_object;
+ 13   loop
+ 14     fetch cur_object bulk collect
+ 15       into vnt_object_bulk;
+ 16       dbe_output.print_line('========'||vnt_object_bulk.count||'==========');
+ 17     dbe_output.print_line('========'||1||': '||vnt_object_bulk(1).EMPLOYEE_ID||'==========');
+ 18     for i in vnt_object_bulk.first .. vnt_object_bulk.last loop
+ 19       vnt_object(i) := vnt_object_bulk(i);
+ 20       dbe_output.print_line('========'||i||': '||vnt_object(i).last_name||'==========');
+ 21     end loop;
+ 22     exit when cur_object%notfound;
+ 23   end loop;
+ 24   close cur_object;
+ 25 end;
+ 26 /
+
+========BULK COLLECT LIMIT==========
+========5==========
+========1: 198==========
+========1: OConnell==========
+========2: Grant==========
+========3: Whalen==========
+========4: Hartstein==========
+========5: Fay==========
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table t_objects;
+
+Succeed.
+
+SQL> --returning
+SQL> DROP TABLE if exists test_returning_bulkinto;
+
+Succeed.
+
+SQL> create table test_returning_bulkinto (a VARCHAR2(10), b VARCHAR2(10), c VARCHAR2(10));
+
+Succeed.
+
+SQL> insert into test_returning_bulkinto values ('a','a','a');
+
+1 rows affected.
+
+SQL> insert into test_returning_bulkinto values ('a','a','a');
+
+1 rows affected.
+
+SQL> insert into test_returning_bulkinto values ('a','b','a');
+
+1 rows affected.
+
+SQL> insert into test_returning_bulkinto values ('a','b','a');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> DECLARE
+  2    TYPE emp_rec_type IS RECORD
+  3    (
+  4      ra      test_returning_bulkinto.a%TYPE,
+  5      rb      test_returning_bulkinto.b%TYPE,
+  6      rc   test_returning_bulkinto.c%TYPE
+  7    );
+  8    TYPE nested_emp_type1 IS TABLE OF emp_rec_type index by binary_integer;
+  9    emp_tab   nested_emp_type1;
+ 10 begin
+ 11   update test_returning_bulkinto set a='b' where a='a' returning a,b,c bulk collect into emp_tab;
+ 12   dbe_output.print_line('emp_tab');
+ 13   for i in 1..emp_tab.count loop
+ 14   dbe_output.print_line(emp_tab(i).ra||' '||emp_tab(i).rb||' '||emp_tab(i).rc);
+ 15   end loop;
+ 16 end;
+ 17 /
+
+emp_tab
+b a a
+b a a
+b b a
+b b a
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP TABLE test_returning_bulkinto;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_user;
+
+Succeed.
+
+SQL> create table t_user(userid number,phone varchar2(11));
+
+Succeed.
+
+SQL> declare
+  2 type array_number is table of number(20) INDEX BY PLS_INTEGER;
+  3   numarr_result array_number;
+  4   v_count number;
+  5 begin
+  6 numarr_result(1):=1;
+  7 numarr_result(2):=numarr_result(1);
+  8 numarr_result(3):=numarr_result(1);
+  9   delete from t_user where userid = 1
+ 10    returning userid bulk collect into  numarr_result;
+ 11   dbe_output.print_line('numarr_result count:' ||numarr_result.count);
+ 12 end;
+ 13 /
+
+numarr_result count:0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table t_user;
+
+Succeed.
+
+SQL> 
+SQL> -------------direct assignment series
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        type ListType is table of t_table1 index by Binary_Integer;
+  4         p_key ListType;
+  5 begin
+  6        p_key(2)(3):=11;
+  7        DBE_OUTPUT.PRINT_LINE(p_key(2)(3));
+  8 end;
+  9 /
+
+11
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 Type RecType11 Is Record
+  3 (
+  4   a int,
+  5   b int
+  6 );
+  7        type ListType is table of RecType11 index by Binary_Integer;
+  8         p_key ListType;
+  9 begin
+ 10        p_key(2).a:=3;
+ 11        DBE_OUTPUT.PRINT_LINE(p_key(2).a);
+ 12 end;
+ 13 /
+
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 type ListType is table of int index by Binary_Integer;
+  3 Type RecType11 Is Record
+  4 (
+  5   a ListType,
+  6   b int
+  7 );
+  8 CC RecType11;
+  9 begin
+ 10        CC.a(1) := 3;
+ 11        DBE_OUTPUT.PRINT_LINE(CC.a(1));
+ 12 end;
+ 13 /
+
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 type ListType is record(
+  3 c int,
+  4 d int
+  5 );
+  6 Type RecType11 Is Record
+  7 (
+  8   a ListType,
+  9   b int
+ 10 );
+ 11 CC RecType11;
+ 12 begin
+ 13        CC.a.c := 3;
+ 14        DBE_OUTPUT.PRINT_LINE(CC.a.c);
+ 15 end;
+ 16 /
+
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists t_422311;
+
+Succeed.
+
+SQL> create table t_422311(EMPNO int, b varchar(100));
+
+Succeed.
+
+SQL> insert into t_422311 values(123, 'test422311');
+
+1 rows affected.
+
+SQL> insert into t_422311 values(234, 'test1123224');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> Declare
+  2 Type RecType Is Record
+  3 (
+  4   rno t_422311.EMPNO%type,
+  5   rname t_422311.b%type
+  6 );
+  7 Type TabType Is Table Of RecType Index By Binary_Integer;
+  8 MyTab TabType;
+  9 vN Number;
+ 10 Begin
+ 11 vN := 1;
+ 12 For varR In (Select * From t_422311 Order By EMPNO ASC)
+ 13 Loop
+ 14   MyTab(vN).rno  := varR.EMPNO;
+ 15   MyTab(vN).rname := varR.b;
+ 16   DBE_OUTPUT.PRINT_LINE(vN ||'   '||MyTab(vN).rno||'   '||MyTab(vN).rname);
+ 17   vN := vN + 1;
+ 18 End Loop;
+ 19 vN := MyTab.First;
+ 20 DBE_OUTPUT.PRINT_LINE(vN ||'   '||MyTab(vN).rno||'   '||MyTab(vN).rname);
+ 21 For varR In vN..MyTab.count
+ 22 Loop
+ 23   DBE_OUTPUT.PRINT_LINE(vN ||'   '||MyTab(vN).rno||'   '||MyTab(vN).rname);
+ 24   vN := vN + 1;
+ 25 End Loop;
+ 26 End;
+ 27 /
+
+1   123   test422311
+2   234   test1123224
+1   123   test422311
+1   123   test422311
+2   234   test1123224
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --error
+SQL> Declare
+  2 Type RecType Is Record
+  3 (
+  4   rno t_422311.EMPNO%type,
+  5   rname t_422311.b%type
+  6 );
+  7 Type TabType Is Table Of RecType Index By Binary_Integer;
+  8 MyTab TabType;
+  9 vN Number;
+ 10 Begin
+ 11 vN := null;
+ 12 For varR In (Select * From t_422311 Order By EMPNO ASC)
+ 13 Loop
+ 14   MyTab(vN).rno  := varR.EMPNO;
+ 15   MyTab(vN).rname := varR.b;
+ 16   DBE_OUTPUT.PRINT_LINE(vN ||'   '||MyTab(vN).rno||'   '||MyTab(vN).rname);
+ 17   vN := vN + 1;
+ 18 End Loop;
+ 19 End;
+ 20 /
+
+CT-00932, [14:3] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[14:3] CT-00512, subscript is null
+
+SQL> 
+SQL> Declare
+  2 Type RecType Is Record
+  3 (
+  4   rno t_422311.EMPNO%type,
+  5   rname t_422311.b%type
+  6 );
+  7 Type TabType Is Table Of RecType Index By varchar(5);
+  8 MyTab TabType;
+  9 Begin
+ 10 For varR In (Select * From t_422311 Order By EMPNO ASC)
+ 11 Loop
+ 12   MyTab('test422311').rno  := varR.EMPNO;
+ 13   MyTab('test422311').rname := varR.b;
+ 14 End Loop;
+ 15 End;
+ 16 /
+
+CT-00932, [12:3] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[12:3] CT-00916, PL/SQL:syntax error(index's length exceed the size)
+
+SQL> drop table t_422311;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2        type t_table1 is varray(10) of int;
+  3        type ListType is table of t_table1 index by Binary_Integer;
+  4         p_key ListType;
+  5 begin
+  6        p_key(2)(1):=11;
+  7        DBE_OUTPUT.PRINT_LINE(p_key(2)(1));
+  8 end;
+  9 /
+
+CT-00932, [6:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[6:8] CT-00903, Reference to uninitialized collection
+
+SQL> 
+SQL> create or replace type t_table22 is object(
+  2 a int,
+  3 b int
+  4 );
+  5 /
+
+Succeed.
+
+SQL> declare
+  2        type ListType is table of t_table22 index by Binary_Integer;
+  3         p_key ListType;
+  4 begin
+  5        p_key(2).a:=3;
+  6        DBE_OUTPUT.PRINT_LINE(p_key(2).a);
+  7 end;
+  8 /
+
+CT-00932, [5:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:8] CT-00901, The referenced object type was not initialized.
+
+SQL> drop type t_table22;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 Type RecType11 Is Record
+  3 (
+  4   a int,
+  5   b int
+  6 );
+  7 CC RecType11;
+  8        type ListType is table of RecType11 index by Binary_Integer;
+  9         p_key ListType;
+ 10 begin
+ 11        DBE_OUTPUT.PRINT_LINE(p_key(1).a);
+ 12 end;
+ 13 /
+
+CT-00932, [11:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[11:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> declare
+  2 type ListType is table of int index by Binary_Integer;
+  3 Type RecType11 Is Record
+  4 (
+  5   a ListType,
+  6   b int
+  7 );
+  8 CC RecType11;
+  9 begin
+ 10        DBE_OUTPUT.PRINT_LINE(CC.a(1));
+ 11 end;
+ 12 /
+
+CT-00932, [10:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[10:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> ------------boundary test series and pls_integer and string atatype
+SQL> declare
+  2    type ListType is table of string(10) index by pls_integer;
+  3    p_key ListType;
+  4 begin
+  5    p_key(1):= '221sssssssss';
+  6    DBE_OUTPUT.PRINT_LINE('index: ' ||1 || ' is ' || p_key(1));
+  7 end;
+  8 /
+
+CT-00932, [5:4] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:4] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> declare
+  2    type ListType is table of binary(10) index by pls_integer;
+  3    p_key ListType;
+  4 begin
+  5    p_key(1):= 101111111111;
+  6    DBE_OUTPUT.PRINT_LINE
+  7        ('index: ' ||1 || ' is ' || p_key(1));
+  8 end;
+  9 /
+
+CT-00932, [5:4] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:4] CT-00635, Value error: binary buffer too small
+
+SQL> 
+SQL> declare
+  2    type ListType is table of pls_integer index by string(10);
+  3    p_key ListType;
+  4 begin
+  5    p_key('221sssssssss'):= 1;
+  6 end;
+  7 /
+
+CT-00932, [5:4] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:4] CT-00916, PL/SQL:syntax error(index's length exceed the size)
+
+SQL> 
+SQL> declare
+  2        type ListType is table of pls_integer index by string(32767);
+  3        p_key ListType;
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE('ok '|| p_key.first);
+  6 end;
+  7 /
+
+ok 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of pls_integer index by string(32768);
+  3        p_key ListType;
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE('ok '|| p_key.first);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:62] PLC-00601 Sql syntax error: size value must between 1 and 32767
+
+SQL> 
+SQL> 
+SQL> declare
+  2        type ListType is table of pls_integer index by pls_integer;
+  3        p_key ListType;
+  4 begin
+  5        p_key(1):=2147483648;
+  6        DBE_OUTPUT.PRINT_LINE('ok '|| p_key.first);
+  7 end;
+  8 /
+
+CT-00932, [5:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:8] CT-00659, INTEGER out of range
+
+SQL> 
+SQL> declare
+  2        type ListType is table of pls_integer index by pls_integer;
+  3        p_key ListType;
+  4 begin
+  5        p_key(1):=-2147483648;
+  6        DBE_OUTPUT.PRINT_LINE('ok '|| p_key.first);
+  7 end;
+  8 /
+
+ok 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of pls_integer index by pls_integer;
+  3        p_key ListType;
+  4 begin
+  5        p_key(2147483648):=21;
+  6        DBE_OUTPUT.PRINT_LINE('ok '|| p_key.first);
+  7 end;
+  8 /
+
+CT-00932, [5:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:8] CT-00659, INTEGER out of range
+
+SQL> 
+SQL> declare
+  2        type ListType is table of pls_integer index by pls_integer;
+  3        p_key ListType;
+  4 begin
+  5        p_key(-2147483648):=-2147483648;
+  6        DBE_OUTPUT.PRINT_LINE('ok '|| p_key.first);
+  7 end;
+  8 /
+
+ok -2147483648
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --variant
+SQL> declare
+  2 p_1 pls_integer;
+  3 p_2 string(10);
+  4 begin
+  5 p_1 := 1234567;
+  6 p_2 := '7654321';
+  7 DBE_OUTPUT.PRINT_LINE('p_1: ' || p_1);
+  8 DBE_OUTPUT.PRINT_LINE('p_2: ' || p_2);
+  9 end;
+ 10 /
+
+p_1: 1234567
+p_2: 7654321
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --only in plsql
+SQL> drop table if exists intest;
+
+Succeed.
+
+SQL> create table intest(id pls_integer); --error
+
+CT-00601, [1:35]Sql syntax error: datatype expected, but got 'pls_integer'
+SQL> create table intest(id string(2));  --error
+
+CT-00601, [1:30]Sql syntax error: datatype expected, but got 'string'
+SQL> 
+SQL> --can use to local varry\nested table\hash table\record
+SQL> declare
+  2 type ListType is varray(10) of pls_integer;
+  3 cc ListType := ListType(1);
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE(cc(1));
+  6 end;
+  7 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 type ListType is table of string(10);
+  3 cc ListType := ListType('ss');
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE(cc(1));
+  6 end;
+  7 /
+
+ss
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 type qwer is record (a pls_integer, b string(3));
+  3 v qwer;
+  4 begin
+  5 v.a:=123;
+  6 v.b:='321';
+  7 DBE_OUTPUT.PRINT_LINE(v.a);
+  8 DBE_OUTPUT.PRINT_LINE(v.b);
+  9 end;
+ 10 /
+
+123
+321
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --error
+SQL> create or replace type ccdd is object(
+  2 x pls_integer,
+  3 y int
+  4 );
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_HASH_TABLE.CCDD) terminated with compiling errors
+[2:3] PLC-00828 type GS_PLSQL_HASH_TABLE.PLS_INTEGER does not exist
+
+
+SQL> create or replace type ccdd is varray(5) of pls_integer;
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_HASH_TABLE.CCDD) terminated with compiling errors
+[1:45] PLC-00601 Sql syntax error: datatype expected, but got 'pls_integer'
+
+
+SQL> create or replace type ccdd is table of string(10);
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_HASH_TABLE.CCDD) terminated with compiling errors
+[1:41] PLC-00601 Sql syntax error: datatype expected, but got 'string'
+
+
+SQL> drop type if exists ccdd;
+
+Succeed.
+
+SQL> 
+SQL> --can used to procedure and function
+SQL> create or replace procedure p_test(p_1 string, p_2 in pls_integer) as
+  2 v_s varchar2(10);
+  3 v_i int;
+  4 begin
+  5 v_s:=(p_1 || 'ddddddd');
+  6 v_i:=p_2 + 3;
+  7 dbe_output.print_line(v_s);
+  8 dbe_output.print_line(v_i);
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> call p_test('100',200);
+
+100ddddddd
+203
+
+PL/SQL procedure successfully completed.
+
+SQL> drop procedure p_test;
+
+Succeed.
+
+SQL> 
+SQL> drop function if exists function_002;
+
+Succeed.
+
+SQL> CREATE OR REPLACE FUNCTION function_002 (a in string, b pls_integer, d out string) RETURN pls_integer
+  2   AS
+  3     c pls_integer;
+  4   BEGIN
+  5        c := b * 4 + 5;
+  6        d:= (a || 'ddrrttt');
+  7        dbe_output.print_line(c);
+  8        dbe_output.print_line(d);
+  9   RETURN c;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> DECLARE
+  2 a string(10);
+  3 b pls_integer;
+  4 c pls_integer;
+  5 d string(15);
+  6 BEGIN
+  7  a := 'dddd';
+  8  b := 3;
+  9  c := function_002(a, b, d);
+ 10 END;
+ 11 /
+
+17
+ddddddrrttt
+
+PL/SQL procedure successfully completed.
+
+SQL> drop function function_002;
+
+Succeed.
+
+SQL> 
+SQL> --hash table%type
+SQL> set serveroutput on;
+
+ON
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4        c p_key%type; --same as t_table1
+  5 begin
+  6        p_key(2):=11;
+  7        c:=p_key;
+  8        DBE_OUTPUT.PRINT_LINE(c(2));
+  9 end;
+ 10 /
+
+11
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> ---------------------delete test series
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4        i Binary_Integer;
+  5 begin
+  6        p_key(2):=11;
+  7        p_key(3):=3;
+  8        p_key(1):=3;
+  9        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 10        p_key.delete;
+ 11        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 12        p_key.delete(2);
+ 13        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 14        DBE_OUTPUT.PRINT_LINE(p_key.first || p_key.last);
+ 15 end;
+ 16 /
+
+3
+0
+0
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4        i Binary_Integer;
+  5 begin
+  6        p_key(2):=11;
+  7        p_key(2):=18;
+  8        p_key(3):=null; --element is null
+  9        p_key(1):=3;
+ 10        p_key(1):=3;
+ 11        p_key(5):=11;
+ 12        p_key(6):=12;
+ 13        p_key(7):=3;
+ 14        i := p_key.FIRST;
+ 15        WHILE i IS NOT NULL LOOP
+ 16        DBE_OUTPUT.PRINT_LINE
+ 17        ('index: ' || i || ' is ' || p_key(i));
+ 18        i := p_key.NEXT(i);
+ 19        end loop;
+ 20        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 21        p_key.delete(2);
+ 22        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 23        p_key.delete(8);  --delete no assign index
+ 24        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 25        p_key.delete(3, 5);
+ 26        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 27        p_key.delete;
+ 28        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 29 end;
+ 30 /
+
+index: 1 is 3
+index: 2 is 18
+index: 3 is 
+index: 5 is 11
+index: 6 is 12
+index: 7 is 3
+6
+5
+5
+3
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --delete and exists
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4        i Binary_Integer;
+  5 begin
+  6        p_key(2):=11;
+  7        p_key(3):=3;
+  8        p_key(1):=3;
+  9        p_key(-1):=3;
+ 10        p_key(-3):=3;
+ 11        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 12        p_key.delete(2, 5);
+ 13        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 14        if p_key.exists(3) then
+ 15          DBE_OUTPUT.PRINT_LINE('yes');
+ 16        else
+ 17          DBE_OUTPUT.PRINT_LINE('no');
+ 18        end if;
+ 19 end;
+ 20 /
+
+5
+3
+no
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --delete and first or last
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4        i Binary_Integer;
+  5 begin
+  6        p_key(2):=11;
+  7        p_key(3):=3;
+  8        p_key(1):=3;
+  9        p_key(-1):=3;
+ 10        p_key(-3):=3;
+ 11        p_key(5):=3;
+ 12        DBE_OUTPUT.PRINT_LINE(p_key.first || '  ' || p_key.count);
+ 13        p_key.delete(p_key.first);
+ 14        DBE_OUTPUT.PRINT_LINE(p_key.first || '  ' || p_key.count);
+ 15        p_key.delete(p_key.last);
+ 16        DBE_OUTPUT.PRINT_LINE(p_key.last || '  ' || p_key.count);
+ 17        p_key.delete(p_key.first, 2);
+ 18        DBE_OUTPUT.PRINT_LINE(p_key.first || '  ' || p_key.count);
+ 19        p_key.delete(3, p_key.last);
+ 20        DBE_OUTPUT.PRINT_LINE(p_key.first || '  ' || p_key.count);
+ 21 end;
+ 22 /
+
+-3  6
+-1  5
+3  4
+3  1
+  0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --delete and prior or next
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4        i Binary_Integer;
+  5 begin
+  6        p_key(2):=11;
+  7        p_key(3):=3;
+  8        p_key(1):=3;
+  9        p_key(-1):=3;
+ 10        p_key(-3):=3;
+ 11        p_key(5):=3;
+ 12        DBE_OUTPUT.PRINT_LINE(p_key.first || '  ' || p_key.count);
+ 13        DBE_OUTPUT.PRINT_LINE(p_key.prior(-1) || '  ' || p_key.count);
+ 14        p_key.delete(p_key.prior(-1));
+ 15        DBE_OUTPUT.PRINT_LINE(p_key.first || '  ' || p_key.count);
+ 16        DBE_OUTPUT.PRINT_LINE(p_key.prior(-1) || '  ' || p_key.count);
+ 17        p_key.delete(p_key.next(3));
+ 18        DBE_OUTPUT.PRINT_LINE(p_key.last || '  ' || p_key.count);
+ 19        DBE_OUTPUT.PRINT_LINE(p_key.next(3) || '  ' || p_key.count);
+ 20        p_key.delete(p_key.prior(-1), 2);
+ 21        DBE_OUTPUT.PRINT_LINE(p_key.first || '  ' || p_key.count);
+ 22        p_key.delete(3, p_key.next(3));
+ 23        DBE_OUTPUT.PRINT_LINE(p_key.first || '  ' || p_key.count);
+ 24 end;
+ 25 /
+
+-3  6
+-3  6
+-1  5
+  5
+3  4
+  4
+-1  4
+-1  4
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --convert index
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4        i Binary_Integer;
+  5 begin
+  6        p_key(2):=11;
+  7        p_key(2):=12;
+  8        p_key(3):=3;
+  9        p_key(1):=3;
+ 10        p_key(5):=11;
+ 11        p_key(6):=12;
+ 12        p_key(7):=3;
+ 13        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 14        p_key.delete(2.2);
+ 15        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 16        p_key.delete(2.4);
+ 17        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 18        p_key.delete(2.8);
+ 19        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 20        p_key.delete(3.2, 5.6);
+ 21        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 22        i := p_key.FIRST;
+ 23        WHILE i IS NOT NULL LOOP
+ 24        DBE_OUTPUT.PRINT_LINE
+ 25        ('index: ' || i || ' is ' || p_key(i));
+ 26        i := p_key.NEXT(i);
+ 27        end loop;
+ 28 end;
+ 29 /
+
+6
+5
+5
+4
+2
+index: 1 is 3
+index: 7 is 3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --delete null index and start > end
+SQL> set serveroutput on;
+
+ON
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4        i Binary_Integer;
+  5 begin
+  6        p_key(2):=11;
+  7        p_key(2):=12;
+  8        p_key(3):=3;
+  9        p_key(1):=3;
+ 10        p_key(5):=11;
+ 11        p_key(6):=12;
+ 12        p_key(7):=3;
+ 13        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 14        p_key.delete(null);
+ 15        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 16        p_key.delete(null, 2);
+ 17        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 18        p_key.delete(3, null);
+ 19        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 20        p_key.delete(7, 5);
+ 21        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 22        p_key.delete(6, 50);
+ 23        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 24        i := p_key.FIRST;
+ 25        WHILE i IS NOT NULL LOOP
+ 26        DBE_OUTPUT.PRINT_LINE
+ 27        ('index: ' || i || ' is ' || p_key(i));
+ 28        i := p_key.NEXT(i);
+ 29        end loop;
+ 30 end;
+ 31 /
+
+6
+6
+6
+6
+6
+4
+index: 1 is 3
+index: 2 is 12
+index: 3 is 3
+index: 5 is 11
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --delete index length exceed
+SQL> declare
+  2        type t_table1 is table of int index by varchar(5);
+  3        p_key t_table1;
+  4        i varchar(10);
+  5 begin
+  6        p_key('a'):=11;
+  7        p_key('ab'):=12;
+  8        p_key('va'):=3;
+  9        p_key('za'):=3;
+ 10        p_key('da'):=11;
+ 11        p_key('dva'):=12;
+ 12        p_key('opt'):=3;
+ 13        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 14        p_key.delete('ab');
+ 15        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 16        p_key.delete('scccccs'); --exceed length, delete 0 element
+ 17        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 18        p_key.delete('scccccs', 'dva');
+ 19        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 20        i := p_key.FIRST;
+ 21        WHILE i IS NOT NULL LOOP
+ 22        DBE_OUTPUT.PRINT_LINE
+ 23        ('index: ' || i || ' is ' || p_key(i));
+ 24        i := p_key.NEXT(i);
+ 25        end loop;
+ 26        p_key.delete('dva', 'scccccs');--delete 2 elements success
+ 27        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 28        i := p_key.FIRST;
+ 29        WHILE i IS NOT NULL LOOP
+ 30        DBE_OUTPUT.PRINT_LINE
+ 31        ('index: ' || i || ' is ' || p_key(i));
+ 32        i := p_key.NEXT(i);
+ 33        end loop;
+ 34 end;
+ 35 /
+
+7
+6
+6
+6
+index: a is 11
+index: da is 11
+index: dva is 12
+index: opt is 3
+index: va is 3
+index: za is 3
+4
+index: a is 11
+index: da is 11
+index: va is 3
+index: za is 3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --error
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3 	   p_key t_table1;
+  4 	   i Binary_Integer;
+  5 begin
+  6        p_key(2):=11;
+  7        p_key(3):=3;
+  8        p_key(1):=3;
+  9        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 10        p_key.delete(2, 2147483650); --out range
+ 11        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 12 end;
+ 13 /
+
+3
+CT-00932, [10:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[10:8] CT-00659, INTEGER out of range
+
+SQL> 
+SQL> -----------nested delete test
+SQL> --nested table
+SQL> create or replace type t_table is table of int;
+  2 /
+
+Succeed.
+
+SQL> declare
+  2        cs t_table:=t_table(8, 2);
+  3        type ListType is table of t_table index by pls_integer;
+  4         p_key ListType;
+  5 begin
+  6        p_key(3):=cs;
+  7        DBE_OUTPUT.PRINT_LINE(p_key.count);
+  8        DBE_OUTPUT.PRINT_LINE(cs(2));
+  9        DBE_OUTPUT.PRINT_LINE(p_key(3)(2));
+ 10        p_key.delete(3);
+ 11        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 12        DBE_OUTPUT.PRINT_LINE(cs(2));
+ 13        DBE_OUTPUT.PRINT_LINE(p_key(3)(2));--error
+ 14 end;
+ 15 /
+
+1
+2
+2
+0
+2
+CT-00932, [13:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[13:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> drop type t_table;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by string(10);
+  3        type t_table is table of ListType;
+  4        cs t_table:=t_table();
+  5 begin
+  6        cs.extend(5);
+  7        DBE_OUTPUT.PRINT_LINE(cs(7)('a'));--error
+  8 end;
+  9 /
+
+CT-00932, [7:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[7:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-00912, Subscript beyond count
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by varchar(10);
+  3        type t_table is table of ListType;
+  4        cs t_table:=t_table();
+  5 begin
+  6        cs.extend(5);
+  7        DBE_OUTPUT.PRINT_LINE(cs(4)('a'));--error
+  8 end;
+  9 /
+
+CT-00932, [7:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[7:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by varchar(10);
+  3        type t_table is table of ListType;
+  4        cs t_table:=t_table();
+  5 begin
+  6        cs.extend(5);
+  7        cs(4)('a'):=4;
+  8        cs(3)('a'):=3;
+  9        DBE_OUTPUT.PRINT_LINE(cs(4)('a'));
+ 10        DBE_OUTPUT.PRINT_LINE(cs(3)('a'));
+ 11 end;
+ 12 /
+
+4
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by varchar(10);
+  3        aa ListType;
+  4        type t_table is table of ListType;
+  5        cs t_table:=t_table(aa);
+  6 begin
+  7        cs.extend(5, 1);
+  8        cs(4)('a'):=4;
+  9        cs(3)('a'):=3;
+ 10        DBE_OUTPUT.PRINT_LINE(cs(4)('a'));
+ 11        DBE_OUTPUT.PRINT_LINE(cs(3)('a'));
+ 12 end;
+ 13 /
+
+4
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by varchar(10);
+  3        type t_table is varray(10) of ListType;
+  4        cs t_table:=t_table();
+  5 begin
+  6        cs.extend(5);
+  7        cs(4)('a'):=4;
+  8        cs(3)('a'):=3;
+  9        DBE_OUTPUT.PRINT_LINE(cs(4)('a'));
+ 10        DBE_OUTPUT.PRINT_LINE(cs(3)('a'));
+ 11 end;
+ 12 /
+
+4
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by string(10);
+  3        p_key ListType;
+  4        p_list ListType;
+  5        type t_table is table of ListType;
+  6        cs t_table:=t_table();
+  7 begin
+  8        p_key('sd'):=3;
+  9        p_key('aa'):=1;
+ 10        p_list('ws'):=2;
+ 11        p_list('rr'):=5;
+ 12        p_list('tr'):=6;
+ 13        cs.extend(5);
+ 14        cs(1):=p_key;
+ 15        cs(2):=p_key;
+ 16        cs(3):=p_list;
+ 17        cs(4):=p_list;
+ 18        DBE_OUTPUT.PRINT_LINE(cs.count);
+ 19        DBE_OUTPUT.PRINT_LINE(cs(4)('rr'));
+ 20        cs.delete(3, 4);
+ 21        DBE_OUTPUT.PRINT_LINE(cs.count);
+ 22        DBE_OUTPUT.PRINT_LINE(p_list('rr'));
+ 23        DBE_OUTPUT.PRINT_LINE(cs(4)('rr'));--ERROR
+ 24 end;
+ 25 /
+
+5
+5
+3
+5
+CT-00932, [23:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[23:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> --varray
+SQL> create or replace type t_table1 is varray(10) of int;
+  2 /
+
+Succeed.
+
+SQL> declare
+  2        cc t_table1:=t_table1(3, 2);
+  3        type ListType is table of t_table1 index by pls_integer;
+  4        p_key ListType;
+  5 begin
+  6        p_key(2):=t_table1(1, 2);
+  7        p_key(-1):=cc;
+  8        DBE_OUTPUT.PRINT_LINE(p_key(-1)(1));
+  9        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 10        DBE_OUTPUT.PRINT_LINE(cc(1));
+ 11        cc.delete;
+ 12        p_key.delete(-4, 0);
+ 13        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 14        DBE_OUTPUT.PRINT_LINE(p_key(-1)(1));
+ 15 end;
+ 16 /
+
+3
+2
+3
+1
+CT-00932, [14:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[14:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> drop type t_table1;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2        type t_table3 is table of int index by pls_integer;
+  3        cc t_table3;
+  4        type ListType is varray(10) of t_table3;
+  5         p_key ListType:=ListType();
+  6 begin
+  7        cc(2) := 2;
+  8        p_key:=ListType(cc,cc,cc,cc,cc);
+  9        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 10        p_key.delete;
+ 11        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 12        DBE_OUTPUT.PRINT_LINE(cc(2));
+ 13 end;
+ 14 /
+
+5
+0
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --object
+SQL> create or replace type t_table2 is object(
+  2 a int,
+  3 b int
+  4 );
+  5 /
+
+Succeed.
+
+SQL> declare
+  2        cc t_table2:=t_table2(1, 2);
+  3        dd t_table2:=t_table2(4, 5);
+  4        type ListType is table of t_table2 index by pls_integer;
+  5         p_key ListType;
+  6 begin
+  7        p_key(2):=cc;
+  8        p_key(-1):=t_table2(1, 2);
+  9        DBE_OUTPUT.PRINT_LINE(p_key(-1).a);
+ 10        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 11        p_key.delete(-4, 0);
+ 12        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 13        DBE_OUTPUT.PRINT_LINE(p_key(-1).a);
+ 14 end;
+ 15 /
+
+1
+2
+1
+CT-00932, [13:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[13:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> drop type t_table2;
+
+Succeed.
+
+SQL> 
+SQL> --record
+SQL> declare
+  2         Type RecType11 Is Record
+  3         (
+  4         a int,
+  5         b int
+  6         );
+  7         cc RecType11;
+  8        type ListType is table of RecType11 index by pls_integer;
+  9         p_key ListType;
+ 10 begin
+ 11        cc.a := 3;
+ 12        p_key(2):=cc;
+ 13        p_key(-1):=cc;
+ 14        DBE_OUTPUT.PRINT_LINE(p_key(-1).a);
+ 15        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 16        p_key.delete(-4, 0);
+ 17        DBE_OUTPUT.PRINT_LINE(p_key.count);
+ 18        DBE_OUTPUT.PRINT_LINE(p_key(-1).a);
+ 19 end;
+ 20 /
+
+3
+2
+1
+CT-00932, [18:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[18:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> declare
+  2        type t_table3 is table of int index by pls_integer;
+  3        cc t_table3;
+  4        type ListType is record(
+  5          aa t_table3,
+  6          bb t_table3
+  7        );
+  8         p_key ListType;
+  9         p_2 ListType;
+ 10 begin
+ 11        cc(2) := 2;
+ 12        p_key.aa:=cc;
+ 13        cc(2) :=3;
+ 14        p_key.bb := cc;
+ 15        p_2 := p_key;
+ 16        DBE_OUTPUT.PRINT_LINE(p_key.aa(2));
+ 17        DBE_OUTPUT.PRINT_LINE(p_key.bb(2));
+ 18        DBE_OUTPUT.PRINT_LINE(cc(2));
+ 19        DBE_OUTPUT.PRINT_LINE(p_2.aa(2));
+ 20        DBE_OUTPUT.PRINT_LINE(p_2.bb(2));
+ 21        cc.delete;
+ 22        DBE_OUTPUT.PRINT_LINE(p_key.aa(2));
+ 23 end;
+ 24 /
+
+2
+3
+3
+2
+3
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --%rowtype
+SQL> drop table if exists test_table1;
+
+Succeed.
+
+SQL> create table test_table1(id int,name varchar(10));
+
+Succeed.
+
+SQL> insert into test_table1 values(1, 'ss');
+
+1 rows affected.
+
+SQL> insert into test_table1 values(2, 'sd');
+
+1 rows affected.
+
+SQL> insert into test_table1 values(3, 'as');
+
+1 rows affected.
+
+SQL> insert into test_table1 values(4, 'As');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2        cv SYS_REFCURSOR;
+  3        t_row test_table1%rowtype;
+  4        type ListType is table of test_table1%rowtype index by pls_integer;
+  5         p_key ListType;
+  6 begin
+  7        open cv for select * from test_table1;
+  8        loop
+  9          fetch cv into t_row;
+ 10          EXIT WHEN cv%NOTFOUND;
+ 11          p_key(t_row.id):=t_row;
+ 12          DBE_OUTPUT.PRINT_LINE(p_key(t_row.id).name);
+ 13        end loop;
+ 14        p_key.delete(3);
+ 15        DBE_OUTPUT.PRINT_LINE(p_key(3).name);
+ 16 end;
+ 17 /
+
+ss
+sd
+as
+As
+CT-00932, [15:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[15:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> --hash table
+SQL> declare
+  2        type t_table3 is table of int index by pls_integer;
+  3        cc t_table3;
+  4        type ListType is table of t_table3 index by pls_integer;
+  5         p_key ListType;
+  6 begin
+  7        cc(2) := 2;
+  8        cc(3):= 4;
+  9        cc(4):=5;
+ 10        cc.delete(3);
+ 11        p_key(2):=cc;
+ 12        p_key(3):=cc;
+ 13        p_key.delete(3);
+ 14        DBE_OUTPUT.PRINT_LINE(p_key(2)(4));
+ 15        DBE_OUTPUT.PRINT_LINE(p_key(2)(3));
+ 16 end;
+ 17 /
+
+5
+CT-00932, [15:8] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[15:8] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> ------------coverage use cases--error
+SQL> declare
+  2        type t_table1 is table of int index by pls_integer;
+  3        p_key t_table1;
+  4 begin
+  5        p_key.delete(1,2,3);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:8] PLC-02601 Wrong number or types of arguments in call to 'DELETE'
+
+SQL> 
+SQL> declare
+  2        type t_table1 is table of int index by pls_integer;
+  3        p_key t_table1;
+  4 begin
+  5        p_key.first(1);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:8] PLC-02601 Wrong number or types of arguments in call to 'FIRST'
+
+SQL> 
+SQL> declare
+  2        type t_table1 is table of int index by pls_integer;
+  3        p_key t_table1;
+  4 begin
+  5        p_key.last(1);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:8] PLC-02601 Wrong number or types of arguments in call to 'LAST'
+
+SQL> 
+SQL> declare
+  2        type t_table1 is table of int index by pls_integer;
+  3        p_key t_table1;
+  4 begin
+  5        p_key.prior;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:8] PLC-02601 Wrong number or types of arguments in call to 'PRIOR'
+
+SQL> 
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4 begin
+  5        p_key.next;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:8] PLC-02601 Wrong number or types of arguments in call to 'NEXT'
+
+SQL> 
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE(p_key.count(1));
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:30] PLC-02601 Wrong number or types of arguments in call to 'COUNT'
+
+SQL> 
+SQL> declare
+  2        type t_table1 is table of int index by Binary_Integer;
+  3        p_key t_table1;
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE(p_key.limit(1));
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:30] PLC-02601 Wrong number or types of arguments in call to 'LIMIT'
+
+SQL> 
+SQL> declare
+  2        type ListType is table of pls_integer;
+  3        type t_table is table of pls_integer index by ListType;
+  4 begin
+  5        DBE_OUTPUT.PRINT_LINE('sd');
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:62] PLC-02609 associative array's index of type must be integer or varchar
+
+SQL> 
+SQL> --------expression and hash table
+SQL> --error
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3         p_key ListType;
+  4         p_new ListType;
+  5 begin
+  6        p_key(2):= 'aa';
+  7        p_new(2):= 'aa';
+  8        if p_key = p_new then
+  9        DBE_OUTPUT.PRINT_LINE('4exists');
+ 10        end if;
+ 11 end;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[8:11] PLC-00601 Sql syntax error: complex type cannot be used for condition
+[10:12] PLC-00920 Undefined symbol IF
+
+SQL> 
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3         p_key ListType;
+  4         i int := 0;
+  5 begin
+  6        p_key(2):= 'aa';
+  7        i := (p_key = p_key);
+  8        DBE_OUTPUT.PRINT_LINE(i);
+  9 end;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:22] PLC-00601 Sql syntax error: complex type cannot be used for condition
+
+SQL> 
+SQL> declare
+  2        type t_table3 is table of int index by pls_integer;
+  3        cc t_table3;
+  4        type ListType is table of t_table3 index by pls_integer;
+  5         p_key ListType;
+  6 begin
+  7        cc(2) := 2;
+  8        cc(3):= 4;
+  9        p_key(2):=cc+8;
+ 10        p_key(3):=cc;
+ 11        DBE_OUTPUT.PRINT_LINE(p_key(2)(2));
+ 12        DBE_OUTPUT.PRINT_LINE(p_key(2)(3));
+ 13 end;
+ 14 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[9:20] PLC-01320 Undefined operator: COLLECTION + BINARY_INTEGER
+
+SQL> 
+SQL> declare
+  2        type t_table3 is table of int index by int;
+  3        cc t_table3;
+  4 begin
+  5        select id into cc(1) from (select * from dual order by cc); --pl_verify_expr_param_node
+  6        DBE_OUTPUT.PRINT_LINE(cc(1));
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:53] PLC-02605 Collection types not allowed in current statements
+
+SQL> 
+SQL> declare
+  2        type t_table3 is table of int index by int;
+  3        cc t_table3;
+  4        type t_trr is table of t_table3;
+  5        pt t_trr:=t_trr();
+  6 begin
+  7        pt.extend;
+  8        select id into pt from (select * from dual order by pt); --pl_verify_expr_param_node
+  9        DBE_OUTPUT.PRINT_LINE(pt(1));
+ 10 end;
+ 11 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[8:53] PLC-02605 Collection types not allowed in current statements
+
+SQL> drop table if exists test_table1;
+
+Succeed.
+
+SQL> 
+SQL> -- A assign to A
+SQL> set serveroutput on;
+
+ON
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3         p_key ListType;
+  4 begin
+  5        p_key(2):= 'aa';
+  6        p_key(8):= 'ww';
+  7        p_key := p_key;
+  8        DBE_OUTPUT.PRINT_LINE('prior: '||p_key.prior(10));
+  9        DBE_OUTPUT.PRINT_LINE('next: '||p_key.next(10));
+ 10 end;
+ 11 /
+
+prior: 8
+next: 
+
+PL/SQL procedure successfully completed.
+
+SQL> --error
+SQL> DECLARE
+  2   type ccc is table of int index by pls_integer;
+  3   target2 ccc DEFAULT 1;
+  4 BEGIN
+  5   DBE_OUTPUT.PRINT_LINE(target2(1));
+  6 END;
+  7 /
+
+CT-00932, [4:1] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[3:23] CT-00965, Expression is of wrong type
+
+SQL> 
+SQL> DECLARE
+  2  TYPE ORG_TABLE_TYPE IS TABLE OF VARCHAR2(25) INDEX BY BINARY_INTEGER;
+  3  V_ORG_TABLE ORG_TABLE_TYPE:= '2';
+  4 BEGIN
+  5  DBE_OUTPUT.PRINT_LINE('ok');
+  6 END;
+  7 /
+
+CT-00932, [4:1] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[3:31] CT-00965, Expression is of wrong type
+
+SQL> 
+SQL> DECLARE
+  2   type ccc is table of int index by pls_integer;
+  3   dd ccc;
+  4   dd(1):=2;
+  5 BEGIN
+  6   DBE_OUTPUT.PRINT_LINE(dd(1));
+  7 END;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[4:3] PLC-00604 Duplicate declaration name dd
+
+SQL> 
+SQL> DECLARE
+  2   type ccc is table of int index by pls_integer;
+  3   dd ccc;
+  4   type xxx is table of int index by pls_integer;
+  5   target2 xxx := dd;
+  6 BEGIN
+  7   dd(1):=9;
+  8 END;
+  9 /
+
+CT-00932, [6:1] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:18] CT-00965, Expression is of wrong type
+
+SQL> 
+SQL> DECLARE
+  2   type ccc is table of int index by pls_integer;
+  3   dd ccc;
+  4   target2 ccc DEFAULT dd;
+  5 BEGIN
+  6   dd(1):=9;
+  7   DBE_OUTPUT.PRINT_LINE(target2(1));
+  8 END;
+  9 /
+
+CT-00932, [7:3] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[7:3] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+CT-02604, no data found
+
+SQL> 
+SQL> DECLARE
+  2   type ccc is table of int index by pls_integer;
+  3   dd ccc;
+  4   target2 ccc := dd;
+  5 BEGIN
+  6   dd(1):=9;
+  7   target2 := dd;
+  8   DBE_OUTPUT.PRINT_LINE(target2(1));
+  9 END;
+ 10 /
+
+9
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --ref cursor as type member, error
+SQL> declare
+  2 type c_t1 is ref cursor;
+  3 type ccc is table of c_t1 index by pls_integer;
+  4 begin
+  5     dbe_output.print_line(' error ');
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:22] PLC-00974 Unexpected pl variant
+
+SQL> 
+SQL> declare
+  2 type c_t1 is ref cursor;
+  3 type ccc is table of int index by c_t1;
+  4 begin
+  5     dbe_output.print_line(' error ');
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:35] PLC-00974 Unexpected pl variant
+
+SQL> 
+SQL> declare
+  2 type c_t1 is ref cursor;
+  3 type ccc is table of c_t1;
+  4 begin
+  5     dbe_output.print_line(' error ');
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:22] PLC-00974 Unexpected pl variant
+
+SQL> 
+SQL> declare
+  2 type c_t1 is ref cursor;
+  3 type ccc is varray(10) of c_t1;
+  4 begin
+  5     dbe_output.print_line(' error ');
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:27] PLC-00974 Unexpected pl variant
+
+SQL> 
+SQL> declare
+  2 type c_t1 is ref cursor;
+  3 type t_record2 is record
+  4 (
+  5     c c_t1,
+  6     d sys_refcursor
+  7    );
+  8 begin
+  9     dbe_output.print_line(' error ');
+ 10 end;
+ 11 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:7] PLC-00974 Unexpected pl variant
+
+SQL> 
+SQL> declare
+  2 type ccc is table of sys_refcursor index by pls_integer;
+  3 begin
+  4     dbe_output.print_line(' error ');
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:22] PLC-00601 Sql syntax error: datatype expected, but got 'sys_refcursor'
+
+SQL> 
+SQL> --bind parameter
+SQL> drop table if exists t112;
+
+Succeed.
+
+SQL> create table t112(f1 int, name varchar(10), address varchar(10));
+
+Succeed.
+
+SQL> set serveroutput on;
+
+ON
+SQL> create or replace procedure testjob is
+  2 type nesttb is table of t112%rowtype index by pls_integer;
+  3 v1 nesttb;
+  4 v2 integer := 1;
+  5 v3 integer := 10;
+  6 v4 nesttb;
+  7 cursor v_cur is select * from t112;
+  8 begin
+  9 for i in v2..v3 loop
+ 10 insert into t112 values (i,'aa','bb');
+ 11 select * bulk collect into v1 from t112 where f1 = i;
+ 12 end loop;
+ 13 DBE_OUTPUT.PRINT_LINE(v1.count);
+ 14 open v_cur;
+ 15 loop
+ 16 fetch v_cur bulk collect into v1;
+ 17 DBE_OUTPUT.PRINT_LINE(v1.count);
+ 18 for i in v1.first .. v1.last loop
+ 19 execute immediate 'select * from t112 where f1 = :1' bulk collect into v4 using in i;
+ 20 end loop;
+ 21 exit when v_cur%notfound;
+ 22 end loop;
+ 23 close v_cur;
+ 24 for i in v4.first .. v4.last loop
+ 25 DBE_OUTPUT.PRINT_LINE(v4(i).f1);
+ 26 end loop;
+ 27 end ;
+ 28 /
+
+Succeed.
+
+SQL> call testjob();
+
+1
+10
+10
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table t112;
+
+Succeed.
+
+SQL> drop procedure testjob;
+
+Succeed.
+
+SQL> 
+SQL> -- expression for table type
+SQL> drop table if exists coll_tbl1;
+
+Succeed.
+
+SQL> create table coll_tbl1(a1 int);
+
+Succeed.
+
+SQL> insert into coll_tbl1 values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> declare
+  2  TYPE C1 IS TABLE OF INTEGER index by pls_integer;
+  3  var_C1 C1;
+  4  a int;
+  5 begin
+  6 var_C1(1):=123;
+  7  select a1 + var_C1(1) into a from coll_tbl1 order by a1;
+  8  dbe_output.print_line(a);
+  9  select a1 + var_C1(1) into a from coll_tbl1 order by a1 + var_C1(1);
+ 10  dbe_output.print_line(a);
+ 11  select a1 + var_C1(1) into a from coll_tbl1 order by var_C1(1);
+ 12  dbe_output.print_line(a);
+ 13 end;
+ 14 /
+
+124
+124
+124
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2  TYPE C1 IS TABLE OF INTEGER index by pls_integer;
+  3  var_C1 C1;
+  4  a int;
+  5 begin
+  6 var_C1(1):=123;
+  7 var_c1(2):=234;
+  8 var_c1(3):=345;
+  9  select a1 + var_C1(1) into a from coll_tbl1 order by var_C1;
+ 10  dbe_output.print_line(a);
+ 11 end;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[9:40] PLC-02605 Collection types not allowed in current statements
+
+SQL> declare
+  2  TYPE C1 IS TABLE OF INTEGER index by pls_integer;
+  3  var_C1 C1;
+  4  a int;
+  5 begin
+  6 var_C1(1):=123;
+  7 var_c1(2):=234;
+  8 var_c1(3):=345;
+  9  select a1 + var_C1(1) into a from coll_tbl1 group by var_C1(1); -- raise error
+ 10 end;
+ 11 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[9:9] PLC-00609 Expression not in group list
+
+SQL> declare
+  2  TYPE C1 IS TABLE OF INTEGER index by pls_integer;
+  3  var_C1 C1;
+  4  a int;
+  5 begin
+  6 var_C1(1):=123;
+  7 var_c1(2):=234;
+  8 var_c1(3):=345;
+  9  select a1 + var_C1(1) into a from coll_tbl1 group by var_C1;  -- raise error
+ 10 end;
+ 11 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[9:9] PLC-00609 Expression not in group list
+
+SQL> drop table coll_tbl1;
+
+Succeed.
+
+SQL> 
+SQL> -- only hash table element can be compared
+SQL> Declare
+  2  TYPE C2 IS TABLE OF INTEGER index by pls_integer;
+  3     EmpRec1  c2;
+  4     EmpRec2  c2;
+  5 Begin
+  6     EmpRec1(3):=7369;
+  7     EmpRec1(4):=800;
+  8     EmpRec1(0):=10;
+  9     EmpRec1(7):=100;
+ 10     EmpRec2 := EmpRec1;
+ 11     if EmpRec1(3) <= EmpRec2(3) then
+ 12        DBE_OUTPUT.PRINT_LINE('CantianDB');
+ 13     end if;
+ 14     if EmpRec2(7) is not null then
+ 15        DBE_OUTPUT.PRINT_LINE('Huawei');
+ 16     end if;
+ 17 End;
+ 18 /
+
+CantianDB
+Huawei
+
+PL/SQL procedure successfully completed.
+
+SQL> Declare
+  2  TYPE C2 IS TABLE OF INTEGER index by pls_integer;
+  3     EmpRec1  c2;
+  4     EmpRec2  c2;
+  5 Begin
+  6     EmpRec1(3):=7369;
+  7     EmpRec1(4):=800;
+  8     EmpRec1(0):=10;
+  9     EmpRec1(7):=100;
+ 10     EmpRec2 := EmpRec1;
+ 11     if EmpRec2 is not null then
+ 12        DBE_OUTPUT.PRINT_LINE('Huawei');
+ 13     end if;
+ 14     if EmpRec1 <= EmpRec2 then --error
+ 15        DBE_OUTPUT.PRINT_LINE('CantianDB');
+ 16     end if;
+ 17 End;
+ 18 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[14:8] PLC-00601 Sql syntax error: complex type cannot be used for condition
+[16:9] PLC-00920 Undefined symbol IF
+
+SQL> 
+SQL> DECLARE
+  2 TYPE TABLE_TYPE_SET_NULL IS TABLE OF VARCHAR(10) Index By Binary_Integer;
+  3  v1 TABLE_TYPE_SET_NULL;
+  4 BEGIN
+  5 v1(1):='ABC';
+  6 v1(2):='def';
+  7  DBE_OUTPUT.PRINT_LINE(v1(1));
+  8  DBE_OUTPUT.PRINT_LINE(v1(2));
+  9  v1 := null;  --error
+ 10  DBE_OUTPUT.PRINT_LINE(v1(1));
+ 11 END;
+ 12 /
+
+ABC
+def
+CT-00932, [9:2] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[9:2] CT-00601, Sql syntax error: associative array can't be assigned to null
+
+SQL> 
+SQL> drop table if exists test_t1;
+
+Succeed.
+
+SQL> create table test_t1(f1 varchar(30));
+
+Succeed.
+
+SQL> create or replace type test_type_varchar5 is VARRAY(5) of varchar2(10);
+  2 /
+
+Succeed.
+
+SQL> --test cast func 1st arg
+SQL> DECLARE
+  2     type test_type_varchar7 is table of varchar2(20) index by pls_integer;
+  3     i_n1 test_type_varchar7;
+  4 BEGIN
+  5     i_n1(1):='aaa';
+  6     i_n1(2):='www';
+  7     insert into test_t1 select * from table(cast(i_n1 as test_type_varchar5));
+  8 END;
+  9 /
+
+CT-00932, [7:5] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[7:5] CT-00241, The argument 1 should be type global collection
+
+SQL> 
+SQL> --test cast func 2nd arg
+SQL> DECLARE
+  2     i_n1 test_type_varchar5;
+  3     type test_type_varchar7 is table of varchar2(20) index by pls_integer;
+  4     i_n2 test_type_varchar7;
+  5 BEGIN
+  6     i_n1 :=test_type_varchar5('abc','dge');
+  7     insert into test_t1 select * from table(cast(i_n1 as test_type_varchar7));
+  8 END;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:5] PLC-00241 The argument 2 should be type global collection
+
+SQL> 
+SQL> DECLARE
+  2     type test_type_varchar7 is table of varchar2(20) index by pls_integer;
+  3     i_n1 test_type_varchar7;
+  4 BEGIN
+  5     i_n1(1):='aaa';
+  6     i_n1(2):='www';
+  7     insert into test_t1 select * from table(cast(i_n1(1) as test_type_varchar5));
+  8 END;
+  9 /
+
+CT-00932, [7:5] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[7:5] CT-00606, Inconsistent datatypes, expected COLLECTION - got VARCHAR
+
+SQL> drop type test_type_varchar5 force;
+
+Succeed.
+
+SQL> drop table test_t1 purge;
+
+Succeed.
+
+SQL> 
+SQL> -- DATA_TYP_USING_REPLACE attr using, replace DATA_TYP_USING_REPLACE success
+SQL> CREATE OR REPLACE TYPE DATA_TYP_USING_REPLACE FORCE AS OBJECT
+  2 ( year NUMBER
+  3 );
+  4 /
+
+Succeed.
+
+SQL> create or replace function FVT_FUN_01_01(id int) return int
+  2 is
+  3  count_row int := 0;
+  4  kkk DATA_TYP_USING_REPLACE;
+  5 begin
+  6  kkk := DATA_TYP_USING_REPLACE(2);
+  7  DBE_OUTPUT.PRINT_LINE(kkk.year);
+  8  execute immediate 'declare TYPE DATA_TYP_USING_REPLACE IS TABLE OF INT INDEX BY PLS_INTEGER; xxx DATA_TYP_USING_REPLACE; begin xxx(1) := '||	id || '; xxx(2) := ' || (id * 2)|| '; DBE_OUTPUT.PRINT_LINE(xxx(1)); DBE_OUTPUT.PRINT_LINE(xxx(2)); end;';
+  9  return count_row;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> declare
+  2 a int;
+  3 begin
+  4  a := FVT_FUN_01_01(3);
+  5 end;
+  6 /
+
+2
+3
+6
+
+PL/SQL procedure successfully completed.
+
+SQL> drop function FVT_FUN_01_01;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function FVT_FUN_01_02(id int) return int
+  2 is
+  3  count_row int := 0;
+  4 begin
+  5  execute immediate 'declare TYPE DATA_TYP_USING_REPLACE IS TABLE OF INT INDEX BY PLS_INTEGER; xxx DATA_TYP_USING_REPLACE; begin xxx(1) := :1 ; xxx(2) := :2; DBE_OUTPUT.PRINT_LINE(xxx(1)); DBE_OUTPUT.PRINT_LINE(xxx(2)); end;' using id, (id*2);
+  6  return count_row;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> declare
+  2 a int;
+  3 begin
+  4  a := FVT_FUN_01_02(3);
+  5 end;
+  6 /
+
+3
+6
+
+PL/SQL procedure successfully completed.
+
+SQL> drop function FVT_FUN_01_02;
+
+Succeed.
+
+SQL> drop type if exists DATA_TYP_USING_REPLACE;
+
+Succeed.
+
+SQL> 
+SQL> drop TYPE if exists c_v_s force;
+
+Succeed.
+
+SQL> drop TYPE if exists c_n_s force;
+
+Succeed.
+
+SQL> drop TYPE if exists c_n_v force;
+
+Succeed.
+
+SQL> drop TYPE if exists c_v_n force;
+
+Succeed.
+
+SQL> drop TYPE if exists r_s_s force;
+
+Succeed.
+
+SQL> drop TYPE if exists r_s_r_n_v force;
+
+Succeed.
+
+SQL> drop TYPE if exists c_v_r force;
+
+Succeed.
+
+SQL> drop TYPE if exists c_n_r force;
+
+Succeed.
+
+SQL> create type c_v_s is varray(3) of varchar(100);
+  2 /
+
+Succeed.
+
+SQL> create type c_n_s is table of number;
+  2 /
+
+Succeed.
+
+SQL> create type c_n_v is table of c_v_s;
+  2 /
+
+Succeed.
+
+SQL> create type c_v_n is varray(3) of c_n_s;
+  2 /
+
+Succeed.
+
+SQL> create type r_s_s FORCE AS OBJECT(a int, b int);
+  2 /
+
+Succeed.
+
+SQL> create type r_s_r_n_v FORCE AS OBJECT(a int, b r_s_s, c c_n_v, d c_v_n);
+  2 /
+
+Succeed.
+
+SQL> create type c_n_r is table of r_s_r_n_v;
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2     type c_v_r is table of r_s_r_n_v index by pls_integer;
+  3     type l_r_s_s is record(a int, b int);
+  4     type l_r_s_r_n_v is record(a int, b l_r_s_s, c c_v_r, d c_n_r);
+  5     type l_c_v_r is varray(3) of l_r_s_r_n_v;
+  6     type l_c_n_r is table of l_r_s_r_n_v index by pls_integer;
+  7 
+  8     v1 c_v_s := c_v_s(123, 456, 789);
+  9     v2 c_n_s := c_n_s(123, 456, 789);
+ 10     v3 c_n_v := c_n_v(v1, c_v_s(111, 222, 333));
+ 11     v4 c_v_n := c_v_n(v2, c_n_s(111, 222, 333));
+ 12     v5 r_s_s := r_s_s(1,1);
+ 13 
+ 14     v6 r_s_r_n_v := r_s_r_n_v(1, v5, v3, v4);
+ 15     v61 r_s_r_n_v;
+ 16     v7 c_v_r;
+ 17     v8 c_n_r := c_n_r(v6, v6, v6);
+ 18 
+ 19     v11 l_r_s_s;
+ 20     v12 l_r_s_r_n_v;
+ 21     v121 l_r_s_r_n_v;
+ 22     v13 l_c_v_r := l_c_v_r();
+ 23     v14 l_c_n_r;
+ 24 
+ 25 BEGIN
+ 26     v7(1):= v6;
+ 27     v7(2):= v6;
+ 28     if v11.a is NULL then
+ 29       dbe_output.PRINT_LINE('v11.a' ||' is null');
+ 30     end if;
+ 31     v11.b := 3;
+ 32     if v11.b is not NULL then
+ 33       dbe_output.PRINT_LINE('v11.b = ' || v11.b ||' is not null');
+ 34     end if;
+ 35     v11:=null;
+ 36     if v11.b is NULL then
+ 37       dbe_output.PRINT_LINE('v11.b' ||' is null');
+ 38     end if;
+ 39 
+ 40     -- local record assign
+ 41     if v12.b.b is NULL then
+ 42       dbe_output.PRINT_LINE('v12.b.b' ||' is null');
+ 43     end if;
+ 44 
+ 45     v12.b.a:=3;
+ 46     if v12.b.a is not NULL then
+ 47       dbe_output.PRINT_LINE('v12.b.a = ' || v12.b.a ||' is not null');
+ 48     end if;
+ 49 
+ 50     if v12.c is NULL then
+ 51       dbe_output.PRINT_LINE('v12.c' ||' is null');
+ 52     end if;
+ 53     v12.c := v7;
+ 54     v12.d := v8;
+ 55     v121:= v12;
+ 56     v12 := null;
+ 57     if v12.b.b is NULL then
+ 58       dbe_output.PRINT_LINE('v12.b.b' ||' is null');
+ 59     end if;
+ 60 
+ 61     if v12.c is NULL then
+ 62       dbe_output.PRINT_LINE('v12.c' ||' is null');
+ 63     end if;
+ 64 
+ 65     -- object record assign
+ 66     v61 := v6;
+ 67     v6 :=null;
+ 68     if v6 is NULL then
+ 69       dbe_output.PRINT_LINE('v6' ||' is null');
+ 70     end if;
+ 71 
+ 72     dbe_output.PRINT_LINE('v61.a = ' || v61.a);
+ 73     dbe_output.PRINT_LINE('v61.b.a = ' || v61.a);
+ 74     dbe_output.PRINT_LINE('v61.c(1)(1) = ' || v61.c(1)(1));
+ 75     dbe_output.PRINT_LINE('v61.d(1)(2) = ' || v61.d(1)(2));
+ 76 
+ 77     -- collection assign, record and object is same
+ 78     v13.extend();
+ 79     v13(1):= v121;
+ 80     v13 := null;
+ 81 
+ 82     v14(1):= v121;
+ 83     v14(1).a := 100;
+ 84     v14(1).b.a := 100;
+ 85     v14(1).b.b := 100;
+ 86     dbe_output.PRINT_LINE('v14(1).a = ' || v121.a);
+ 87     dbe_output.PRINT_LINE('v14(1).b.a = ' || v121.b.a);
+ 88     dbe_output.PRINT_LINE('v14(1).b.b = ' || v121.b.b);
+ 89     v14 := null;
+ 90     dbe_output.PRINT_LINE('v121.a = ' || v121.a);
+ 91     dbe_output.PRINT_LINE('v121.b.a = ' || v121.b.a);
+ 92     dbe_output.PRINT_LINE('v121.b.b = ' || v121.b.b);
+ 93 
+ 94 END;
+ 95 /
+
+v11.a is null
+v11.b = 3 is not null
+v11.b is null
+v12.b.b is null
+v12.b.a = 3 is not null
+v12.b.b is null
+v12.c is null
+v6 is null
+v61.a = 1
+v61.b.a = 1
+v61.c(1)(1) = 123
+v61.d(1)(2) = 456
+v14(1).a = 
+v14(1).b.a = 3
+v14(1).b.b = 
+CT-00932, [89:5] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[89:5] CT-00601, Sql syntax error: associative array can't be assigned to null
+
+SQL> drop type c_v_s FORCE;
+
+Succeed.
+
+SQL> drop type c_n_s FORCE;
+
+Succeed.
+
+SQL> drop type c_n_v FORCE;
+
+Succeed.
+
+SQL> drop type c_v_n FORCE;
+
+Succeed.
+
+SQL> drop type r_s_s FORCE;
+
+Succeed.
+
+SQL> drop type r_s_r_n_v FORCE;
+
+Succeed.
+
+SQL> drop type c_n_r FORCE;
+
+Succeed.
+
+SQL> 
+SQL> --index is not exists    prior and next
+SQL> DECLARE
+  2  TYPE Arr_Type IS table OF NUMBER index by pls_integer;
+  3  v_Numbers Arr_Type;
+  4 BEGIN
+  5  v_Numbers(1) := 10;
+  6  v_Numbers(2) := 20;
+  7  v_Numbers(3) := 30;
+  8  v_Numbers(4) := 40;
+  9  DBE_OUTPUT.PRINT_LINE(NVL(v_Numbers.prior(0), 1));
+ 10  DBE_OUTPUT.PRINT_LINE(NVL(v_Numbers.prior(5), 1));
+ 11  DBE_OUTPUT.PRINT_LINE(NVL(v_Numbers.next(5), 1));
+ 12  DBE_OUTPUT.PRINT_LINE(NVL(v_Numbers.prior(v_Numbers.first()), 1));
+ 13  DBE_OUTPUT.PRINT_LINE(NVL(v_Numbers.next(v_Numbers.last()), 1));
+ 14  DBE_OUTPUT.PRINT_LINE(NVL(v_Numbers.prior(3400), 1));
+ 15  DBE_OUTPUT.PRINT_LINE(NVL(v_Numbers.next(3400), 1));
+ 16 END;
+ 17 /
+
+1
+4
+1
+1
+1
+4
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2  TYPE nt_Type IS table OF NUMBER index by pls_integer;
+  3  v_Numbers nt_Type;
+  4 BEGIN
+  5  v_Numbers(1) := 10;
+  6  v_Numbers(2) := 20;
+  7  v_Numbers(3) := 30;
+  8  v_Numbers(4) := 40;
+  9  v_Numbers.delete(4);
+ 10  v_Numbers.delete(1);
+ 11  v_Numbers(3) := null;
+ 12  DBE_OUTPUT.PRINT_LINE(v_Numbers.prior(0));
+ 13  DBE_OUTPUT.PRINT_LINE(v_Numbers.prior(5));
+ 14  DBE_OUTPUT.PRINT_LINE(v_Numbers.next(5));
+ 15  DBE_OUTPUT.PRINT_LINE(v_Numbers.next(-1));
+ 16  DBE_OUTPUT.PRINT_LINE(v_Numbers.next(1));
+ 17  DBE_OUTPUT.PRINT_LINE(v_Numbers.prior(3400));
+ 18  DBE_OUTPUT.PRINT_LINE(v_Numbers.next(0));
+ 19 END;
+ 20 /
+
+
+3
+
+2
+2
+3
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2 TYPE t1 IS VARRAY(10) OF INTEGER; -- varray of integer
+  3 va t1 := t1(2,3,5);
+  4 vb t1 := t1(55,6,73);
+  5 vc t1 := t1(2,4);
+  6 TYPE nt1 IS table OF t1 index by pls_integer; -- varray of varray of integer
+  7 nva nt1;
+  8 i INTEGER;
+  9 j INTEGER;
+ 10 BEGIN
+ 11 nva(1) := va;
+ 12 nva(2) := vb;
+ 13 nva(3) := vc;
+ 14 nva(4) := va;
+ 15 i := nva(2)(3);
+ 16 DBE_OUTPUT.PRINT_LINE('i = ' || i);
+ 17 nva(3) := t1(56, 32);
+ 18 nva(4) := t1(45,43,67,43345);
+ 19 nva(4)(4) := 1;
+ 20 nva(4).EXTEND;
+ 21 nva(4)(5) := 909;
+ 22 FOR i IN 1 .. nva.COUNT() LOOP
+ 23     DBE_OUTPUT.PRINT_LINE('----------------------------');
+ 24     FOR j IN 1 .. nva(i).COUNT() LOOP
+ 25         DBE_OUTPUT.PRINT_LINE('nva('|| i || ') = ' || nva(i)(j));
+ 26     END LOOP;
+ 27  END LOOP;
+ 28 END;
+ 29 /
+
+i = 73
+----------------------------
+nva(1) = 2
+nva(1) = 3
+nva(1) = 5
+----------------------------
+nva(2) = 55
+nva(2) = 6
+nva(2) = 73
+----------------------------
+nva(3) = 56
+nva(3) = 32
+----------------------------
+nva(4) = 45
+nva(4) = 43
+nva(4) = 67
+nva(4) = 1
+nva(4) = 909
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2   TYPE tb IS TABLE OF VARCHAR2(20) index by pls_integer;
+  3   vtb tb;
+  4   TYPE ntb IS TABLE OF tb index by pls_integer;
+  5   vntn ntb;
+  6 BEGIN
+  7   vtb(1):=3;
+  8   vtb(2):=4;
+  9   vntn(1):=vtb;
+ 10   vntn(2) := vntn(1);
+ 11   vntn.DELETE(1);
+ 12   vntn(2).DELETE(1);
+ 13   DBE_OUTPUT.PRINT_LINE(vntn.count);
+ 14   DBE_OUTPUT.PRINT_LINE(vtb.count);
+ 15   DBE_OUTPUT.PRINT_LINE(vntn(2).count);
+ 16 END;
+ 17 /
+
+1
+2
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --Inserting %ROWTYPE Record into hash Table (Right)
+SQL> DROP TABLE if exists plch_departure;
+
+Succeed.
+
+SQL> CREATE TABLE plch_departure (destination VARCHAR2(100),departure_time VARCHAR2(20),delay NUMBER(10));
+
+Succeed.
+
+SQL> DECLARE
+  2 dep_rec plch_departure%rowtype;
+  3 type plc is table of plch_departure%rowtype index by pls_integer;
+  4 ccc plc;
+  5 BEGIN
+  6 dep_rec.destination := 'X';
+  7 dep_rec.departure_time := '0000-00-00';
+  8 dep_rec.delay := 1500;
+  9 ccc(1):=dep_rec;
+ 10 INSERT INTO plch_departure (destination, departure_time, delay)
+ 11 VALUES (ccc(1).destination, ccc(1).departure_time, ccc(1).delay);
+ 12 END;
+ 13 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from plch_departure;
+
+DESTINATION                                                      DEPARTURE_TIME       DELAY                                   
+---------------------------------------------------------------- -------------------- ----------------------------------------
+X                                                                0000-00-00           1500                                    
+
+1 rows fetched.
+
+SQL> DROP TABLE plch_departure;
+
+Succeed.
+
+SQL> 
+SQL> --test default
+SQL> DROP TABLE if exists t1;
+
+Succeed.
+
+SQL> create table t1 (a int);
+
+Succeed.
+
+SQL> DECLARE
+  2   TYPE name_rec IS RECORD (
+  3     first t1.a%TYPE DEFAULT 1
+  4   );
+  5   target name_rec;
+  6     TYPE name_rec2 IS RECORD (
+  7     rec2 t1%ROWTYPE DEFAULT target
+  8   );
+  9   dd name_rec2;
+ 10   type ccc is table of name_rec2 index by pls_integer;
+ 11   target2 ccc;
+ 12     target3 t1%ROWTYPE DEFAULT target;
+ 13 BEGIN
+ 14  target2(1):=dd;
+ 15   DBE_OUTPUT.PRINT_LINE ('target2: ' || target2(1).rec2.a);
+ 16   DBE_OUTPUT.PRINT_LINE ('target3: ' || target3.a);
+ 17 END;
+ 18 /
+
+target2: 1
+target3: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test default
+SQL> create or replace type vv1 is varray(4) of varchar2(15);
+  2 /
+
+Succeed.
+
+SQL> DECLARE
+  2   TYPE name_rec1 IS RECORD (
+  3     rec1 t1.a%TYPE DEFAULT 1,
+  4     rec1_2 int DEFAULT 2
+  5   );
+  6   target1 name_rec1;
+  7   TYPE name_rec2 IS RECORD (
+  8     rec2 t1%ROWTYPE DEFAULT target1
+  9   );
+ 10   target2 name_rec2;
+ 11   v_def_1 vv1 := vv1('aaaa');
+ 12   TYPE name_rec3 IS RECORD (
+ 13     rec3 name_rec2 DEFAULT target2,
+ 14     rec3_2 vv1 DEFAULT v_def_1,
+ 15     rec3_3 int DEFAULT 1
+ 16   );
+ 17   v_def_2 vv1 := vv1('bbbb');
+ 18   target3 name_rec3;
+ 19   TYPE name_rec4 IS RECORD (
+ 20     rec4 name_rec3 DEFAULT target3,
+ 21     rec4_2 vv1 DEFAULT v_def_2,
+ 22     rec4_3 int DEFAULT 1
+ 23   );
+ 24   target4 name_rec4;
+ 25   TYPE name_rec5 IS RECORD (
+ 26     rec5 name_rec4 DEFAULT target4
+ 27   );
+ 28   target5 name_rec5;
+ 29   type ccc is table of name_rec5 index by pls_integer;
+ 30   we ccc;
+ 31 BEGIN
+ 32   we(1):=target5;
+ 33   DBE_OUTPUT.PRINT_LINE ('DEFAULT: ' || we(1).rec5.rec4.rec3.rec2.a);
+ 34 END;
+ 35 /
+
+CT-00932, [31:1] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[31:1] CT-00965, Expression is of wrong type
+
+SQL> drop type vv1 force;
+
+Succeed.
+
+SQL> DROP TABLE t1;
+
+Succeed.
+
+SQL> 
+SQL> --expression
+SQL> declare
+  2 TYPE zzz IS TABLE OF int INDEX BY PLS_INTEGER;
+  3 c_r zzz;
+  4 c1_r zzz;
+  5 begin
+  6   select c_r + 2 into c1_r from dual;
+  7 end;
+  8 /
+
+CT-00932, [6:3] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[6:13] CT-01320, Undefined operator: COLLECTION + BINARY_INTEGER
+
+SQL> 
+SQL> declare
+  2 TYPE zzz IS TABLE OF int INDEX BY PLS_INTEGER;
+  3 type yyy is record(r zzz);
+  4 c_r yyy;
+  5 c1_r zzz;
+  6 begin
+  7   select c_r.r * 2 into c1_r from dual;
+  8 end;
+  9 /
+
+CT-00932, [7:3] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[7:14] CT-01320, Undefined operator: COLLECTION * BINARY_INTEGER
+
+SQL> 
+SQL> declare
+  2   TYPE varray1 IS table OF clob INDEX BY PLS_INTEGER;
+  3   var1 varray1;
+  4 begin
+  5     var1(1):='null';
+  6     var1(3):='';
+  7     var1(2):=null;
+  8     dbe_output.print_line('var1(2):' || var1(2) || '  var1(1):' || var1(1) ||'  var1(3):' ||var1(3));
+  9 end;
+ 10 /
+
+var1(2):  var1(1):null  var1(3):
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 TYPE for_type_null IS TABLE OF varchar(100) index by pls_integer;
+  3   nt for_type_null;
+  4 BEGIN
+  5 for i in nt.first..nt.last loop --error
+  6 dbe_output.print_line(1);
+  7 end loop;
+  8 end;
+  9 /
+
+CT-00932, [5:1] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:1] CT-00636, Invalid number null
+
+SQL> 
+SQL> --fetch cursor into hash table & record
+SQL> DECLARE--hstb.record
+  2  CURSOR c2 IS
+  3   SELECT *
+  4     FROM EMPLOYEES_UDT
+  5    WHERE REGEXP_LIKE(job_id, '[ACADFIMKSA]_M[ANGR]')
+  6    ORDER BY job_id;
+  7   TYPE namelist IS TABLE OF EMPLOYEES_UDT%ROWTYPE INDEX BY varchar(10);
+  8    v_EMPLOYEES_UDT namelist;
+  9    cc EMPLOYEES_UDT%ROWTYPE;
+ 10    i varchar(20);
+ 11 BEGIN
+ 12  i :='a';
+ 13  OPEN c2;
+ 14  LOOP
+ 15   FETCH c2
+ 16   INTO v_EMPLOYEES_UDT(i);
+ 17   EXIT WHEN c2%NOTFOUND;
+ 18   DBE_OUTPUT.PRINT_LINE(i || '  ' || RPAD(v_EMPLOYEES_UDT(i).last_name, 25, ' ') ||
+ 19                        v_EMPLOYEES_UDT(i).job_id);
+ 20  i:=i || 'b';
+ 21  END LOOP;
+ 22  CLOSE c2;
+ 23 END;
+ 24 /
+
+a  Hartstein                MK_MAN
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE--hstb.record
+  2  CURSOR c2 IS
+  3   SELECT *
+  4     FROM EMPLOYEES_UDT
+  5    WHERE REGEXP_LIKE(job_id, '[ACADFIMKSA]_M[ANGR]')
+  6    ORDER BY job_id;
+  7   TYPE namelist IS TABLE OF EMPLOYEES_UDT%ROWTYPE INDEX BY PLS_INTEGER;
+  8    v_EMPLOYEES_UDT namelist;
+  9    cc EMPLOYEES_UDT%ROWTYPE;
+ 10    i int;
+ 11 BEGIN
+ 12 cc.job_id := 'SA_MAN';
+ 13 cc.last_name := 'Greenberg';
+ 14  for i in 1.. 12 LOOP
+ 15 v_EMPLOYEES_UDT(i) := cc;
+ 16  END LOOP;
+ 17  DBE_OUTPUT.PRINT_LINE('count:'|| v_EMPLOYEES_UDT.count);
+ 18  i :=1;
+ 19  OPEN c2;
+ 20  LOOP
+ 21   FETCH c2
+ 22   INTO v_EMPLOYEES_UDT(i);
+ 23   EXIT WHEN c2%NOTFOUND;
+ 24   DBE_OUTPUT.PRINT_LINE(RPAD(v_EMPLOYEES_UDT(i).last_name, 25, ' ') ||
+ 25                        v_EMPLOYEES_UDT(i).job_id);
+ 26  i:=i+1;
+ 27  END LOOP;
+ 28  CLOSE c2;
+ 29   DBE_OUTPUT.PRINT_LINE('count:'|| v_EMPLOYEES_UDT.count);
+ 30  for i in 1.. v_EMPLOYEES_UDT.count LOOP
+ 31     DBE_OUTPUT.PRINT_LINE(RPAD(v_EMPLOYEES_UDT(i).last_name, 25, ' ') ||
+ 32                        v_EMPLOYEES_UDT(i).job_id);
+ 33  END LOOP;
+ 34 END;
+ 35 /
+
+count:12
+Hartstein                MK_MAN
+count:12
+Hartstein                MK_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+Greenberg                SA_MAN
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE--record.hstb.record
+  2  CURSOR c2 IS
+  3   SELECT *
+  4     FROM EMPLOYEES_UDT
+  5    WHERE REGEXP_LIKE(job_id, '[ACADFIMKSA]_M[ANGR]')
+  6    ORDER BY job_id;
+  7   TYPE namelist IS TABLE OF EMPLOYEES_UDT%ROWTYPE INDEX BY PLS_INTEGER;
+  8    type ccc is record(
+  9    ss namelist
+ 10    );
+ 11    v_EMPLOYEES_UDT ccc;
+ 12 BEGIN
+ 13  OPEN c2;
+ 14  LOOP
+ 15   FETCH c2
+ 16   INTO v_EMPLOYEES_UDT.ss(1);
+ 17   EXIT WHEN c2%NOTFOUND;
+ 18   DBE_OUTPUT.PRINT_LINE(RPAD(v_EMPLOYEES_UDT.ss(1).last_name, 25, ' ') ||
+ 19                        v_EMPLOYEES_UDT.ss(1).job_id);
+ 20  END LOOP;
+ 21  CLOSE c2;
+ 22 END;
+ 23 /
+
+Hartstein                MK_MAN
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE--hstb.hstb.record
+  2  CURSOR c2 IS
+  3   SELECT *
+  4     FROM EMPLOYEES_UDT
+  5    WHERE REGEXP_LIKE(job_id, '[ACADFIMKSA]_M[ANGR]')
+  6    ORDER BY job_id;
+  7   TYPE namelist IS TABLE OF EMPLOYEES_UDT%ROWTYPE INDEX BY PLS_INTEGER;
+  8   TYPE ccc IS TABLE OF namelist INDEX BY PLS_INTEGER;
+  9    v_EMPLOYEES_UDT ccc;
+ 10 BEGIN
+ 11  OPEN c2;
+ 12  LOOP
+ 13   FETCH c2
+ 14   INTO v_EMPLOYEES_UDT(2)(1);
+ 15   EXIT WHEN c2%NOTFOUND;
+ 16   DBE_OUTPUT.PRINT_LINE(RPAD(v_EMPLOYEES_UDT(2)(1).last_name, 25, ' ') ||
+ 17                        v_EMPLOYEES_UDT(2)(1).job_id);
+ 18  END LOOP;
+ 19  CLOSE c2;
+ 20 END;
+ 21 /
+
+Hartstein                MK_MAN
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DROP TABLE EMPLOYEES_UDT PURGE;
+
+Succeed.
+
+SQL> DROP TABLE JOBS PURGE;
+
+Succeed.
+
+SQL> 
+SQL> --error some method can't be function
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3         p_key ListType;
+  4         i int;
+  5 begin
+  6        p_key(2):=1;
+  7        i:=p_key.delete(2);
+  8        DBE_OUTPUT.PRINT_LINE(i);
+  9 end;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:11] PLC-00916 PL/SQL:syntax error(DELETE method is not allowed here.)
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3         p_key ListType;
+  4         i int;
+  5 begin
+  6        p_key(2):=1;
+  7        if p_key.delete(2) < 1 then
+  8        DBE_OUTPUT.PRINT_LINE('yes');
+  9        else
+ 10        DBE_OUTPUT.PRINT_LINE('no');
+ 11        end if;
+ 12 end;
+ 13 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:11] PLC-00916 PL/SQL:syntax error(DELETE method is not allowed here.)
+[9:8] PLC-00955 Unexpected ELSE found
+[11:12] PLC-00920 Undefined symbol IF
+
+SQL> 
+SQL> declare
+  2        type ListType is varray(10) of int;
+  3         p_key ListType:=ListType(null, null);
+  4         i int;
+  5 begin
+  6        p_key(2):=1;
+  7        i:=p_key.extend(2) + 1;
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:11] PLC-00916 PL/SQL:syntax error(EXTEND method is not allowed here.)
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int;
+  3         p_key ListType:=ListType(null, null);
+  4         i int;
+  5 begin
+  6        p_key(2):=1;
+  7        i:=p_key.trim(2);
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:11] PLC-00916 PL/SQL:syntax error(TRIM method is not allowed here.)
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3         p_key ListType;
+  4         i int;
+  5 begin
+  6        select 1 into i from dual order by p_key.delete(2);
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[6:1] PLC-00916 PL/SQL:syntax error(DELETE method is not allowed here.)
+
+SQL> 
+SQL> declare
+  2        type ListType is table of int index by binary_integer;
+  3         p_key ListType;
+  4         i int;
+  5 begin
+  6        p_key(1):=2;
+  7        select 1 into i from dual where p_key.prior(2) < 1;
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:1] PLC-00916 PL/SQL:syntax error(PRIOR method is not allowed here.)
+
+SQL> 
+SQL> --array to hash table
+SQL> --error
+SQL> declare
+  2 type myhash is table of int index by pls_integer;
+  3 arr myhash;
+  4 begin
+  5 select * bulk collect into arr from table(cast(array[1,2,3] as myhash));
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:1] PLC-00241 The argument 2 should be type global collection
+
+SQL> 
+SQL> --success
+SQL> set serveroutput on;
+
+ON
+SQL> declare
+  2 type myhash is table of int index by pls_integer;
+  3 arr myhash;
+  4 begin
+  5 arr := cast(array[1,2,3,4] as myhash);
+  6 for i in 1..arr.count loop
+  7     dbe_output.print_line(arr(i));
+  8 end loop;
+  9 end;
+ 10 /
+
+1
+2
+3
+4
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2 type myhash is table of int index by pls_integer;
+  3 arr myhash;
+  4 begin
+  5 --assign cast result to a udt var directly(int)
+  6 arr := cast(array[1,2,3] as myhash);
+  7 for i in 1..arr.count loop
+  8     dbe_output.print_line(arr(i));
+  9 end loop;
+ 10 arr := cast('{1,2,3}'::int[] as myhash);
+ 11 for i in 1..arr.count loop
+ 12     dbe_output.print_line(arr(i));
+ 13 end loop;
+ 14 end;
+ 15 /
+
+1
+2
+3
+1
+2
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 type myhash is table of varchar(10) index by pls_integer;
+  3 arr myhash;
+  4 begin
+  5 --assign cast result to a udt var directly(string)
+  6 arr := cast(array['li','hang','hello'] as myhash);
+  7 for i in 1..arr.count loop
+  8     dbe_output.print_line(arr(i));
+  9 end loop;
+ 10 arr := cast('{"li","hello","world"}'::varchar(10)[] as myhash);
+ 11 for i in 1..arr.count loop
+ 12     dbe_output.print_line(arr(i));
+ 13 end loop;
+ 14 end;
+ 15 /
+
+li
+hang
+hello
+li
+hello
+world
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test string truncation
+SQL> declare
+  2 type myhash is table of varchar(2) index by pls_integer;
+  3 arr myhash;
+  4 begin
+  5 arr := cast(array['liu','hang','hello'] as myhash);
+  6 for i in 1..arr.count loop
+  7     dbe_output.print_line(arr(i));
+  8 end loop;
+  9 arr := cast('{"liu","hang","world"}'::varchar(10)[] as myhash);
+ 10 for i in 1..arr.count loop
+ 11     dbe_output.print_line(arr(i));
+ 12 end loop;
+ 13 end;
+ 14 /
+
+li
+ha
+he
+li
+ha
+wo
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --local type can not be out parameter
+SQL> declare
+  2 type array_varchar2 is table of varchar(100) INDEX BY PLS_INTEGER;
+  3 zz array_varchar2;
+  4 yy array_varchar2;
+  5 str_l_querysql varchar(100);
+  6 begin
+  7     zz(1):='a';
+  8     zz(2):='b';
+  9     str_l_querysql :=
+ 10     ' begin
+ 11     :1 := :2;
+ 12     end;';
+ 13     execute immediate str_l_querysql using out yy, zz;
+ 14     dbe_output.print_line(yy(2));
+ 15 end;
+ 16 /
+
+CT-00932, [13:5] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] CT-00922, PL/SQL: illegal line(out parameter have to be of SQL types)
+
+SQL> 
+SQL> declare
+  2 type array_varchar2 is table of varchar(100);
+  3 zz array_varchar2:=array_varchar2('array', '0');
+  4 yy array_varchar2;
+  5 str_l_querysql varchar(100);
+  6 begin
+  7     zz(1):='a';
+  8     zz(2):='b';
+  9     str_l_querysql :=
+ 10     ' begin
+ 11     :1 := :2;
+ 12     end;';
+ 13     execute immediate str_l_querysql using in out yy, in zz;
+ 14     dbe_output.print_line(yy(1));
+ 15 end;
+ 16 /
+
+CT-00932, [13:5] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] CT-00922, PL/SQL: illegal line(out parameter have to be of SQL types)
+
+SQL> 
+SQL> declare
+  2 type array_varchar2 is table of varchar(100) INDEX BY PLS_INTEGER;
+  3 zz array_varchar2;
+  4 str_l_querysql varchar(100);
+  5 i varchar(10);
+  6 begin
+  7     zz(1):='a';
+  8     zz(2):='b';
+  9     str_l_querysql :=
+ 10     'begin
+ 11     :1 := :2;
+ 12     end;';
+ 13     execute immediate str_l_querysql using out i, zz(2);
+ 14     dbe_output.print_line(i);
+ 15 end;
+ 16 /
+
+b
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --error
+SQL> declare
+  2 type array_varchar2 is table of varchar(100) INDEX BY PLS_INTEGER;
+  3 zz array_varchar2;
+  4 str_l_querysql varchar(200);
+  5 i varchar(10);
+  6 begin
+  7     zz(1):='a';
+  8     zz(2):='b';
+  9     str_l_querysql :=
+ 10     'declare
+ 11     type array_varchar2 is table of varchar(100) INDEX BY PLS_INTEGER;
+ 12     yy array_varchar2;
+ 13     begin
+ 14     yy := :1;
+ 15     dbe_output.print_line(yy(2));
+ 16     end;
+ 17     ';
+ 18     execute immediate str_l_querysql using zz;
+ 19 end;
+ 20 /
+
+CT-00932, [18:5] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:5] PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with execute errors
+[5:5] CT-00965, Expression is of wrong type
+
+SQL> 
+SQL> --bug-hash table + multi-storey record
+SQL> set serveroutput on;
+
+ON
+SQL> declare
+  2 type t_table1 is table of int index by Binary_Integer;
+  3 Type RecType11 Is Record
+  4 (
+  5   a t_table1,
+  6   b int
+  7 );
+  8 type ListType Is Record
+  9 (
+ 10   c RecType11,
+ 11   d int
+ 12 );
+ 13 type secType Is Record
+ 14 (
+ 15   e ListType,
+ 16   f int
+ 17 );
+ 18         p_key secType;
+ 19 begin
+ 20        p_key.e.c.a(1):=3;
+ 21        DBE_OUTPUT.PRINT_LINE(p_key.e.c.a(1));
+ 22 end;
+ 23 /
+
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 type nesttb is table of int;
+  3 v1 nesttb;
+  4 begin
+  5 v1:=nesttb(1,2,3);
+  6 dbe_output.print_line(v1.trim);
+  7 end ;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[6:23] PLC-00916 PL/SQL:syntax error(TRIM method is not allowed here.)
+
+SQL> 
+SQL> declare
+  2 type nesttb is table of int;
+  3 v1 nesttb;
+  4 a int;
+  5 begin
+  6 v1:=nesttb(1,2,3);
+  7 a := v1.extend;
+  8 dbe_output.print_line(a);
+  9 end ;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:6] PLC-00916 PL/SQL:syntax error(EXTEND method is not allowed here.)
+
+SQL> 
+SQL> declare
+  2 type nesttb is table of int;
+  3 v1 nesttb;
+  4 a int;
+  5 begin
+  6 v1:=nesttb(1,2,3);
+  7 v1.last;
+  8 dbe_output.print_line(a);
+  9 end ;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_HASH_TABLE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:1] PLC-00916 PL/SQL:syntax error(LAST method is not allowed here.)
+
+SQL> 
+SQL> --DTS20200619
+SQL> drop table if exists DISTRIBUTE_TABLE_01_03_PURCHASE;
+
+Succeed.
+
+SQL> create table DISTRIBUTE_TABLE_01_03_PURCHASE(id int,supernon_alphabetic blob);
+
+Succeed.
+
+SQL> begin
+  2  for i in 1..5 loop
+  3    insert into DISTRIBUTE_TABLE_01_03_PURCHASE values(i, 'A1234567891011121314151617181920212223A24A25A26A27A28A29A30A31A32A3');
+  4  end loop;
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 v_sql varchar(100);
+  3 begin
+  4  update DISTRIBUTE_TABLE_01_03_PURCHASE set supernon_alphabetic=empty_blob() where id=1;
+  5  select supernon_alphabetic into v_sql from DISTRIBUTE_TABLE_01_03_PURCHASE where id=1;
+  6  dbe_output.print_line(v_sql);
+  7 end;
+  8 /
+
+
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2  cursor v_cursor is select SUPERNON_ALPHABETIC from DISTRIBUTE_TABLE_01_03_PURCHASE where SUPERNON_ALPHABETIC is not null;
+  3 begin
+  4  for i in v_cursor loop
+  5    dbe_output.print_line('ok');
+  6  end loop;
+  7  end;
+  8 /
+
+ok
+ok
+ok
+ok
+ok
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table DISTRIBUTE_TABLE_01_03_PURCHASE;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3         p_key ListType;
+  4         p2 ListType;
+  5 begin
+  6        p_key(1) := 'a';
+  7 	   p_key(2) := null;
+  8 	   p2 := p_key;
+  9        DBE_OUTPUT.PRINT_LINE(p2(1) || p2(2));
+ 10 end;
+ 11 /
+
+a
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2        type ListType is table of varchar(10) index by binary_integer;
+  3        p_key ListType;
+  4 begin
+  5        p_key(2) := null;
+  6        p_key(2) := '1';
+  7        p_key(3) := '';
+  8        p_key(3) := '1';
+  9        dbe_output.print_line(p_key(2));
+  10 end;
+  11 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user gs_plsql_hash_table cascade;
+
+Succeed.
+
+SQL> set serveroutput off;
+OFF
+
+
+

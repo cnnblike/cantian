@@ -1,0 +1,258 @@
+
+
+SQL> set term on
+
+
+SQL> @./sql/ct_testsql_1.sql
+
+SQL> select * from dual
+  2 where dual.x > 1;
+
+CT-00601, [2:7]Sql syntax error: invalid column name X
+SQL> select * from dual;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from duall;
+
+CT-00843, [1:15]The table or view SYS.DUALL does not exist.
+SQL> 
+SQL> drop function if exists f_tab_qr_getrownum1111; 
+
+Succeed.
+
+SQL> create or replace funcTioN f_tab_qr_getrownum1111
+  2 (
+  3     str_in_schema       in            varchar2,
+  4     str_in_tablename    in            varchar2,
+  5     str_in_version      in            varchar2,
+  6     i_o_rownum          out           integer
+  7 )
+  8 return integer
+  9 as
+ 10 begin    
+ 11     if (str_in_version = '0') then--default
+ 12         i_o_rownum := null;    
+ 13     elsif (str_in_version = '1') then--music
+ 14         begin
+ 15             execute immediate 'select num_rows from ' || str_in_schema || '.t_tablestat where table_name = :1' into i_o_rownum using str_in_tablename;
+ 16         exception
+ 17             when no_data_found then
+ 18                 i_o_rownum := null;
+ 19         end;    
+ 20     elsif (str_in_version in ('2', '4')) then--telecom usdp
+ 21         begin
+ 22             execute immediate 'select num_rows from ' || str_in_schema || '.usdp$table_stats where table_name = :1' into i_o_rownum using str_in_tablename;
+ 23         exception
+ 24             when no_data_found then
+ 25                 i_o_rownum := null;
+ 26         end;
+ 27     end if;
+ 28     return 1;
+ 29 exception
+ 30     when others then
+ 31         p_in_procexceptionlog('');
+ 32         return 0;
+ 33 end f_tab_qr_getrownum1111;
+ 34 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.F_TAB_QR_GETROWNUM1111) terminated with compiling errors
+[31:9] PLC-00828 procedure SYS.P_IN_PROCEXCEPTIONLOG does not exist
+[34:1] PLC-00954 more text expected but EOF found
+
+
+SQL> --create a function, which is used to output SQL result to defined file
+SQL> drop function if exists f_exportdata_ronghe_201209; 
+
+Succeed.
+
+SQL> create or replace procedure f_exportdata_ronghe_201209
+  2 (
+  3     str_in_sql                in            varchar2,
+  4     str_in_filename           in            varchar2,
+  5     str_o_error               out           varchar2,
+  6     i_o_result                out           integer
+  7 )
+  8 as
+  9     cur_l_result      pkg_type.refcur;
+ 10     str_l_record      varchar2(4000);
+ 11     v_file_handle     utl_file.file_type;
+ 12 begin
+ 13     v_file_handle := utl_file.fopen('EXPORT_DATA_PATH', str_in_filename, 'w');
+ 14 
+ 15     i_o_result := 1;
+ 16 
+ 17     open cur_l_result for str_in_sql;
+ 18 
+ 19     loop
+ 20         fetch cur_l_result into str_l_record;
+ 21 
+ 22         exit when cur_l_result%notfound;
+ 23 
+ 24         utl_file.put_line(v_file_handle, str_l_record);
+ 25 
+ 26     end loop;
+ 27 
+ 28     close cur_l_result;
+ 29     utl_file.fclose(v_file_handle);
+ 30     return;
+ 31     
+ 32 exception
+ 33     when others then      
+ 34         str_o_error := substr(SQL_ERR_MSG,1,2000);
+ 35         i_o_result := 0;    
+ 36         return; 
+ 37 end f_exportdata_ronghe_201209;
+ 38 /
+Succeed.
+Warning:
+PL/SQL(SYS.F_EXPORTDATA_RONGHE_201209) terminated with compiling errors
+[9:23] PLC-00601 Sql syntax error: datatype expected, but got 'pkg_type'
+
+
+
+
+SQL> set term off
+
+
+SQL> @./sql/ct_testsql_1.sql
+
+
+CT-00601, [2:7]Sql syntax error: invalid column name X
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+
+CT-00843, [1:15]The table or view SYS.DUALL does not exist.
+
+Succeed.
+
+
+Succeed.
+Warning:
+PL/SQL(SYS.F_TAB_QR_GETROWNUM1111) terminated with compiling errors
+[31:9] PLC-00828 procedure SYS.P_IN_PROCEXCEPTIONLOG does not exist
+[34:1] PLC-00954 more text expected but EOF found
+
+
+
+Succeed.
+
+
+Succeed.
+Warning:
+PL/SQL(SYS.F_EXPORTDATA_RONGHE_201209) terminated with compiling errors
+[9:23] PLC-00601 Sql syntax error: datatype expected, but got 'pkg_type'
+
+
+
+
+SQL> set term on
+
+
+SQL> @./sql/ct_testsql_2.sql
+
+SQL> set term off
+
+
+
+CT-00601, [2:7]Sql syntax error: invalid column name X
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+
+CT-00843, [1:15]The table or view SYS.DUALL does not exist.
+
+Succeed.
+
+
+Succeed.
+Warning:
+PL/SQL(SYS.F_TAB_QR_GETROWNUM1111) terminated with compiling errors
+[31:9] PLC-00828 procedure SYS.P_IN_PROCEXCEPTIONLOG does not exist
+[34:1] PLC-00954 more text expected but EOF found
+
+
+
+Succeed.
+
+
+Succeed.
+Warning:
+PL/SQL(SYS.F_EXPORTDATA_RONGHE_201209) terminated with compiling errors
+[9:23] PLC-00601 Sql syntax error: datatype expected, but got 'pkg_type'
+
+
+
+
+SQL> @./sql/ct_testsql_3.sql
+
+OFF
+
+ON
+
+connected.
+
+
+$Start processing script.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$Finish processing script.
+
+
+COUNT(*)            
+--------------------
+1                   
+
+
+ON
+set feedback on
+
+ON
+select count(*) from dual
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+set echo off
+
+OFF
+
+OFF
+
+
+
+
+

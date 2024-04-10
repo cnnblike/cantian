@@ -1,0 +1,214 @@
+
+
+SQL> drop table if exists TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> /*==============================================================*/
+SQL> /* Table: TRANS_RECORD_LOG                                      */
+SQL> /*==============================================================*/
+SQL> create table TRANS_RECORD_LOG
+  2 (
+  3    REF_NO               varchar(32) not null comment 'Sharding Key',
+  4    TR_TIME              timestamp(3) not null default CURRENT_TIMESTAMP(3) comment 'Partitioning Key (Per Day)',
+  5    TR_API_ID            varchar(32) not null,
+  6    TR_API_VERSION       varchar(10),
+  7    TR_CHANNEL           char(6),
+  8    REQUEST              varchar(1024) not null,
+  9    CREATE_TIME          timestamp(3) not null default CURRENT_TIMESTAMP(3),
+ 10    ID_TYPE              char(2),
+ 11    ID_NO                varchar(50),
+ 12    CUST_NAME            varchar(100),
+ 13    CUST_NO              char(16),
+ 14    UID                  varchar(12),
+ 15    CARD_NO1             varchar(50),
+ 16    CARD1_BANK_NAME      varchar(100),
+ 17    CARD1_CD_FLAG        char(1),
+ 18    CARD_NO2             varchar(50),
+ 19    CARD2_BANK_NAME      varchar(100),
+ 20    CARD2_CD_FLAG        char(1),
+ 21    ORIGINAL_REF_NO      varchar(32),
+ 22    CUST_TC_CODE         char(4),
+ 23    TX_CHNL1             varchar(5),
+ 24    TX_CHNL2             varchar(5),
+ 25    CHNL_RSP_CODE        varchar(16),
+ 26    CHNL_RSP_MSG         varchar(512),
+ 27    EXTRA_INFO           varchar(1024),
+ 28    RESERVE1             varchar(32),
+ 29    RESERVE2             varchar(64),
+ 30    RESERVE3             varchar(128),
+ 31    RSP_CODE             varchar(12),
+ 32    RSP_MSG              varchar(512),
+ 33    VERSION_TIME         timestamp(3) null,
+ 34    UPDATE_TIME          timestamp(3) default CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+ 35    DONE_TIME            timestamp(3) null,
+ 36    DURATION             int not null default 0,
+ 37    STATE                char(1) not null default 'N' comment 'N: Not Available, S: Success, F: Failure, Z: post result failure',
+ 38    RESPONSE             clob,
+ 39    primary key (REF_NO, TR_TIME)
+ 40 );
+
+Succeed.
+
+SQL> 
+SQL> /*==============================================================*/
+SQL> /* Index: TR_RECL_IDNO_IDX                                      */
+SQL> /*==============================================================*/
+SQL> create index TR_RECL_IDNO_IDX on TRANS_RECORD_LOG
+  2 (
+  3    ID_NO ASC
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> /*==============================================================*/
+SQL> /* Index: TR_RECL_CRNO1_IDX                                     */
+SQL> /*==============================================================*/
+SQL> create index TR_RECL_CRNO1_IDX on TRANS_RECORD_LOG
+  2 (
+  3    CARD_NO1 ASC
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> /*==============================================================*/
+SQL> /* Index: TR_RECL_CRNO2_IDX                                     */
+SQL> /*==============================================================*/
+SQL> create index TR_RECL_CRNO2_IDX on TRANS_RECORD_LOG
+  2 (
+  3    CARD_NO2 ASC
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> /*==============================================================*/
+SQL> /* Index: TR_RECL_TRTM_IDX                                      */
+SQL> /*==============================================================*/
+SQL> create index TR_RECL_TRTM_IDX on TRANS_RECORD_LOG
+  2 (
+  3    TR_TIME ASC
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> drop index TR_RECL_TRTM_IDX on TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> drop index TR_RECL_CRNO2_IDX on TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> drop index TR_RECL_CRNO1_IDX on TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> drop index TR_RECL_IDNO_IDX on TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> ----------------------------------------------------------------------------
+SQL> ----------------------------------------------------------------------------
+SQL> 
+SQL> drop index QR_RECL_CRNO_IDX on QUERY_RECORD_LOG;
+
+CT-00843, The table or view SYS.QUERY_RECORD_LOG does not exist.
+SQL> 
+SQL> drop index QR_RECL_IDNO_IDX on QUERY_RECORD_LOG;
+
+CT-00843, The table or view SYS.QUERY_RECORD_LOG does not exist.
+SQL> 
+SQL> drop table if exists QUERY_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> /*==============================================================*/
+SQL> /* Table: QUERY_RECORD_LOG                                      */
+SQL> /*==============================================================*/
+SQL> create table QUERY_RECORD_LOG
+  2 (
+  3    REF_NO               varchar(32) not null,
+  4    TR_TIME              timestamp(3) not null default CURRENT_TIMESTAMP(3) comment 'Sharding Key and Partitioning Key (Per Day)',
+  5    TR_API_ID            varchar(32) not null,
+  6    TR_API_VERSION       varchar(10),
+  7    TR_CHANNEL           char(6),
+  8    REQUEST              varchar(1024) not null,
+  9    CREATE_TIME          timestamp(3) not null default CURRENT_TIMESTAMP(3),
+ 10    ID_TYPE              char(2),
+ 11    ID_NO                varchar(50),
+ 12    CUST_NAME            varchar(100),
+ 13    CUST_NO              char(16),
+ 14    UID                  varchar(12),
+ 15    CARD_NO              varchar(50),
+ 16    CARD_BANK_NAME       varchar(100),
+ 17    CARD_CD_FLAG         char(1),
+ 18    EXTRA_INFO           varchar(1024),
+ 19    RESERVE1             varchar(32),
+ 20    RESERVE2             varchar(64),
+ 21    RESERVE3             varchar(128),
+ 22    RSP_CODE             varchar(12),
+ 23    RSP_MSG              varchar(512),
+ 24    UPDATE_TIME          timestamp(3) default CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+ 25    DONE_TIME            timestamp(3) null,
+ 26    DURATION             int not null default 0,
+ 27    STATE                char(1) not null default 'N' comment 'N: Not Available, S: Success, F: Failure, Z: post result failure',
+ 28    RESPONSE             clob,
+ 29    primary key (REF_NO, TR_TIME)
+ 30 );
+
+Succeed.
+
+SQL> 
+SQL> /*==============================================================*/
+SQL> /* Index: QR_RECL_IDNO_IDX                                      */
+SQL> /*==============================================================*/
+SQL> create index QR_RECL_IDNO_IDX on QUERY_RECORD_LOG
+  2 (
+  3    ID_NO ASC
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> /*==============================================================*/
+SQL> /* Index: QR_RECL_CRNO_IDX                                      */
+SQL> /*==============================================================*/
+SQL> create index QR_RECL_CRNO_IDX on QUERY_RECORD_LOG
+  2 (
+  3    CARD_NO ASC
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> drop index QR_RECL_CRNO_IDX on QUERY_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> drop index QR_RECL_IDNO_IDX on QUERY_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists QUERY_RECORD_LOG;
+Succeed.
+
+
+
+

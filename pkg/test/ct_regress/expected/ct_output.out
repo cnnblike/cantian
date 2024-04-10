@@ -1,0 +1,601 @@
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> -- [1]inout normal bind + inout normal bind
+SQL> drop procedure if exists p_out1;
+
+Succeed.
+
+SQL> create or replace procedure p_out1(v_name in out varchar, v_age in out int)
+  2 as
+  3 	sqlstr varchar2(200);
+  4 begin
+  5 	sqlstr :='123' || v_age;
+  6 	v_name :=sqlstr || v_name;
+  7 	v_age  :=sqlstr || v_age;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> call p_out1(:p1, :p2);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+OutParam #1
+
+name=[V_NAME]
+direction=[3]
+type=[VARCHAR]
+value=[123456abcd]
+
+OutParam #2
+
+name=[V_AGE]
+direction=[3]
+type=[BINARY_INTEGER]
+value=[123456456]
+
+SQL> 
+SQL> -- [2]in out normal bind + out normal bind
+SQL> drop procedure if exists p_out2;
+
+Succeed.
+
+SQL> create or replace procedure p_out2(v_name in out varchar, v_age out int)
+  2 as
+  3 	sqlstr varchar2(200);
+  4 begin
+  5 	sqlstr :='123';
+  6 	v_name :=sqlstr || v_name;
+  7 	v_age  :=sqlstr || sqlstr;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> call p_out2(:p1, :p2);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+OutParam #1
+
+name=[V_NAME]
+direction=[3]
+type=[VARCHAR]
+value=[123abcd]
+
+OutParam #2
+
+name=[V_AGE]
+direction=[2]
+type=[BINARY_INTEGER]
+value=[123123]
+
+SQL> 
+SQL> -- [3]in out normal bind + in normal no bind
+SQL> drop table if exists t_output;
+
+Succeed.
+
+SQL> create table t_output(f1 int);
+
+Succeed.
+
+SQL> insert into t_output values(1),(2),(3);
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> drop procedure if exists p_out3;
+
+Succeed.
+
+SQL> create or replace procedure p_out3(v_age in out int, v_name in int)
+  2 as
+  3 	sqlstr varchar2(200);
+  4 begin
+  5 	sqlstr :='123' || v_name;
+  6 	v_age  :=sqlstr || v_age;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> call p_out3(:p1, 789);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+OutParam #1
+
+name=[V_AGE]
+direction=[3]
+type=[BINARY_INTEGER]
+value=[123789456]
+
+SQL> 
+SQL> -- [4]in out normal bind + in normal bind
+SQL> drop table if exists t_output;
+
+Succeed.
+
+SQL> create table t_output(f1 int);
+
+Succeed.
+
+SQL> insert into t_output values(1),(2),(3);
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> drop procedure if exists p_out4;
+
+Succeed.
+
+SQL> create or replace procedure p_out4(v_age in out int, v_name in int)
+  2 as
+  3 	sqlstr varchar2(200);
+  4 begin
+  5 	sqlstr :='123' || v_name;
+  6 	v_age  :=sqlstr || v_age;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> call p_out4(:p1, :p2);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+OutParam #1
+
+name=[V_AGE]
+direction=[3]
+type=[BINARY_INTEGER]
+value=[123789456]
+
+SQL> 
+SQL> -- [5]in normal no bind+in normal no bind(test int to string)
+SQL> drop table if exists t_output;
+
+Succeed.
+
+SQL> create table t_output(a int, b varchar(200));
+
+Succeed.
+
+SQL> drop procedure if exists p_out5;
+
+Succeed.
+
+SQL> create or replace procedure p_out5(a int, b varchar)
+  2 as
+  3 c int := 1;
+  4 d int := 2;
+  5 begin
+  6   insert into t_output values(a, b);
+  7   commit;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> call p_out5(3, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from t_output order by a, b;
+
+A            B                                                               
+------------ ----------------------------------------------------------------
+3            4                                                               
+
+1 rows fetched.
+
+SQL> 
+SQL> -- [6]need keep params for sys_refcursor
+SQL> drop table if exists t_output;
+
+Succeed.
+
+SQL> create table t_output(f_int_output int, f_varchar1 varchar(200),  f_varchar2 varchar(200));
+
+Succeed.
+
+SQL> insert into t_output (f_int_output, f_varchar1, f_varchar2) values (1, 'e', 'f');
+
+1 rows affected.
+
+SQL> insert into t_output (f_int_output, f_varchar1, f_varchar2) values (2, 'e', 'f');
+
+1 rows affected.
+
+SQL> insert into t_output (f_int_output, f_varchar1, f_varchar2) values (3, 'e', 'f');
+
+1 rows affected.
+
+SQL> insert into t_output (f_int_output, f_varchar1, f_varchar2) values (4, 'e', 'f');
+
+1 rows affected.
+
+SQL> insert into t_output (f_int_output, f_varchar1, f_varchar2) values (3, 'a', 'ww');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> drop procedure if exists p_out6;
+
+Succeed.
+
+SQL> create or replace procedure p_out6 (f1 in number, n_count out number)
+  2  as
+  3    f2 int := 0;
+  4  begin
+  5 	n_count := 10;
+  6  end;
+  7 /
+
+Succeed.
+
+SQL> call p_out6(:p1,:p2);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+OutParam #1
+
+name=[N_COUNT]
+direction=[2]
+type=[NUMBER]
+value=[10]
+
+SQL> 
+SQL> create or replace procedure p_number2_out6 (f1 in number, n_count out number2)
+  2  as
+  3    f2 int := 0;
+  4  begin
+  5 	n_count := 10E50;
+  6  end;
+  7 /
+
+Succeed.
+
+SQL> call p_number2_out6(:p1,:p2);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+OutParam #1
+
+name=[N_COUNT]
+direction=[2]
+type=[NUMBER2]
+value=[1.0000000000000000000000000000000000E+51]
+
+SQL> 
+SQL> -- [7]open cursor table not exists
+SQL> drop table if exists t_not_exists;
+
+Succeed.
+
+SQL> drop procedure if exists p_out7;
+
+Succeed.
+
+SQL> create or replace procedure p_out7(result_cur out sys_refcursor)
+  2 	as
+  3 		strSQL varchar2(1000);
+  4 	begin
+  5 		strSQL := 'select * from t_not_exists order by f1, f2';
+  6 		dbe_output.print_line(strSQL);
+  7 		OPEN result_cur for strSQL;
+  8 	end p_out7;
+  9 /
+
+Succeed.
+
+SQL> call p_out7(:p1);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: Bind params successfully.
+select * from t_not_exists order by f1, f2
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[7:3] PL/SQL(SYS.P_OUT7) terminated with execute errors
+[7:3] CT-00922, PL/SQL: illegal line(sys_refcursor must open a legal SELECT statement)
+
+SQL> 
+SQL> -- [8] out param + put_line + return_result
+SQL> drop table if exists employees;
+
+Succeed.
+
+SQL> drop table if exists locations;
+
+Succeed.
+
+SQL> create table employees(employee_id int, first_name varchar2(32), last_name varchar2(32));
+
+Succeed.
+
+SQL> insert into employees values(1, 'zhang', 'wei');
+
+1 rows affected.
+
+SQL> insert into employees values(2, 'wang', 'hai');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table locations(country_id varchar2(16), city varchar2(16), state_province varchar2(16));
+
+Succeed.
+
+SQL> insert into locations values('AU', 'beijing', 'beijing');
+
+1 rows affected.
+
+SQL> insert into locations values('NKG', 'nanjing', 'jiangsu');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE p_out8(c1 in out int, c3 out varchar) 
+  2 AS
+  3   c4 SYS_REFCURSOR;
+  4   c5 SYS_REFCURSOR;
+  5   a employees%rowtype;
+  6 BEGIN
+  7   c1 := c1 + 1234;
+  8   
+  9   dbe_output.print_line('test return result1');
+ 10   
+ 11   OPEN c4 FOR
+ 12     SELECT first_name, last_name
+ 13     FROM employees
+ 14     WHERE employee_id > 0
+ 15     ORDER BY first_name, last_name;
+ 16   DBE_SQL.RETURN_CURSOR(c4);
+ 17   
+ 18   dbe_output.print_line(c1 || '8899');
+ 19   
+ 20   c3 := 'outparams' || 'put_line';
+ 21   
+ 22   OPEN c5 FOR
+ 23     SELECT city, state_province
+ 24     FROM locations
+ 25     WHERE country_id = 'AU'
+ 26     ORDER BY city, state_province;
+ 27  
+ 28   DBE_SQL.RETURN_CURSOR(c5);
+ 29   
+ 30   dbe_output.print_line(c3);
+ 31 END;
+ 32 /
+
+Succeed.
+
+SQL> 
+SQL> call p_out8(:p1, :p3);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+test return result1
+25488899
+outparamsput_line
+
+PL/SQL procedure successfully completed.
+
+OutParam #1
+
+name=[C1]
+direction=[3]
+type=[BINARY_INTEGER]
+value=[2548]
+
+OutParam #2
+
+name=[C3]
+direction=[2]
+type=[VARCHAR]
+value=[outparamsput_line]
+
+ResultSet #1
+
+FIRST_NAME                       LAST_NAME                       
+-------------------------------- --------------------------------
+wang                             hai                             
+zhang                            wei                             
+
+2 rows fetched.
+
+
+ResultSet #2
+
+CITY             STATE_PROVINCE  
+---------------- ----------------
+beijing          beijing         
+
+1 rows fetched.
+
+
+SQL> 
+SQL> -- [9] 
+SQL> set autocommit on
+
+ON
+SQL> drop table if exists gs_output_test;
+
+Succeed.
+
+SQL> create table gs_output_test(f1 int);
+
+Succeed.
+
+SQL> create or replace procedure p_out8(a in int, b out int)
+  2 as
+  3 begin
+  4     b := a;
+  5     insert into gs_output_test values(a);
+  6     insert into gs_output_test values(b);
+  7 end p_out8;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> call p_out8(?,?);
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+OutParam #1
+
+name=[B]
+direction=[2]
+type=[BINARY_INTEGER]
+value=[2]
+
+SQL> 
+SQL> select * from gs_output_test order by f1;
+
+F1          
+------------
+2           
+2           
+
+2 rows fetched.
+
+SQL> 
+SQL> --test anonymous block with pl param
+SQL> begin
+  2 insert into gs_output_test values(:p1);
+  3 insert into gs_output_test values(:p2);
+  4 commit;
+  5 end;
+  6 /
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from gs_output_test order by f1;
+
+F1          
+------------
+2           
+2           
+12345       
+12346       
+
+4 rows fetched.
+
+SQL> 
+SQL> drop table if exists testProcBind;
+
+Succeed.
+
+SQL> create table testProcBind(f1 int, f2 varchar(10), f3 varchar(20));
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 v1 number(10, 0);
+  3 begin
+  4 insert into testProcBind(f1,f2,f3) values(?,?,?);
+  5 end;
+  6 /
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: The 3th param:
+Direction : DataType : BindValue: Bind params successfully.
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from testProcBind;
+
+F1           F2         F3                  
+------------ ---------- --------------------
+1            2          3                   
+
+1 rows fetched.
+
+SQL> 
+SQL> set autocommit off
+
+OFF
+SQL> spool off
+

@@ -1,0 +1,2869 @@
+
+
+SQL> --
+SQL> -- ALTER_TABLE
+SQL> --
+SQL> --
+SQL> -- CLASS DEFINITIONS
+SQL> --
+SQL> --test add column
+SQL> drop table if exists IND_CONFS_NAME_5;
+
+Succeed.
+
+SQL> create table IND_CONFS_NAME_5 (a int, b INT,c int);
+
+Succeed.
+
+SQL> insert into IND_CONFS_NAME_5 values (1,1,1);
+
+1 rows affected.
+
+SQL> alter table IND_CONFS_NAME_5 modify c date constraint cc check (c>to_date('2018-01-01','YYYY-MM-DD'));
+
+CT-00805, Column C is not empty in table IND_CONFS_NAME_5
+SQL> drop table if exists IND_CONFS_NAME_5;
+
+Succeed.
+
+SQL> create table IND_CONFS_NAME_5 (a int, b INT,c int);
+
+Succeed.
+
+SQL> alter table IND_CONFS_NAME_5 modify c date;
+
+Succeed.
+
+SQL> alter table IND_CONFS_NAME_5 add constraint cc check (c>to_date('2018-01-01','YYYY-MM-DD'));
+
+Succeed.
+
+SQL> desc IND_CONFS_NAME_5
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+A                                            BINARY_INTEGER                      
+B                                            BINARY_INTEGER                      
+C                                            DATE                                
+
+SQL> drop table if exists IND_CONFS_NAME_5;
+
+Succeed.
+
+SQL> drop table if exists test_altertable;
+
+Succeed.
+
+SQL> drop table if exists test_altertable_1;
+
+Succeed.
+
+SQL> create table test_altertable(id int, a1 float default 3.1, a2 float default 3.2, a3 int);
+
+Succeed.
+
+SQL> insert into test_altertable values (1, default, default, 3);
+
+1 rows affected.
+
+SQL> select * from test_altertable order by id; 
+
+ID           A1                   A2                   A3          
+------------ -------------------- -------------------- ------------
+1            3.1                  3.2                  3           
+
+1 rows fetched.
+
+SQL> alter table test_altertable add a4 varchar(10) default 'abcd';
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   A2                   A3           A4        
+------------ -------------------- -------------------- ------------ ----------
+1            3.1                  3.2                  3            abcd      
+
+1 rows fetched.
+
+SQL> insert into test_altertable (id, a4) values (2, default);
+
+1 rows affected.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   A2                   A3           A4        
+------------ -------------------- -------------------- ------------ ----------
+1            3.1                  3.2                  3            abcd      
+2            3.1                  3.2                               abcd      
+
+2 rows fetched.
+
+SQL> alter table test_altertable add a5 int;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   A2                   A3           A4         A5          
+------------ -------------------- -------------------- ------------ ---------- ------------
+1            3.1                  3.2                  3            abcd                   
+2            3.1                  3.2                               abcd                   
+
+2 rows fetched.
+
+SQL> alter table test_altertable add a6 int default 66;
+
+Succeed.
+
+SQL> insert into test_altertable (id) values (3);
+
+1 rows affected.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   A2                   A3           A4         A5           A6          
+------------ -------------------- -------------------- ------------ ---------- ------------ ------------
+1            3.1                  3.2                  3            abcd                    66          
+2            3.1                  3.2                               abcd                    66          
+3            3.1                  3.2                               abcd                    66          
+
+3 rows fetched.
+
+SQL> drop table test_altertable;
+
+Succeed.
+
+SQL> 
+SQL> --test modify column
+SQL> create table test_altertable(id int,a1 char, a2 char, a3 char, a4 int, a5 char);
+
+Succeed.
+
+SQL> select * from test_altertable;
+
+ID           A1 A2 A3 A4           A5
+------------ -- -- -- ------------ --
+
+0 rows fetched.
+
+SQL> 
+SQL> alter table test_altertable modify a4 char;
+
+Succeed.
+
+SQL> insert into test_altertable (id, a4) values (1, 'a');
+
+1 rows affected.
+
+SQL> alter table test_altertable modify a4 char;
+
+Succeed.
+
+SQL> alter table test_altertable modify aa4 char;
+
+CT-00844, The column TEST_ALTERTABLE.AA4 does not exist.
+SQL> select * from test_altertable order by id;
+
+ID           A1 A2 A3 A4 A5
+------------ -- -- -- -- --
+1                     a    
+
+1 rows fetched.
+
+SQL> alter table test_altertable modify a1 char;
+
+Succeed.
+
+SQL> insert into test_altertable (id, a1) values (2, 'a');
+
+1 rows affected.
+
+SQL> alter table test_altertable modify a1 char;
+
+Succeed.
+
+SQL> alter table test_altertable modify aa1 char;
+
+CT-00844, The column TEST_ALTERTABLE.AA1 does not exist.
+SQL> select * from test_altertable order by id;
+
+ID           A1 A2 A3 A4 A5
+------------ -- -- -- -- --
+1                     a    
+2            a             
+
+2 rows fetched.
+
+SQL> alter table test_altertable modify a5 char;
+
+Succeed.
+
+SQL> insert into test_altertable (id, a5) values (3, 'a');
+
+1 rows affected.
+
+SQL> alter table test_altertable modify a5 char;
+
+Succeed.
+
+SQL> alter table test_altertable modify aa5 char;
+
+CT-00844, The column TEST_ALTERTABLE.AA5 does not exist.
+SQL> select * from test_altertable order by id;
+
+ID           A1 A2 A3 A4 A5
+------------ -- -- -- -- --
+1                     a    
+2            a             
+3                        a 
+
+3 rows fetched.
+
+SQL> update test_altertable set a1=null where id=2;
+
+1 rows affected.
+
+SQL> alter table test_altertable modify a1 int;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1           A2 A3 A4 A5
+------------ ------------ -- -- -- --
+1                               a    
+2                                    
+3                                  a 
+
+3 rows fetched.
+
+SQL> alter table test_altertable modify a1 varchar(10);
+
+Succeed.
+
+SQL> alter table test_altertable modify a1 varchar(20) default 'abc01234567890';
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   A2 A3 A4 A5
+------------ -------------------- -- -- -- --
+1                                       a    
+2                                            
+3                                          a 
+
+3 rows fetched.
+
+SQL> 
+SQL> alter table test_altertable rename column a2 to ar2;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 A5
+------------ -------------------- --- -- -- --
+1                                        a    
+2                                             
+3                                           a 
+
+3 rows fetched.
+
+SQL> insert into test_altertable (id, ar2) values (4, 'a');
+
+1 rows affected.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 A5
+------------ -------------------- --- -- -- --
+1                                        a    
+2                                             
+3                                           a 
+4            abc01234567890       a           
+
+4 rows fetched.
+
+SQL> alter table test_altertable rename column aa2 to a2;
+
+CT-00844, The column SYS.AA2 does not exist.
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 A5
+------------ -------------------- --- -- -- --
+1                                        a    
+2                                             
+3                                           a 
+4            abc01234567890       a           
+
+4 rows fetched.
+
+SQL> alter table test_altertable rename column a3 to a4;
+
+CT-00753, The object column A4 already exists.
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 A5
+------------ -------------------- --- -- -- --
+1                                        a    
+2                                             
+3                                           a 
+4            abc01234567890       a           
+
+4 rows fetched.
+
+SQL> alter table test_altertable rename column a5 to ar5;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 AR5
+------------ -------------------- --- -- -- ---
+1                                        a     
+2                                              
+3                                           a  
+4            abc01234567890       a            
+
+4 rows fetched.
+
+SQL> insert into test_altertable (id, ar5) values (5, 'a');
+
+1 rows affected.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 AR5
+------------ -------------------- --- -- -- ---
+1                                        a     
+2                                              
+3                                           a  
+4            abc01234567890       a            
+5            abc01234567890                 a  
+
+5 rows fetched.
+
+SQL> alter table test_altertable rename column aa5 to a5;
+
+CT-00844, The column SYS.AA5 does not exist.
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 AR5
+------------ -------------------- --- -- -- ---
+1                                        a     
+2                                              
+3                                           a  
+4            abc01234567890       a            
+5            abc01234567890                 a  
+
+5 rows fetched.
+
+SQL> alter table test_altertable rename column a5 to a4;
+
+CT-00844, The column SYS.A5 does not exist.
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 AR5
+------------ -------------------- --- -- -- ---
+1                                        a     
+2                                              
+3                                           a  
+4            abc01234567890       a            
+5            abc01234567890                 a  
+
+5 rows fetched.
+
+SQL> 
+SQL> update test_altertable set a1=11;
+
+5 rows affected.
+
+SQL> select * from test_altertable order by id;
+
+ID           A1                   AR2 A3 A4 AR5
+------------ -------------------- --- -- -- ---
+1            11                          a     
+2            11                                
+3            11                             a  
+4            11                   a            
+5            11                             a  
+
+5 rows fetched.
+
+SQL> alter table test_altertable drop column a1;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5
+------------ --- -- -- ---
+1                   a     
+2                         
+3                      a  
+4            a            
+5                      a  
+
+5 rows fetched.
+
+SQL> select t.NAME, c.ID, c.NAME, c.FLAGS from SYS_COLUMNS c, SYS_TABLES t where t.NAME='TEST_ALTERTABLE' and t.id = c.TABLE# ORDER BY c.ID;
+
+NAME                                                             ID           NAME                                                             FLAGS       
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------
+TEST_ALTERTABLE                                                  0            ID                                                               0           
+TEST_ALTERTABLE                                                  1            A1                                                               2           
+TEST_ALTERTABLE                                                  2            AR2                                                              0           
+TEST_ALTERTABLE                                                  3            A3                                                               0           
+TEST_ALTERTABLE                                                  4            A4                                                               0           
+TEST_ALTERTABLE                                                  5            AR5                                                              0           
+
+6 rows fetched.
+
+SQL> alter table test_altertable add a1 char;
+
+Succeed.
+
+SQL> select c.ID, c.NAME, c.FLAGS from SYS_COLUMNS c, SYS_TABLES t where t.NAME='TEST_ALTERTABLE' and t.id = c.TABLE# ORDER BY c.ID;
+
+ID           NAME                                                             FLAGS       
+------------ ---------------------------------------------------------------- ------------
+0            ID                                                               0           
+1            A1                                                               2           
+2            AR2                                                              0           
+3            A3                                                               0           
+4            A4                                                               0           
+5            AR5                                                              0           
+6            A1                                                               0           
+
+7 rows fetched.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 A1
+------------ --- -- -- --- --
+1                   a        
+2                            
+3                      a     
+4            a               
+5                      a     
+
+5 rows fetched.
+
+SQL> insert into test_altertable (id, a1) values (6, 'a');
+
+1 rows affected.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 A1
+------------ --- -- -- --- --
+1                   a        
+2                            
+3                      a     
+4            a               
+5                      a     
+6                          a 
+
+6 rows fetched.
+
+SQL> alter table test_altertable drop column a1;
+
+Succeed.
+
+SQL> select c.ID, c.NAME, c.FLAGS from SYS_COLUMNS c, SYS_TABLES t where t.NAME='TEST_ALTERTABLE' and t.id = c.TABLE# ORDER BY c.ID;
+
+ID           NAME                                                             FLAGS       
+------------ ---------------------------------------------------------------- ------------
+0            ID                                                               0           
+1            A1                                                               2           
+2            AR2                                                              0           
+3            A3                                                               0           
+4            A4                                                               0           
+5            AR5                                                              0           
+6            A1                                                               2           
+
+7 rows fetched.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5
+------------ --- -- -- ---
+1                   a     
+2                         
+3                      a  
+4            a            
+5                      a  
+6                         
+
+6 rows fetched.
+
+SQL> alter table test_altertable drop column a5;
+
+CT-00844, The column TEST_ALTERTABLE.A5 does not exist.
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5
+------------ --- -- -- ---
+1                   a     
+2                         
+3                      a  
+4            a            
+5                      a  
+6                         
+
+6 rows fetched.
+
+SQL> alter table test_altertable add a5 char;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 A5
+------------ --- -- -- --- --
+1                   a        
+2                            
+3                      a     
+4            a               
+5                      a     
+6                            
+
+6 rows fetched.
+
+SQL> insert into test_altertable (id, a5) values (7, 'a');
+
+1 rows affected.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 A5
+------------ --- -- -- --- --
+1                   a        
+2                            
+3                      a     
+4            a               
+5                      a     
+6                            
+7                          a 
+
+7 rows fetched.
+
+SQL> alter table test_altertable drop column a5;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5
+------------ --- -- -- ---
+1                   a     
+2                         
+3                      a  
+4            a            
+5                      a  
+6                         
+7                         
+
+7 rows fetched.
+
+SQL> alter table test_altertable add a1 char;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 A1
+------------ --- -- -- --- --
+1                   a        
+2                            
+3                      a     
+4            a               
+5                      a     
+6                            
+7                            
+
+7 rows fetched.
+
+SQL> alter table test_altertable add a5 char;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 A1 A5
+------------ --- -- -- --- -- --
+1                   a           
+2                               
+3                      a        
+4            a                  
+5                      a        
+6                               
+7                               
+
+7 rows fetched.
+
+SQL> 
+SQL> alter table test_altertable modify A1 int;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 A1           A5
+------------ --- -- -- --- ------------ --
+1                   a                     
+2                                         
+3                      a                  
+4            a                            
+5                      a                  
+6                                         
+7                                         
+
+7 rows fetched.
+
+SQL> alter table test_altertable rename column A1 to AaA1;
+
+Succeed.
+
+SQL> select c.ID, c.NAME, c.FLAGS from SYS_COLUMNS c, SYS_TABLES t where t.NAME='TEST_ALTERTABLE' and t.id = c.TABLE# ORDER BY c.ID;
+
+ID           NAME                                                             FLAGS       
+------------ ---------------------------------------------------------------- ------------
+0            ID                                                               0           
+1            A1                                                               2           
+2            AR2                                                              0           
+3            A3                                                               0           
+4            A4                                                               0           
+5            AR5                                                              0           
+6            A1                                                               2           
+7            A5                                                               2           
+8            AAA1                                                             0           
+9            A5                                                               0           
+
+10 rows fetched.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 AAA1         A5
+------------ --- -- -- --- ------------ --
+1                   a                     
+2                                         
+3                      a                  
+4            a                            
+5                      a                  
+6                                         
+7                                         
+
+7 rows fetched.
+
+SQL> alter table test_altertable modify aaa1 char;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 AAA1 A5
+------------ --- -- -- --- ---- --
+1                   a             
+2                                 
+3                      a          
+4            a                    
+5                      a          
+6                                 
+7                                 
+
+7 rows fetched.
+
+SQL> alter table test_altertable drop column AAA1;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           AR2 A3 A4 AR5 A5
+------------ --- -- -- --- --
+1                   a        
+2                            
+3                      a     
+4            a               
+5                      a     
+6                            
+7                            
+
+7 rows fetched.
+
+SQL> drop table test_altertable;
+
+Succeed.
+
+SQL> 
+SQL> create table test_altertable(id int, a1 char, a2 char, a3 char, a4 varchar(10) default 'abcd', a5 char);
+
+Succeed.
+
+SQL> insert into test_altertable values (1,'a','b','c',default,'e');
+
+1 rows affected.
+
+SQL> insert into test_altertable values (2,'a','b','c','d','e');
+
+1 rows affected.
+
+SQL> alter table test_altertable add constraint pk_test primary key (a4);
+
+Succeed.
+
+SQL> insert into test_altertable values (3,'a','b','c',default,'e');
+
+CT-00729, Unique constraint violated, index PK_TEST, duplicate key abcd
+SQL> alter table test_altertable drop constraint pk_test;
+
+Succeed.
+
+SQL> insert into test_altertable values (3,'a','b','c',default,default);
+
+CT-01316, [1:59]Unexpected 'DEFAULT' found
+SQL> alter table test_altertable add constraint pk_test primary key (a5);
+
+CT-00729, Unique constraint violated
+SQL> alter table test_altertable add constraint un_test unique (a5);
+
+CT-00729, Unique constraint violated
+SQL> update test_altertable set a5='x' where id=2;
+
+1 rows affected.
+
+SQL> update test_altertable set a5='y' where id=3;
+
+0 rows affected.
+
+SQL> alter table test_altertable add constraint un_test unique (a5);
+
+Succeed.
+
+SQL> select i.ID,i.NAME from SYS_INDEXES i, SYS_TABLES t where t.id = i.TABLE# and t.name = 'TEST_ALTERTABLE' order by i.NAME;
+
+ID           NAME                                                            
+------------ ----------------------------------------------------------------
+0            UN_TEST                                                         
+
+1 rows fetched.
+
+SQL> alter table test_altertable drop constraint un_test;
+
+Succeed.
+
+SQL> 
+SQL> alter table test_altertable add constraint pk_test primary key (a3);
+
+CT-00729, Unique constraint violated
+SQL> alter table test_altertable add constraint pk_test primary key (a3);
+
+CT-00729, Unique constraint violated
+SQL> alter table test_altertable add constraint pk_test primary key (a4);
+
+Succeed.
+
+SQL> alter table test_altertable add constraint pk_test1 primary key (a4);
+
+CT-00640, The table had more than one primary key
+SQL> alter table test_altertable add constraint un_test unique (id);
+
+Succeed.
+
+SQL> alter table test_altertable add constraint un_test1 unique (id);
+
+CT-00726, The column has been indexed by UN_TEST.
+SQL> alter table test_altertable add constraint un_test unique (a1);
+
+CT-00753, The object constraint UN_TEST already exists.
+SQL> alter table test_altertable add constraint un_test1 unique (a1);
+
+CT-00729, Unique constraint violated
+SQL> select i.ID,i.NAME from SYS_INDEXES i, SYS_TABLES t where t.id = i.TABLE# and t.name = 'TEST_ALTERTABLE' order by i.NAME;
+
+ID           NAME                                                            
+------------ ----------------------------------------------------------------
+0            PK_TEST                                                         
+1            UN_TEST                                                         
+
+2 rows fetched.
+
+SQL> alter table test_altertable drop constraint un_test;
+
+Succeed.
+
+SQL> alter table test_altertable drop constraint pk_test;
+
+Succeed.
+
+SQL> alter table test_altertable drop constraint un_test1;
+
+CT-00811, The constraint UN_TEST1 does not exist.
+SQL> 
+SQL> drop table test_altertable;
+
+Succeed.
+
+SQL> 
+SQL> create table test_altertable(id int, a1 char, a2 char, a3 char, a4 varchar(10) default 'abcd', a5 char);
+
+Succeed.
+
+SQL> create table test_altertable_1(id int, a1 char, a2 char, a3 char, a4 varchar(10) default 'abcd', a5 char);
+
+Succeed.
+
+SQL> insert into test_altertable values (1,'a','b','c',default,'e');
+
+1 rows affected.
+
+SQL> insert into test_altertable_1 values (1,'a','b','c',default,'e');
+
+1 rows affected.
+
+SQL> alter table test_altertable add constraint pk_test primary key (a1);
+
+Succeed.
+
+SQL> alter table test_altertable add constraint un_test unique (a2);
+
+Succeed.
+
+SQL> alter table test_altertable_1 add constraint pk_test1 primary key (a1);
+
+Succeed.
+
+SQL> alter table test_altertable_1 add constraint un_test1 unique (a2);
+
+Succeed.
+
+SQL> alter table test_altertable drop constraint pk_test;
+
+Succeed.
+
+SQL> select i.ID,i.NAME from SYS_INDEXES i, SYS_TABLES t where t.id = i.TABLE# and (t.name = 'TEST_ALTERTABLE' or t.name = 'TEST_ALTERTABLE_1') order by i.NAME;
+
+ID           NAME                                                            
+------------ ----------------------------------------------------------------
+0            PK_TEST1                                                        
+1            UN_TEST                                                         
+1            UN_TEST1                                                        
+
+3 rows fetched.
+
+SQL> 
+SQL> drop table test_altertable;
+
+Succeed.
+
+SQL> drop table test_altertable_1;
+
+Succeed.
+
+SQL> select i.ID,i.NAME from SYS_INDEXES i, SYS_TABLES t where t.id = i.TABLE# and (t.name = 'TEST_ALTERTABLE' or t.name = 'TEST_ALTERTABLE_1') order by i.NAME;
+
+ID           NAME                                                            
+------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> -- test modify column with default value
+SQL> create table test_altertable(id int);
+
+Succeed.
+
+SQL> insert into test_altertable(id) values(1);
+
+1 rows affected.
+
+SQL> alter table test_altertable add c1 varchar(10);
+
+Succeed.
+
+SQL> insert into test_altertable(id) values(2);
+
+1 rows affected.
+
+SQL> insert into test_altertable(id, c1) values(3, 'abc');
+
+1 rows affected.
+
+SQL> select * from test_altertable order by id;
+
+ID           C1        
+------------ ----------
+1                      
+2                      
+3            abc       
+
+3 rows fetched.
+
+SQL> alter table test_altertable modify c1 varchar(20) default 'varchar10';
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID           C1                  
+------------ --------------------
+1                                
+2                                
+3            abc                 
+
+3 rows fetched.
+
+SQL> alter table test_altertable drop column c1;
+
+Succeed.
+
+SQL> select * from test_altertable order by id;
+
+ID          
+------------
+1           
+2           
+3           
+
+3 rows fetched.
+
+SQL> drop table test_altertable;
+
+Succeed.
+
+SQL> 
+SQL> -- test modify lob column
+SQL> create table test_altertable(c1 clob, c2 blob);
+
+Succeed.
+
+SQL> alter table test_altertable modify c1 varchar(4000);
+
+Succeed.
+
+SQL> alter table test_altertable modify c2 binary(4000);
+
+Succeed.
+
+SQL> drop table test_altertable;
+
+Succeed.
+
+SQL> 
+SQL> -- test alter table rename to
+SQL> CREATE TABLE test_table_old(c1 integer);
+
+Succeed.
+
+SQL> INSERT INTO test_table_old VALUES(1);
+
+1 rows affected.
+
+SQL> INSERT INTO test_table_old VALUES(2);
+
+1 rows affected.
+
+SQL> INSERT INTO test_table_old VALUES(3);
+
+1 rows affected.
+
+SQL> SELECT * FROM test_table_old;
+
+C1          
+------------
+1           
+2           
+3           
+
+3 rows fetched.
+
+SQL> ALTER TABLE test_table_old RENAME TO test_table_new;
+
+Succeed.
+
+SQL> SELECT * FROM test_table_old;
+
+CT-00843, [1:15]The table or view SYS.TEST_TABLE_OLD does not exist.
+SQL> SELECT * FROM test_table_new;
+
+C1          
+------------
+1           
+2           
+3           
+
+3 rows fetched.
+
+SQL> DROP TABLE test_table_new;
+
+Succeed.
+
+SQL> 
+SQL> -- test ddl on view
+SQL> DROP VIEW IF EXISTS test_view_ddl;
+
+Succeed.
+
+SQL> CREATE VIEW test_view_ddl AS SELECT * FROM SYS_TABLES;
+
+Succeed.
+
+SQL> ALTER TABLE test_view_ddl ADD c1 integer;
+
+CT-00130, Operation alter table is not supported on view or system table
+SQL> ALTER TABLE test_view_ddl ADD CONSTRAINT pk_test_view_ddl PRIMARY KEY(id);
+
+CT-00130, Operation alter table is not supported on view or system table
+SQL> CREATE INDEX ix_test_view_ddl ON test_view_ddl(id);
+
+CT-00130, Operation create index is not supported on view
+SQL> TRUNCATE TABLE test_view_ddl;
+
+CT-00130, Operation truncate table is not supported on view or system table
+SQL> DROP VIEW test_view_ddl;
+
+Succeed.
+
+SQL> 
+SQL> --dts
+SQL> --DTS2017120901598 & DTS2017120901407
+SQL> DROP TABLE IF EXISTS ref_cons_column1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS drop_cons_column1;
+
+Succeed.
+
+SQL> CREATE TABLE drop_cons_column1(c1 int, c2 int, c3 int, CONSTRAINT drop_pk1 PRIMARY KEY(c1, c2), c4 int UNIQUE, c5 int, CONSTRAINT drop_unique1 UNIQUE(c4, c5));
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 add CONSTRAINT if not exists drop_pk1 PRIMARY KEY(c1, c2,c3);
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 add CONSTRAINT drop_pk1 PRIMARY KEY(c1, c2,c3);
+
+CT-00753, The object constraint DROP_PK1 already exists.
+SQL> ALTER TABLE drop_cons_column1 drop CONSTRAINT if exists drop_pk;
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 drop CONSTRAINT drop_pk;
+
+CT-00811, The constraint DROP_PK does not exist.
+SQL> CREATE TABLE ref_cons_column1(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> ALTER TABLE ref_cons_column1 ADD FOREIGN KEY(c1, c2) REFERENCES drop_cons_column1(c1, c2);
+
+Succeed.
+
+SQL> ALTER TABLE ref_cons_column1 ADD FOREIGN KEY(c3) REFERENCES drop_cons_column1(c4);
+
+Succeed.
+
+SQL> ALTER TABLE ref_cons_column1 DROP COLUMN c1;
+
+CT-00755, The column was referenced as a constraint.
+SQL> ALTER TABLE ref_cons_column1 DROP COLUMN c2;
+
+CT-00755, The column was referenced as a constraint.
+SQL> ALTER TABLE ref_cons_column1 DROP COLUMN c3;
+
+Succeed.
+
+SQL> DROP TABLE ref_cons_column1;
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 DROP COLUMN c1;
+
+CT-00755, The column was referenced as a constraint.
+SQL> ALTER TABLE drop_cons_column1 DROP COLUMN c2;
+
+CT-00755, The column was referenced as a constraint.
+SQL> ALTER TABLE drop_cons_column1 DROP CONSTRAINT drop_pk1;
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 DROP COLUMN c1;
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 DROP COLUMN c2;
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 DROP COLUMN c4;
+
+CT-00755, The column was referenced as a constraint.
+SQL> ALTER TABLE drop_cons_column1 DROP COLUMN c5;
+
+CT-00755, The column was referenced as a constraint.
+SQL> ALTER TABLE drop_cons_column1 DROP CONSTRAINT drop_unique1;
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 DROP COLUMN c4;
+
+Succeed.
+
+SQL> ALTER TABLE drop_cons_column1 DROP COLUMN c5;
+
+Succeed.
+
+SQL> SELECT * FROM drop_cons_column1;
+
+C3          
+------------
+
+0 rows fetched.
+
+SQL> DROP TABLE drop_cons_column1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS drop_cons_column2;
+
+Succeed.
+
+SQL> CREATE TABLE drop_cons_column2(c1 int, c2 int, c3 int, CONSTRAINT drop_pk2 PRIMARY KEY(c1, c2), c4 int, c5 int, CONSTRAINT drop_unique2 UNIQUE(c4, c5));
+
+Succeed.
+
+SQL> SELECT name FROM SYS_INDEXES WHERE name ='DROP_PK2' or name ='DROP_UNIQUE2' ORDER BY name;
+
+NAME                                                            
+----------------------------------------------------------------
+DROP_PK2                                                        
+DROP_UNIQUE2                                                    
+
+2 rows fetched.
+
+SQL> SELECT cons_name, cons_type FROM SYS_CONSTRAINT_DEFS WHERE cons_name ='DROP_PK2' or cons_name ='DROP_UNIQUE2' ORDER BY cons_name;
+
+CONS_NAME                                                        CONS_TYPE   
+---------------------------------------------------------------- ------------
+DROP_PK2                                                         0           
+DROP_UNIQUE2                                                     1           
+
+2 rows fetched.
+
+SQL> ALTER TABLE drop_cons_column2 DROP COLUMN c4;
+
+CT-00755, The column was referenced as a constraint.
+SQL> ALTER TABLE drop_cons_column2 DROP COLUMN c5;
+
+CT-00755, The column was referenced as a constraint.
+SQL> SELECT name FROM SYS_INDEXES WHERE name ='DROP_PK2' or name ='DROP_UNIQUE2' ORDER BY name;
+
+NAME                                                            
+----------------------------------------------------------------
+DROP_PK2                                                        
+DROP_UNIQUE2                                                    
+
+2 rows fetched.
+
+SQL> SELECT cons_name, cons_type FROM SYS_CONSTRAINT_DEFS WHERE cons_name ='DROP_PK2' or cons_name ='DROP_UNIQUE2' ORDER BY cons_name;
+
+CONS_NAME                                                        CONS_TYPE   
+---------------------------------------------------------------- ------------
+DROP_PK2                                                         0           
+DROP_UNIQUE2                                                     1           
+
+2 rows fetched.
+
+SQL> --DTS2017120809170 & DTS2017120806977 & DTS2017120713138
+SQL> DROP TABLE IF EXISTS drop_fk2;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS drop_fk1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS drop_fk0;
+
+Succeed.
+
+SQL> CREATE TABLE drop_fk0(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> ALTER TABLE drop_fk0 ADD CONSTRAINT pk_drop_fk0 PRIMARY KEY(c1, c2);
+
+Succeed.
+
+SQL> DROP TABLE drop_fk0;
+
+Succeed.
+
+SQL> CREATE TABLE drop_fk1(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> ALTER TABLE drop_fk1 ADD CONSTRAINT pk_drop_fk0 PRIMARY KEY(c1, c2);
+
+Succeed.
+
+SQL> CREATE TABLE drop_fk2(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> ALTER TABLE drop_fk2 ADD CONSTRAINT ref_drop_fk2 FOREIGN KEY(c1, c2) REFERENCES drop_fk1(c1);
+
+CT-00601, Sql syntax error: number of referencing columns must match referenced columns.
+SQL> ALTER TABLE drop_fk2 ADD CONSTRAINT ref_drop_fk2 FOREIGN KEY(c1, c2) REFERENCES drop_fk1(c1, c2);
+
+Succeed.
+
+SQL> ALTER TABLE drop_fk1 MODIFY c1 VARCHAR(10);
+
+CT-00817, In the FOREIGN KEY constraint, the column type does not match the type of the referenced column.
+SQL> ALTER TABLE drop_fk2 MODIFY c2 VARCHAR(10);
+
+CT-00817, In the FOREIGN KEY constraint, the column type does not match the type of the referenced column.
+SQL> ALTER TABLE drop_fk2 DROP CONSTRAINT ref_drop_fk2;
+
+Succeed.
+
+SQL> DROP TABLE drop_fk2;
+
+Succeed.
+
+SQL> DROP TABLE drop_fk1;
+
+Succeed.
+
+SQL> 
+SQL> --constraints using existing index
+SQL> DROP TABLE IF EXISTS test_cons;
+
+Succeed.
+
+SQL> CREATE TABLE test_cons(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> CREATE INDEX ix_cons ON test_cons(c1, c3);
+
+Succeed.
+
+SQL> ALTER TABLE test_cons ADD CONSTRAINT pk_cons PRIMARY KEY(c1, c3);
+
+Succeed.
+
+SQL> SELECT count(*) FROM SYS_INDEXES i, SYS_TABLES t WHERE i.USER#=t.USER# and i.TABLE#=t.ID and t.NAME='TEST_CONS';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> DROP INDEX ix_cons ON test_cons;
+
+CT-00651, The index cannot be deleted because it is referenced by a primary key or unique index
+SQL> INSERT INTO test_cons VALUES(null,1, 1);
+
+CT-00620, Can't set NULL value for column 'C1'
+SQL> INSERT INTO test_cons VALUES(1,2, 1);
+
+1 rows affected.
+
+SQL> INSERT INTO test_cons VALUES(1,3, 1);
+
+CT-00729, Unique constraint violated, index IX_CONS, duplicate key 1-1
+SQL> ALTER TABLE test_cons DROP CONSTRAINT pk_cons;
+
+Succeed.
+
+SQL> INSERT INTO test_cons VALUES(null,1, 1);
+
+CT-00620, Can't set NULL value for column 'C1'
+SQL> INSERT INTO test_cons VALUES(1,3, 1);
+
+1 rows affected.
+
+SQL> DROP INDEX ix_cons ON test_cons;
+
+Succeed.
+
+SQL> DROP TABLE test_cons;
+
+Succeed.
+
+SQL> CREATE TABLE test_cons(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> CREATE INDEX ix_cons ON test_cons(c1, c3);
+
+Succeed.
+
+SQL> ALTER TABLE test_cons ADD CONSTRAINT u_cons UNIQUE(c1, c3);
+
+Succeed.
+
+SQL> SELECT count(*) FROM SYS_INDEXES i, SYS_TABLES t WHERE i.USER#=t.USER# and i.TABLE#=t.ID and t.NAME='TEST_CONS';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> DROP INDEX ix_cons ON test_cons;
+
+CT-00651, The index cannot be deleted because it is referenced by a primary key or unique index
+SQL> INSERT INTO test_cons VALUES(null,1, 1);
+
+1 rows affected.
+
+SQL> INSERT INTO test_cons VALUES(1,2, 1);
+
+1 rows affected.
+
+SQL> INSERT INTO test_cons VALUES(1,3, 1);
+
+CT-00729, Unique constraint violated, index IX_CONS, duplicate key 1-1
+SQL> ALTER TABLE test_cons DROP CONSTRAINT u_cons;
+
+Succeed.
+
+SQL> INSERT INTO test_cons VALUES(null,1, 1);
+
+1 rows affected.
+
+SQL> INSERT INTO test_cons VALUES(1,3, 1);
+
+1 rows affected.
+
+SQL> DROP INDEX ix_cons ON test_cons;
+
+Succeed.
+
+SQL> DROP TABLE test_cons;
+
+Succeed.
+
+SQL> CREATE TABLE test_cons(c1 int, c2 int, c3 int, constraint u_cons1 unique(c1), constraint u_cons1 unique(c2));
+
+CT-00753, The object constraint U_CONS1 already exists.
+SQL> CREATE TABLE test_cons(c1 int, c2 int, c3 int, constraint u_cons1 unique(c1), constraint u_cons2 unique(c1));
+
+CT-00726, The column has been indexed by U_CONS1.
+SQL> CREATE TABLE test_cons(c1 int, c2 int, c3 int, constraint u_cons1 primary key(c1), constraint u_cons2 primary key(c2));
+
+CT-00640, The table had more than one primary key
+SQL> CREATE TABLE test_cons(c1 int, c2 int, c3 int, constraint u_cons1 primary key(c1), constraint u_cons2 unique(c1));
+
+CT-00726, The column has been indexed by U_CONS1.
+SQL> DROP TABLE test_cons;
+
+CT-00843, The table or view SYS.TEST_CONS does not exist.
+SQL> --DTS2018032712051
+SQL> DROP TABLE IF EXISTS t1;
+
+Succeed.
+
+SQL> create table t1(a int, b varchar(2048) default  '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111');
+
+Succeed.
+
+SQL> insert into t1 values(1,'1111');
+
+1 rows affected.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t1 drop column b;
+
+Succeed.
+
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+Succeed.
+
+SQL> alter table t3 drop column b;
+
+CT-00843, The table or view SYS.T3 does not exist.
+SQL> alter table t1 add  b varchar(2048) default '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111';
+
+CT-00753, The object column B already exists.
+SQL> insert into t1 values(2,'2222');
+
+1 rows affected.
+
+SQL> DROP TABLE IF EXISTS t1;
+
+Succeed.
+
+SQL> 
+SQL> --case modify column type which column in index
+SQL> 
+SQL> drop table STORAGE_ELSE_TABLE_047;
+
+CT-00843, The table or view SYS.STORAGE_ELSE_TABLE_047 does not exist.
+SQL> create table STORAGE_ELSE_TABLE_047(a int);
+
+Succeed.
+
+SQL> create index STORAGE_ELSE_IDX_047 on STORAGE_ELSE_TABLE_047(a);
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(1);
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A           
+------------
+1           
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a int;
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(111);
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A           
+------------
+111         
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a TIMESTAMP;
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(to_char(sysdate,'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> select count(*) from STORAGE_ELSE_TABLE_047;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a number;
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(2);
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A                                       
+----------------------------------------
+2                                       
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a numeric(12,2);
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(3);
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A                                       
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a char(100);
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values('abcdefghe');
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A                                                               
+----------------------------------------------------------------
+abcdefghe                                                                                           
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a varchar2(200);
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values('varchar2-50000000000000');
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A                                                               
+----------------------------------------------------------------
+varchar2-50000000000000                                         
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> drop table STORAGE_ELSE_TABLE_047;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists test_altertable;
+
+Succeed.
+
+SQL> create table test_altertable(id int,a1 char, a2 char, a3 char, a4 int, a5 char);
+
+Succeed.
+
+SQL> alter table test_altertable add logical log (primary key);
+
+CT-00708, The object primary key or unique index on table TEST_ALTERTABLE does not exist
+SQL> alter table test_altertable add primary key(id, a1);
+
+Succeed.
+
+SQL> alter table test_altertable add logical log (primary key);
+
+Succeed.
+
+SQL> alter table test_altertable add logical log (primary key);
+
+CT-00753, The object logical log TEST_ALTERTABLE already exists.
+SQL> alter table test_altertable drop logical log;
+
+Succeed.
+
+SQL> alter table test_altertable drop logical log;
+
+Succeed.
+
+SQL> alter table test_altertable drop logical log;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists FTV_truncate_001;
+
+Succeed.
+
+SQL> drop table if exists FTV_truncate_002;
+
+Succeed.
+
+SQL> create table FTV_truncate_001(id int primary key ,name clob );
+
+Succeed.
+
+SQL> create table FTV_truncate_002(ids int primary key,sex int );
+
+Succeed.
+
+SQL> ALTER TABLE  FTV_truncate_002 ADD CONSTRAINT fk_a_ FOREIGN KEY(sex ) REFERENCES FTV_truncate_001(id);
+
+Succeed.
+
+SQL> 
+SQL> truncate table FTV_truncate_001;
+
+CT-00642, The unique index or primary key was referenced by a foreign key
+SQL> alter table FTV_truncate_001 enable constraint fk_a_;
+
+CT-00811, The constraint FK_A_ does not exist.
+SQL> alter table FTV_truncate_001 disable constraint fk_a_;
+
+CT-00811, The constraint FK_A_ does not exist.
+SQL> 
+SQL> alter table FTV_truncate_002 enable constraint fk_a_;
+
+Succeed.
+
+SQL> alter table FTV_truncate_002 disable constraint fk_a_;
+
+Succeed.
+
+SQL> DROP TABLE FTV_truncate_001 CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP TABLE FTV_truncate_002 CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_pct;
+
+Succeed.
+
+SQL> create table test_pct(id int,a1 char, a2 char, a3 char, a4 int, a5 char) partition by range(id)
+  2 ( partition pt1 values less than (10),
+  3 partition pt2 values less than (20),
+  4 partition pt3 values less than (30),
+  5 partition pt4 values less than ( maxvalue ));
+
+Succeed.
+
+SQL> alter table test_pct pctfree 20;
+
+Succeed.
+
+SQL> alter table test_pct modify a1 int;
+
+Succeed.
+
+SQL> drop table if exists test_pct;
+
+Succeed.
+
+SQL> 
+SQL> --create table with constraint
+SQL> drop table if exists ind_confs_name_1 ;
+
+Succeed.
+
+SQL> create table ind_confs_name_1 (a int,constraint AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01 check(a>1));
+
+Succeed.
+
+SQL> drop table if exists ind_confs_name_2 ;
+
+Succeed.
+
+SQL> create table ind_confs_name_2 (a int constraint AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_02 primary key);
+
+Succeed.
+
+SQL> 
+SQL> --create index
+SQL> drop table if exists ind_confs_name_1 ;
+
+Succeed.
+
+SQL> create table ind_confs_name_1 (a int,B int,c int,d int);
+
+Succeed.
+
+SQL> create index AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01 on ind_confs_name_1 (a,b);
+
+Succeed.
+
+SQL> 
+SQL> --drop index
+SQL> drop index AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01 on ind_confs_name_1;
+
+Succeed.
+
+SQL> 
+SQL> --alter index
+SQL> alter index AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01 on ind_confs_name_1 rebuild;
+
+CT-00830, Index SYS.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBB_01 does not exist
+SQL> 
+SQL> --alter table add constraint
+SQL> drop table if exists ind_confs_name_1 ;
+
+Succeed.
+
+SQL> create table ind_confs_name_1 (a int,B int,c int,d int);
+
+Succeed.
+
+SQL> alter table ind_confs_name_1 add (constraint AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01 UNIQUE(a);
+
+CT-00601, [1:34]Sql syntax error: text is not completed
+SQL> alter table ind_confs_name_1 add (constraint AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_02 UNIQUE (col2) NOT DEFERRABLE INITIALLY IMMEDIATE VALIDATE );
+
+CT-00844, The column IND_CONFS_NAME_1.COL2 does not exist.
+SQL> alter table ind_confs_name_1 add e int constraint AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01 check(e>1);
+
+Succeed.
+
+SQL> alter table ind_confs_name_1 modify a int constraint  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01 check(a>1);
+
+CT-00753, The object constraint AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBB_01 already exists.
+SQL> alter table ind_confs_name_1 drop constraint AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01;
+
+Succeed.
+
+SQL> 
+SQL> --purge
+SQL> purge index AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBbbbb_01 ;
+
+CT-00829, Recyclebin object SYS.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBB_01 does not exist
+SQL> 
+SQL> drop table if exists test_altertable;
+
+Succeed.
+
+SQL> create table test_altertable(
+  2 id int,
+  3 a1 char, 
+  4 a2 char, 
+  5 a3 char, 
+  6 a4 int, 
+  7 a5 char,
+  8 a6 char, 
+  9 a7 char, 
+ 10 a8 char, 
+ 11 a9 int, 
+ 12 a10 char
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> alter table test_altertable modify (
+  2 a10 varchar(20) default 'abc20', 
+  3 a9 varchar(100) default 'abc30',
+  4 a8 varchar(20) default 'abc40', 
+  5 a5 varchar(100) default 'abc50',
+  6 a4 varchar(20) default 'abc60', 
+  7 a1 varchar(100) default 'abc70',
+  8 a2 varchar(20) default 'abc80', 
+  9 a3 varchar(100) default 'abc90');
+
+Succeed.
+
+SQL> 
+SQL> insert into test_altertable values
+  2 (
+  3 1,
+  4 default,
+  5 default,
+  6 default,
+  7 default,
+  8 default,
+  9 'a',
+ 10 'a',
+ 11 default,
+ 12 default,
+ 13 default
+ 14 );
+
+1 rows affected.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test_altertable;
+
+ID           A1                                                               A2                   A3                                                               A4                   A5                                                               A6 A7 A8                   A9                                                               A10                 
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- -- -- -------------------- ---------------------------------------------------------------- --------------------
+1            abc70                                                            abc80                abc90                                                            abc60                abc50                                                            a  a  abc40                abc30                                                            abc20               
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists table_liu;
+
+Succeed.
+
+SQL> CREATE TABLE table_liu(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> create index drop_pk1 on table_liu(c1,c2); 
+
+Succeed.
+
+SQL> select id,name,col_list,is_primary,is_unique from SYS_INDEXES where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+ID           NAME                                                             COL_LIST                                                         IS_PRIMARY   IS_UNIQUE   
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+0            DROP_PK1                                                         0,1                                                              0            0           
+
+1 rows fetched.
+
+SQL> select cons_name,col_list,ind# from SYS_CONSTRAINT_DEFS  where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+CONS_NAME                                                        COL_LIST                                                         IND#        
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+
+0 rows fetched.
+
+SQL> ALTER TABLE table_liu add CONSTRAINT if not exists drop_pk1 PRIMARY KEY(c1, c2);
+
+Succeed.
+
+SQL> select id,name,col_list,is_primary,is_unique from SYS_INDEXES where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+ID           NAME                                                             COL_LIST                                                         IS_PRIMARY   IS_UNIQUE   
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+0            DROP_PK1                                                         0,1                                                              0            0           
+
+1 rows fetched.
+
+SQL> select cons_name,col_list,ind# from SYS_CONSTRAINT_DEFS  where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+CONS_NAME                                                        COL_LIST                                                         IND#        
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+DROP_PK1                                                         0,1                                                              0           
+
+1 rows fetched.
+
+SQL> ALTER TABLE table_liu add CONSTRAINT if not exists drop_pk1 PRIMARY KEY(c1, c2, c3);
+
+Succeed.
+
+SQL> select id,name,col_list,is_primary,is_unique from SYS_INDEXES where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+ID           NAME                                                             COL_LIST                                                         IS_PRIMARY   IS_UNIQUE   
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+0            DROP_PK1                                                         0,1                                                              0            0           
+
+1 rows fetched.
+
+SQL> select cons_name,col_list,ind# from SYS_CONSTRAINT_DEFS  where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+CONS_NAME                                                        COL_LIST                                                         IND#        
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+DROP_PK1                                                         0,1                                                              0           
+
+1 rows fetched.
+
+SQL> ALTER TABLE table_liu add CONSTRAINT drop_pk1 PRIMARY KEY(c1, c2);
+
+CT-00753, The object constraint DROP_PK1 already exists.
+SQL> ALTER TABLE table_liu add CONSTRAINT drop_pk1 PRIMARY KEY(c1, c2, c3);
+
+CT-00753, The object constraint DROP_PK1 already exists.
+SQL> ALTER TABLE table_liu drop CONSTRAINT if exists drop_pk1;
+
+Succeed.
+
+SQL> select id,name,col_list,is_primary,is_unique from SYS_INDEXES where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+ID           NAME                                                             COL_LIST                                                         IS_PRIMARY   IS_UNIQUE   
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+0            DROP_PK1                                                         0,1                                                              0            0           
+
+1 rows fetched.
+
+SQL> select cons_name,col_list,ind# from SYS_CONSTRAINT_DEFS  where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+CONS_NAME                                                        COL_LIST                                                         IND#        
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+
+0 rows fetched.
+
+SQL> ALTER TABLE table_liu drop CONSTRAINT drop_pk1;
+
+CT-00811, The constraint DROP_PK1 does not exist.
+SQL> drop index drop_pk1 on table_liu;
+
+Succeed.
+
+SQL> select id,name,col_list,is_primary,is_unique from SYS_INDEXES where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+ID           NAME                                                             COL_LIST                                                         IS_PRIMARY   IS_UNIQUE   
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+
+0 rows fetched.
+
+SQL> select cons_name,col_list,ind# from SYS_CONSTRAINT_DEFS  where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+CONS_NAME                                                        COL_LIST                                                         IND#        
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+
+0 rows fetched.
+
+SQL> ALTER TABLE table_liu add CONSTRAINT if not exists drop_pk1 PRIMARY KEY(c1, c2);
+
+Succeed.
+
+SQL> select id,name,col_list,is_primary,is_unique from SYS_INDEXES where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+ID           NAME                                                             COL_LIST                                                         IS_PRIMARY   IS_UNIQUE   
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+0            DROP_PK1                                                         0,1                                                              1            0           
+
+1 rows fetched.
+
+SQL> select cons_name,col_list,ind# from SYS_CONSTRAINT_DEFS  where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+CONS_NAME                                                        COL_LIST                                                         IND#        
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+DROP_PK1                                                         0,1                                                              0           
+
+1 rows fetched.
+
+SQL> ALTER TABLE table_liu add CONSTRAINT if not exists drop_pk1 PRIMARY KEY(c1, c2, c3);
+
+Succeed.
+
+SQL> select id,name,col_list,is_primary,is_unique from SYS_INDEXES where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+ID           NAME                                                             COL_LIST                                                         IS_PRIMARY   IS_UNIQUE   
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+0            DROP_PK1                                                         0,1                                                              1            0           
+
+1 rows fetched.
+
+SQL> select cons_name,col_list,ind# from SYS_CONSTRAINT_DEFS  where table# in (select id from SYS_TABLES where name=upper('table_liu'));
+
+CONS_NAME                                                        COL_LIST                                                         IND#        
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+DROP_PK1                                                         0,1                                                              0           
+
+1 rows fetched.
+
+SQL> drop table if exists table_liu;
+
+Succeed.
+
+SQL> 
+SQL> --test modify column with number type
+SQL> drop table if exists alt_dec;
+
+Succeed.
+
+SQL> create table alt_dec(id int, c1 decimal, c2 number, c3 number(5,3), c4 number(5, -2));
+
+Succeed.
+
+SQL> insert into alt_dec values(1, 1.123123123123, 1.123456789, 1.001, 123456.812839);
+
+1 rows affected.
+
+SQL> insert into alt_dec values(2, 1.123123123123, 1.123456789, 2.0022, 123456.812839);
+
+1 rows affected.
+
+SQL> insert into alt_dec values(3, 1.123123123123, 1.123456789, 333.0033, 123456.812839);
+
+CT-00635, Value error: value larger than specified precision
+SQL> select * from alt_dec order by id;
+
+ID           C1                                       C2                                       C3                                       C4                                      
+------------ ---------------------------------------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+1            1.123123123123                           1.123456789                              1.001                                    123500                                  
+2            1.123123123123                           1.123456789                              2.002                                    123500                                  
+
+2 rows fetched.
+
+SQL> alter table alt_dec modify c1 decimal(5,3);
+
+CT-00805, Column C1 is not empty in table ALT_DEC
+SQL> alter table alt_dec modify c1 number;
+
+Succeed.
+
+SQL> alter table alt_dec modify c2 number(5,3);
+
+CT-00805, Column C2 is not empty in table ALT_DEC
+SQL> alter table alt_dec modify c2 decimal;
+
+Succeed.
+
+SQL> alter table alt_dec modify c3 number(5,2);
+
+CT-00805, Column C3 is not empty in table ALT_DEC
+SQL> alter table alt_dec modify c3 number(4,3);
+
+CT-00805, Column C3 is not empty in table ALT_DEC
+SQL> alter table alt_dec modify c3 number(5,4);
+
+CT-00805, Column C3 is not empty in table ALT_DEC
+SQL> alter table alt_dec modify c3 number(6,4);
+
+Succeed.
+
+SQL> insert into alt_dec values(3, 1.123123123123, 1.123456789, 33.0003, 123456.812839);
+
+1 rows affected.
+
+SQL> insert into alt_dec values(4, 1.123123123123, 1.123456789, 444.00044, 123456.812839);
+
+CT-00635, Value error: value larger than specified precision
+SQL> select * from alt_dec order by id;
+
+ID           C1                                       C2                                       C3                                       C4                                      
+------------ ---------------------------------------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+1            1.123123123123                           1.123456789                              1.001                                    123500                                  
+2            1.123123123123                           1.123456789                              2.002                                    123500                                  
+3            1.123123123123                           1.123456789                              33.0003                                  123500                                  
+
+3 rows fetched.
+
+SQL> alter table alt_dec modify c3 number(8,5);
+
+Succeed.
+
+SQL> insert into alt_dec values(4, 1.123123123123, 1.123456789, 444.00044, 123456.812839);
+
+1 rows affected.
+
+SQL> select * from alt_dec order by id;
+
+ID           C1                                       C2                                       C3                                       C4                                      
+------------ ---------------------------------------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+1            1.123123123123                           1.123456789                              1.001                                    123500                                  
+2            1.123123123123                           1.123456789                              2.002                                    123500                                  
+3            1.123123123123                           1.123456789                              33.0003                                  123500                                  
+4            1.123123123123                           1.123456789                              444.00044                                123500                                  
+
+4 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table alt_dec modify c4 number(5, -1);
+
+CT-00805, Column C4 is not empty in table ALT_DEC
+SQL> alter table alt_dec modify c4 number(5, -3);
+
+CT-00805, Column C4 is not empty in table ALT_DEC
+SQL> alter table alt_dec modify c4 number(6, -1);
+
+Succeed.
+
+SQL> insert into alt_dec values(5, 1.123123123123, 1.123456789, 444.00044, 1234567.812839);
+
+1 rows affected.
+
+SQL> select * from alt_dec order by id;
+
+ID           C1                                       C2                                       C3                                       C4                                      
+------------ ---------------------------------------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+1            1.123123123123                           1.123456789                              1.001                                    123500                                  
+2            1.123123123123                           1.123456789                              2.002                                    123500                                  
+3            1.123123123123                           1.123456789                              33.0003                                  123500                                  
+4            1.123123123123                           1.123456789                              444.00044                                123500                                  
+5            1.123123123123                           1.123456789                              444.00044                                1234570                                 
+
+5 rows fetched.
+
+SQL> alter table alt_dec modify c4 decimal;
+
+Succeed.
+
+SQL> create index ix_alt_dec on alt_dec(c3, c4);
+
+Succeed.
+
+SQL> update alt_dec set c3=null, c4= null;
+
+5 rows affected.
+
+SQL> alter table alt_dec modify c4 varchar(64);
+
+Succeed.
+
+SQL> insert into alt_dec values(5, 1.123123123123, 1.123456789, 444.00044, '1234567.812839');
+
+1 rows affected.
+
+SQL> delete from alt_dec;
+
+6 rows affected.
+
+SQL> drop table alt_dec purge;
+
+Succeed.
+
+SQL> drop table if exists RCA_NULL_010;
+
+Succeed.
+
+SQL> CREATE TABLE RCA_NULL_010 (COL_1 VARCHAR(255) default '' ON UPDATE NULL,
+  2 COL_2 clob default '' COLLATE  UTF8_BIN
+  3 );
+
+Succeed.
+
+SQL> insert into RCA_NULL_010 values ('ddd','&');
+
+1 rows affected.
+
+SQL> insert into RCA_NULL_010 values (' ','hjff6501');
+
+1 rows affected.
+
+SQL> insert into RCA_NULL_010 values (' ','hjff6501');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> ALTER TABLE RCA_NULL_010 modify (COL_1 VARCHAR(255) default '' ON UPDATE '',COL_2 default '' COLLATE  UTF8_UNICODE_CI );
+
+Succeed.
+
+SQL> drop table RCA_NULL_010 purge;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TEST_ALTER;
+
+Succeed.
+
+SQL> CREATE TABLE TEST_ALTER (ID INT, VAL VARCHAR(10));
+
+Succeed.
+
+SQL> INSERT INTO TEST_ALTER VALUES (1, NULL);
+
+1 rows affected.
+
+SQL> ALTER TABLE TEST_ALTER MODIFY VAL VARCHAR(20) NOT NULL DEFAULT 'A';
+
+CT-00709, Found null value, cannot set not null constraint
+SQL> DROP TABLE IF EXISTS TEST_ALTER;
+
+Succeed.
+
+SQL> CREATE TABLE TEST_ALTER (ID INT, VAL VARCHAR(10));
+
+Succeed.
+
+SQL> INSERT INTO TEST_ALTER VALUES (1, NULL);
+
+1 rows affected.
+
+SQL> ALTER TABLE TEST_ALTER MODIFY VAL VARCHAR(20) DEFAULT 'A';
+
+Succeed.
+
+SQL> SELECT * FROM TEST_ALTER;
+
+ID           VAL                 
+------------ --------------------
+1                                
+
+1 rows fetched.
+
+SQL> INSERT INTO TEST_ALTER(ID) VALUES(3);
+
+1 rows affected.
+
+SQL> SELECT * FROM TEST_ALTER ORDER BY ID;
+
+ID           VAL                 
+------------ --------------------
+1                                
+3            A                   
+
+2 rows fetched.
+
+SQL> DROP TABLE IF EXISTS TEST_ALTER;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS TEST_C;
+
+Succeed.
+
+SQL> CREATE TABLE TEST_C(COL_1 VARCHAR(200));
+
+Succeed.
+
+SQL> select TABLE_NAME, CONSTRAINT_TYPE, CONS_COLS, SEARCH_CONDITION, STATUS FROM USER_CONSTRAINTS WHERE TABLE_NAME = 'TEST_C';
+
+TABLE_NAME                                                       CONSTRAINT_TYPE CONS_COLS                                                        SEARCH_CONDITION                                                 STATUS
+---------------------------------------------------------------- --------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------
+
+0 rows fetched.
+
+SQL> ALTER TABLE TEST_C MODIFY COL_1 VARCHAR(300) CHECK(COL_1 IN ('ddd')) UNIQUE;
+
+Succeed.
+
+SQL> select TABLE_NAME, CONSTRAINT_TYPE, CONS_COLS, SEARCH_CONDITION, STATUS FROM USER_CONSTRAINTS where TABLE_NAME = 'TEST_C';
+
+TABLE_NAME                                                       CONSTRAINT_TYPE CONS_COLS                                                        SEARCH_CONDITION                                                 STATUS
+---------------------------------------------------------------- --------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------
+TEST_C                                                           U               COL_1                                                                                                                             ENABLED
+TEST_C                                                           C               COL_1                                                            COL_1 IN ('ddd')                                                 ENABLED
+
+2 rows fetched.
+
+SQL> DROP TABLE IF EXISTS TEST_C;
+
+Succeed.
+
+
+
+

@@ -1,0 +1,224 @@
+
+
+
+SQL> -- imp too short file
+SQL> drop user if exists imp_empty_file cascade;
+
+Succeed.
+
+SQL> create user imp_empty_file identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to imp_empty_file;
+
+Succeed.
+
+SQL> conn imp_empty_file/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts (c int);
+
+Succeed.
+
+SQL> insert into ts values (1);
+
+1 rows affected.
+
+SQL> dump table ts into file './data/imp_empty_file.dmp';
+1 rows dumped.
+
+Dump TABLE successfully:
+  1 rows are totally dumped.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> -- imp bin file include 120B filehead , this file is too short.
+SQL> imp users=imp_empty_file file="./data/imp_empty_file.dmp" filetype=bin;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_EMPTY_FILE
+-- DUMP FILE = ./data/imp_empty_file.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+ZS-00005: try to read more data(120 B) from file failed.
+
+CT-00520, Import error occur when read file, detail: file size too small
+Logical import failed.
+
+SQL> 
+SQL> -- imp use different CONTENT with exp
+SQL> drop user if exists imp_diff_content cascade;
+
+Succeed.
+
+SQL> create user imp_diff_content identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to imp_diff_content;
+
+Succeed.
+
+SQL> conn imp_diff_content/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts (c int);
+
+Succeed.
+
+SQL> insert into ts values (1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users = imp_diff_content filetype=bin file = "./data/imp_diff_content.dmp";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = IMP_DIFF_CONTENT
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/imp_diff_content.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema IMP_DIFF_CONTENT ...
+Exporting sequence of schema IMP_DIFF_CONTENT ...
+Exporting profile of schema IMP_DIFF_CONTENT ...
+Exporting type of schema IMP_DIFF_CONTENT ...
+Exporting tables of schema IMP_DIFF_CONTENT ...
+Reading table objects of IMP_DIFF_CONTENT
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TS                                                               1         
+
+Exporting tables (scripts or data) of IMP_DIFF_CONTENT
+exporting table IMP_DIFF_CONTENT.TS ...
+  exporting DDL of IMP_DIFF_CONTENT.TS ...
+  exporting data of IMP_DIFF_CONTENT.TS ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on IMP_DIFF_CONTENT.TS ...
+  exporting constraints on IMP_DIFF_CONTENT.TS ...
+
+Exporting procedures/functions/triggers of schema IMP_DIFF_CONTENT ...
+Exporting views of schema IMP_DIFF_CONTENT ...
+Exporting synonyms of schema IMP_DIFF_CONTENT ...
+Exporting package of schema IMP_DIFF_CONTENT ...
+End of export schema IMP_DIFF_CONTENT ...
+
+Logical export succeeded.
+
+SQL> imp users = imp_diff_content filetype=bin file = "./data/imp_diff_content.dmp" CONTENT=METADATA_ONLY;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_DIFF_CONTENT
+-- DUMP FILE = ./data/imp_diff_content.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = METADATA_ONLY
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_DIFF_CONTENT ... 
+  Importing sequence of schema IMP_DIFF_CONTENT ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_DIFF_CONTENT ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_DIFF_CONTENT ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_DIFF_CONTENT ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_DIFF_CONTENT ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_DIFF_CONTENT ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_DIFF_CONTENT ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_DIFF_CONTENT ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_DIFF_CONTENT ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> drop user if exists imp_diff_content cascade;
+Succeed.
+
+
+
+

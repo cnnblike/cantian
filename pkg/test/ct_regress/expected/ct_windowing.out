@@ -1,0 +1,307 @@
+
+
+SQL> drop table if exists test_windowing;
+
+Succeed.
+
+SQL> create table test_windowing  
+  2 (  
+  3 	f_int1			integer default 0 not null,  
+  4 	f_int2			integer,  
+  5 	f_int3			integer, 	
+  6 	f_dec1			DECIMAL(38, 0), 
+  7 	f_timestamp		timestamp 
+  8 );
+
+Succeed.
+
+SQL> create index idx_test_windowing_1 on test_windowing(f_int1);
+
+Succeed.
+
+SQL> 
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(0,100,14000.00,1);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(1,110,12000.00,2);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(1,NULL,12000.00,2);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(1,111,12000.00,3);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(1,111,13000.00,4);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(1,111,12000.00,5);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,5,12000.00,6);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,6,12000.00,7);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,7,12000.00,8);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,9,12000.00,9);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,9,12000.00,10);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,10,12000.00,11);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,10,12000.00,NULL);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,10,13000.00,12);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,10,12000.00,13);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,11,12000.00,14);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(2,11,12000.00,15);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(3,99,13000.00,16);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(3,101,12000.00,17);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(3,101,13000.00,18);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(3,101,12000.00,19);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(1,NULL,12000.00,2);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3) values(1,NULL,12000.00,2);
+
+1 rows affected.
+
+SQL> 
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(0,100,14000.00,1,  to_timestamp('2021-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(1,110,12000.00,2,  to_timestamp('2021-01-01 01:00:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(1,NULL,12000.00,2, to_timestamp('2021-01-01 01:00:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(1,111,12000.00,3,  NULL);
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(1,111,13000.00,4,  to_timestamp('2021-01-01 01:20:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(1,111,12000.00,5,  to_timestamp('2021-01-01 01:20:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,5,12000.00,6,    to_timestamp('2021-01-01 00:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,6,12000.00,7,    to_timestamp('2021-01-01 00:02:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,7,12000.00,8,    to_timestamp('2021-01-01 00:03:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,9,12000.00,9,    to_timestamp('2021-01-01 00:05:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,9,12000.00,10,   to_timestamp('2021-01-01 00:05:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,10,12000.00,11,  to_timestamp('2021-01-01 00:10:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,10,12000.00,NULL,to_timestamp('2021-01-01 00:10:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,10,13000.00,12,  to_timestamp('2021-01-01 00:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,10,12000.00,13,  to_timestamp('2021-01-01 00:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,11,12000.00,14,  to_timestamp('2021-01-01 00:50:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(2,11,12000.00,15,  to_timestamp('2021-01-01 00:50:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(3,99,13000.00,16,  to_timestamp('2021-01-01 10:00:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(3,101,12000.00,17, to_timestamp('2021-01-01 11:00:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(3,101,13000.00,18, to_timestamp('2021-01-01 11:00:01', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(3,101,12000.00,19, to_timestamp('2021-01-01 11:10:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> insert into test_windowing(f_int1, f_int2, f_dec1, f_int3, f_timestamp) values(4,120,12000.00,19, to_timestamp('2021-01-01 11:10:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> -- result different oracle
+SQL> select f_int1, f_int2, sum(f_int1) over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and 3.999999999999999999999999999999999999999 following) from test_windowing;
+
+F_INT1       F_INT2       SUM(F_INT1) OVER(PARTITION BY F_INT1 ORDER BY F_INT1 ROWS BETWEE
+------------ ------------ ----------------------------------------------------------------
+0            100          0                                                               
+0            100          0                                                               
+1            110          4                                                               
+1                         5                                                               
+1            111          6                                                               
+1            111          7                                                               
+1            111          8                                                               
+1                         9                                                               
+1                         10                                                              
+1            110          11                                                              
+1                         12                                                              
+1            111          12                                                              
+1            111          12                                                              
+1            111          12                                                              
+2            5            8                                                               
+2            6            10                                                              
+2            7            12                                                              
+2            9            14                                                              
+2            9            16                                                              
+2            10           18                                                              
+2            10           20                                                              
+2            10           22                                                              
+2            10           24                                                              
+2            11           26                                                              
+2            11           28                                                              
+2            5            30                                                              
+2            6            32                                                              
+2            7            34                                                              
+2            9            36                                                              
+2            9            38                                                              
+2            10           40                                                              
+2            10           42                                                              
+2            10           44                                                              
+2            10           44                                                              
+2            11           44                                                              
+2            11           44                                                              
+3            99           12                                                              
+3            101          15                                                              
+3            101          18                                                              
+3            101          21                                                              
+3            99           24                                                              
+3            101          24                                                              
+3            101          24                                                              
+3            101          24                                                              
+4            120          4                                                               
+
+45 rows fetched.
+
+SQL> select f_int1, f_int2, sum(f_int1) over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and 5000000000 following) from test_windowing; --uint32
+
+CT-00659, UNSIGNED INTEGER out of range
+SQL> select f_int1, f_int2, sum(f_int1) over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and 28446744073709551615 following) from test_windowing;  --uint64
+
+CT-00659, UNSIGNED INTEGER out of range
+SQL> -- parse error
+SQL> select f_int1, sum(f_int1) over(partition by f_int1 order by f_int1 rows 3 following) from test_windowing;
+
+CT-00601, [1:16]Sql syntax error: left border must be less than right border in windowing clause
+SQL> select f_int1, sum(f_int1) over(partition by f_int1 order by f_int1 rows between 3 following) from test_windowing;
+
+CT-00601, [1:93]Sql syntax error: and expected
+SQL> select f_int1, sum(f_int1) over(partition by f_int1 order by f_int1 rows between 3 following 2 following) from test_windowing;
+
+CT-00601, [1:94]Sql syntax error: and expected
+SQL> -- not support
+SQL> select f_int1, cume_dist() over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and UNBOUNDED following) from test_windowing;
+
+CT-01323, [1:16]Windowing clause is not supported in function CUME_DIST
+SQL> select f_int1, dense_rank() over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and UNBOUNDED following) from test_windowing;
+
+CT-01323, [1:16]Windowing clause is not supported in function ROW_NUMBER/RANK/DENSE_RANK
+SQL> select f_int1, lag(f_int1) over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and UNBOUNDED following) from test_windowing;
+
+CT-01323, [1:16]Windowing clause is not supported in function LEAD or LAG
+SQL> select f_int1, lead(f_int1) over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and UNBOUNDED following) from test_windowing;
+
+CT-01323, [1:16]Windowing clause is not supported in function LEAD or LAG
+SQL> select f_int1, listagg(f_int1) within group(order by f_int1 rows between UNBOUNDED preceding and UNBOUNDED following) over(partition by f_int1 ) from test_windowing;
+
+CT-00601, [1:66]Sql syntax error: expected end but rows found
+SQL> select f_int1, ntile(f_int1) over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and UNBOUNDED following) from test_windowing;
+
+CT-01323, [1:16]Windowing clause is not supported in function NTILE
+SQL> select f_int1, rank() over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and UNBOUNDED following) from test_windowing;
+
+CT-01323, [1:16]Windowing clause is not supported in function ROW_NUMBER/RANK/DENSE_RANK
+SQL> select f_int1, row_number(f_int1) over(partition by f_int1 order by f_int1 rows between UNBOUNDED preceding and UNBOUNDED following) from test_windowing;
+
+CT-01323, [1:16]Windowing clause is not supported in function ROW_NUMBER/RANK/DENSE_RANK
+SQL> drop table if exists test_windowing;
+Succeed.
+
+
+
+

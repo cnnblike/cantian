@@ -1,0 +1,413 @@
+
+
+SQL> drop table if exists test_tb1;
+
+Succeed.
+
+SQL> create table test_tb1(f1 int, f2 int);
+
+Succeed.
+
+SQL> drop table if exists test_tb2;
+
+Succeed.
+
+SQL> create table test_tb2(f1 int, f2 int);
+
+Succeed.
+
+SQL> drop table if exists test_tb3;
+
+Succeed.
+
+SQL> create table test_tb3(f1 int, f2 int);
+
+Succeed.
+
+SQL> 
+SQL> insert into test_tb1(f1,f2) values(1,11);
+
+1 rows affected.
+
+SQL> insert into test_tb1(f1,f2) values(2,22);
+
+1 rows affected.
+
+SQL> insert into test_tb2(f1,f2) values(1,11);
+
+1 rows affected.
+
+SQL> insert into test_tb2(f1,f2) values(2,22);
+
+1 rows affected.
+
+SQL> insert into test_tb3(f1,f2) values(1,11);
+
+1 rows affected.
+
+SQL> insert into test_tb3(f1,f2) values(2,22);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> update test_tb1 set f1 = 3 where f2 = 22;
+
+1 rows affected.
+
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> update test_tb2 set f1 = 3 where f2 = 22;
+
+1 rows affected.
+
+SQL> savepoint sp2;
+
+Succeed.
+
+SQL> update test_tb3 set f1 = 3 where f2 = 22;
+
+1 rows affected.
+
+SQL> savepoint sp3;
+
+Succeed.
+
+SQL> rollback to savepoint sp3;
+
+Succeed.
+
+SQL> rollback to savepoint sp2;
+
+Succeed.
+
+SQL> select TYPE, LMODE from V$LOCK where SID in (select SID from V$ME) order by TYPE;
+
+TYPE                 LMODE               
+-------------------- --------------------
+RX                                       
+RX                                       
+TS                   S                   
+TS                   S                   
+
+4 rows fetched.
+
+SQL> rollback to savepoint sp1;
+
+Succeed.
+
+SQL> select TYPE, LMODE from V$LOCK where SID in (select SID from V$ME) order by TYPE;
+
+TYPE                 LMODE               
+-------------------- --------------------
+RX                                       
+TS                   S                   
+
+2 rows fetched.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> 
+SQL> savepoint sp0;
+
+Succeed.
+
+SQL> insert into test_tb1(f1,f2) select * from test_tb2;
+
+2 rows affected.
+
+SQL> insert into test_tb1(f1,f2) select * from test_tb3;
+
+2 rows affected.
+
+SQL> savepoint sp4;
+
+Succeed.
+
+SQL> insert into test_tb3(f1,f2) values(1,11);
+
+1 rows affected.
+
+SQL> insert into test_tb3(f1,f2) values(2,22);
+
+1 rows affected.
+
+SQL> savepoint sp5;
+
+Succeed.
+
+SQL> rollback to savepoint sp4;
+
+Succeed.
+
+SQL> select TYPE, LMODE from V$LOCK where SID in (select SID from V$ME) order by TYPE;
+
+TYPE                 LMODE               
+-------------------- --------------------
+RX                                       
+TS                   S                   
+
+2 rows fetched.
+
+SQL> rollback to savepoint sp0;
+
+Succeed.
+
+SQL> select TYPE, LMODE from V$LOCK where SID in (select SID from V$ME) order by TYPE;
+
+TYPE                 LMODE               
+-------------------- --------------------
+
+0 rows fetched.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_tb4;
+
+Succeed.
+
+SQL> create table test_tb4(f1 int, f2 int);
+
+Succeed.
+
+SQL> insert into test_tb4(f1,f2) values(1,11);
+
+1 rows affected.
+
+SQL> insert into test_tb4(f1,f2) values(2,22);
+
+1 rows affected.
+
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> insert into test_tb4(f1,f2) values(3,33);
+
+1 rows affected.
+
+SQL> insert into test_tb4(f1,f2) values(4,44);
+
+1 rows affected.
+
+SQL> savepoint sp2;
+
+Succeed.
+
+SQL> insert into test_tb4(f1,f2) values(5,55);
+
+1 rows affected.
+
+SQL> insert into test_tb4(f1,f2) values(6,66);
+
+1 rows affected.
+
+SQL> savepoint sp3;
+
+Succeed.
+
+SQL> insert into test_tb4(f1,f2) values(7,77);
+
+1 rows affected.
+
+SQL> insert into test_tb4(f1,f2) values(8,88);
+
+1 rows affected.
+
+SQL> savepoint sp4;
+
+Succeed.
+
+SQL> insert into test_tb4(f1,f2) values(9,99);
+
+1 rows affected.
+
+SQL> release savepoint sp4;
+
+Succeed.
+
+SQL> rollback to savepoint sp4;
+
+CT-00736, The savepoint 'SP4' does not exist.
+SQL> release savepoint sp2;
+
+Succeed.
+
+SQL> rollback to savepoint sp2;
+
+CT-00736, The savepoint 'SP2' does not exist.
+SQL> rollback to savepoint sp3;
+
+CT-00736, The savepoint 'SP3' does not exist.
+SQL> rollback to savepoint sp6;
+
+CT-00736, The savepoint 'SP6' does not exist.
+SQL> release savepoint sp1;
+
+Succeed.
+
+SQL> rollback to savepoint sp1;
+
+CT-00736, The savepoint 'SP1' does not exist.
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> release savepoint sp1;
+
+Succeed.
+
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> insert into test_tb4(f1,f2) values(11,99);
+
+1 rows affected.
+
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> release savepoint sp1;
+
+Succeed.
+
+SQL> release savepoint sp1;
+
+CT-00736, The savepoint 'SP1' does not exist.
+SQL> 
+SQL> drop table if exists test_tb1;
+
+Succeed.
+
+SQL> drop table if exists test_tb2;
+
+Succeed.
+
+SQL> drop table if exists test_tb3;
+
+Succeed.
+
+SQL> drop table if exists test_tb4;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019052601209
+SQL> drop table if exists svpt_t1;
+
+Succeed.
+
+SQL> drop table if exists svpt_t2;
+
+Succeed.
+
+SQL> create table svpt_t1 (id int, name varchar(4000));
+
+Succeed.
+
+SQL> create table svpt_t2 (id int, name varchar(4000));
+
+Succeed.
+
+SQL> create index id_svpt_t1 on svpt_t1(id);
+
+Succeed.
+
+SQL> 
+SQL> insert into svpt_t1 values (1, lpad('A', 4000, 'A'));
+
+1 rows affected.
+
+SQL> insert into svpt_t2 values (2, lpad('B', 4000, 'B'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> update svpt_t1 set id = 1, name = lpad('a', 4000, 'a');
+
+1 rows affected.
+
+SQL> update svpt_t1 set id = 1, name = lpad('a', 4000, 'a');
+
+1 rows affected.
+
+SQL> update svpt_t1 set id = 1, name = lpad('a', 4000, 'a');
+
+1 rows affected.
+
+SQL> update svpt_t1 set id = 1, name = lpad('a', 4000, 'a');
+
+1 rows affected.
+
+SQL> update svpt_t2 set id = 2, name = lpad('b', 4000, 'b');
+
+1 rows affected.
+
+SQL> 
+SQL> savepoint test_svpt;
+
+Succeed.
+
+SQL> 
+SQL> update svpt_t1 set id = 1, name = lpad('a', 4000, 'a');
+
+1 rows affected.
+
+SQL> update svpt_t2 set id = 2, name = lpad('b', 4000, 'b');
+
+1 rows affected.
+
+SQL> update svpt_t2 set id = 2, name = lpad('b', 4000, 'b');
+
+1 rows affected.
+
+SQL> update svpt_t2 set id = 2, name = lpad('b', 4000, 'b');
+
+1 rows affected.
+
+SQL> update svpt_t2 set id = 2, name = lpad('b', 4000, 'b');
+
+1 rows affected.
+
+SQL> 
+SQL> rollback to savepoint test_svpt;
+
+Succeed.
+
+SQL> 
+SQL> update svpt_t2 set id = 2, name = lpad('b', 4000, 'b');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists svpt_t1;
+
+Succeed.
+
+SQL> drop table if exists svpt_t2;
+
+Succeed.
+
+SQL> 
+
+
