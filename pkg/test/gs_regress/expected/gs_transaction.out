@@ -1,0 +1,366 @@
+
+
+SQL> --TEST transaction
+SQL> 
+SQL> drop table if exists test_t1;
+
+Succeed.
+
+SQL> 
+SQL> create table test_t1(f1 int);
+
+Succeed.
+
+SQL> insert into test_t1 values(1);prepare transaction '1.abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab.abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab';
+
+1 rows affected.
+
+
+Succeed.
+
+SQL> select length(global_tran_id),length(branch_id) from SYS_PENDING_TRANS where format_id=1;
+
+LENGTH(GLOBAL_TRAN_ID) LENGTH(BRANCH_ID)   
+---------------------- --------------------
+128                    128                 
+
+1 rows fetched.
+
+SQL> select length(global_tran_id),length(branch_id) from DV_GLOBAL_TRANSACTIONS where format_id=1;
+
+LENGTH(GLOBAL_TRAN_ID) LENGTH(BRANCH_ID)   
+---------------------- --------------------
+128                    128                 
+
+1 rows fetched.
+
+SQL> commit prepared '1.abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab.abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab';
+
+Succeed.
+
+SQL> select * from test_t1 order by f1;
+
+F1          
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from SYS_PENDING_TRANS where format_id=1;
+
+GLOBAL_TRAN_ID                                                   LOCAL_TRAN_ID        TLOCK_LOBS                                                       TLOCK_LOBS_EXT                                                   FORMAT_ID            BRANCH_ID                                                        OWNER        PREPARE_SCN          COMMIT_SCN          
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------------ -------------------- --------------------
+
+0 rows fetched.
+
+SQL> select * from DV_GLOBAL_TRANSACTIONS where format_id=1;
+
+GLOBAL_TRAN_ID                                                   FORMAT_ID                                                        BRANCH_ID                                                        LOCAL_TRAN_ID                                                    STATUS                                                           SID          RMID        
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> insert into test_t1 values(2);prepare transaction '1.ab.cd';
+
+1 rows affected.
+
+
+Succeed.
+
+SQL> rollback prepared '1.ab.cd';
+
+Succeed.
+
+SQL> select * from test_t1 order by f1;
+
+F1          
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from SYS_PENDING_TRANS where global_tran_id = '1.ab.cd';
+
+GLOBAL_TRAN_ID                                                   LOCAL_TRAN_ID        TLOCK_LOBS                                                       TLOCK_LOBS_EXT                                                   FORMAT_ID            BRANCH_ID                                                        OWNER        PREPARE_SCN          COMMIT_SCN          
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------------ -------------------- --------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table test_t1;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> drop table if exists t3;
+
+Succeed.
+
+SQL> drop table if exists t4;
+
+Succeed.
+
+SQL> drop table if exists t5;
+
+Succeed.
+
+SQL> drop table if exists t6;
+
+Succeed.
+
+SQL> drop table if exists t7;
+
+Succeed.
+
+SQL> drop table if exists t8;
+
+Succeed.
+
+SQL> drop table if exists t9;
+
+Succeed.
+
+SQL> drop table if exists t10;
+
+Succeed.
+
+SQL> drop table if exists t11;
+
+Succeed.
+
+SQL> drop table if exists t12;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> create table t1(c1 int);
+
+Succeed.
+
+SQL> create table t2(c1 int);
+
+Succeed.
+
+SQL> create table t3(c1 int);
+
+Succeed.
+
+SQL> create table t4(c1 int);
+
+Succeed.
+
+SQL> create table t5(c1 int);
+
+Succeed.
+
+SQL> create table t6(c1 int);
+
+Succeed.
+
+SQL> create table t7(c1 int);
+
+Succeed.
+
+SQL> create table t8(c1 int);
+
+Succeed.
+
+SQL> create table t9(c1 int);
+
+Succeed.
+
+SQL> create table t10(c1 int);
+
+Succeed.
+
+SQL> create table t11(c1 int);
+
+Succeed.
+
+SQL> create table t12(c1 int);
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> insert into t1 values(1);
+
+1 rows affected.
+
+SQL> insert into t2 values(1);
+
+1 rows affected.
+
+SQL> insert into t3 values(1);
+
+1 rows affected.
+
+SQL> insert into t4 values(1);
+
+1 rows affected.
+
+SQL> insert into t5 values(1);
+
+1 rows affected.
+
+SQL> insert into t6 values(1);
+
+1 rows affected.
+
+SQL> insert into t7 values(1);
+
+1 rows affected.
+
+SQL> insert into t8 values(1);
+
+1 rows affected.
+
+SQL> insert into t9 values(1);
+
+1 rows affected.
+
+SQL> insert into t10 values(1);
+
+1 rows affected.
+
+SQL> insert into t11 values(1);
+
+1 rows affected.
+
+SQL> insert into t12 values(1);
+
+1 rows affected.
+
+SQL> select FORMAT_ID,GLOBAL_TRAN_ID,BRANCH_ID from sys_pending_trans;
+
+FORMAT_ID            GLOBAL_TRAN_ID                                                   BRANCH_ID                                                       
+-------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select FORMAT_ID,GLOBAL_TRAN_ID,BRANCH_ID from dv_global_transactions;
+
+FORMAT_ID                                                        GLOBAL_TRAN_ID                                                   BRANCH_ID                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> prepare transaction '4052000.00095D5D650000006A24000063B6.3D00';
+
+Succeed.
+
+SQL> select FORMAT_ID,GLOBAL_TRAN_ID,BRANCH_ID from sys_pending_trans;
+
+FORMAT_ID            GLOBAL_TRAN_ID                                                   BRANCH_ID                                                       
+-------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+4052000              00095D5D650000006A24000063B6                                     3D00                                                            
+
+1 rows fetched.
+
+SQL> select FORMAT_ID,GLOBAL_TRAN_ID,BRANCH_ID from dv_global_transactions;
+
+FORMAT_ID                                                        GLOBAL_TRAN_ID                                                   BRANCH_ID                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+4052000                                                          00095D5D650000006A24000063B6                                     3D00                                                            
+
+1 rows fetched.
+
+SQL> commit prepared '4052000.00095D5D650000006A24000063B6.3D00';
+
+Succeed.
+
+SQL> select FORMAT_ID,GLOBAL_TRAN_ID,BRANCH_ID from sys_pending_trans;
+
+FORMAT_ID            GLOBAL_TRAN_ID                                                   BRANCH_ID                                                       
+-------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select FORMAT_ID,GLOBAL_TRAN_ID,BRANCH_ID from dv_global_transactions;
+
+FORMAT_ID                                                        GLOBAL_TRAN_ID                                                   BRANCH_ID                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> drop table if exists t3;
+
+Succeed.
+
+SQL> drop table if exists t4;
+
+Succeed.
+
+SQL> drop table if exists t5;
+
+Succeed.
+
+SQL> drop table if exists t6;
+
+Succeed.
+
+SQL> drop table if exists t7;
+
+Succeed.
+
+SQL> drop table if exists t8;
+
+Succeed.
+
+SQL> drop table if exists t9;
+
+Succeed.
+
+SQL> drop table if exists t10;
+
+Succeed.
+
+SQL> drop table if exists t11;
+
+Succeed.
+
+SQL> drop table if exists t12;
+
+Succeed.
+
+SQL> 
+SQL> Alter system set LOCAL_TEMPORARY_TABLE_ENABLED = true;
+Succeed.
+
+SQL> create temporary table #transaction_stored_anonymous_temp_tabl_014(c1 int, c2 bigint not null);
+Succeed.
+
+SQL> delete from #transaction_stored_anonymous_temp_tabl_014 where c2>200 and c2<800;
+0 rows affected.
+
+SQL> prepare transaction '2076.accabe.000014';
+CT-00832, Xa transaction can't change temp table
+SQL> commit prepared '2076.accabe.000014';
+CT-01502, Specified branch does not exists
+SQL> drop table if exists #transaction_stored_anonymous_temp_tabl_014;
+Succeed.
+
+SQL> Alter system set LOCAL_TEMPORARY_TABLE_ENABLED = false;
+Succeed.
+
+SQL> 

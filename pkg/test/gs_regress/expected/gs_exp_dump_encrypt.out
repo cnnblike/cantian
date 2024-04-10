@@ -1,0 +1,2852 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop user if exists encrypt;
+
+Succeed.
+
+SQL> create user encrypt identified by 'Changeme_123';
+
+Succeed.
+
+SQL> grant dba to encrypt;
+
+Succeed.
+
+SQL> 
+SQL> conn encrypt/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists encrypt_big_data;
+
+Succeed.
+
+SQL> create table encrypt_big_data (f1 clob, f2 clob, f3 int, f4 varchar(20));
+
+Succeed.
+
+SQL> insert into encrypt_big_data values('abcdefghijklmn','abcdefghijklmn',1,'test1');
+
+1 rows affected.
+
+SQL> insert into encrypt_big_data values('abcdefghijmn','abcdefghijkln',2,'test2');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace procedure gen_cry_data(size in int )
+  2 as
+  3 begin 
+  4     for i in 1..size loop
+  5         update encrypt_big_data set f1=f1||f1;
+  6 		update encrypt_big_data set f2=f2||f2;
+  7     end loop;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> call gen_cry_data(16);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select length(f1),length(f2) from encrypt_big_data order by f3;
+
+LENGTH(F1)           LENGTH(F2)          
+-------------------- --------------------
+917504               917504              
+786432               851968              
+
+2 rows fetched.
+
+SQL> dump table encrypt_big_data INTO FILE 'encrypt_big_data.dmp' fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' file size '10M' encrypt by 'Changeme_123';
+2 rows dumped.
+
+Dump TABLE successfully:
+  2 rows are totally dumped.
+
+SQL> truncate table encrypt_big_data;
+
+Succeed.
+
+SQL> load data infile "encrypt_big_data.dmp" into table encrypt_big_data  fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' decrypt by 'Changeme_123';
+1 rows have been committed.
+2 rows have been committed.
+
+Complete the data load.
+totally read rows: 2
+     ignored rows: 0
+      loaded rows: 2
+   committed rows: 2
+       error rows: 0
+        skip rows: 0
+SQL> select length(f1),length(f2) from encrypt_big_data order by f3;
+
+LENGTH(F1)           LENGTH(F2)          
+-------------------- --------------------
+917504               917504              
+786432               851968              
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists encrypt_test;
+
+Succeed.
+
+SQL> create table encrypt_test (f1 int, f2 varchar(50));
+
+Succeed.
+
+SQL> insert into encrypt_test values (1,'sfs'),(2,'yyy'),(3,'wee');
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> drop index if exists encrypt_test_1 ON encrypt_test;
+
+Succeed.
+
+SQL> CREATE INDEX encrypt_test_1 ON encrypt_test(f1);
+
+Succeed.
+
+SQL> 
+SQL> select * from encrypt_test order by f1;
+
+F1           F2                                                
+------------ --------------------------------------------------
+1            sfs                                               
+2            yyy                                               
+3            wee                                               
+
+3 rows fetched.
+
+SQL> dump table encrypt_test INTO FILE 'encrypt_test.dmp' fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' encrypt by '123456789';
+CT-00657, Password is too simple, password should contain at least three of the following character types:
+A. at least one lowercase letter
+B. at least one uppercase letter
+C. at least one digit
+D. at least one special character: `~!@#$%^&*()-_=+\|[{}]:'",<.>/? and space
+SQL> dump table encrypt_test INTO FILE 'encrypt_test.dmp' fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' encrypt by 'Changeme_123';
+3 rows dumped.
+
+Dump TABLE successfully:
+  3 rows are totally dumped.
+
+SQL> truncate table encrypt_test;
+
+Succeed.
+
+SQL> load data infile "encrypt_test.dmp" into table encrypt_test  fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' decrypt by 'sfasdfdsf';
+CT-00657, Password is too simple, password should contain at least three of the following character types:
+A. at least one lowercase letter
+B. at least one uppercase letter
+C. at least one digit
+D. at least one special character: `~!@#$%^&*()-_=+\|[{}]:'",<.>/? and space
+SQL> load data infile "encrypt_test.dmp" into table encrypt_test  fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' decrypt by 'Changeme_123';
+3 rows have been committed.
+
+Complete the data load.
+totally read rows: 3
+     ignored rows: 0
+      loaded rows: 3
+   committed rows: 3
+       error rows: 0
+        skip rows: 0
+SQL> load data infile "encrypt_test.dmp" into table encrypt_test  fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' decrypt by 'Changeme_222';
+ZS-00003: Fail to parse encrypt.cfg or incorrect password
+SQL> select * from encrypt_test order by f1;
+
+F1           F2                                                
+------------ --------------------------------------------------
+1            sfs                                               
+2            yyy                                               
+3            wee                                               
+
+3 rows fetched.
+
+SQL> 
+SQL> dump table encrypt_big_data INTO FILE 'encrypt_parallel.dmp' fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' encrypt by 'Changeme_123';
+2 rows dumped.
+
+Dump TABLE successfully:
+  2 rows are totally dumped.
+
+SQL> truncate table encrypt_big_data;
+
+Succeed.
+
+SQL> load data infile "encrypt_parallel.dmp" into table encrypt_big_data  fields ENCLOSED BY '`' fields TERMINATED BY ',' lines TERMINATED BY '\n' decrypt by 'Changeme_123';
+1 rows have been committed.
+2 rows have been committed.
+
+Complete the data load.
+totally read rows: 2
+     ignored rows: 0
+      loaded rows: 2
+   committed rows: 2
+       error rows: 0
+        skip rows: 0
+SQL> select length(f1),length(f2) from encrypt_big_data order by f3;
+
+LENGTH(F1)           LENGTH(F2)          
+-------------------- --------------------
+917504               917504              
+786432               851968              
+
+2 rows fetched.
+
+SQL> 
+SQL> exp users=encrypt file="encrypt_user.dmp" FILETYPE=bin parallel = 4 encrypt= 'Changeme_123';
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = ENCRYPT
+-- FILE TYPE = BIN
+-- DUMP FILE = encrypt_user.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 4
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema ENCRYPT ...
+Exporting sequence of schema ENCRYPT ...
+Exporting profile of schema ENCRYPT ...
+Exporting type of schema ENCRYPT ...
+Exporting tables of schema ENCRYPT ...
+Reading table objects of ENCRYPT
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+ENCRYPT_BIG_DATA                                                 1         
+ENCRYPT_TEST                                                     2         
+
+Exporting tables (scripts or data) of ENCRYPT
+exporting table ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting DDL of ENCRYPT.ENCRYPT_BIG_DATA ...
+    data exporting success! 2 rows are dumped.
+  exporting indexes on ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting constraints on ENCRYPT.ENCRYPT_BIG_DATA ...
+
+exporting table ENCRYPT.ENCRYPT_TEST ...
+  exporting DDL of ENCRYPT.ENCRYPT_TEST ...
+    data exporting success! 3 rows are dumped.
+  exporting indexes on ENCRYPT.ENCRYPT_TEST ...
+  exporting constraints on ENCRYPT.ENCRYPT_TEST ...
+
+Exporting procedures/functions/triggers of schema ENCRYPT ...
+  exporting PROCEDURE ENCRYPT.GEN_CRY_DATA
+Exporting views of schema ENCRYPT ...
+Exporting synonyms of schema ENCRYPT ...
+Exporting package of schema ENCRYPT ...
+End of export schema ENCRYPT ...
+
+Logical export succeeded.
+
+SQL> truncate table encrypt_big_data;
+
+Succeed.
+
+SQL> truncate table encrypt_test;
+
+Succeed.
+
+SQL> imp users=encrypt file="encrypt_user.dmp" FILETYPE=bin parallel = 8 decrypt= 'Changeme_123';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = ENCRYPT
+-- DUMP FILE = encrypt_user.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 8
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema ENCRYPT ... 
+  Importing sequence of schema ENCRYPT ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema ENCRYPT ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema ENCRYPT ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema ENCRYPT ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    ENCRYPT_BIG_DATA                                                     2         
+    ENCRYPT_TEST                                                         3         
+
+  Importing foreign key of schema ENCRYPT ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema ENCRYPT ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema ENCRYPT ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema ENCRYPT ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema ENCRYPT ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 5 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from encrypt_test order by f1;
+
+F1           F2                                                
+------------ --------------------------------------------------
+1            sfs                                               
+2            yyy                                               
+3            wee                                               
+
+3 rows fetched.
+
+SQL> select length(f1),length(f2) from encrypt_big_data order by f3;
+
+LENGTH(F1)           LENGTH(F2)          
+-------------------- --------------------
+917504               917504              
+786432               851968              
+
+2 rows fetched.
+
+SQL> 
+SQL> exp tables=% file="encrypt_tableall.dmp" FILETYPE=bin parallel = 4 encrypt= 'Changeme_123';
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = BIN
+-- DUMP FILE = encrypt_tableall.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 4
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Reading table objects of ENCRYPT
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+ENCRYPT_BIG_DATA                                                 1         
+ENCRYPT_TEST                                                     2         
+
+Exporting tables (scripts or data) of ENCRYPT
+exporting table ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting DDL of ENCRYPT.ENCRYPT_BIG_DATA ...
+    data exporting success! 2 rows are dumped.
+  exporting indexes on ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting constraints on ENCRYPT.ENCRYPT_BIG_DATA ...
+
+exporting table ENCRYPT.ENCRYPT_TEST ...
+  exporting DDL of ENCRYPT.ENCRYPT_TEST ...
+    data exporting success! 3 rows are dumped.
+  exporting indexes on ENCRYPT.ENCRYPT_TEST ...
+  exporting constraints on ENCRYPT.ENCRYPT_TEST ...
+
+Logical export succeeded.
+
+SQL> truncate table encrypt_big_data;
+
+Succeed.
+
+SQL> truncate table encrypt_test;
+
+Succeed.
+
+SQL> imp tables=% file="encrypt_tableall.dmp" FILETYPE=bin parallel = 8 decrypt= 'Changeme_123';
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = encrypt_tableall.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 8
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema ENCRYPT ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema ENCRYPT ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema ENCRYPT ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema ENCRYPT ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    ENCRYPT_BIG_DATA                                                     2         
+    ENCRYPT_TEST                                                         3         
+
+  Importing foreign key of schema ENCRYPT ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema ENCRYPT ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema ENCRYPT ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema ENCRYPT ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema ENCRYPT ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 5 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from encrypt_test order by f1;
+
+F1           F2                                                
+------------ --------------------------------------------------
+1            sfs                                               
+2            yyy                                               
+3            wee                                               
+
+3 rows fetched.
+
+SQL> select length(f1),length(f2) from encrypt_big_data order by f3;
+
+LENGTH(F1)           LENGTH(F2)          
+-------------------- --------------------
+917504               917504              
+786432               851968              
+
+2 rows fetched.
+
+SQL> 
+SQL> exp tables=encrypt_test file="encrypt_test_exp.dmp" FILETYPE=txt encrypt= 'Changeme_123';
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ENCRYPT_TEST
+-- FILE TYPE = TXT
+-- DUMP FILE = encrypt_test_exp.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table ENCRYPT.ENCRYPT_TEST ...
+  exporting DDL of ENCRYPT.ENCRYPT_TEST ...
+  exporting data of ENCRYPT.ENCRYPT_TEST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on ENCRYPT.ENCRYPT_TEST ...
+  exporting constraints on ENCRYPT.ENCRYPT_TEST ...
+
+Logical export succeeded.
+
+SQL> imp tables=encrypt_test file="encrypt_test_exp.dmp" FILETYPE=txt decrypt= 'Changeme_123';
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ENCRYPT_TEST
+-- DUMP FILE = encrypt_test_exp.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 3 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from encrypt_test order by f1;
+
+F1           F2                                                
+------------ --------------------------------------------------
+1            sfs                                               
+2            yyy                                               
+3            wee                                               
+
+3 rows fetched.
+
+SQL> 
+SQL> exp tables=encrypt_big_data file="encrypt_exp.dmp" FILETYPE=bin encrypt= 'Changeme_123';
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ENCRYPT_BIG_DATA
+-- FILE TYPE = BIN
+-- DUMP FILE = encrypt_exp.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting DDL of ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting data of ENCRYPT.ENCRYPT_BIG_DATA ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting constraints on ENCRYPT.ENCRYPT_BIG_DATA ...
+
+Logical export succeeded.
+
+SQL> imp tables=encrypt_big_data file="encrypt_exp.dmp" FILETYPE=bin decrypt= 'Changeme_123';
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ENCRYPT_BIG_DATA
+-- DUMP FILE = encrypt_exp.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema ENCRYPT ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema ENCRYPT ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema ENCRYPT ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema ENCRYPT ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    ENCRYPT_BIG_DATA                                                     2         
+
+  Importing foreign key of schema ENCRYPT ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema ENCRYPT ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema ENCRYPT ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema ENCRYPT ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema ENCRYPT ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select length(f1),length(f2) from encrypt_big_data order by f3;
+
+LENGTH(F1)           LENGTH(F2)          
+-------------------- --------------------
+917504               917504              
+786432               851968              
+
+2 rows fetched.
+
+SQL> 
+SQL> exp tables=encrypt_test file="encrypt_compress.dmp" FILETYPE=bin encrypt= 'Changeme_123' compress = 2;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ENCRYPT_TEST
+-- FILE TYPE = BIN
+-- DUMP FILE = encrypt_compress.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = Y
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table ENCRYPT.ENCRYPT_TEST ...
+  exporting DDL of ENCRYPT.ENCRYPT_TEST ...
+  exporting data of ENCRYPT.ENCRYPT_TEST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on ENCRYPT.ENCRYPT_TEST ...
+  exporting constraints on ENCRYPT.ENCRYPT_TEST ...
+
+Logical export succeeded.
+
+SQL> imp tables=encrypt_test file="encrypt_compress.dmp" FILETYPE=bin decrypt= 'Changeme_123';
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ENCRYPT_TEST
+-- DUMP FILE = encrypt_compress.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema ENCRYPT ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema ENCRYPT ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema ENCRYPT ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema ENCRYPT ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    ENCRYPT_TEST                                                         3         
+
+  Importing foreign key of schema ENCRYPT ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema ENCRYPT ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema ENCRYPT ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema ENCRYPT ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema ENCRYPT ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 3 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from encrypt_test order by f1;
+
+F1           F2                                                
+------------ --------------------------------------------------
+1            sfs                                               
+2            yyy                                               
+3            wee                                               
+
+3 rows fetched.
+
+SQL> 
+SQL> exp tables=encrypt_test file="encrypt_test_exp.dmp" FILETYPE=txt parallel = 4 encrypt= 'Changeme_123';
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ENCRYPT_TEST
+-- FILE TYPE = TXT
+-- DUMP FILE = encrypt_test_exp.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 4
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table ENCRYPT.ENCRYPT_TEST ...
+  exporting DDL of ENCRYPT.ENCRYPT_TEST ...
+  exporting indexes on ENCRYPT.ENCRYPT_TEST ...
+  exporting constraints on ENCRYPT.ENCRYPT_TEST ...
+
+Logical export succeeded.
+
+SQL> imp tables=encrypt_test file="encrypt_test_exp.dmp" FILETYPE=txt parallel = 8 decrypt= 'Changeme_123';
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ENCRYPT_TEST
+-- DUMP FILE = encrypt_test_exp.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 8
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 4 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from encrypt_test order by f1;
+
+F1           F2                                                
+------------ --------------------------------------------------
+1            sfs                                               
+2            yyy                                               
+3            wee                                               
+
+3 rows fetched.
+
+SQL> 
+SQL> exp tables=encrypt_big_data file="encrypt_exp.dmp" FILETYPE=bin parallel = 4 encrypt= 'Changeme_123';
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ENCRYPT_BIG_DATA
+-- FILE TYPE = BIN
+-- DUMP FILE = encrypt_exp.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 4
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting DDL of ENCRYPT.ENCRYPT_BIG_DATA ...
+    data exporting success! 2 rows are dumped.
+  exporting indexes on ENCRYPT.ENCRYPT_BIG_DATA ...
+  exporting constraints on ENCRYPT.ENCRYPT_BIG_DATA ...
+
+Logical export succeeded.
+
+SQL> imp tables=encrypt_big_data file="encrypt_exp.dmp" FILETYPE=bin parallel = 8 decrypt= 'Changeme_123';
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ENCRYPT_BIG_DATA
+-- DUMP FILE = encrypt_exp.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 8
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema ENCRYPT ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema ENCRYPT ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema ENCRYPT ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema ENCRYPT ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    ENCRYPT_BIG_DATA                                                     2         
+
+  Importing foreign key of schema ENCRYPT ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema ENCRYPT ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema ENCRYPT ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema ENCRYPT ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema ENCRYPT ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select length(f1),length(f2) from encrypt_big_data order by f3;
+
+LENGTH(F1)           LENGTH(F2)          
+-------------------- --------------------
+917504               917504              
+786432               851968              
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists encrypt_big_data;
+
+Succeed.
+
+SQL> drop index if exists encrypt_test_1 ON encrypt_test;
+
+Succeed.
+
+SQL> drop table if exists encrypt_test;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists encrypt cascade;
+
+Succeed.
+
+SQL> drop user if exists encrypt_empty cascade;
+
+Succeed.
+
+SQL> create user encrypt_empty identified by 'Changeme_123';
+
+Succeed.
+
+SQL> grant dba to encrypt_empty;
+
+Succeed.
+
+SQL> 
+SQL> conn encrypt_empty/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=encrypt_empty file="empty_user.dmp";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = ENCRYPT_EMPTY
+-- FILE TYPE = TXT
+-- DUMP FILE = empty_user.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema ENCRYPT_EMPTY ...
+Exporting sequence of schema ENCRYPT_EMPTY ...
+Exporting profile of schema ENCRYPT_EMPTY ...
+Exporting type of schema ENCRYPT_EMPTY ...
+Exporting tables of schema ENCRYPT_EMPTY ...
+Reading table objects of ENCRYPT_EMPTY
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+
+Exporting tables (scripts or data) of ENCRYPT_EMPTY
+Exporting procedures/functions/triggers of schema ENCRYPT_EMPTY ...
+Exporting views of schema ENCRYPT_EMPTY ...
+Exporting synonyms of schema ENCRYPT_EMPTY ...
+Exporting package of schema ENCRYPT_EMPTY ...
+End of export schema ENCRYPT_EMPTY ...
+
+Logical export succeeded.
+
+SQL> imp users=encrypt_empty file="empty_user.dmp";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = ENCRYPT_EMPTY
+-- DUMP FILE = empty_user.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> exp users=encrypt_empty file="empty_database.dmp" encrypt='sdfsfsfdsf';
+Parsing export options ... 
+
+CT-00657, Password is too simple, password should contain at least three of the following character types:
+A. at least one lowercase letter
+B. at least one uppercase letter
+C. at least one digit
+D. at least one special character: `~!@#$%^&*()-_=+\|[{}]:'",<.>/? and space
+Logical export failed.
+
+SQL> exp users=encrypt_empty file="empty_database.dmp" encrypt='Changeme_123';
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = ENCRYPT_EMPTY
+-- FILE TYPE = TXT
+-- DUMP FILE = empty_database.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema ENCRYPT_EMPTY ...
+Exporting sequence of schema ENCRYPT_EMPTY ...
+Exporting profile of schema ENCRYPT_EMPTY ...
+Exporting type of schema ENCRYPT_EMPTY ...
+Exporting tables of schema ENCRYPT_EMPTY ...
+Reading table objects of ENCRYPT_EMPTY
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+
+Exporting tables (scripts or data) of ENCRYPT_EMPTY
+Exporting procedures/functions/triggers of schema ENCRYPT_EMPTY ...
+Exporting views of schema ENCRYPT_EMPTY ...
+Exporting synonyms of schema ENCRYPT_EMPTY ...
+Exporting package of schema ENCRYPT_EMPTY ...
+End of export schema ENCRYPT_EMPTY ...
+
+Logical export succeeded.
+
+SQL> imp users=encrypt_empty file="empty_database.dmp" decrypt='Changeme_123';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = ENCRYPT_EMPTY
+-- DUMP FILE = empty_database.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=encrypt_empty file="empty_database.dmp" decrypt='Changeme_222';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+ZS-00005: Fail to parse encrypt.cfg or incorrect password
+
+CT-00110, Failed to encrypt password
+Logical import failed.
+
+SQL> imp users=encrypt_empty file="empty_database.dmp" decrypt='12345678';
+Parsing import options ... 
+
+CT-00657, Password is too simple, password should contain at least three of the following character types:
+A. at least one lowercase letter
+B. at least one uppercase letter
+C. at least one digit
+D. at least one special character: `~!@#$%^&*()-_=+\|[{}]:'",<.>/? and space
+Logical import failed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists encrypt_empty cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019092111582;DTS2019092011413
+SQL> drop user if exists smaller cascade;
+
+Succeed.
+
+SQL> Create user smaller identified by Changme_123;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists greater cascade;
+
+Succeed.
+
+SQL> Create user greater identified by Changme_123;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists hanson cascade;
+
+Succeed.
+
+SQL> Create user hanson identified by Changme_123;
+
+Succeed.
+
+SQL> grant dba to smaller,greater,hanson;
+
+Succeed.
+
+SQL> 
+SQL> conn smaller/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS smaller1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS smaller2;
+
+Succeed.
+
+SQL> CREATE TABLE smaller1(ID INT,POSTCODE BIGINT,NAME VARCHAR2(10),SEX CHAR(6),COMMENT VARCHAR(20),IDCARD NUMBER(20),BIRTHDAY DATE,ACTIVE BOOLEAN,MY_BLOB BLOB,MY_CLOB CLOB,MY_BINARY BINARY(5),MY_VARBINARY VARBINARY(5),MY_REAL REAL(5));
+
+Succeed.
+
+SQL> ALTER TABLE smaller1 MODIFY ID INT AUTO_INCREMENT;
+
+Succeed.
+
+SQL> CREATE TABLE smaller2(ID INT,POSTCODE BIGINT,NAME VARCHAR2(10),SEX CHAR(6),COMMENT VARCHAR(20),IDCARD NUMBER(20),BIRTHDAY DATE,ACTIVE BOOLEAN,MY_BLOB BLOB,MY_CLOB CLOB,MY_BINARY BINARY(5),MY_VARBINARY VARBINARY(5),MY_REAL REAL(5));
+
+Succeed.
+
+SQL> ALTER TABLE smaller2 MODIFY ID INT AUTO_INCREMENT;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure smaller(size in int )
+  2 as
+  3 begin 
+  4     for i in 1..size loop
+  5         INSERT INTO smaller1 VALUES(0,710100,'ANNIE','MALE','this Is@3!','610111199003064490','2019-02-28 23:01:59',TRUE,'0XE87F1','CLOB',131,101,100.6);
+  6 				INSERT INTO smaller2 VALUES(0,710100,'ANNIE','MALE','this Is@3!','610111199003064490','2019-02-28 23:01:59',TRUE,'0XE87F1','CLOB',131,101,100.6);
+  7     end loop;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> call smaller(55);
+
+PL/SQL procedure successfully completed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> conn greater/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS greater1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS greater2;
+
+Succeed.
+
+SQL> CREATE TABLE greater1(ID INT,POSTCODE BIGINT,NAME VARCHAR2(10),SEX CHAR(6),COMMENT VARCHAR(20),IDCARD NUMBER(20),BIRTHDAY DATE,ACTIVE BOOLEAN,MY_BLOB BLOB,MY_CLOB CLOB,MY_BINARY BINARY(5),MY_VARBINARY VARBINARY(5),MY_REAL REAL(5));
+
+Succeed.
+
+SQL> ALTER TABLE greater1 MODIFY ID INT AUTO_INCREMENT;
+
+Succeed.
+
+SQL> CREATE TABLE greater2(ID INT,POSTCODE BIGINT,NAME VARCHAR2(10),SEX CHAR(6),COMMENT VARCHAR(20),IDCARD NUMBER(20),BIRTHDAY DATE,ACTIVE BOOLEAN,MY_BLOB BLOB,MY_CLOB CLOB,MY_BINARY BINARY(5),MY_VARBINARY VARBINARY(5),MY_REAL REAL(5));
+
+Succeed.
+
+SQL> ALTER TABLE greater2 MODIFY ID INT AUTO_INCREMENT;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure greater(size in int )
+  2 as
+  3 begin 
+  4     for i in 1..size loop
+  5         INSERT INTO greater1 VALUES(0,710077,'ANNIE','MALE','THIS IS TABLE TEST@','610111199003064490','2019-02-28 22:00:00',TRUE,'0XE87F1','CLOB',131,101,100.6);
+  6 				INSERT INTO greater2 VALUES(0,710077,'leo','MALE','THIS IS TABLE TEST@','610111199003064490','2019-02-28 22:00:00',TRUE,'0XE87F1','CLOB',131,101,100.6);
+  7     end loop;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> call greater(136);
+
+PL/SQL procedure successfully completed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> conn hanson/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS mytable1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS mytable2;
+
+Succeed.
+
+SQL> CREATE TABLE mytable1(ID INT,POSTCODE BIGINT,NAME VARCHAR2(10),SEX CHAR(6),COMMENT VARCHAR(20),IDCARD NUMBER(20),BIRTHDAY DATE,ACTIVE BOOLEAN,MY_BLOB BLOB,MY_CLOB CLOB,MY_BINARY BINARY(5),MY_VARBINARY VARBINARY(5),MY_REAL REAL(5));
+
+Succeed.
+
+SQL> ALTER TABLE mytable1 MODIFY ID INT AUTO_INCREMENT;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE mytable2(ID INT,POSTCODE BIGINT,NAME VARCHAR2(10),SEX CHAR(6),COMMENT VARCHAR(20),IDCARD NUMBER(20),BIRTHDAY DATE,ACTIVE BOOLEAN,MY_BLOB BLOB,MY_CLOB CLOB,MY_BINARY BINARY(5),MY_VARBINARY VARBINARY(5),MY_REAL REAL(5));
+
+Succeed.
+
+SQL> ALTER TABLE mytable2 MODIFY ID INT AUTO_INCREMENT;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure hanson(size in int )
+  2 as
+  3 begin 
+  4     for i in 1..size loop
+  5         INSERT INTO mytable1 VALUES(0,710077,'mark','MALE','THIS IS TABLE TEST@','610111199003064490','2019-02-28 22:00:00',TRUE,'0XE87F1','CLOB',131,101,99.56);
+  6 				INSERT INTO mytable2 VALUES(0,710077,'mark','MALE','THIS IS TABLE TEST@','610111199003064490','2019-02-28 22:00:00',TRUE,'0XE87F1','CLOB',131,101,99.56);
+  7     end loop;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> call hanson(999);
+
+PL/SQL procedure successfully completed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=smaller,greater,hanson file="dum11.dmp" parallel=2 filetype=bin consistent=Y encrypt='Cantian_234';
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = SMALLER, GREATER, HANSON
+-- FILE TYPE = BIN
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 2
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema SMALLER ...
+Exporting sequence of schema SMALLER ...
+Exporting profile of schema SMALLER ...
+Exporting type of schema SMALLER ...
+Exporting tables of schema SMALLER ...
+Reading table objects of SMALLER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+SMALLER1                                                         1         
+SMALLER2                                                         2         
+
+Exporting tables (scripts or data) of SMALLER
+exporting table SMALLER.SMALLER1 ...
+  exporting DDL of SMALLER.SMALLER1 ...
+    data exporting success! 55 rows are dumped.
+  exporting auto_increment attr on SMALLER.SMALLER1 ...
+  exporting indexes on SMALLER.SMALLER1 ...
+  exporting constraints on SMALLER.SMALLER1 ...
+
+exporting table SMALLER.SMALLER2 ...
+  exporting DDL of SMALLER.SMALLER2 ...
+    data exporting success! 55 rows are dumped.
+  exporting auto_increment attr on SMALLER.SMALLER2 ...
+  exporting indexes on SMALLER.SMALLER2 ...
+  exporting constraints on SMALLER.SMALLER2 ...
+
+Exporting procedures/functions/triggers of schema SMALLER ...
+  exporting PROCEDURE SMALLER.SMALLER
+Exporting views of schema SMALLER ...
+Exporting synonyms of schema SMALLER ...
+Exporting package of schema SMALLER ...
+End of export schema SMALLER ...
+
+Exporting schema GREATER ...
+Exporting sequence of schema GREATER ...
+Exporting profile of schema GREATER ...
+Exporting type of schema GREATER ...
+Exporting tables of schema GREATER ...
+Reading table objects of GREATER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+GREATER1                                                         1         
+GREATER2                                                         2         
+
+Exporting tables (scripts or data) of GREATER
+exporting table GREATER.GREATER1 ...
+  exporting DDL of GREATER.GREATER1 ...
+    data exporting success! 136 rows are dumped.
+  exporting auto_increment attr on GREATER.GREATER1 ...
+  exporting indexes on GREATER.GREATER1 ...
+  exporting constraints on GREATER.GREATER1 ...
+
+exporting table GREATER.GREATER2 ...
+  exporting DDL of GREATER.GREATER2 ...
+    data exporting success! 136 rows are dumped.
+  exporting auto_increment attr on GREATER.GREATER2 ...
+  exporting indexes on GREATER.GREATER2 ...
+  exporting constraints on GREATER.GREATER2 ...
+
+Exporting procedures/functions/triggers of schema GREATER ...
+  exporting PROCEDURE GREATER.GREATER
+Exporting views of schema GREATER ...
+Exporting synonyms of schema GREATER ...
+Exporting package of schema GREATER ...
+End of export schema GREATER ...
+
+Exporting schema HANSON ...
+Exporting sequence of schema HANSON ...
+Exporting profile of schema HANSON ...
+Exporting type of schema HANSON ...
+Exporting tables of schema HANSON ...
+Reading table objects of HANSON
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+MYTABLE1                                                         1         
+MYTABLE2                                                         2         
+
+Exporting tables (scripts or data) of HANSON
+exporting table HANSON.MYTABLE1 ...
+  exporting DDL of HANSON.MYTABLE1 ...
+    data exporting success! 999 rows are dumped.
+  exporting auto_increment attr on HANSON.MYTABLE1 ...
+  exporting indexes on HANSON.MYTABLE1 ...
+  exporting constraints on HANSON.MYTABLE1 ...
+
+exporting table HANSON.MYTABLE2 ...
+  exporting DDL of HANSON.MYTABLE2 ...
+    data exporting success! 999 rows are dumped.
+  exporting auto_increment attr on HANSON.MYTABLE2 ...
+  exporting indexes on HANSON.MYTABLE2 ...
+  exporting constraints on HANSON.MYTABLE2 ...
+
+Exporting procedures/functions/triggers of schema HANSON ...
+  exporting PROCEDURE HANSON.HANSON
+Exporting views of schema HANSON ...
+Exporting synonyms of schema HANSON ...
+Exporting package of schema HANSON ...
+End of export schema HANSON ...
+
+Logical export succeeded.
+
+SQL> imp users=smaller,greater,hanson file="dum11.dmp" parallel=2 filetype=bin decrypt='Cantian_234';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = SMALLER, GREATER, HANSON
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 2
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema SMALLER ... 
+  Importing sequence of schema SMALLER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema SMALLER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema SMALLER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema SMALLER ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    SMALLER1                                                             55        
+    SMALLER2                                                             55        
+
+  Importing foreign key of schema SMALLER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema SMALLER ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema SMALLER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema SMALLER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema SMALLER ...
+    Package importing success, 0 rows are loaded.
+
+
+Importing schema GREATER ... 
+  Importing sequence of schema GREATER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema GREATER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema GREATER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema GREATER ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    GREATER1                                                             136       
+    GREATER2                                                             136       
+
+  Importing foreign key of schema GREATER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema GREATER ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema GREATER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema GREATER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema GREATER ...
+    Package importing success, 0 rows are loaded.
+
+
+Importing schema HANSON ... 
+  Importing sequence of schema HANSON ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema HANSON ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema HANSON ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema HANSON ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    MYTABLE1                                                             999       
+    MYTABLE2                                                             999       
+
+  Importing foreign key of schema HANSON ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema HANSON ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema HANSON ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema HANSON ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema HANSON ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2380 rows are loaded.
+Logical import succeeded.
+
+SQL> exp users=smaller,greater,hanson file="dum11.dmp" parallel=2 filetype=bin consistent=Y encrypt='Cantian_234';
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = SMALLER, GREATER, HANSON
+-- FILE TYPE = BIN
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 2
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema SMALLER ...
+Exporting sequence of schema SMALLER ...
+Exporting profile of schema SMALLER ...
+Exporting type of schema SMALLER ...
+Exporting tables of schema SMALLER ...
+Reading table objects of SMALLER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+SMALLER1                                                         1         
+SMALLER2                                                         2         
+
+Exporting tables (scripts or data) of SMALLER
+exporting table SMALLER.SMALLER1 ...
+  exporting DDL of SMALLER.SMALLER1 ...
+    data exporting success! 55 rows are dumped.
+  exporting auto_increment attr on SMALLER.SMALLER1 ...  
+  exporting indexes on SMALLER.SMALLER1 ...
+  exporting constraints on SMALLER.SMALLER1 ...
+
+exporting table SMALLER.SMALLER2 ...
+  exporting DDL of SMALLER.SMALLER2 ...
+    data exporting success! 55 rows are dumped.
+  exporting auto_increment attr on SMALLER.SMALLER2 ...  
+  exporting indexes on SMALLER.SMALLER2 ...
+  exporting constraints on SMALLER.SMALLER2 ...
+
+Exporting procedures/functions/triggers of schema SMALLER ...
+  exporting PROCEDURE SMALLER.SMALLER
+Exporting views of schema SMALLER ...
+Exporting synonyms of schema SMALLER ...
+Exporting package of schema SMALLER ...
+End of export schema SMALLER ...
+
+Exporting schema GREATER ...
+Exporting sequence of schema GREATER ...
+Exporting profile of schema GREATER ...
+Exporting type of schema GREATER ...
+Exporting tables of schema GREATER ...
+Reading table objects of GREATER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+GREATER1                                                         1         
+GREATER2                                                         2         
+
+Exporting tables (scripts or data) of GREATER
+exporting table GREATER.GREATER1 ...
+  exporting DDL of GREATER.GREATER1 ...
+    data exporting success! 136 rows are dumped.
+  exporting auto_increment attr on GREATER.GREATER1 ...  
+  exporting indexes on GREATER.GREATER1 ...
+  exporting constraints on GREATER.GREATER1 ...
+
+exporting table GREATER.GREATER2 ...
+  exporting DDL of GREATER.GREATER2 ...
+    data exporting success! 136 rows are dumped.
+  exporting auto_increment attr on GREATER.GREATER2 ...  
+  exporting indexes on GREATER.GREATER2 ...
+  exporting constraints on GREATER.GREATER2 ...
+
+Exporting procedures/functions/triggers of schema GREATER ...
+  exporting PROCEDURE GREATER.GREATER
+Exporting views of schema GREATER ...
+Exporting synonyms of schema GREATER ...
+Exporting package of schema GREATER ...
+End of export schema GREATER ...
+
+Exporting schema HANSON ...
+Exporting sequence of schema HANSON ...
+Exporting profile of schema HANSON ...
+Exporting type of schema HANSON ...
+Exporting tables of schema HANSON ...
+Reading table objects of HANSON
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+MYTABLE1                                                         1         
+MYTABLE2                                                         2         
+
+Exporting tables (scripts or data) of HANSON
+exporting table HANSON.MYTABLE1 ...
+  exporting DDL of HANSON.MYTABLE1 ...
+    data exporting success! 999 rows are dumped.
+  exporting auto_increment attr on HANSON.MYTABLE1 ...  
+  exporting indexes on HANSON.MYTABLE1 ...
+  exporting constraints on HANSON.MYTABLE1 ...
+
+exporting table HANSON.MYTABLE2 ...
+  exporting DDL of HANSON.MYTABLE2 ...
+    data exporting success! 999 rows are dumped.
+  exporting auto_increment attr on HANSON.MYTABLE2 ...  
+  exporting indexes on HANSON.MYTABLE2 ...
+  exporting constraints on HANSON.MYTABLE2 ...
+
+Exporting procedures/functions/triggers of schema HANSON ...
+  exporting PROCEDURE HANSON.HANSON
+Exporting views of schema HANSON ...
+Exporting synonyms of schema HANSON ...
+Exporting package of schema HANSON ...
+End of export schema HANSON ...
+
+Logical export succeeded.
+
+SQL> imp users=smaller,greater,hanson file="dum11.dmp" parallel=2 filetype=bin decrypt='Cantian_234';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = SMALLER, GREATER, HANSON
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 2
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema SMALLER ... 
+  Importing sequence of schema SMALLER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema SMALLER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema SMALLER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema SMALLER ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    SMALLER1                                                             55        
+    SMALLER2                                                             55        
+
+  Importing foreign key of schema SMALLER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema SMALLER ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema SMALLER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema SMALLER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema SMALLER ...
+    Package importing success, 0 rows are loaded.
+
+
+Importing schema GREATER ... 
+  Importing sequence of schema GREATER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema GREATER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema GREATER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema GREATER ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    GREATER1                                                             136       
+    GREATER2                                                             136       
+
+  Importing foreign key of schema GREATER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema GREATER ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema GREATER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema GREATER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema GREATER ...
+    Package importing success, 0 rows are loaded.
+
+
+Importing schema HANSON ... 
+  Importing sequence of schema HANSON ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema HANSON ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema HANSON ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema HANSON ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    MYTABLE1                                                             999       
+    MYTABLE2                                                             999       
+
+  Importing foreign key of schema HANSON ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema HANSON ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema HANSON ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema HANSON ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema HANSON ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2380 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> exp users=smaller,greater,hanson file="dum11.dmp" filetype=bin consistent=Y encrypt='Cantian_234';
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = SMALLER, GREATER, HANSON
+-- FILE TYPE = BIN
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema SMALLER ...
+Exporting sequence of schema SMALLER ...
+Exporting profile of schema SMALLER ...
+Exporting type of schema SMALLER ...
+Exporting tables of schema SMALLER ...
+Reading table objects of SMALLER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+SMALLER1                                                         1         
+SMALLER2                                                         2         
+
+Exporting tables (scripts or data) of SMALLER
+exporting table SMALLER.SMALLER1 ...
+  exporting DDL of SMALLER.SMALLER1 ...
+  exporting data of SMALLER.SMALLER1 ...
+    data exporting success, 55 rows are dumped.
+
+  exporting auto_increment attr on SMALLER.SMALLER1 ...  
+  exporting indexes on SMALLER.SMALLER1 ...
+  exporting constraints on SMALLER.SMALLER1 ...
+
+exporting table SMALLER.SMALLER2 ...
+  exporting DDL of SMALLER.SMALLER2 ...
+  exporting data of SMALLER.SMALLER2 ...
+    data exporting success, 55 rows are dumped.
+
+  exporting auto_increment attr on SMALLER.SMALLER2 ...  
+  exporting indexes on SMALLER.SMALLER2 ...
+  exporting constraints on SMALLER.SMALLER2 ...
+
+Exporting procedures/functions/triggers of schema SMALLER ...
+  exporting PROCEDURE SMALLER.SMALLER
+Exporting views of schema SMALLER ...
+Exporting synonyms of schema SMALLER ...
+Exporting package of schema SMALLER ...
+End of export schema SMALLER ...
+
+Exporting schema GREATER ...
+Exporting sequence of schema GREATER ...
+Exporting profile of schema GREATER ...
+Exporting type of schema GREATER ...
+Exporting tables of schema GREATER ...
+Reading table objects of GREATER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+GREATER1                                                         1         
+GREATER2                                                         2         
+
+Exporting tables (scripts or data) of GREATER
+exporting table GREATER.GREATER1 ...
+  exporting DDL of GREATER.GREATER1 ...
+  exporting data of GREATER.GREATER1 ...
+    data exporting success, 136 rows are dumped.
+
+  exporting auto_increment attr on GREATER.GREATER1 ...  
+  exporting indexes on GREATER.GREATER1 ...
+  exporting constraints on GREATER.GREATER1 ...
+
+exporting table GREATER.GREATER2 ...
+  exporting DDL of GREATER.GREATER2 ...
+  exporting data of GREATER.GREATER2 ...
+    data exporting success, 136 rows are dumped.
+
+  exporting auto_increment attr on GREATER.GREATER2 ...  
+  exporting indexes on GREATER.GREATER2 ...
+  exporting constraints on GREATER.GREATER2 ...
+
+Exporting procedures/functions/triggers of schema GREATER ...
+  exporting PROCEDURE GREATER.GREATER
+Exporting views of schema GREATER ...
+Exporting synonyms of schema GREATER ...
+Exporting package of schema GREATER ...
+End of export schema GREATER ...
+
+Exporting schema HANSON ...
+Exporting sequence of schema HANSON ...
+Exporting profile of schema HANSON ...
+Exporting type of schema HANSON ...
+Exporting tables of schema HANSON ...
+Reading table objects of HANSON
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+MYTABLE1                                                         1         
+MYTABLE2                                                         2         
+
+Exporting tables (scripts or data) of HANSON
+exporting table HANSON.MYTABLE1 ...
+  exporting DDL of HANSON.MYTABLE1 ...
+  exporting data of HANSON.MYTABLE1 ...
+    data exporting success, 999 rows are dumped.
+
+  exporting auto_increment attr on HANSON.MYTABLE1 ...  
+  exporting indexes on HANSON.MYTABLE1 ...
+  exporting constraints on HANSON.MYTABLE1 ...
+
+exporting table HANSON.MYTABLE2 ...
+  exporting DDL of HANSON.MYTABLE2 ...
+  exporting data of HANSON.MYTABLE2 ...
+    data exporting success, 999 rows are dumped.
+
+  exporting auto_increment attr on HANSON.MYTABLE2 ...  
+  exporting indexes on HANSON.MYTABLE2 ...
+  exporting constraints on HANSON.MYTABLE2 ...
+
+Exporting procedures/functions/triggers of schema HANSON ...
+  exporting PROCEDURE HANSON.HANSON
+Exporting views of schema HANSON ...
+Exporting synonyms of schema HANSON ...
+Exporting package of schema HANSON ...
+End of export schema HANSON ...
+
+Logical export succeeded.
+
+SQL> imp users=smaller,greater,hanson file="dum11.dmp" filetype=bin decrypt='Cantian_234';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = SMALLER, GREATER, HANSON
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema SMALLER ... 
+  Importing sequence of schema SMALLER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema SMALLER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema SMALLER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema SMALLER ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    SMALLER1                                                             55        
+    SMALLER2                                                             55        
+
+  Importing foreign key of schema SMALLER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema SMALLER ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema SMALLER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema SMALLER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema SMALLER ...
+    Package importing success, 0 rows are loaded.
+
+
+Importing schema GREATER ... 
+  Importing sequence of schema GREATER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema GREATER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema GREATER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema GREATER ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    GREATER1                                                             136       
+    GREATER2                                                             136       
+
+  Importing foreign key of schema GREATER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema GREATER ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema GREATER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema GREATER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema GREATER ...
+    Package importing success, 0 rows are loaded.
+
+
+Importing schema HANSON ... 
+  Importing sequence of schema HANSON ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema HANSON ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema HANSON ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema HANSON ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    MYTABLE1                                                             999       
+    MYTABLE2                                                             999       
+
+  Importing foreign key of schema HANSON ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema HANSON ...
+    Fuction/procedure/trigger importing success, 1 rows are loaded.
+
+  Importing view of schema HANSON ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema HANSON ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema HANSON ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2380 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> exp users=smaller,greater,hanson file="dum11.dmp" parallel=2 filetype=txt consistent=Y encrypt='Cantian_234';
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = SMALLER, GREATER, HANSON
+-- FILE TYPE = TXT
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 2
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema SMALLER ...
+Exporting sequence of schema SMALLER ...
+Exporting profile of schema SMALLER ...
+Exporting type of schema SMALLER ...
+Exporting tables of schema SMALLER ...
+Reading table objects of SMALLER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+SMALLER1                                                         1         
+SMALLER2                                                         2         
+
+Exporting tables (scripts or data) of SMALLER
+exporting table SMALLER.SMALLER1 ...
+  exporting DDL of SMALLER.SMALLER1 ...
+  exporting auto_increment attr on SMALLER.SMALLER1 ...  
+  exporting indexes on SMALLER.SMALLER1 ...
+  exporting constraints on SMALLER.SMALLER1 ...
+
+exporting table SMALLER.SMALLER2 ...
+  exporting DDL of SMALLER.SMALLER2 ...
+  exporting auto_increment attr on SMALLER.SMALLER2 ...  
+  exporting indexes on SMALLER.SMALLER2 ...
+  exporting constraints on SMALLER.SMALLER2 ...
+
+Exporting procedures/functions/triggers of schema SMALLER ...
+  exporting PROCEDURE SMALLER.SMALLER
+Exporting views of schema SMALLER ...
+Exporting synonyms of schema SMALLER ...
+Exporting package of schema SMALLER ...
+End of export schema SMALLER ...
+
+Exporting schema GREATER ...
+Exporting sequence of schema GREATER ...
+Exporting profile of schema GREATER ...
+Exporting type of schema GREATER ...
+Exporting tables of schema GREATER ...
+Reading table objects of GREATER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+GREATER1                                                         1         
+GREATER2                                                         2         
+
+Exporting tables (scripts or data) of GREATER
+exporting table GREATER.GREATER1 ...
+  exporting DDL of GREATER.GREATER1 ...
+  exporting auto_increment attr on GREATER.GREATER1 ...  
+  exporting indexes on GREATER.GREATER1 ...
+  exporting constraints on GREATER.GREATER1 ...
+
+exporting table GREATER.GREATER2 ...
+  exporting DDL of GREATER.GREATER2 ...
+  exporting auto_increment attr on GREATER.GREATER2 ...  
+  exporting indexes on GREATER.GREATER2 ...
+  exporting constraints on GREATER.GREATER2 ...
+
+Exporting procedures/functions/triggers of schema GREATER ...
+  exporting PROCEDURE GREATER.GREATER
+Exporting views of schema GREATER ...
+Exporting synonyms of schema GREATER ...
+Exporting package of schema GREATER ...
+End of export schema GREATER ...
+
+Exporting schema HANSON ...
+Exporting sequence of schema HANSON ...
+Exporting profile of schema HANSON ...
+Exporting type of schema HANSON ...
+Exporting tables of schema HANSON ...
+Reading table objects of HANSON
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+MYTABLE1                                                         1         
+MYTABLE2                                                         2         
+
+Exporting tables (scripts or data) of HANSON
+exporting table HANSON.MYTABLE1 ...
+  exporting DDL of HANSON.MYTABLE1 ...
+  exporting auto_increment attr on HANSON.MYTABLE1 ...  
+  exporting indexes on HANSON.MYTABLE1 ...
+  exporting constraints on HANSON.MYTABLE1 ...
+
+exporting table HANSON.MYTABLE2 ...
+  exporting DDL of HANSON.MYTABLE2 ...
+  exporting auto_increment attr on HANSON.MYTABLE2 ...  
+  exporting indexes on HANSON.MYTABLE2 ...
+  exporting constraints on HANSON.MYTABLE2 ...
+
+Exporting procedures/functions/triggers of schema HANSON ...
+  exporting PROCEDURE HANSON.HANSON
+Exporting views of schema HANSON ...
+Exporting synonyms of schema HANSON ...
+Exporting package of schema HANSON ...
+End of export schema HANSON ...
+
+Logical export succeeded.
+
+SQL> imp users=smaller,greater,hanson file="dum11.dmp" parallel=2 filetype=txt decrypt='Cantian_234';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = SMALLER, GREATER, HANSON
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 2
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 2388 rows are loaded.
+Logical import succeeded.
+
+SQL> exp users=smaller,greater,hanson file="dum11.dmp" filetype=txt consistent=Y encrypt='Cantian_234';
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = SMALLER, GREATER, HANSON
+-- FILE TYPE = TXT
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema SMALLER ...
+Exporting sequence of schema SMALLER ...
+Exporting profile of schema SMALLER ...
+Exporting type of schema SMALLER ...
+Exporting tables of schema SMALLER ...
+Reading table objects of SMALLER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+SMALLER1                                                         1         
+SMALLER2                                                         2         
+
+Exporting tables (scripts or data) of SMALLER
+exporting table SMALLER.SMALLER1 ...
+  exporting DDL of SMALLER.SMALLER1 ...
+  exporting data of SMALLER.SMALLER1 ...
+    data exporting success, 55 rows are dumped.
+
+  exporting auto_increment attr on SMALLER.SMALLER1 ...
+  exporting indexes on SMALLER.SMALLER1 ...
+  exporting constraints on SMALLER.SMALLER1 ...
+
+exporting table SMALLER.SMALLER2 ...
+  exporting DDL of SMALLER.SMALLER2 ...
+  exporting data of SMALLER.SMALLER2 ...
+    data exporting success, 55 rows are dumped.
+
+  exporting auto_increment attr on SMALLER.SMALLER2 ...  
+  exporting indexes on SMALLER.SMALLER2 ...
+  exporting constraints on SMALLER.SMALLER2 ...
+
+Exporting procedures/functions/triggers of schema SMALLER ...
+  exporting PROCEDURE SMALLER.SMALLER
+Exporting views of schema SMALLER ...
+Exporting synonyms of schema SMALLER ...
+Exporting package of schema SMALLER ...
+End of export schema SMALLER ...
+
+Exporting schema GREATER ...
+Exporting sequence of schema GREATER ...
+Exporting profile of schema GREATER ...
+Exporting type of schema GREATER ...
+Exporting tables of schema GREATER ...
+Reading table objects of GREATER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+GREATER1                                                         1         
+GREATER2                                                         2         
+
+Exporting tables (scripts or data) of GREATER
+exporting table GREATER.GREATER1 ...
+  exporting DDL of GREATER.GREATER1 ...
+  exporting data of GREATER.GREATER1 ...
+    data exporting success, 136 rows are dumped.
+
+  exporting auto_increment attr on GREATER.GREATER1 ...  
+  exporting indexes on GREATER.GREATER1 ...
+  exporting constraints on GREATER.GREATER1 ...
+
+exporting table GREATER.GREATER2 ...
+  exporting DDL of GREATER.GREATER2 ...
+  exporting data of GREATER.GREATER2 ...
+    data exporting success, 136 rows are dumped.
+
+  exporting auto_increment attr on GREATER.GREATER2 ...  
+  exporting indexes on GREATER.GREATER2 ...
+  exporting constraints on GREATER.GREATER2 ...
+
+Exporting procedures/functions/triggers of schema GREATER ...
+  exporting PROCEDURE GREATER.GREATER
+Exporting views of schema GREATER ...
+Exporting synonyms of schema GREATER ...
+Exporting package of schema GREATER ...
+End of export schema GREATER ...
+
+Exporting schema HANSON ...
+Exporting sequence of schema HANSON ...
+Exporting profile of schema HANSON ...
+Exporting type of schema HANSON ...
+Exporting tables of schema HANSON ...
+Reading table objects of HANSON
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+MYTABLE1                                                         1         
+MYTABLE2                                                         2         
+
+Exporting tables (scripts or data) of HANSON
+exporting table HANSON.MYTABLE1 ...
+  exporting DDL of HANSON.MYTABLE1 ...
+  exporting data of HANSON.MYTABLE1 ...
+    data exporting success, 999 rows are dumped.
+
+  exporting auto_increment attr on HANSON.MYTABLE1 ...  
+  exporting indexes on HANSON.MYTABLE1 ...
+  exporting constraints on HANSON.MYTABLE1 ...
+
+exporting table HANSON.MYTABLE2 ...
+  exporting DDL of HANSON.MYTABLE2 ...
+  exporting data of HANSON.MYTABLE2 ...
+    data exporting success, 999 rows are dumped.
+
+  exporting auto_increment attr on HANSON.MYTABLE2 ...  
+  exporting indexes on HANSON.MYTABLE2 ...
+  exporting constraints on HANSON.MYTABLE2 ...
+
+Exporting procedures/functions/triggers of schema HANSON ...
+  exporting PROCEDURE HANSON.HANSON
+Exporting views of schema HANSON ...
+Exporting synonyms of schema HANSON ...
+Exporting package of schema HANSON ...
+End of export schema HANSON ...
+
+Logical export succeeded.
+
+SQL> imp users=smaller,greater,hanson file="dum11.dmp" filetype=txt decrypt='Cantian_234';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = SMALLER, GREATER, HANSON
+-- DUMP FILE = dum11.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 2380 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> conn smaller/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> dump table smaller1 into file 'smaller1.txt' charset = GBK;
+55 rows dumped.
+
+Dump TABLE successfully:
+  55 rows are totally dumped.
+
+SQL> load data infile "smaller1.txt" into table smaller1 charset = GBK;
+55 rows have been committed.
+
+Complete the data load.
+totally read rows: 55
+     ignored rows: 0
+      loaded rows: 55
+   committed rows: 55
+       error rows: 0
+        skip rows: 0
+SQL> dump table smaller1 into file 'smaller1.txt' charset GBK;
+110 rows dumped.
+
+Dump TABLE successfully:
+  110 rows are totally dumped.
+
+SQL> load data infile "smaller1.txt" into table smaller1 charset GBK;
+110 rows have been committed.
+
+Complete the data load.
+totally read rows: 110
+     ignored rows: 0
+      loaded rows: 110
+   committed rows: 110
+       error rows: 0
+        skip rows: 0
+SQL> 
+SQL> exp tables=% file="smaller.dmp" filetype=txt;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = TXT
+-- DUMP FILE = smaller.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Reading table objects of SMALLER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+SMALLER1                                                         1         
+SMALLER2                                                         2         
+
+Exporting tables (scripts or data) of SMALLER
+exporting table SMALLER.SMALLER1 ...
+  exporting DDL of SMALLER.SMALLER1 ...
+  exporting data of SMALLER.SMALLER1 ...
+    data exporting success, 220 rows are dumped.
+
+  exporting auto_increment attr on SMALLER.SMALLER1 ...  
+  exporting indexes on SMALLER.SMALLER1 ...
+  exporting constraints on SMALLER.SMALLER1 ...
+
+exporting table SMALLER.SMALLER2 ...
+  exporting DDL of SMALLER.SMALLER2 ...
+  exporting data of SMALLER.SMALLER2 ...
+    data exporting success, 55 rows are dumped.
+
+  exporting auto_increment attr on SMALLER.SMALLER2 ...  
+  exporting indexes on SMALLER.SMALLER2 ...
+  exporting constraints on SMALLER.SMALLER2 ...
+
+Logical export succeeded.
+
+SQL> exp tables=% filetype=sdd file="smaller.dmp";
+Parsing export options ... 
+
+CT-00601, [1:23]Sql syntax error: BIN or TXT expected
+Logical export failed.
+
+SQL> exp tables=% file="smaller.dmp" filetype=sdd;
+Parsing export options ... 
+
+CT-00601, [1:42]Sql syntax error: BIN or TXT expected
+Logical export failed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists smaller cascade;
+
+Succeed.
+
+SQL> drop user if exists greater cascade;
+
+Succeed.
+
+SQL> drop user if exists hanson cascade;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists compress4 cascade;
+
+Succeed.
+
+SQL> create user compress4 identified by 'cantian@123';
+
+Succeed.
+
+SQL> grant dba to compress4;
+
+Succeed.
+
+SQL> conn compress4/cantian@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists lobtest1;
+
+Succeed.
+
+SQL> create table lobtest1(aa nvarchar(8000),bb blob);
+
+Succeed.
+
+SQL> drop table if exists lobtest2;
+
+Succeed.
+
+SQL> create table lobtest2(aa nvarchar(8000),cc clob);
+
+Succeed.
+
+SQL> insert into lobtest1 values('sdsdsd',LPAD('10',8000,'1') || LPAD('10',8000,'1'));
+
+1 rows affected.
+
+SQL> insert into lobtest2 values('sdsdd',LPAD('ab',8000,'a') || LPAD('cd',8000,'c'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> exp users=compress4 file='exp_compress4_bin.dmp' filetype=bin encrypt = 'Chanmge_123' compress=4;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = COMPRESS4
+-- FILE TYPE = BIN
+-- DUMP FILE = exp_compress4_bin.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = Y
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema COMPRESS4 ...
+Exporting sequence of schema COMPRESS4 ...
+Exporting profile of schema COMPRESS4 ...
+Exporting type of schema COMPRESS4 ...
+Exporting tables of schema COMPRESS4 ...
+Reading table objects of COMPRESS4
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+LOBTEST1                                                         1         
+LOBTEST2                                                         2         
+
+Exporting tables (scripts or data) of COMPRESS4
+exporting table COMPRESS4.LOBTEST1 ...
+  exporting DDL of COMPRESS4.LOBTEST1 ...
+  exporting data of COMPRESS4.LOBTEST1 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on COMPRESS4.LOBTEST1 ...
+  exporting constraints on COMPRESS4.LOBTEST1 ...
+
+exporting table COMPRESS4.LOBTEST2 ...
+  exporting DDL of COMPRESS4.LOBTEST2 ...
+  exporting data of COMPRESS4.LOBTEST2 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on COMPRESS4.LOBTEST2 ...
+  exporting constraints on COMPRESS4.LOBTEST2 ...
+
+Exporting procedures/functions/triggers of schema COMPRESS4 ...
+Exporting views of schema COMPRESS4 ...
+Exporting synonyms of schema COMPRESS4 ...
+Exporting package of schema COMPRESS4 ...
+End of export schema COMPRESS4 ...
+
+Logical export succeeded.
+
+SQL> imp users=compress4 file='exp_compress4_bin.dmp' filetype=bin decrypt = 'Chanmge_123';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = COMPRESS4
+-- DUMP FILE = exp_compress4_bin.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema COMPRESS4 ... 
+  Importing sequence of schema COMPRESS4 ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema COMPRESS4 ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema COMPRESS4 ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema COMPRESS4 ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    LOBTEST1                                                             1         
+    LOBTEST2                                                             1         
+
+  Importing foreign key of schema COMPRESS4 ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema COMPRESS4 ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema COMPRESS4 ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema COMPRESS4 ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema COMPRESS4 ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists compress4 cascade;
+Succeed.
+
+
+
+

@@ -1,0 +1,751 @@
+
+
+SQL> alter system set cbo = on;
+
+Succeed.
+
+SQL> drop table if exists test_dy_1;
+
+Succeed.
+
+SQL> create table test_dy_1 (f1 int, f2 integer, f3 bigint, f4 number);
+
+Succeed.
+
+SQL> BEGIN
+  2   FOR i IN 1..10000 LOOP
+  3         insert into test_dy_1 values(i % 200, i % 300, i % 400,  i % 500);
+  4   END LOOP;
+  5 END;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_dy;
+
+Succeed.
+
+SQL> create table test_dy as select * from test_dy_1 where 1=0;
+
+Succeed.
+
+SQL> insert into test_dy select * from test_dy_1 order by f1;
+
+10000 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create index idx_test_dy_1 on test_dy (f1);
+
+Succeed.
+
+SQL> create index idx_test_dy_2 on test_dy (f2);
+
+Succeed.
+
+SQL> create index idx_test_dy_3 on test_dy (f1, f2);
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> -- the purpose of the procedure: whether dynamic sampling is triggered before and after the execution of the sql statement
+SQL> -- the first parameter:      sql statement
+SQL> -- the second parameter:     statistics view of the table
+SQL> -- the third parameter:      statistics view of the index in the table
+SQL> -- the fourth parameter:     statistics view of the fields in the table
+SQL> -- description of the printing result:
+SQL> 	-- the normal table only has the results of 0 and 1, where 0 means that the statistical information is not modified, and 1 means that the statistical information is modified.
+SQL> 	-- in the partition table, 0 means that the statistics are not modified, and greater than 0 means that the statistics of several partitions have been modified.
+SQL> create or replace procedure test_stats(v_sql in varchar2, view1 in varchar2, view2 in varchar2, view3 in varchar2) is
+  2 	a int;
+  3 	s VARCHAR(200);
+  4 begin
+  5 	EXECUTE IMMEDIATE 'drop table if exists tab_stats';
+  6 	EXECUTE IMMEDIATE 'create table tab_stats as select num_rows,blocks,empty_blocks,avg_row_len,sample_size from '||view1||' where table_name = ''TEST_DY''';
+  7 	for i in 1..4 loop
+  8 		EXECUTE IMMEDIATE 'drop table if exists src_idx_stats_' || i;
+  9 		s := 'IDX_TEST_DY_' || i;
+ 10 		EXECUTE IMMEDIATE 'create table src_idx_stats_' || i || ' as select * from '||view2 ||' where index_name=' || '''' || s || '''';
+ 11 	end loop;
+ 12 	for i in 1..4 loop
+ 13 		EXECUTE IMMEDIATE 'drop table if exists src_col_stats_' || i;
+ 14 		s := 'F' || i;
+ 15 		EXECUTE IMMEDIATE 'create table src_col_stats_'|| i || ' as select * from '||view3||' where table_name = ''TEST_DY'' and column_name = '|| '''' || s || '''';
+ 16 	end loop;
+ 17 	EXECUTE IMMEDIATE v_sql;
+ 18 	EXECUTE IMMEDIATE 'select count(*) from (select num_rows,blocks,empty_blocks,avg_row_len,sample_size from '||view1||' where table_name = ''TEST_DY'' except all select * from tab_stats)' into a;
+ 19     DBE_OUTPUT.PRINT_LINE('tab_stats diff: ' || a);
+ 20 	EXECUTE IMMEDIATE 'drop table if exists tab_stats';
+ 21 	for i in 1..4 loop
+ 22 		EXECUTE IMMEDIATE 'drop table if exists dst_idx_stats_' || i;
+ 23 		s := 'IDX_TEST_DY_' || i;
+ 24 		EXECUTE IMMEDIATE 'create table dst_idx_stats_' || i || ' as select * from '||view2 ||' where index_name=' || '''' || s || '''';
+ 25 	    EXECUTE IMMEDIATE 'select count(*) from (select * from dst_idx_stats_' || i || ' except all select * from src_idx_stats_'|| i || ')' into a; 
+ 26 	    DBE_OUTPUT.PRINT_LINE('idx_test_dy_' || i ||' diff: ' || a);
+ 27 		EXECUTE IMMEDIATE 'drop table if exists src_idx_stats_' || i;
+ 28 		EXECUTE IMMEDIATE 'drop table if exists dst_idx_stats_' || i;
+ 29 	end loop;
+ 30 	for i in 1..4 loop
+ 31 		EXECUTE IMMEDIATE 'drop table if exists dst_col_stats_' || i;
+ 32 		s := 'F' || i;
+ 33 		EXECUTE IMMEDIATE 'create table dst_col_stats_'|| i || ' as select * from '||view3||' where table_name = ''TEST_DY'' and column_name = ' || '''' || s || '''';
+ 34 	    EXECUTE IMMEDIATE 'select count(*) from (select * from dst_col_stats_' || i || ' except all select * from src_col_stats_' || i || ')' into a;
+ 35 	    DBE_OUTPUT.PRINT_LINE('f' || i ||' diff: ' || a);
+ 36 		EXECUTE IMMEDIATE 'drop table if exists src_col_stats_' || i;
+ 37 		EXECUTE IMMEDIATE 'drop table if exists dst_col_stats_' || i;
+ 38 	end loop;
+ 39 end;
+ 40 /
+
+Succeed.
+
+SQL> 
+SQL> -- f4 column stats null, trigger column dynamic sampling. only modify the statistics of f4.
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 < 200 and t0.f4 = t1.f1 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 0
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- f3, f4 column stats null, trigger column dynamic sampling. only modify the statistics of f3.
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for columns f1, f2');
+
+PL/SQL procedure successfully completed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 < 50 and t0.f3 = t1.f1 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 0
+f1 diff: 0
+f2 diff: 0
+f3 diff: 1
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- collect statistics after delete, and then trigger dynamic sampling
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 < 50 and t0.f3 = t1.F4 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 0
+f1 diff: 0
+f2 diff: 0
+f3 diff: 1
+f4 diff: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- table stats null, trigger all dynamic sampling. table, indexes, and columns statistics are all modified
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 20 and t1.f2 = 30 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 1
+idx_test_dy_1 diff: 1
+idx_test_dy_2 diff: 1
+idx_test_dy_3 diff: 1
+idx_test_dy_4 diff: 0
+f1 diff: 1
+f2 diff: 1
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- delete insert proportion 100%, trigger all dynamic sampling. table, indexes, and columns statistics are all modified
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> delete test_dy;
+
+10000 rows affected.
+
+SQL> insert into test_dy select * from test_dy_1 order by f1;
+
+10000 rows affected.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 = 20 and t1.f2 > 30 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 1
+idx_test_dy_1 diff: 1
+idx_test_dy_2 diff: 1
+idx_test_dy_3 diff: 1
+idx_test_dy_4 diff: 0
+f1 diff: 1
+f2 diff: 1
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- delete insert proportion 100% and f4 column stats null, trigger all dynamic sampling. table, indexes, and columns statistics are all modified
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> delete test_dy;
+
+10000 rows affected.
+
+SQL> insert into test_dy select * from test_dy_1 order by f1;
+
+10000 rows affected.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f4 = 20 and t1.f2 > 30 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 1
+idx_test_dy_1 diff: 1
+idx_test_dy_2 diff: 1
+idx_test_dy_3 diff: 1
+idx_test_dy_4 diff: 0
+f1 diff: 1
+f2 diff: 1
+f3 diff: 0
+f4 diff: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- add index, f1, f2 in cond, trigger index dynamic sampling. only modify the statistics of IDX_TEST_DY_4
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> create index IDX_TEST_DY_4 on test_dy(f1, f2, f4);
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 20 and t1.f2 < 30 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 1
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> 
+SQL> -- add function index, f1 in cond, trigger index dynamic sampling. only modify the statistics of IDX_TEST_DY_4
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> create index IDX_TEST_DY_4 on test_dy(to_number(f1));
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 50 and t1.f2 < 30 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 1
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> 
+SQL> -- add index, f4 not in cond, not trigger dynamic sampling. all statistics must not be modified
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> create index IDX_TEST_DY_4 on test_dy(f4);
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 50 and t1.f2 < 30 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 0
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> 
+SQL> -- add function index, f4 not in cond, but trigger index dynamic sampling. only modify the statistics of IDX_TEST_DY_4
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> create index IDX_TEST_DY_4 on test_dy(to_number(f4));
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 50 and t1.f2 < 30 limit 1', 'my_tables', 'my_indexes', 'my_tab_cols');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 1
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_dy;
+
+Succeed.
+
+SQL> --partition table
+SQL> create table test_dy (f1 int, f2 integer, f3 bigint, f4 number)
+  2 PARTITION BY RANGE (f1)
+  3 (
+  4     PARTITION P_0 VALUES LESS THAN (50),
+  5 	PARTITION P_1 VALUES LESS THAN (100),
+  6 	PARTITION P_2 VALUES LESS THAN (150),
+  7 	PARTITION P_3 VALUES LESS THAN (250)
+  8 );
+
+Succeed.
+
+SQL> insert into test_dy select * from test_dy_1 order by f1;
+
+10000 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create index idx_test_dy_1 on test_dy (f1) local;
+
+Succeed.
+
+SQL> create index idx_test_dy_2 on test_dy (f2) local;
+
+Succeed.
+
+SQL> create index idx_test_dy_3 on test_dy (f1, f2) local;
+
+Succeed.
+
+SQL> 
+SQL> -- f4 column stats null, trigger column dynamic sampling. only modify the statistics of the single partition f4.
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 < 200 and t0.f4 = t1.f1 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 0
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- f3, f4 column stats null, trigger column dynamic sampling. only modify the statistics of the single partition f3.
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for columns f1, f2');
+
+PL/SQL procedure successfully completed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 < 50 and t0.f3 = t1.f1 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 0
+f1 diff: 0
+f2 diff: 0
+f3 diff: 1
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- table stats null, trigger all dynamic sampling. modify statistics of all partitions of tables, indexes, and columns
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 20 and t1.f2 = 30 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 4
+idx_test_dy_1 diff: 5
+idx_test_dy_2 diff: 5
+idx_test_dy_3 diff: 5
+idx_test_dy_4 diff: 0
+f1 diff: 4
+f2 diff: 4
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- delete insert proportion 100%, trigger all dynamic sampling. modify statistics of single partitions of tables, indexes, and columns
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> delete test_dy;
+
+10000 rows affected.
+
+SQL> insert into test_dy select * from test_dy_1 order by f1;
+
+10000 rows affected.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 = 20 and t1.f2 > 30 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 1
+idx_test_dy_1 diff: 2
+idx_test_dy_2 diff: 2
+idx_test_dy_3 diff: 2
+idx_test_dy_4 diff: 0
+f1 diff: 1
+f2 diff: 1
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- delete insert proportion 100% and f4 column stats null, trigger all dynamic sampling. modify statistics of all partitions of tables, indexes, and columns
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> delete test_dy;
+
+10000 rows affected.
+
+SQL> insert into test_dy select * from test_dy_1 order by f1;
+
+10000 rows affected.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f4 = 20 and t1.f2 > 30 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 4
+idx_test_dy_1 diff: 5
+idx_test_dy_2 diff: 5
+idx_test_dy_3 diff: 5
+idx_test_dy_4 diff: 0
+f1 diff: 4
+f2 diff: 4
+f3 diff: 0
+f4 diff: 4
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- add index, f1, f2 in cond, trigger index dynamic sampling. only modify the statistics of all partitions of IDX_TEST_DY_4.
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> create index IDX_TEST_DY_4 on test_dy(f1, f2, f4) local;
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 20 and t1.f2 < 30 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 5
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> 
+SQL> -- add function index, f1 in cond, trigger index dynamic sampling. only modify the statistics of all partitions of IDX_TEST_DY_4.
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> create index IDX_TEST_DY_4 on test_dy(to_number(f1)) local;
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 50 and t1.f2 < 30 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 5
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> 
+SQL> -- add index, f4 not in cond, not trigger dynamic sampling. all statistics must not be modified
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> create index IDX_TEST_DY_4 on test_dy(f4);
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 50 and t1.f2 < 30 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 0
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> 
+SQL> -- add function index, f4 not in cond, but trigger index dynamic sampling. only modify the statistics of all partitions of IDX_TEST_DY_4.
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> create index IDX_TEST_DY_4 on test_dy(to_number(f4));
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 50 and t1.f2 < 30 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 1
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> drop index if exists IDX_TEST_DY_4 on test_dy;
+
+Succeed.
+
+SQL> 
+SQL> -- add partition, not trigger dynamic sampling. all statistics must not be modified
+SQL> call  dbe_stats.delete_table_stats(schema=>user, name=>'test_dy');
+
+PL/SQL procedure successfully completed.
+
+SQL> call  dbe_stats.collect_table_stats(schema=>user, name=>'test_dy', sample_ratio => 100, method_opt=>'for all indexed columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> alter table test_dy add partition p_5 values less than (300);
+
+Succeed.
+
+SQL> call test_stats('select t0.f1 from test_dy t0, test_dy t1 where t0.f1 = t1.f2 and t0.f1 < 50 and t1.f2 < 30 limit 1', 'my_tab_partitions', 'my_ind_statistics', 'my_part_col_statistics');
+
+tab_stats diff: 0
+idx_test_dy_1 diff: 0
+idx_test_dy_2 diff: 0
+idx_test_dy_3 diff: 0
+idx_test_dy_4 diff: 0
+f1 diff: 0
+f2 diff: 0
+f3 diff: 0
+f4 diff: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists test_dy;
+
+Succeed.
+
+SQL> alter system set cbo = off;
+Succeed.
+
+
+
+

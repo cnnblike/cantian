@@ -1,0 +1,97 @@
+
+
+SQL> --DTS202007170FKPH8P1100
+SQL> --first session
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop table if exists lock_test1;
+
+Succeed.
+
+SQL> drop table if exists lock_test2;
+
+Succeed.
+
+SQL> drop procedure if exists lock_proc1;
+
+Succeed.
+
+SQL> create table lock_test1(id int, name varchar(15));
+
+Succeed.
+
+SQL> create table lock_test2(id int, name varchar(15));
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 i int;
+  3 begin
+  4 for i in 1..1000 loop
+  5 insert into lock_test1 values(i, 'a'||i);
+  6 end loop;
+  7 commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 i int;
+  3 begin
+  4 for i in 1..20 loop
+  5 insert into lock_test2 values(i, 'b'||i);
+  6 end loop;
+  7 commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure lock_proc1 is
+  2 pragma autonomous_transaction;
+  3 begin
+  4 insert into lock_test1 select * from lock_test1 limit 10;
+  5 update lock_test1 set  id = 0 where rownum <= 10;
+  6 commit;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> create or replace function is_target_object(id out int) return boolean is
+  2 begin
+  3   execute immediate 'select SESSION_ID from dv_locked_objects where OBJECT_NAME = ''LOCK_TEST1''' into id;
+  4   return true;
+  5 exception
+  6   when others then
+  7     return false;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 sid int default 0;
+  3 begin
+  4   for i in 1..50 loop
+  5     if is_target_object(sid) then
+  6       execute immediate 'call lock_proc1';
+  7       exit;
+  8     end if;
+  9   end loop;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+
+

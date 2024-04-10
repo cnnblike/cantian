@@ -1,0 +1,504 @@
+
+
+SQL> --privilege testcases
+SQL> conn / as sysdba
+
+connected.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_SPM_TEST_001;
+
+Succeed.
+
+SQL> CREATE TABLE T_SPM_TEST_001(
+  2 ID INT,C_INT INT,C_REAL REAL,C_FLOAT FLOAT,C_DECIMAL DECIMAL,C_NUMBER NUMBER,
+  3 C_CHAR CHAR(10),C_VCHAR VARCHAR(10) NOT NULL,C_VCHAR2 VARCHAR2(100),C_CLOB CLOB,
+  4 C_LONG VARCHAR(200),C_BLOB BLOB,C_RAW RAW(100),C_DATE DATE,C_TIMESTAMP TIMESTAMP);
+
+Succeed.
+
+SQL> 
+SQL> create user spm_test identified by Cantian_234;
+
+Succeed.
+
+SQL> grant DBA to spm_test;
+
+Succeed.
+
+SQL> CONN spm_test/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_SPM_TEST_001;
+
+Succeed.
+
+SQL> CREATE TABLE T_SPM_TEST_001(
+  2 ID INT,C_INT INT,C_REAL REAL,C_FLOAT FLOAT,C_DECIMAL DECIMAL,C_NUMBER NUMBER,
+  3 C_CHAR CHAR(10),C_VCHAR VARCHAR(10) NOT NULL,C_VCHAR2 VARCHAR2(100),C_CLOB CLOB,
+  4 C_LONG VARCHAR(200),C_BLOB BLOB,C_RAW RAW(100),C_DATE DATE,C_TIMESTAMP TIMESTAMP);
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create user spm_public identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to spm_public;
+
+Succeed.
+
+SQL> grant create table to spm_public;
+
+Succeed.
+
+SQL> CONN spm_public/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_SPM_TEST_001;
+
+Succeed.
+
+SQL> CREATE TABLE T_SPM_TEST_001(
+  2 ID INT,C_INT INT,C_REAL REAL,C_FLOAT FLOAT,C_DECIMAL DECIMAL,C_NUMBER NUMBER,
+  3 C_CHAR CHAR(10),C_VCHAR VARCHAR(10) NOT NULL,C_VCHAR2 VARCHAR2(100),C_CLOB CLOB,
+  4 C_LONG VARCHAR(200),C_BLOB BLOB,C_RAW RAW(100),C_DATE DATE,C_TIMESTAMP TIMESTAMP);
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> CREATE TENANT SPM_TNT TABLESPACES (USERS) DEFAULT TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE TABLESPACE SPM_TNT_SPACE1 DATAFILE 'SPM_TNT_SPACE1' SIZE 128M;
+
+Succeed.
+
+SQL> ALTER TENANT SPM_TNT ADD TABLESPACES(SPM_TNT_SPACE1);
+
+Succeed.
+
+SQL> ALTER TENANT SPM_TNT DEFAULT TABLESPACE SPM_TNT_SPACE1;
+
+Succeed.
+
+SQL> alter session set tenant=SPM_TNT;
+
+Succeed.
+
+SQL> create user user1 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to user1;
+
+Succeed.
+
+SQL> CONN user1/Cantian_234@127.0.0.1:1611/SPM_TNT
+
+connected.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_SPM_TEST_001;
+
+Succeed.
+
+SQL> CREATE TABLE T_SPM_TEST_001(
+  2 ID INT,C_INT INT,C_REAL REAL,C_FLOAT FLOAT,C_DECIMAL DECIMAL,C_NUMBER NUMBER,
+  3 C_CHAR CHAR(10),C_VCHAR VARCHAR(10) NOT NULL,C_VCHAR2 VARCHAR2(100),C_CLOB CLOB,
+  4 C_LONG VARCHAR(200),C_BLOB BLOB,C_RAW RAW(100),C_DATE DATE,C_TIMESTAMP TIMESTAMP);
+
+Succeed.
+
+SQL> 
+SQL> ----SYS
+SQL> --ROOT sys
+SQL> conn / as sysdba
+
+connected.
+
+SQL> call DBE_SPM.imp_sql_profile(schema=>'spm_test', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_SPM_TEST_privs_test_1');
+
+PL/SQL procedure successfully completed.
+
+SQL> call DBE_SPM.imp_sql_profile(schema=>'SPM_TNT$USER1', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_SPM_TNTUSER1_privs_test_1');
+
+PL/SQL procedure successfully completed.
+
+SQL> --TENANT sys
+SQL> alter session set tenant=SPM_TNT;
+
+Succeed.
+
+SQL> call DBE_SPM.alter_sql_profile(prof_name=>'prof_SPM_TEST_privs_test_1', profile=>'alter adjust index cost');
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(SPM_TNT$DBE_SPM.ALTER_SQL_PROFILE) terminated with execute errors
+CT-01001, Permissions were insufficient
+
+SQL> call DBE_SPM.alter_sql_profile(prof_name=>'prof_SPM_TNTUSER1_privs_test_1', profile=>'alter adjust index cost');
+
+PL/SQL procedure successfully completed.
+
+SQL> ----DBE_SPM
+SQL> --ROOT DBE_SPM
+SQL> CONN spm_test/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call DBE_SPM.imp_sql_profile(schema=>'SYS', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_SYS_privs_test_1');
+
+CT-00932, [1:2] PL/SQL(SPM_TEST.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_SPM.IMP_SQL_PROFILE) terminated with execute errors
+CT-01001, Permissions were insufficient
+
+SQL> call DBE_SPM.imp_sql_profile(schema=>'spm_public', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_spm_public_privs_test_1');
+
+PL/SQL procedure successfully completed.
+
+SQL> call DBE_SPM.alter_sql_profile(prof_name=>'prof_spm_public_privs_test_1', profile=>'alter adjust index cost');
+
+PL/SQL procedure successfully completed.
+
+SQL> call DBE_SPM.imp_sql_profile(schema=>'SPM_TNT$USER1', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_SPM_TNTUSER1_privs_test_2');
+
+PL/SQL procedure successfully completed.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from adm_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS   LAST_STATUS PROF_NAME                                                        PROFILE                                                          OUTLINE                                                          SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- -------- ----------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_PUBLIC                                                       1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_PUBLIC_PRIVS_TEST_1                                     ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TEST                                                         1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TEST_PRIVS_TEST_1                                       ADJUST INDEX COST                                                                                                                 select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_1                                   ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_2                                   ADJUST INDEX COST                                                                                                                 select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+4 rows fetched.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from db_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS   LAST_STATUS PROF_NAME                                                        PROFILE                                                          OUTLINE                                                          SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- -------- ----------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_PUBLIC                                                       1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_PUBLIC_PRIVS_TEST_1                                     ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TEST                                                         1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TEST_PRIVS_TEST_1                                       ADJUST INDEX COST                                                                                                                 select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_1                                   ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_2                                   ADJUST INDEX COST                                                                                                                 select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+4 rows fetched.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from my_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS   LAST_STATUS PROF_NAME                                                        PROFILE                                                          OUTLINE                                                          SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- -------- ----------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_TEST                                                         1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TEST_PRIVS_TEST_1                                       ADJUST INDEX COST                                                                                                                 select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+1 rows fetched.
+
+SQL> --TENANT DBA
+SQL> CONN user1/Cantian_234@127.0.0.1:1611/SPM_TNT
+
+connected.
+
+SQL> call DBE_SPM.imp_sql_profile(schema=>'SYS', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_SYS_privs_test_1');
+
+CT-00932, [1:2] PL/SQL(SPM_TNT$USER1.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(SPM_TNT$DBE_SPM.IMP_SQL_PROFILE) terminated with execute errors
+CT-00613, Invalid operation, only support for users in TENANT$ROOT
+
+SQL> call DBE_SPM.imp_sql_profile(schema=>'TENANT$ROOT$spm_public', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_spm_public_privs_test_2');
+
+CT-00932, [1:2] PL/SQL(SPM_TNT$USER1.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(SPM_TNT$DBE_SPM.IMP_SQL_PROFILE) terminated with execute errors
+CT-00613, Invalid operation, can not cross tenant in non-root tenant
+
+SQL> call DBE_SPM.alter_sql_profile(prof_name=>'prof_SPM_TNTUSER1_privs_test_2', profile=>'alter adjust index cost');
+
+PL/SQL procedure successfully completed.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from adm_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS   LAST_STATUS PROF_NAME                                                        PROFILE                                                          OUTLINE                                                          SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- -------- ----------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_1                                   ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_2                                   ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+2 rows fetched.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from db_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS   LAST_STATUS PROF_NAME                                                        PROFILE                                                          OUTLINE                                                          SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- -------- ----------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_1                                   ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_2                                   ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+2 rows fetched.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from my_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS   LAST_STATUS PROF_NAME                                                        PROFILE                                                          OUTLINE                                                          SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- -------- ----------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_1                                   ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_TNTUSER1_PRIVS_TEST_2                                   ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+2 rows fetched.
+
+SQL> ----PUBLIC
+SQL> --ROOT
+SQL> CONN spm_public/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call DBE_SPM.imp_sql_profile(schema=>'SYS', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_SYS_privs_test_1');
+
+CT-00944, PL/SQL(SPM_PUBLIC.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> 
+SQL> call DBE_SPM.imp_sql_profile(schema=>'spm_public', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_spm_public_privs_test_2');
+
+CT-00944, PL/SQL(SPM_PUBLIC.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> 
+SQL> call DBE_SPM.imp_sql_profile(schema=>'SPM_TNT$USER1', sql=>'select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id', profile=>'adjust index cost', prof_name=>'prof_SPM_TNTUSER1_privs_test_3');
+
+CT-00944, PL/SQL(SPM_PUBLIC.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from adm_spm order by PROF_NAME;
+
+CT-01001, Permissions were insufficient
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from db_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS   LAST_STATUS PROF_NAME                                                        PROFILE                                                          OUTLINE                                                          SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- -------- ----------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_PUBLIC                                                       1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_PUBLIC_PRIVS_TEST_1                                     ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+1 rows fetched.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE,SQL_TEXT from my_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS   LAST_STATUS PROF_NAME                                                        PROFILE                                                          OUTLINE                                                          SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- -------- ----------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_PUBLIC                                                       1523062363 32940A90583FCAB1EFC0485652191B1D                                  READY    READY       PROF_SPM_PUBLIC_PRIVS_TEST_1                                     ALTER ADJUST INDEX COST                                                                                                           select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+1 rows fetched.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE from sys_spm order by PROF_NAME;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS       LAST_STATUS  PROF_NAME                                                        PROFILE                                                          OUTLINE                                                         
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+SPM_PUBLIC                                                       1523062363 32940A90583FCAB1EFC0485652191B1D                                  0            0            PROF_SPM_PUBLIC_PRIVS_TEST_1                                     ALTER ADJUST INDEX COST                                                                                                          
+SPM_TEST                                                         1523062363 32940A90583FCAB1EFC0485652191B1D                                  0            0            PROF_SPM_TEST_PRIVS_TEST_1                                       ADJUST INDEX COST                                                                                                                
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  0            0            PROF_SPM_TNTUSER1_PRIVS_TEST_1                                   ALTER ADJUST INDEX COST                                                                                                          
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D                                  0            0            PROF_SPM_TNTUSER1_PRIVS_TEST_2                                   ALTER ADJUST INDEX COST                                                                                                          
+
+4 rows fetched.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SQL_TEXT from sys_spm_sqls order by SCHEMA,SQL_ID;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- ----------------------------------------------------------------
+SPM_PUBLIC                                                       1523062363 32940A90583FCAB1EFC0485652191B1D select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TEST                                                         1523062363 32940A90583FCAB1EFC0485652191B1D select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+SPM_TNT$USER1                                                    1523062363 32940A90583FCAB1EFC0485652191B1D select count(*) from t_spm_test_001 t1, t_spm_test_001 t3 inner join t_spm_test_001 t4 on t3.id = t4.id where t1.id > t3.id
+
+3 rows fetched.
+
+SQL> 
+SQL> --different user same sql
+SQL> --sys
+SQL> explain SELECT /*+use_nl(t2) leading(t1)*/ T2.ID FROM t_spm_test_001 T1 JOIN t_spm_test_001 T2 ON T1.C_CHAR = T2.C_CHAR WHERE T1.C_CHAR = 'TEST-1';
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name              | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                   |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |                   |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_SPM_TEST_001 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_SPM_TEST_001 T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.C_CHAR = 'TEST-1'                             
+   3 - filter: T1.C_CHAR = T2.C_CHAR                            
+
+12 rows fetched.
+
+SQL> select distinct pt.sql_id,pt.signature,pt.version,pt.plan_text from dv_sql_plan pt join dv_sqls st on st.sql_id = pt.sql_id where pt.sql_id = '2651504305';
+
+SQL_ID     SIGNATURE                        VERSION                                                          PLAN_TEXT                                                       
+---------- -------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+2651504305 AFE209FE0160B5236D7B293506FEC20E AFE209FE0160B5236D7B293506FEC20E                                 -------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name              | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                   |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |                   |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_SPM_TEST_001 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_SPM_TEST_001 T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   2 - filter: T1.C_CHAR = 'TEST-1'
+   3 - filter: T1.C_CHAR = T2.C_CHAR
+
+1 rows fetched.
+
+SQL> call DBE_SPM.create_sql_outline(schema=>user, dst_sql=>'SELECT  T2.ID FROM t_spm_test_001 T1 JOIN t_spm_test_001 T2 ON T1.C_CHAR = T2.C_CHAR WHERE T1.C_CHAR = ''TEST-1''', sql_id=>'2651504305', signature=>'AFE209FE0160B5236D7B293506FEC20E');
+
+PL/SQL procedure successfully completed.
+
+SQL> explain SELECT  T2.ID FROM t_spm_test_001 T1 JOIN t_spm_test_001 T2 ON T1.C_CHAR = T2.C_CHAR WHERE T1.C_CHAR = 'TEST-1';
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name              | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                   |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |                   |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_SPM_TEST_001 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_SPM_TEST_001 T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.C_CHAR = 'TEST-1'                             
+   3 - filter: T1.C_CHAR = T2.C_CHAR                            
+Note:                                                           
+-----                                                           
+ - SPM fixed plan "AFE209FE0160B5236D7B293506FEC20E" used for this statement
+
+15 rows fetched.
+
+SQL> --spm_test
+SQL> CONN spm_test/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> explain SELECT /*+use_nl(t2) leading(t1)*/ T2.ID FROM t_spm_test_001 T1 JOIN t_spm_test_001 T2 ON T1.C_CHAR = T2.C_CHAR WHERE T1.C_CHAR = 'TEST-1';
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description            | Owner    | Name              | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |          |                   |      |      |       |        |
+| 1   |   NESTED LOOPS         |          |                   |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SPM_TEST | T_SPM_TEST_001 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SPM_TEST | T_SPM_TEST_001 T2 |      |      |       |        |
+----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.C_CHAR = 'TEST-1'                             
+   3 - filter: T1.C_CHAR = T2.C_CHAR                            
+
+12 rows fetched.
+
+SQL> select distinct pt.sql_id,pt.signature,pt.version,pt.plan_text from dv_sql_plan pt join dv_sqls st on st.sql_id = pt.sql_id where pt.sql_id = '2651504305' and pt.signature = '79030DF7EF8386CFBB0FD94757F3E317';
+
+SQL_ID     SIGNATURE                        VERSION                                                          PLAN_TEXT                                                       
+---------- -------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+2651504305 79030DF7EF8386CFBB0FD94757F3E317 79030DF7EF8386CFBB0FD94757F3E317                                 ----------------------------------------------------------------------------------------------
+| Id  | Description            | Owner    | Name              | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |          |                   |      |      |       |        |
+| 1   |   NESTED LOOPS         |          |                   |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SPM_TEST | T_SPM_TEST_001 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SPM_TEST | T_SPM_TEST_001 T2 |      |      |       |        |
+----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   2 - filter: T1.C_CHAR = 'TEST-1'
+   3 - filter: T1.C_CHAR = T2.C_CHAR
+
+1 rows fetched.
+
+SQL> call DBE_SPM.create_sql_outline(schema=>user, dst_sql=>'SELECT  T2.ID FROM t_spm_test_001 T1 JOIN t_spm_test_001 T2 ON T1.C_CHAR = T2.C_CHAR WHERE T1.C_CHAR = ''TEST-1''', sql_id=>'2651504305', signature=>'79030DF7EF8386CFBB0FD94757F3E317');
+
+PL/SQL procedure successfully completed.
+
+SQL> explain SELECT  T2.ID FROM t_spm_test_001 T1 JOIN t_spm_test_001 T2 ON T1.C_CHAR = T2.C_CHAR WHERE T1.C_CHAR = 'TEST-1';
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description            | Owner    | Name              | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |          |                   |      |      |       |        |
+| 1   |   NESTED LOOPS         |          |                   |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SPM_TEST | T_SPM_TEST_001 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SPM_TEST | T_SPM_TEST_001 T2 |      |      |       |        |
+----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.C_CHAR = 'TEST-1'                             
+   3 - filter: T1.C_CHAR = T2.C_CHAR                            
+Note:                                                           
+-----                                                           
+ - SPM fixed plan "79030DF7EF8386CFBB0FD94757F3E317" used for this statement
+
+15 rows fetched.
+
+SQL> 
+SQL> --end
+SQL> conn / as sysdba
+
+connected.
+
+SQL> call dbe_spm.clean_spm(schema=>user);
+
+PL/SQL procedure successfully completed.
+
+SQL> drop user spm_public cascade;
+
+Succeed.
+
+SQL> drop user spm_test cascade;
+
+Succeed.
+
+SQL> drop tenant SPM_TNT cascade;
+
+Succeed.
+
+SQL> drop TABLESPACE SPM_TNT_SPACE1;
+
+Succeed.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SIGNATURE,STATUS,LAST_STATUS,PROF_NAME,PROFILE,OUTLINE from sys_spm;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SIGNATURE                        STATUS       LAST_STATUS  PROF_NAME                                                        PROFILE                                                          OUTLINE                                                         
+---------------------------------------------------------------- ---------- -------------------------------- -------------------------------- ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select SCHEMA,SQL_ID,SQL_SIGN,SQL_TEXT from sys_spm_sqls;
+
+SCHEMA                                                           SQL_ID     SQL_SIGN                         SQL_TEXT                                                        
+---------------------------------------------------------------- ---------- -------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+
+

@@ -1,0 +1,544 @@
+
+
+SQL> drop user if exists test_remap_tables;
+
+Succeed.
+
+SQL> create user test_remap_tables identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap_tables;
+
+Succeed.
+
+SQL> conn test_remap_tables/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> -- test bin mode single thread remap_tables, include metadata,data
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> create table t1 (c int);
+
+Succeed.
+
+SQL> alter table t1 add constraint t1_pkk primary key(c);
+
+Succeed.
+
+SQL> insert into t1 values(1),(2),(10);
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> exp tables=t1 remap_tables=t1:t2 filetype=bin file="./data/exp_remap_tables.dmp";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T1
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/exp_remap_tables.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_REMAP_TABLES.T1 ...
+  exporting DDL of TEST_REMAP_TABLES.T1 ...
+  exporting data of TEST_REMAP_TABLES.T1 ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on TEST_REMAP_TABLES.T1 ...
+  exporting constraints on TEST_REMAP_TABLES.T1 ...
+
+Logical export succeeded.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> imp full = y filetype=bin file="./data/exp_remap_tables.dmp";
+Parsing import options ... 
+Verify options ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = FULL
+-- IMPORT OBJECTS = 
+-- DUMP FILE = ./data/exp_remap_tables.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_REMAP_TABLES ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP_TABLES ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP_TABLES ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP_TABLES ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    T2                                                               3         
+
+  Importing foreign key of schema TEST_REMAP_TABLES ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP_TABLES ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP_TABLES ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP_TABLES ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP_TABLES ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 3 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from t1;
+
+CT-00843, [1:15]The table or view TEST_REMAP_TABLES.T1 does not exist.
+SQL> select * from t2;
+
+C           
+------------
+1           
+2           
+10          
+
+3 rows fetched.
+
+SQL> insert into t2 values(1);
+
+CT-00729, Unique constraint violated, index T1_PKK, duplicate key 1
+SQL> 
+SQL> -- test txt mode single thread remap_tables, include metadata,data
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> create table t1 (c int);
+
+Succeed.
+
+SQL> alter table t1 add constraint t1_pkk primary key(c);
+
+Succeed.
+
+SQL> insert into t1 values(1),(2),(10);
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> exp tables=t1 remap_tables=t1:t2 file="./data/exp_remap_tables.dmp";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T1
+-- FILE TYPE = TXT
+-- DUMP FILE = ./data/exp_remap_tables.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_REMAP_TABLES.T1 ...
+  exporting DDL of TEST_REMAP_TABLES.T1 ...
+  exporting data of TEST_REMAP_TABLES.T1 ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on TEST_REMAP_TABLES.T1 ...
+  exporting constraints on TEST_REMAP_TABLES.T1 ...
+
+Logical export succeeded.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> imp full = y file="./data/exp_remap_tables.dmp";
+Parsing import options ... 
+Verify options ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = FULL
+-- IMPORT OBJECTS = 
+-- DUMP FILE = ./data/exp_remap_tables.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 3 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from t1;
+
+CT-00843, [1:15]The table or view TEST_REMAP_TABLES.T1 does not exist.
+SQL> select * from t2;
+
+C           
+------------
+1           
+2           
+10          
+
+3 rows fetched.
+
+SQL> insert into t2 values(1);
+
+CT-00729, Unique constraint violated, index T1_PKK, duplicate key 1
+SQL> 
+SQL> -- test bin mode multi thread remap_tables, include metadata,data
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> create table t1 (c int);
+
+Succeed.
+
+SQL> alter table t1 add constraint t1_pkk primary key(c);
+
+Succeed.
+
+SQL> insert into t1 values(1),(2),(10);
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> exp tables=t1 remap_tables=t1:t2 filetype=bin parallel = 2 file="./data/exp_remap_tables.dmp";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T1
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/exp_remap_tables.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 2
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_REMAP_TABLES.T1 ...
+  exporting DDL of TEST_REMAP_TABLES.T1 ...
+    data exporting success! 3 rows are dumped.
+  exporting indexes on TEST_REMAP_TABLES.T1 ...
+  exporting constraints on TEST_REMAP_TABLES.T1 ...
+
+Logical export succeeded.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> imp full = y filetype=bin file="./data/exp_remap_tables.dmp";
+Parsing import options ... 
+Verify options ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = FULL
+-- IMPORT OBJECTS = 
+-- DUMP FILE = ./data/exp_remap_tables.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_REMAP_TABLES ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP_TABLES ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP_TABLES ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP_TABLES ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    T2                                                               3         
+
+  Importing foreign key of schema TEST_REMAP_TABLES ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP_TABLES ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP_TABLES ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP_TABLES ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP_TABLES ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 3 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from t1;
+
+CT-00843, [1:15]The table or view TEST_REMAP_TABLES.T1 does not exist.
+SQL> select * from t2;
+
+C           
+------------
+1           
+2           
+10          
+
+3 rows fetched.
+
+SQL> insert into t2 values(1);
+
+CT-00729, Unique constraint violated, index T1_PKK, duplicate key 1
+SQL> 
+SQL> -- test txt mode multi thread remap_tables, include metadata,data
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> create table t1 (c int);
+
+Succeed.
+
+SQL> alter table t1 add constraint t1_pkk primary key(c);
+
+Succeed.
+
+SQL> insert into t1 values(1),(2),(10);
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> exp tables=t1 remap_tables=t1:t2 parallel = 2 file="./data/exp_remap_tables.dmp";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T1
+-- FILE TYPE = TXT
+-- DUMP FILE = ./data/exp_remap_tables.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 2
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_REMAP_TABLES.T1 ...
+  exporting DDL of TEST_REMAP_TABLES.T1 ...
+  exporting indexes on TEST_REMAP_TABLES.T1 ...
+  exporting constraints on TEST_REMAP_TABLES.T1 ...
+
+Logical export succeeded.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> imp full = y file="./data/exp_remap_tables.dmp";
+Parsing import options ... 
+Verify options ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = FULL
+-- IMPORT OBJECTS = 
+-- DUMP FILE = ./data/exp_remap_tables.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 4 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from t1;
+
+CT-00843, [1:15]The table or view TEST_REMAP_TABLES.T1 does not exist.
+SQL> select * from t2;
+
+C           
+------------
+1           
+2           
+10          
+
+3 rows fetched.
+
+SQL> insert into t2 values(1);
+
+CT-00729, Unique constraint violated, index T1_PKK, duplicate key 1
+SQL> 
+
+

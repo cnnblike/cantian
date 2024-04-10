@@ -1,0 +1,2388 @@
+SQL> --distinct eliminate
+SQL> drop table if exists t1_for_eliminate;
+
+Succeed.
+
+SQL> create table t1_for_eliminate(a int, b int, c int);
+
+Succeed.
+
+SQL> alter table t1_for_eliminate add constraint pk_t1_for_eliminate primary key(a, b);
+
+Succeed.
+
+SQL> insert into t1_for_eliminate values(1, 2, 3);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> explain select distinct a, b, c from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> alter system set _OPTIM_DISTINCT_ELIMINATION=false;
+
+Succeed.
+
+SQL> explain select distinct a, b, c from t1_for_eliminate   ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> alter system set _OPTIM_DISTINCT_ELIMINATION=true;
+
+Succeed.
+
+SQL> explain select distinct a, b from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+| Id  | Description                   | Owner | Name                | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT              |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE    |      |      |       |        |
+| 2   |     INDEX FAST FULL SCAN      | SYS   | PK_T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select distinct a, c from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> alter table t1_for_eliminate drop constraint pk_t1_for_eliminate;
+
+Succeed.
+
+SQL> create unique index uni_idx_001_t1_for_eliminate on t1_for_eliminate(a, b);
+
+Succeed.
+
+SQL> explain select distinct a, b, c from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select distinct a, b from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
+| Id  | Description                   | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT              |       |                              |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 2   |     INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+-------------------------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select distinct a, c from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select distinct (select c from dual),a,b from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 2   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select distinct (select c from dual limit 1),a,b from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   QUERY LIMIT          |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 3   |   TABLE ACCESS FULL    | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select distinct (select max(c) from dual),a,b from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   AGGR                 |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 3   |   TABLE ACCESS FULL    | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select distinct (select max(c) from dual),a,b from t1_for_eliminate order by 2;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                         | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                              |      |      |       |        |
+| 1   |   AGGR                         |       |                              |      |      |       |        |
+| 2   |     TABLE ACCESS FULL          | SYS   | SYS_DUMMY                    |      |      |       |        |
+| 3   |   TABLE ACCESS BY INDEX ROWID  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 4   |     INDEX FULL SCAN            | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> explain select (select distinct (select max(t1.c) from dual) from t1_for_eliminate limit 1) from t1_for_eliminate t1;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                              |      |      |       |        |
+| 1   |   QUERY LIMIT                     |       |                              |      |      |       |        |
+| 2   |     HASH DISTINCT                 |       |                              |      |      |       |        |
+| 3   |       AGGR                        |       |                              |      |      |       |        |
+| 4   |         TABLE ACCESS FULL         | SYS   | SYS_DUMMY                    |      |      |       |        |
+| 5   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 6   |         INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 7   |   TABLE ACCESS FULL               | SYS   | T1_FOR_ELIMINATE T1          |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------------
+
+12 rows fetched.
+
+SQL> explain select (select distinct (select max(t1.c) + t1.c from dual) from t1_for_eliminate limit 1) from t1_for_eliminate t1;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                              |      |      |       |        |
+| 1   |   QUERY LIMIT                     |       |                              |      |      |       |        |
+| 2   |     HASH DISTINCT                 |       |                              |      |      |       |        |
+| 3   |       AGGR                        |       |                              |      |      |       |        |
+| 4   |         TABLE ACCESS FULL         | SYS   | SYS_DUMMY                    |      |      |       |        |
+| 5   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 6   |         INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 7   |   TABLE ACCESS FULL               | SYS   | T1_FOR_ELIMINATE T1          |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------------
+
+12 rows fetched.
+
+SQL> explain select (select count(*) from (select distinct t1.a,t1.b from dual) limit 1) from t1_for_eliminate t1;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
+| Id  | Description                   | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT              |       |                              |      |      |       |        |
+| 1   |   QUERY LIMIT                 |       |                              |      |      |       |        |
+| 2   |     AGGR                      |       |                              |      |      |       |        |
+| 3   |       SUBSELECT               |       |                              |      |      |       |        |
+| 4   |         HASH DISTINCT         |       |                              |      |      |       |        |
+| 5   |           TABLE ACCESS FULL   | SYS   | SYS_DUMMY                    |      |      |       |        |
+| 6   |   TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T1          |      |      |       |        |
+| 7   |     INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+-------------------------------------------------------------------------------------------------------------
+
+12 rows fetched.
+
+SQL> explain select (select count(*) from (select distinct a,b from t1_for_eliminate) limit 1) from t1_for_eliminate t1;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                              |      |      |       |        |
+| 1   |   QUERY LIMIT                     |       |                              |      |      |       |        |
+| 2   |     AGGR                          |       |                              |      |      |       |        |
+| 3   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 4   |         INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |   TABLE ACCESS BY INDEX ONLY      | SYS   | T1_FOR_ELIMINATE T1          |      |      |       |        |
+| 6   |     INDEX FAST FULL SCAN          | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain select distinct a, b from t1_for_eliminate t1 where exists(select a from t1_for_eliminate where a = t1.a);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                         | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                              |      |      |       |        |
+| 1   |   KERNEL FILTER                 |       |                              |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T1          |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 5   |       INDEX RANGE SCAN          | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+---------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: EXISTS(SELECT 1 FROM T1_FOR_ELIMINATE)           
+   5 - access: A = T1.A                                         
+
+14 rows fetched.
+
+SQL> explain select distinct a, b from t1_for_eliminate t1 where exists(select (select t1.a from t1_for_eliminate) from t1_for_eliminate t2 where t2.a = t1.a);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                         | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                              |      |      |       |        |
+| 1   |   KERNEL FILTER                 |       |                              |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T1          |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T2          |      |      |       |        |
+| 5   |       INDEX RANGE SCAN          | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+---------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: EXISTS(SELECT 1 FROM T1_FOR_ELIMINATE T2)        
+   5 - access: T2.A = T1.A                                      
+
+14 rows fetched.
+
+SQL> explain select distinct a, b from t1_for_eliminate t1 where exists(select (select a||dummy from t1_for_eliminate,dual where a = t1.a) from t1_for_eliminate t2 where t2.a = t1.a);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                         | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                              |      |      |       |        |
+| 1   |   KERNEL FILTER                 |       |                              |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T1          |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T2          |      |      |       |        |
+| 5   |       INDEX RANGE SCAN          | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+---------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: EXISTS(SELECT 1 FROM T1_FOR_ELIMINATE T2)        
+   5 - access: T2.A = T1.A                                      
+
+14 rows fetched.
+
+SQL> explain select distinct a, b from t1_for_eliminate t1 where a in (select (select a from t1_for_eliminate,dual where a = t1.a) from t1_for_eliminate t2 where t2.a = t1.a);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                              |      |      |       |        |
+| 1   |   KERNEL FILTER                   |       |                              |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY    | SYS   | T1_FOR_ELIMINATE T1          |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN        | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     NESTED LOOPS                  |       |                              |      |      |       |        |
+| 5   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 6   |         INDEX RANGE SCAN          | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 7   |       TABLE ACCESS FULL           | SYS   | SYS_DUMMY                    |      |      |       |        |
+| 8   |     TABLE ACCESS BY INDEX ONLY    | SYS   | T1_FOR_ELIMINATE T2          |      |      |       |        |
+| 9   |       INDEX RANGE SCAN            | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: A IN((SELECT (SELECT A FROM T1_FOR_ELIMINATE, DUAL) FROM T1_FOR_ELIMINATE T2))
+   6 - access: A = T1.A                                         
+   9 - access: T2.A = T1.A                                      
+
+19 rows fetched.
+
+SQL> explain select distinct a,b from t1_for_eliminate connect by prior a + 1 = a;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                              |      |      |       |        |
+| 1   |   SORT DISTINCT                   |       |                              |      |      |       |        |
+| 2   |     START WITH                    |       |                              |      |      |       |        |
+| 3   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 4   |         INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |     CONNECT BY                    |       |                              |      |      |       |        |
+| 6   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 7   |         INDEX RANGE SCAN          | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - filter: PRIOR A + 1 = A                                  
+   7 - access: PRIOR A + 1 = A                                  
+
+16 rows fetched.
+
+SQL> explain select distinct prior a,b from t1_for_eliminate connect by prior a + 1 = a;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                              |      |      |       |        |
+| 1   |   SORT DISTINCT                   |       |                              |      |      |       |        |
+| 2   |     START WITH                    |       |                              |      |      |       |        |
+| 3   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 4   |         INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |     CONNECT BY                    |       |                              |      |      |       |        |
+| 6   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 7   |         INDEX RANGE SCAN          | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - filter: PRIOR A + 1 = A                                  
+   7 - access: PRIOR A + 1 = A                                  
+
+16 rows fetched.
+
+SQL> explain select distinct a, b, c from t1_for_eliminate union all select a, b, c from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   UNION ALL            |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select distinct a, b, c from t1_for_eliminate order by 1,2,3;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY  |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select distinct a, b from t1_for_eliminate order by 1,2;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
+| Id  | Description                   | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT              |       |                              |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 2   |     INDEX FULL SCAN           | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+-------------------------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> drop table t1_for_eliminate;
+
+Succeed.
+
+SQL> --group eliminate
+SQL> drop table if exists t1_for_eliminate;
+
+Succeed.
+
+SQL> create table t1_for_eliminate(a int, b int, c int);
+
+Succeed.
+
+SQL> alter table t1_for_eliminate add constraint pk_t1_for_eliminate primary key(a, b);
+
+Succeed.
+
+SQL> insert into t1_for_eliminate values(1, 2, 3);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> explain select * from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> alter system set _OPTIM_GROUP_BY_ELIMINATION=false;
+
+Succeed.
+
+SQL> explain select * from t1_for_eliminate group by a, b, c   ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> alter system set _OPTIM_GROUP_BY_ELIMINATION=TRUE;
+
+Succeed.
+
+SQL> explain select a,b from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select min(a) from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select count(*) from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select * from t1_for_eliminate group by a, c;
+
+CT-00609, Expression not in group list
+SQL> explain select a,b from t1_for_eliminate group by a, c;
+
+CT-00609, Expression not in group list
+SQL> explain select min(a) from t1_for_eliminate group by a, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select count(*) from t1_for_eliminate group by a, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> alter table t1_for_eliminate drop constraint pk_t1_for_eliminate;
+
+Succeed.
+
+SQL> create unique index uni_idx_001_t1_for_eliminate on t1_for_eliminate(a, b);
+
+Succeed.
+
+SQL> explain select * from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select a,b from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select min(a) from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select count(*) from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select * from t1_for_eliminate group by a, c;
+
+CT-00609, Expression not in group list
+SQL> explain select a,b from t1_for_eliminate group by a, c;
+
+CT-00609, Expression not in group list
+SQL> explain select min(a) from t1_for_eliminate group by a, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select count(*) from t1_for_eliminate group by a, c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select * from t1_for_eliminate group by cube(a, b, c);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   GENERATE CUBE          |       |                  |      |      |       |        |
+| 2   |     HASH GROUP BY        |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select * from t1_for_eliminate group by cube(a, c);
+
+CT-00609, Expression not in group list
+SQL> explain select min(a) from t1_for_eliminate group by cube(a, b, c);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   GENERATE CUBE          |       |                  |      |      |       |        |
+| 2   |     HASH GROUP BY        |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select min(a) from t1_for_eliminate group by cube(a, c);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   GENERATE CUBE          |       |                  |      |      |       |        |
+| 2   |     HASH GROUP BY        |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select (select a||dummy from dual) from t1_for_eliminate group by a,b,c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+| 2   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select (select a from dual) from t1_for_eliminate group by a,b,c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+| 2   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select a,b from t1_for_eliminate where a in (select count(*) from dual) group by a,b,c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                         | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                              |      |      |       |        |
+| 1   |   NESTED LOOPS                    |       |                              |      |      |       |        |
+| 2   |     NESTED LOOPS                  |       |                              |      |      |       |        |
+| 3   |       SUBSELECT                   |       |                              |      |      |       |        |
+| 4   |         AGGR                      |       |                              |      |      |       |        |
+| 5   |           TABLE ACCESS FULL       | SYS   | SYS_DUMMY                    |      |      |       |        |
+| 6   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 7   |         INDEX RANGE SCAN          | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+| 8   |     TABLE ACCESS BY ROWID         | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 9   |       ROWID SCAN                  |       |                              |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   7 - access: A = COUNT(*)
+
+17 rows fetched.
+
+SQL> explain select a,b from t1_for_eliminate where exists (select a from dual) group by a,b,c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   HASH JOIN SEMI(L)      |       |                  |      |      |       |        |
+| 2   |     SUBSELECT            |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 4   |     TABLE ACCESS FULL    | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   1 - access: NA = NA
+
+12 rows fetched.
+
+SQL> explain select a,b from t1_for_eliminate where exists (select a from dual) group by a,b,c union all select distinct a, b from t1_for_eliminate;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                         | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                              |      |      |       |        |
+| 1   |   UNION ALL                     |       |                              |      |      |       |        |
+| 2   |     HASH JOIN SEMI(L)           |       |                              |      |      |       |        |
+| 3   |       SUBSELECT                 |       |                              |      |      |       |        |
+| 4   |         TABLE ACCESS FULL       | SYS   | SYS_DUMMY                    |      |      |       |        |
+| 5   |       TABLE ACCESS FULL         | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 6   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 7   |       INDEX FAST FULL SCAN      | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+---------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   2 - access: NA = NA
+
+15 rows fetched.
+
+SQL> explain select a,b from t1_for_eliminate group by a,b,c order by 1,2;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                         | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                              |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 2   |     INDEX FULL SCAN            | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select a f1,b f2 from t1_for_eliminate group by a,b,c order by f1,f2;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                         | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                              |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 2   |     INDEX FULL SCAN            | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select a,b from t1_for_eliminate connect by prior a + 1 = a group by a,b,c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name                         | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |                              |      |      |       |        |
+| 1   |   HASH GROUP BY                    |       |                              |      |      |       |        |
+| 2   |     START WITH                     |       |                              |      |      |       |        |
+| 3   |       TABLE ACCESS FULL            | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 4   |     CONNECT BY                     |       |                              |      |      |       |        |
+| 5   |       TABLE ACCESS BY INDEX ROWID  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 6   |         INDEX RANGE SCAN           | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   4 - filter: PRIOR A + 1 = A                                  
+   6 - access: PRIOR A + 1 = A                                  
+
+15 rows fetched.
+
+SQL> explain select prior a,b from t1_for_eliminate connect by prior a + 1 = a group by prior a,b,c;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name                         | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |                              |      |      |       |        |
+| 1   |   HASH GROUP BY                    |       |                              |      |      |       |        |
+| 2   |     START WITH                     |       |                              |      |      |       |        |
+| 3   |       TABLE ACCESS FULL            | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 4   |     CONNECT BY                     |       |                              |      |      |       |        |
+| 5   |       TABLE ACCESS BY INDEX ROWID  | SYS   | T1_FOR_ELIMINATE             |      |      |       |        |
+| 6   |         INDEX RANGE SCAN           | SYS   | UNI_IDX_001_T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   4 - filter: PRIOR A + 1 = A                                  
+   6 - access: PRIOR A + 1 = A                                  
+
+15 rows fetched.
+
+SQL> alter table t1_for_eliminate modify a int null;
+
+Succeed.
+
+SQL> alter table t1_for_eliminate modify b int null;
+
+Succeed.
+
+SQL> explain select min(a) from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> explain select count(*) from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> alter table t1_for_eliminate modify b int not null;
+
+Succeed.
+
+SQL> explain select count(*) from t1_for_eliminate group by a, b, c;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+7 rows fetched.
+
+SQL> drop table t1_for_eliminate;
+
+Succeed.
+
+SQL> --distinct column eliminate
+SQL> drop table if exists t1_for_eliminate;
+
+Succeed.
+
+SQL> create table t1_for_eliminate(a int, b int, c int);
+
+Succeed.
+
+SQL> insert into t1_for_eliminate values(1, 2, 3);
+
+1 rows affected.
+
+SQL> explain select distinct * from (select distinct a, b, 1, null from t1_for_eliminate),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT          |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS         |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> alter system set _OPTIM_DISTINCT_ELIMINATION=false;
+
+Succeed.
+
+SQL> explain select distinct * from (select distinct a, b, 1, null from t1_for_eliminate),dual   ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT              |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |                  |      |      |       |        |
+| 3   |       SUBSELECT              |       |                  |      |      |       |        |
+| 4   |         HASH DISTINCT        |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |       TABLE ACCESS FULL      | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> alter system set _OPTIM_DISTINCT_ELIMINATION=true;
+
+Succeed.
+
+SQL> explain select * from (select distinct a, b, 1, null from t1_for_eliminate),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |                  |      |      |       |        |
+| 2   |     SUBSELECT              |       |                  |      |      |       |        |
+| 3   |       HASH DISTINCT        |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |     TABLE ACCESS FULL      | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> explain select distinct * from (select a, b, 1, null from t1_for_eliminate),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT          |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS         |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> explain select * from t1_for_eliminate t1 where a in (select distinct a from (select distinct a, b, 1, null from t1_for_eliminate),dual);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name                | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |                     |      |      |       |        |
+| 1   |   HASH JOIN SEMI(L)          |       |                     |      |      |       |        |
+| 2   |     SUBSELECT                |       |                     |      |      |       |        |
+| 3   |       HASH DISTINCT          |       |                     |      |      |       |        |
+| 4   |         NESTED LOOPS         |       |                     |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE    |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | SYS_DUMMY           |      |      |       |        |
+| 7   |     TABLE ACCESS FULL        | SYS   | T1_FOR_ELIMINATE T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1_FOR_ELIMINATE.A = A                           
+
+15 rows fetched.
+
+SQL> explain select * from t1_for_eliminate t1 where a in (select distinct a from (select distinct a, b, 1, null from t1_for_eliminate),dual where a = t1.a);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                     |      |      |       |        |
+| 1   |   KERNEL FILTER            |       |                     |      |      |       |        |
+| 2   |     TABLE ACCESS FULL      | SYS   | T1_FOR_ELIMINATE T1 |      |      |       |        |
+| 3   |     HASH DISTINCT          |       |                     |      |      |       |        |
+| 4   |       NESTED LOOPS         |       |                     |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE    |      |      |       |        |
+| 6   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY           |      |      |       |        |
+-------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: A IN((SELECT DISTINCT A FROM T1_FOR_ELIMINATE, DUAL WHERE A = T1.A))
+   5 - filter: A = T1.A                                         
+
+15 rows fetched.
+
+SQL> explain select * from t1_for_eliminate t1 where exists (select distinct a from (select distinct a, b, 1, null from t1_for_eliminate),dual where a = t1.a);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                     |      |      |       |        |
+| 1   |   HASH JOIN SEMI(L)            |       |                     |      |      |       |        |
+| 2   |     SUBSELECT                  |       |                     |      |      |       |        |
+| 3   |       NESTED LOOPS             |       |                     |      |      |       |        |
+| 4   |         SUBSELECT              |       |                     |      |      |       |        |
+| 5   |           HASH DISTINCT        |       |                     |      |      |       |        |
+| 6   |             TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE    |      |      |       |        |
+| 7   |         TABLE ACCESS FULL      | SYS   | SYS_DUMMY           |      |      |       |        |
+| 8   |     TABLE ACCESS FULL          | SYS   | T1_FOR_ELIMINATE T1 |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1_FOR_ELIMINATE.A = T1.A                        
+
+16 rows fetched.
+
+SQL> explain select * from t1_for_eliminate t1 where exists (select a from (select distinct a, b, 1, null from t1_for_eliminate),dual where a = t1.a);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                     |      |      |       |        |
+| 1   |   HASH JOIN SEMI(L)            |       |                     |      |      |       |        |
+| 2   |     SUBSELECT                  |       |                     |      |      |       |        |
+| 3   |       NESTED LOOPS             |       |                     |      |      |       |        |
+| 4   |         SUBSELECT              |       |                     |      |      |       |        |
+| 5   |           HASH DISTINCT        |       |                     |      |      |       |        |
+| 6   |             TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE    |      |      |       |        |
+| 7   |         TABLE ACCESS FULL      | SYS   | SYS_DUMMY           |      |      |       |        |
+| 8   |     TABLE ACCESS FULL          | SYS   | T1_FOR_ELIMINATE T1 |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1_FOR_ELIMINATE.A = T1.A                        
+
+16 rows fetched.
+
+SQL> explain select distinct * from (select distinct (select a from dual), b, 1, null from t1_for_eliminate),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT            |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS           |       |                  |      |      |       |        |
+| 3   |       SUBSELECT            |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |       TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain select distinct * from (select distinct (select a from dual), b, 1, null from t1_for_eliminate order by 2),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT            |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS           |       |                  |      |      |       |        |
+| 3   |       SUBSELECT            |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |       TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain select distinct * from (select distinct a, b, 1, null from t1_for_eliminate where exists(select dummy from dual where rownum = a)),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT                |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS               |       |                  |      |      |       |        |
+| 3   |       SUBSELECT                |       |                  |      |      |       |        |
+| 4   |         KERNEL FILTER          |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL    | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |           ROWNUM FILTER        |       |                  |      |      |       |        |
+| 7   |             TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 8   |       TABLE ACCESS FULL        | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   5 - filter: EXISTS(SELECT 1 FROM DUAL WHERE ROWNUM = A)
+   6 - filter: ROWNUM = A
+
+17 rows fetched.
+
+SQL> explain select distinct * from (select distinct a, 1, null from t1_for_eliminate where exists(select dummy from dual where rownum = a)),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT                |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS               |       |                  |      |      |       |        |
+| 3   |       SUBSELECT                |       |                  |      |      |       |        |
+| 4   |         KERNEL FILTER          |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL    | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |           ROWNUM FILTER        |       |                  |      |      |       |        |
+| 7   |             TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 8   |       TABLE ACCESS FULL        | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   5 - filter: EXISTS(SELECT 1 FROM DUAL WHERE ROWNUM = A)
+   6 - filter: ROWNUM = A
+
+17 rows fetched.
+
+SQL> explain select distinct * from (select distinct a, 1, null from t1_for_eliminate where a in (select count(dummy) from dual where rownum = a)),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |                  |      |      |       |        |
+| 1   |   HASH DISTINCT                  |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS                 |       |                  |      |      |       |        |
+| 3   |       SUBSELECT                  |       |                  |      |      |       |        |
+| 4   |         KERNEL FILTER            |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL      | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |           AGGR                   |       |                  |      |      |       |        |
+| 7   |             ROWNUM FILTER        |       |                  |      |      |       |        |
+| 8   |               TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 9   |       TABLE ACCESS FULL          | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   5 - filter: A IN((SELECT COUNT(*) FROM DUAL WHERE ROWNUM = A))
+   7 - filter: ROWNUM = A
+
+18 rows fetched.
+
+SQL> explain select distinct * from (select distinct a, 1, null from t1_for_eliminate where a in (select count(dummy) from dual where rownum = a)),dual union all select distinct * from (select distinct (select a from dual), 1, null from t1_for_eliminate),dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |                  |      |      |       |        |
+| 1   |   UNION ALL                        |       |                  |      |      |       |        |
+| 2   |     HASH DISTINCT                  |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS                 |       |                  |      |      |       |        |
+| 4   |         SUBSELECT                  |       |                  |      |      |       |        |
+| 5   |           KERNEL FILTER            |       |                  |      |      |       |        |
+| 6   |             TABLE ACCESS FULL      | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 7   |             AGGR                   |       |                  |      |      |       |        |
+| 8   |               ROWNUM FILTER        |       |                  |      |      |       |        |
+| 9   |                 TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 10  |         TABLE ACCESS FULL          | SYS   | SYS_DUMMY        |      |      |       |        |
+| 11  |     HASH DISTINCT                  |       |                  |      |      |       |        |
+| 12  |       NESTED LOOPS                 |       |                  |      |      |       |        |
+| 13  |         SUBSELECT                  |       |                  |      |      |       |        |
+| 14  |           TABLE ACCESS FULL        | SYS   | SYS_DUMMY        |      |      |       |        |
+| 15  |           TABLE ACCESS FULL        | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 16  |         TABLE ACCESS FULL          | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   6 - filter: A IN((SELECT COUNT(*) FROM DUAL WHERE ROWNUM = A))
+   8 - filter: ROWNUM = A
+
+25 rows fetched.
+
+SQL> explain select distinct * from (select distinct (select a from dual), b, c f3, null from t1_for_eliminate),dual order by 2,f3;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |                  |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY        |       |                  |      |      |       |        |
+| 2   |     HASH DISTINCT            |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS           |       |                  |      |      |       |        |
+| 4   |         SUBSELECT            |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 7   |         TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------------
+
+12 rows fetched.
+
+SQL> explain select distinct * from (select distinct (select a from dual), b,c, 1, null from t1_for_eliminate),dual connect by prior b = c;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |                  |      |      |       |        |
+| 1   |   SORT DISTINCT              |       |                  |      |      |       |        |
+| 2   |     CONNECT BY MATERIALIZE   |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS           |       |                  |      |      |       |        |
+| 4   |         SUBSELECT            |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 7   |         TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: PRIOR B = C                                      
+
+15 rows fetched.
+
+SQL> drop table t1_for_eliminate;
+
+Succeed.
+
+SQL> --project column eliminate
+SQL> drop table if exists t1_for_eliminate;
+
+Succeed.
+
+SQL> create table t1_for_eliminate(a int, b int, c int);
+
+Succeed.
+
+SQL> insert into t1_for_eliminate values(1, 2, 3);
+
+1 rows affected.
+
+SQL> create index idx_1_t1_for_eliminate on t1_for_eliminate(a);
+
+Succeed.
+
+SQL> create index idx_2_t1_for_eliminate on t1_for_eliminate(a, b);
+
+Succeed.
+
+SQL> create index idx_3_t1_for_eliminate on t1_for_eliminate(a, b, c);
+
+Succeed.
+
+SQL> explain select a from (select a, b, c from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                   | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                        |      |      |       |        |
+| 1   |   NESTED LOOPS                  |       |                        |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN      | SYS   | IDX_1_T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     TABLE ACCESS FULL           | SYS   | SYS_DUMMY              |      |      |       |        |
+---------------------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> alter system set _OPTIM_PROJECT_LIST_PRUNING = false;
+
+Succeed.
+
+SQL> explain select a from (select a, b, c from t1_for_eliminate), dual   ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                   | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                        |      |      |       |        |
+| 1   |   NESTED LOOPS                  |       |                        |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN      | SYS   | IDX_1_T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     TABLE ACCESS FULL           | SYS   | SYS_DUMMY              |      |      |       |        |
+---------------------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> alter system set _OPTIM_PROJECT_LIST_PRUNING = true;
+
+Succeed.
+
+SQL> explain select a from (select a, b, c from t1_for_eliminate where b > 0), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                   | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                        |      |      |       |        |
+| 1   |   NESTED LOOPS                  |       |                        |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN      | SYS   | IDX_2_T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     TABLE ACCESS FULL           | SYS   | SYS_DUMMY              |      |      |       |        |
+---------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   2 - filter: B > 0
+
+12 rows fetched.
+
+SQL> explain select a from (select a, b, c, rowid from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                   | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                        |      |      |       |        |
+| 1   |   NESTED LOOPS                    |       |                        |      |      |       |        |
+| 2   |     SUBSELECT                     |       |                        |      |      |       |        |
+| 3   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 4   |         INDEX FAST FULL SCAN      | SYS   | IDX_1_T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |     TABLE ACCESS FULL             | SYS   | SYS_DUMMY              |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> explain select a from (select a, max(a) from t1_for_eliminate group by a), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
+| Id  | Description                         | Owner | Name                   | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                    |       |                        |      |      |       |        |
+| 1   |   NESTED LOOPS                      |       |                        |      |      |       |        |
+| 2   |     SUBSELECT                       |       |                        |      |      |       |        |
+| 3   |       INDEX GROUP BY                |       |                        |      |      |       |        |
+| 4   |         TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 5   |           INDEX FULL SCAN           | SYS   | IDX_1_T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |     TABLE ACCESS FULL               | SYS   | SYS_DUMMY              |      |      |       |        |
+-------------------------------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain select a from (select a, b, c from t1_for_eliminate union all select a, b, c from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
+| Id  | Description                         | Owner | Name                   | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                    |       |                        |      |      |       |        |
+| 1   |   NESTED LOOPS                      |       |                        |      |      |       |        |
+| 2   |     SUBSELECT                       |       |                        |      |      |       |        |
+| 3   |       UNION ALL                     |       |                        |      |      |       |        |
+| 4   |         TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 5   |           INDEX FAST FULL SCAN      | SYS   | IDX_3_T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |         TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 7   |           INDEX FAST FULL SCAN      | SYS   | IDX_3_T1_FOR_ELIMINATE |      |      |       |        |
+| 8   |     TABLE ACCESS FULL               | SYS   | SYS_DUMMY              |      |      |       |        |
+-------------------------------------------------------------------------------------------------------------
+
+13 rows fetched.
+
+SQL> explain select a from (select a, b, c from t1_for_eliminate minus select a, b, c from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
+| Id  | Description                         | Owner | Name                   | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                    |       |                        |      |      |       |        |
+| 1   |   NESTED LOOPS                      |       |                        |      |      |       |        |
+| 2   |     SUBSELECT                       |       |                        |      |      |       |        |
+| 3   |       HASH MINUS                    |       |                        |      |      |       |        |
+| 4   |         TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 5   |           INDEX FAST FULL SCAN      | SYS   | IDX_3_T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |         TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 7   |           INDEX FAST FULL SCAN      | SYS   | IDX_3_T1_FOR_ELIMINATE |      |      |       |        |
+| 8   |     TABLE ACCESS FULL               | SYS   | SYS_DUMMY              |      |      |       |        |
+-------------------------------------------------------------------------------------------------------------
+
+13 rows fetched.
+
+SQL> explain select * from t1_for_eliminate where exists (select a, b, c from t1_for_eliminate);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                   | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                        |      |      |       |        |
+| 1   |   HASH JOIN SEMI(L)               |       |                        |      |      |       |        |
+| 2   |     SUBSELECT                     |       |                        |      |      |       |        |
+| 3   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 4   |         INDEX FAST FULL SCAN      | SYS   | IDX_3_T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |     TABLE ACCESS BY INDEX ONLY    | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 6   |       INDEX FAST FULL SCAN        | SYS   | IDX_3_T1_FOR_ELIMINATE |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   1 - access: NA = NA
+
+14 rows fetched.
+
+SQL> explain select * from t1_for_eliminate where a in (select a from t1_for_eliminate);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                   | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                        |      |      |       |        |
+| 1   |   KERNEL FILTER                 |       |                        |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN      | SYS   | IDX_3_T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE       |      |      |       |        |
+| 5   |       INDEX RANGE SCAN          | SYS   | IDX_1_T1_FOR_ELIMINATE |      |      |       |        |
+---------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: EXISTS(SELECT 1 FROM T1_FOR_ELIMINATE)           
+   5 - access: A = T1_FOR_ELIMINATE.A                           
+
+14 rows fetched.
+
+SQL> drop table t1_for_eliminate;
+
+Succeed.
+
+SQL> --sub-select table eliminate
+SQL> drop table if exists t1_for_eliminate;
+
+Succeed.
+
+SQL> create table t1_for_eliminate(a int, b int, c int);
+
+Succeed.
+
+SQL> insert into t1_for_eliminate values(1, 2, 3);
+
+1 rows affected.
+
+SQL> explain select a, b from (select a, b, c from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> alter system set _OPTIM_SUBQUERY_ELIMINATION = false;
+
+Succeed.
+
+SQL> explain select a, b from (select a, b, c from t1_for_eliminate), dual   ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS           |       |                  |      |      |       |        |
+| 2   |     SUBSELECT            |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |     TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> alter system set _OPTIM_SUBQUERY_ELIMINATION = true;
+
+Succeed.
+
+SQL> explain select a, b from (select a, b, rownum c from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select a, b from (select a, b, c from t1_for_eliminate), dual connect by prior a = a;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   CONNECT BY MATERIALIZE |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS         |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: PRIOR A = A                                      
+
+12 rows fetched.
+
+SQL> explain select a, b from (select : a, b, c from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> drop view if exists v1_for_eliminate;
+
+Succeed.
+
+SQL> create view v1_for_eliminate as select a, b, c from t1_for_eliminate;
+
+Succeed.
+
+SQL> explain select a, b from v1_for_eliminate, dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select * from  dual where exists (select a, b, c from t1_for_eliminate);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   2 - filter: EXISTS(SELECT 1 FROM T1_FOR_ELIMINATE)
+
+11 rows fetched.
+
+SQL> explain select max(a) over (partition by b), b from (select a, b, c from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   WINDOW SORT              |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS           |       |                  |      |      |       |        |
+| 3   |       SUBSELECT            |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |       TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> explain select max(a) , b from (select a, b, c from t1_for_eliminate), dual group by a,b;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY              |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |                  |      |      |       |        |
+| 3   |       SUBSELECT              |       |                  |      |      |       |        |
+| 4   |         HASH GROUP BY        |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |       TABLE ACCESS FULL      | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain select a, b from (select a, b, c from t1_for_eliminate where a > 0), dual connect by prior a = a;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   CONNECT BY MATERIALIZE   |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS           |       |                  |      |      |       |        |
+| 3   |       SUBSELECT            |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |       TABLE ACCESS FULL    | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: PRIOR A = A                                      
+   4 - filter: A > 0                                            
+
+14 rows fetched.
+
+SQL> explain select a, b from (select a, b, c from t1_for_eliminate,dual), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |                  |      |      |       |        |
+| 2   |     SUBSELECT              |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+| 6   |     TABLE ACCESS FULL      | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain select * from V$PL_MANAGER,dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |               |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | DV_PL_MANAGER |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY     |      |      |       |        |
+---------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select * from (select * from dual), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name      | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |           |      |      |       |        |
+| 1   |   NESTED LOOPS           |       |           |      |      |       |        |
+| 2   |     SUBSELECT            |       |           |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | SYS_DUMMY |      |      |       |        |
+| 4   |     TABLE ACCESS FULL    | SYS   | SYS_DUMMY |      |      |       |        |
+-------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> explain select a, b,c from (select a, b, rownum c from t1_for_eliminate), dual;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |                  |      |      |       |        |
+| 2   |     SUBSELECT              |       |                  |      |      |       |        |
+| 3   |       ROWNUM COUNT         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |     TABLE ACCESS FULL      | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> drop table t1_for_eliminate;
+
+Succeed.
+
+SQL> drop view v1_for_eliminate;
+
+Succeed.
+
+SQL> drop table if exists t1_for_eliminate;
+
+Succeed.
+
+SQL> create table t1_for_eliminate(a int, b int, c int);
+
+Succeed.
+
+SQL> insert into t1_for_eliminate values(1, 2, 3);
+
+1 rows affected.
+
+SQL> explain select a, b from (select * from t1_for_eliminate, dual);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS         |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> explain select a, b from (select * from t1_for_eliminate where 1 != 0) connect by prior a + 1 = b;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   CONNECT BY MATERIALIZE |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS FULL    | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: PRIOR A + 1 = B                                  
+
+10 rows fetched.
+
+SQL> explain select a, b from (select a, b from t1_for_eliminate) where a <= 1;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   1 - filter: A <= 1
+
+9 rows fetched.
+
+SQL> explain select a, b from (select * from t1_for_eliminate, dual order by a);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY    |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS         |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> explain select a, b from (select * from t1_for_eliminate, dual) order by a;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY    |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS         |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> explain select a, b from (select distinct * from t1_for_eliminate, dual);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   SUBSELECT                |       |                  |      |      |       |        |
+| 2   |     HASH DISTINCT          |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> explain select a, b from (select  max(a) a, b from t1_for_eliminate, dual group by a, b);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY              |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |                  |      |      |       |        |
+| 3   |       SUBSELECT              |       |                  |      |      |       |        |
+| 4   |         HASH GROUP BY        |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 6   |       TABLE ACCESS FULL      | SYS   | SYS_DUMMY        |      |      |       |        |
+------------------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain select max(a) from (select * from t1_for_eliminate, dual);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   AGGR                     |       |                  |      |      |       |        |
+| 2   |     SUBSELECT              |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> explain select a from (select * from t1_for_eliminate, dual) group by a;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY            |       |                  |      |      |       |        |
+| 2   |     SUBSELECT              |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> explain select a, b from (select  max(a) over(partition by b) a, b from t1_for_eliminate, dual);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   SUBSELECT                |       |                  |      |      |       |        |
+| 2   |     WINDOW SORT            |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> explain select max(a) over(partition by a order by b), b from (select * from t1_for_eliminate, dual);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   WINDOW SORT              |       |                  |      |      |       |        |
+| 2   |     SUBSELECT              |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+10 rows fetched.
+
+SQL> explain select a, b from (select * from t1_for_eliminate connect by prior a + 1 = b);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   SUBSELECT                |       |                  |      |      |       |        |
+| 2   |     CONNECT BY MATERIALIZE |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: PRIOR A + 1 = B                                  
+
+11 rows fetched.
+
+SQL> explain select a, b from (select * from t1_for_eliminate where a < 1000) connect by prior a + 1 = b;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   CONNECT BY MATERIALIZE |       |                  |      |      |       |        |
+| 2   |     SUBSELECT            |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+--------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: PRIOR A + 1 = B                                  
+   3 - filter: A < 1000                                         
+
+12 rows fetched.
+
+SQL> explain select a, b from (select rownum a, b from t1_for_eliminate) where rownum <= 1;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   ROWNUM FILTER            |       |                  |      |      |       |        |
+| 2   |     SUBSELECT              |       |                  |      |      |       |        |
+| 3   |       ROWNUM COUNT         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   1 - filter: ROWNUM <= 1
+
+12 rows fetched.
+
+SQL> explain select a, case when b > 0 then 1 else 0 end  b from (select * from t1_for_eliminate, dual);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |                  |      |      |       |        |
+| 1   |   SUBSELECT              |       |                  |      |      |       |        |
+| 2   |     NESTED LOOPS         |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+--------------------------------------------------------------------------------------------
+
+9 rows fetched.
+
+SQL> explain select a, b from (select * from t1_for_eliminate, dual) where rownum <= 1;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   ROWNUM FILTER            |       |                  |      |      |       |        |
+| 2   |     SUBSELECT              |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS         |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T1_FOR_ELIMINATE |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | SYS_DUMMY        |      |      |       |        |
+----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):
+-----------------------------------------
+   1 - filter: ROWNUM <= 1
+
+13 rows fetched.
+
+SQL> explain select * from V$PL_MANAGER;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |               |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | DV_PL_MANAGER |      |      |       |        |
+-------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> drop table t1_for_eliminate;
+
+Succeed.
+
+SQL> 
+SQL> -- join elimination
+SQL> drop table if exists t1_for_eliminate;
+
+Succeed.
+
+SQL> create table t1_for_eliminate(a int, b int, c int);
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX INDEX_JOIN_ELIMINATE ON t1_for_eliminate(A);
+
+Succeed.
+
+SQL> EXPLAIN SELECT COUNT(*) FROM t1_for_eliminate T0 LEFT JOIN t1_for_eliminate T1  ON T1.A = T0.A; 
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+| Id  | Description                     | Owner | Name                 | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                |       |                      |      |      |       |        |
+| 1   |   AGGR                          |       |                      |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T0  |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN      | SYS   | INDEX_JOIN_ELIMINATE |      |      |       |        |
+-------------------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> ALTER SYSTEM SET _OPTIM_JOIN_ELIMINATION = FALSE;
+
+Succeed.
+
+SQL> EXPLAIN SELECT COUNT(*) FROM t1_for_eliminate T0 LEFT JOIN t1_for_eliminate T1  ON T1.A = T0.A  ; 
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                 | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                      |      |      |       |        |
+| 1   |   AGGR                            |       |                      |      |      |       |        |
+| 2   |     NESTED LOOPS OUTER            |       |                      |      |      |       |        |
+| 3   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T0  |      |      |       |        |
+| 4   |         INDEX FAST FULL SCAN      | SYS   | INDEX_JOIN_ELIMINATE |      |      |       |        |
+| 5   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T1_FOR_ELIMINATE T1  |      |      |       |        |
+| 6   |         INDEX UNIQUE SCAN         | SYS   | INDEX_JOIN_ELIMINATE |      |      |       |        |
+---------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   6 - access: T1.A = T0.A                                      
+
+14 rows fetched.
+
+SQL> ALTER SYSTEM SET _OPTIM_JOIN_ELIMINATION = TRUE;
+
+Succeed.
+
+SQL> 
+SQL> --order by elimination
+SQL> EXPLAIN SELECT * FROM (select DISTINCT t1.B  AS A from t1_for_eliminate t1 order by t1.B) t2 inner join t1_for_eliminate t3 on t3.a = t2.a order by t3.a;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name                 | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |                      |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY              |       |                      |      |      |       |        |
+| 2   |     NESTED LOOPS                   |       |                      |      |      |       |        |
+| 3   |       SUBSELECT                    |       | T2                   |      |      |       |        |
+| 4   |         HASH DISTINCT              |       |                      |      |      |       |        |
+| 5   |           TABLE ACCESS FULL        | SYS   | T1_FOR_ELIMINATE T1  |      |      |       |        |
+| 6   |       TABLE ACCESS BY INDEX ROWID  | SYS   | T1_FOR_ELIMINATE T3  |      |      |       |        |
+| 7   |         INDEX UNIQUE SCAN          | SYS   | INDEX_JOIN_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   7 - access: T3.A = T2.A                                      
+
+15 rows fetched.
+
+SQL> ALTER SYSTEM SET _OPTIM_ORDER_BY_ELIMINATION = FALSE;
+
+Succeed.
+
+SQL> EXPLAIN SELECT * FROM (select DISTINCT t1.B  AS A from t1_for_eliminate t1 order by t1.B) t2 inner join t1_for_eliminate t3 on t3.a = t2.a order by t3.a  ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name                 | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |                      |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY              |       |                      |      |      |       |        |
+| 2   |     NESTED LOOPS                   |       |                      |      |      |       |        |
+| 3   |       SUBSELECT                    |       | T2                   |      |      |       |        |
+| 4   |         SORT DISTINCT              |       |                      |      |      |       |        |
+| 5   |           TABLE ACCESS FULL        | SYS   | T1_FOR_ELIMINATE T1  |      |      |       |        |
+| 6   |       TABLE ACCESS BY INDEX ROWID  | SYS   | T1_FOR_ELIMINATE T3  |      |      |       |        |
+| 7   |         INDEX UNIQUE SCAN          | SYS   | INDEX_JOIN_ELIMINATE |      |      |       |        |
+----------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   7 - access: T3.A = T2.A                                      
+
+15 rows fetched.
+
+SQL> ALTER SYSTEM SET _OPTIM_ORDER_BY_ELIMINATION = TRUE;
+
+Succeed.
+
+SQL> drop table t1_for_eliminate;
+
+Succeed.
+
+SQL> --20200529
+SQL> select
+  2   subq_1.c1 as c0,
+  3   subq_1.c1 as c1,
+  4   subq_1.c0 as c2,
+  5   subq_1.c0 as c3,
+  6   subq_1.c3 as c4,
+  7   subq_1.c3 as c5,
+  8   subq_1.c1 as c6,
+  9   subq_1.c1 as c7,
+ 10   subq_1.c0 as c8,
+ 11   subq_1.c1 as c9,
+ 12   subq_1.c0 as c10,
+ 13   subq_1.c0 as c11
+ 14 from
+ 15   (select
+ 16         subq_0.c0 as c0,
+ 17         subq_0.c0 as c1,
+ 18         subq_0.c0 as c2,
+ 19         case when false then subq_0.c0 else subq_0.c0 end
+ 20            as c3
+ 21       from
+ 22         (select
+ 23               ref_0.PASSWORD as c0
+ 24             from
+ 25               SYS.SYS_USER_HISTORY as ref_0
+ 26             where ref_0.USER# is NULL
+ 27               and (ref_0.PASSWORD is not NULL)) as subq_0
+ 28       where 40 is NULL
+ 29       limit 99) as subq_1
+ 30 where subq_1.c0 is not NULL;
+C0                                                               C1                                                               C2                                                               C3                                                               C4                                                               C5                                                               C6                                                               C7                                                               C8                                                               C9                                                               C10                                                              C11                                                             
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> -- DTS202012030I6K2BP0H00
+SQL> create or replace type str_split_table is table of varchar2 (4000);
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function fn_split(in_str       in varchar2,
+  2                                     in_delimiter in varchar2)
+  3   return str_split_table as
+  4   v_result_table str_split_table := str_split_table();
+  5   v_length number := length(in_str);
+  6   v_val varchar2(4000);
+  7   v_start  number := 1;
+  8   v_index  number;
+  9   v_idx number := 0;
+ 10 begin
+ 11   while (v_start <= v_length) loop
+ 12     v_index := instr(in_str, in_delimiter, v_start);
+ 13 
+ 14     if v_index = 0 then
+ 15       v_val := substr(in_str, v_start);
+ 16       v_start := v_length + 1;
+ 17     else
+ 18       v_val := substr(in_str, v_start, v_index - v_start);
+ 19       v_start := v_index + 1;
+ 20     end if;
+ 21     v_idx := v_idx + 1;
+ 22 
+ 23     v_result_table.extend;
+ 24     v_result_table(v_idx) := v_val;
+ 25   end loop;
+ 26 
+ 27   return v_result_table;
+ 28 end;
+ 29 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists func_as_table_rewrite_t1;
+
+Succeed.
+
+SQL> drop table if exists func_as_table_rewrite_t2;
+
+Succeed.
+
+SQL> create table func_as_table_rewrite_t1(
+  2   owner varchar(400 byte)
+  3 );
+
+Succeed.
+
+SQL> insert into func_as_table_rewrite_t1 values('abc;def');
+
+1 rows affected.
+
+SQL> 
+SQL> create table func_as_table_rewrite_t2(
+  2   full_name varchar(400 byte) 
+  3 );
+
+Succeed.
+
+SQL> insert into func_as_table_rewrite_t2 values('myname');
+
+1 rows affected.
+
+SQL> 
+SQL> select 
+  2     t.owner as owner_uuid, 
+  3     (select x.full_name from func_as_table_rewrite_t2 x, (select column_value from table(cast(fn_split(t.owner,';') as str_split_table))) st where rownum=1) 
+SQL> from func_as_table_rewrite_t1 t;
+
+OWNER_UUID                                                       (SELECT X.FULL_NAME FROM FUNC_AS_TABLE_REWRITE_T2 X, (SELECT COL
+---------------------------------------------------------------- ----------------------------------------------------------------
+abc;def                                                          myname                                                          
+
+1 rows fetched.
+
+SQL> 
+SQL> -- DTS2020120804AHKTP0G00
+SQL> select * from func_as_table_rewrite_t1 t 
+  2 where exists (select column_value from table(cast(fn_split(t.owner,';') as str_split_table)) where column_value = t.owner);
+
+OWNER                                                           
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> explain 
+  2 select * from func_as_table_rewrite_t1 t 
+  3 where exists (select column_value from table(cast(fn_split(t.owner,';') as str_split_table)) where column_value = t.owner);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name                       | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                            |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |                            |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | FUNC_AS_TABLE_REWRITE_T1 T |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   |                            |      |      |       |        |
+----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: EXISTS(SELECT 1 FROM SYS.TABLE(CAST(FN_SPLIT(T.OWNER, ';') AS STR_SPLIT_TABLE)) WHERE COLUMN_VALUE = T.OWNER)
+   3 - filter: COLUMN_VALUE = T.OWNER                           
+
+12 rows fetched.
+
+SQL> insert into func_as_table_rewrite_t1 values('ccc;def');
+
+1 rows affected.
+
+SQL> select (select max(column_value) from table(cast(fn_split(t1.owner ,',') as str_split_table)) where column_value = t1.owner) as max from func_as_table_rewrite_t1 t1;
+
+MAX
+----------------------------------------------------------------
+abc;def
+ccc;def
+
+2 rows fetched.
+ 
+SQL> drop table func_as_table_rewrite_t1;
+
+Succeed.
+
+SQL> drop table func_as_table_rewrite_t2;
+
+Succeed.
+
+SQL> drop function fn_split;
+
+Succeed.
+
+SQL> drop type str_split_table;
+Succeed.
+
+
+
+

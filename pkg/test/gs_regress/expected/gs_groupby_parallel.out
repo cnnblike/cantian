@@ -1,0 +1,1056 @@
+
+
+SQL> -- group by
+SQL> drop table if exists tbl_group1;
+
+Succeed.
+
+SQL> create table tbl_group1(a int, b int, c double);
+
+Succeed.
+
+SQL> insert into tbl_group1 values(1, 1, 1.1), (1, 2, 2.1), (2, 3, 3.1), (2, 4, 4.1), (2, 5, 5.1), (1, 6, 6.12);
+
+6 rows affected.
+
+SQL> 
+SQL> insert into tbl_group1 select * from tbl_group1;
+
+6 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> -- parallel group by
+SQL> drop table if exists tbl_group;
+
+Succeed.
+
+SQL> create table tbl_group(a int, b int, c double);
+
+Succeed.
+
+SQL> 
+SQL> create or replace PROCEDURE gen_data_tbl_group(a IN  INTEGER, min_b IN INTEGER, max_b IN  INTEGER)
+  2 as
+  3     i  INTEGER := 0;
+  4 begin
+  5     FOR i IN min_b..max_b LOOP
+  6             BEGIN
+  7                 insert into tbl_group values((a+i) % 10, i, (a+i)*1.2);
+  8             END;
+  9     END LOOP;
+ 10     commit;
+ 11     RETURN;
+ 12 END ;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> call gen_data_tbl_group(1,1,50000);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select a, max(b) from tbl_group group by a order by 1,2;
+
+A            MAX(B)      
+------------ ------------
+0            49999       
+1            50000       
+2            49991       
+3            49992       
+4            49993       
+5            49994       
+6            49995       
+7            49996       
+8            49997       
+9            49998       
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ a, max(b) from tbl_group group by a order by 1,2;
+
+A            MAX(B)      
+------------ ------------
+0            49999       
+1            50000       
+2            49991       
+3            49992       
+4            49993       
+5            49994       
+6            49995       
+7            49996       
+8            49997       
+9            49998       
+
+10 rows fetched.
+
+SQL> 
+SQL> select a, min(b) from tbl_group group by a order by 1,2;
+
+A            MIN(B)      
+------------ ------------
+0            9           
+1            10          
+2            1           
+3            2           
+4            3           
+5            4           
+6            5           
+7            6           
+8            7           
+9            8           
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ a, min(b) from tbl_group group by a order by 1,2;
+
+A            MIN(B)      
+------------ ------------
+0            9           
+1            10          
+2            1           
+3            2           
+4            3           
+5            4           
+6            5           
+7            6           
+8            7           
+9            8           
+
+10 rows fetched.
+
+SQL> 
+SQL> select a, avg(b) from tbl_group group by a order by 1,2;
+
+A            AVG(B)                                  
+------------ ----------------------------------------
+0            25004                                   
+1            25005                                   
+2            24996                                   
+3            24997                                   
+4            24998                                   
+5            24999                                   
+6            25000                                   
+7            25001                                   
+8            25002                                   
+9            25003                                   
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ a, avg(b) from tbl_group group by a order by 1,2;
+
+A            AVG(B)                                  
+------------ ----------------------------------------
+0            25004                                   
+1            25005                                   
+2            24996                                   
+3            24997                                   
+4            24998                                   
+5            24999                                   
+6            25000                                   
+7            25001                                   
+8            25002                                   
+9            25003                                   
+
+10 rows fetched.
+
+SQL> 
+SQL> select a, count(b) from tbl_group group by a order by 1,2;
+
+A            COUNT(B)            
+------------ --------------------
+0            5000                
+1            5000                
+2            5000                
+3            5000                
+4            5000                
+5            5000                
+6            5000                
+7            5000                
+8            5000                
+9            5000                
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ a, count(b) from tbl_group group by a order by 1,2;
+
+A            COUNT(B)            
+------------ --------------------
+0            5000                
+1            5000                
+2            5000                
+3            5000                
+4            5000                
+5            5000                
+6            5000                
+7            5000                
+8            5000                
+9            5000                
+
+10 rows fetched.
+
+SQL> 
+SQL> select a, avg(b), sum(b), count(b), sum(b)/count(b) from tbl_group group by a order by 1,2,3;
+
+A            AVG(B)                                   SUM(B)               COUNT(B)             SUM(B)/COUNT(B)     
+------------ ---------------------------------------- -------------------- -------------------- --------------------
+0            25004                                    125020000            5000                 25004               
+1            25005                                    125025000            5000                 25005               
+2            24996                                    124980000            5000                 24996               
+3            24997                                    124985000            5000                 24997               
+4            24998                                    124990000            5000                 24998               
+5            24999                                    124995000            5000                 24999               
+6            25000                                    125000000            5000                 25000               
+7            25001                                    125005000            5000                 25001               
+8            25002                                    125010000            5000                 25002               
+9            25003                                    125015000            5000                 25003               
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ a, avg(b), sum(b)/count(b) from tbl_group group by a order by 1,2,3;
+
+A            AVG(B)                                   SUM(B)/COUNT(B)     
+------------ ---------------------------------------- --------------------
+0            25004                                    25004               
+1            25005                                    25005               
+2            24996                                    24996               
+3            24997                                    24997               
+4            24998                                    24998               
+5            24999                                    24999               
+6            25000                                    25000               
+7            25001                                    25001               
+8            25002                                    25002               
+9            25003                                    25003               
+
+10 rows fetched.
+
+SQL> 
+SQL> select /*+ parallel(4) */ a, max(b) from tbl_group group by a order by 1,2;
+
+A            MAX(B)      
+------------ ------------
+0            49999       
+1            50000       
+2            49991       
+3            49992       
+4            49993       
+5            49994       
+6            49995       
+7            49996       
+8            49997       
+9            49998       
+
+10 rows fetched.
+
+SQL> 
+SQL> --not supportted
+SQL> --select /*+ parallel(2) */ a, group_concat(b) from tbl_group where a=10 group by a;
+SQL> 
+SQL> --not support having, go to normal process(not parallel)
+SQL> select /*+ parallel(4) */ a, max(b) from tbl_group group by a having a < 100 order by 1,2;
+
+A            MAX(B)      
+------------ ------------
+0            49999       
+1            50000       
+2            49991       
+3            49992       
+4            49993       
+5            49994       
+6            49995       
+7            49996       
+8            49997       
+9            49998       
+
+10 rows fetched.
+
+SQL> --not support subquery and join, go to normal process(not parallel)
+SQL> select /*+ parallel(4) */ count(1) from (select a from tbl_group group by a);
+
+COUNT(1)            
+--------------------
+10                  
+
+1 rows fetched.
+
+SQL> select /*+ parallel(4) */ a, count(1) from (select a from tbl_group) group by a order by 1,2;
+
+A            COUNT(1)            
+------------ --------------------
+0            5000                
+1            5000                
+2            5000                
+3            5000                
+4            5000                
+5            5000                
+6            5000                
+7            5000                
+8            5000                
+9            5000                
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ distinct a, max(b) from tbl_group group by a order by 1,2;
+
+A            MAX(B)      
+------------ ------------
+0            49999       
+1            50000       
+2            49991       
+3            49992       
+4            49993       
+5            49994       
+6            49995       
+7            49996       
+8            49997       
+9            49998       
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ a,(select max(b) from tbl_group1 where a = 2) as max_b from tbl_group group by a order by 1;
+
+A            MAX_B       
+------------ ------------
+0            5           
+1            5           
+2            5           
+3            5           
+4            5           
+5            5           
+6            5           
+7            5           
+8            5           
+9            5           
+
+10 rows fetched.
+
+SQL> select /*+ parallel(4) */ a,max(b) from tbl_group where a in (select a from tbl_group1) group by a order by 1;
+
+A            MAX(B)      
+------------ ------------
+1            50000       
+2            49991       
+
+2 rows fetched.
+
+SQL> select /*+ parallel(4) */ t2.a,max(t1.a),min(t2.b) from tbl_group1 t1 join tbl_group t2 on t1.a = t2.a group by t2.a order by 1,2,3;
+
+A            MAX(T1.A)    MIN(T2.B)   
+------------ ------------ ------------
+1            1            10          
+2            2            1           
+
+2 rows fetched.
+
+SQL> (select /*+ parallel(4) */ a,max(b) from tbl_group1 group by a order by 1,2 limit 2) union all
+  2 (select a,max(b) from tbl_group group by a order by 1,2 limit 2) order by 1,2;
+
+A            MAX(B)      
+------------ ------------
+0            49999       
+1            6           
+1            50000       
+2            5           
+
+4 rows fetched.
+
+SQL> -------------------------test multi group exprs-----------------------------------
+SQL> truncate table tbl_group;
+
+Succeed.
+
+SQL> create or replace PROCEDURE gen_data_tbl_group1(a IN  INTEGER, min_b IN INTEGER, max_b IN  INTEGER)
+  2 as
+  3     i  INTEGER := 0;
+  4     j  INTEGER := 0;
+  5 begin
+  6     FOR i IN min_b..max_b LOOP
+  7             BEGIN
+  8                 FOR j IN 0..3 LOOP
+  9                     BEGIN
+ 10                         insert into tbl_group values((a+i) % 10, (i+j+1) % 4, (a+i)*1.2);
+ 11                     END;
+ 12                 END LOOP;
+ 13             END;
+ 14     END LOOP;
+ 15     commit;
+ 16     RETURN;
+ 17 END ;
+ 18 /
+
+Succeed.
+
+SQL> 
+SQL> call gen_data_tbl_group1(1,1,50000);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select a,b,max(c) from tbl_group group by a,b order by a,b;
+
+A            B            MAX(C)              
+------------ ------------ --------------------
+0            0            60000               
+0            1            60000               
+0            2            60000               
+0            3            60000               
+1            0            60001.2             
+1            1            60001.2             
+1            2            60001.2             
+1            3            60001.2             
+2            0            59990.4             
+2            1            59990.4             
+2            2            59990.4             
+2            3            59990.4             
+3            0            59991.6             
+3            1            59991.6             
+3            2            59991.6             
+3            3            59991.6             
+4            0            59992.8             
+4            1            59992.8             
+4            2            59992.8             
+4            3            59992.8             
+5            0            59994               
+5            1            59994               
+5            2            59994               
+5            3            59994               
+6            0            59995.2             
+6            1            59995.2             
+6            2            59995.2             
+6            3            59995.2             
+7            0            59996.4             
+7            1            59996.4             
+7            2            59996.4             
+7            3            59996.4             
+8            0            59997.6             
+8            1            59997.6             
+8            2            59997.6             
+8            3            59997.6             
+9            0            59998.8             
+9            1            59998.8             
+9            2            59998.8             
+9            3            59998.8             
+
+40 rows fetched.
+
+SQL> select /*+ parallel(4) */ a, b, max(c) from tbl_group group by a,b order by a,b desc;
+
+A            B            MAX(C)              
+------------ ------------ --------------------
+0            3            60000               
+0            2            60000               
+0            1            60000               
+0            0            60000               
+1            3            60001.2             
+1            2            60001.2             
+1            1            60001.2             
+1            0            60001.2             
+2            3            59990.4             
+2            2            59990.4             
+2            1            59990.4             
+2            0            59990.4             
+3            3            59991.6             
+3            2            59991.6             
+3            1            59991.6             
+3            0            59991.6             
+4            3            59992.8             
+4            2            59992.8             
+4            1            59992.8             
+4            0            59992.8             
+5            3            59994               
+5            2            59994               
+5            1            59994               
+5            0            59994               
+6            3            59995.2             
+6            2            59995.2             
+6            1            59995.2             
+6            0            59995.2             
+7            3            59996.4             
+7            2            59996.4             
+7            1            59996.4             
+7            0            59996.4             
+8            3            59997.6             
+8            2            59997.6             
+8            1            59997.6             
+8            0            59997.6             
+9            3            59998.8             
+9            2            59998.8             
+9            1            59998.8             
+9            0            59998.8             
+
+40 rows fetched.
+
+SQL> select /*+ parallel(4) */ a, b, max(c) from tbl_group group by a,b order by a,b;
+
+A            B            MAX(C)              
+------------ ------------ --------------------
+0            0            60000               
+0            1            60000               
+0            2            60000               
+0            3            60000               
+1            0            60001.2             
+1            1            60001.2             
+1            2            60001.2             
+1            3            60001.2             
+2            0            59990.4             
+2            1            59990.4             
+2            2            59990.4             
+2            3            59990.4             
+3            0            59991.6             
+3            1            59991.6             
+3            2            59991.6             
+3            3            59991.6             
+4            0            59992.8             
+4            1            59992.8             
+4            2            59992.8             
+4            3            59992.8             
+5            0            59994               
+5            1            59994               
+5            2            59994               
+5            3            59994               
+6            0            59995.2             
+6            1            59995.2             
+6            2            59995.2             
+6            3            59995.2             
+7            0            59996.4             
+7            1            59996.4             
+7            2            59996.4             
+7            3            59996.4             
+8            0            59997.6             
+8            1            59997.6             
+8            2            59997.6             
+8            3            59997.6             
+9            0            59998.8             
+9            1            59998.8             
+9            2            59998.8             
+9            3            59998.8             
+
+40 rows fetched.
+
+SQL> select /*+ parallel(4) */ distinct a, b, max(c) from tbl_group group by a,b order by a,b;
+
+A            B            MAX(C)              
+------------ ------------ --------------------
+0            0            60000               
+0            1            60000               
+0            2            60000               
+0            3            60000               
+1            0            60001.2             
+1            1            60001.2             
+1            2            60001.2             
+1            3            60001.2             
+2            0            59990.4             
+2            1            59990.4             
+2            2            59990.4             
+2            3            59990.4             
+3            0            59991.6             
+3            1            59991.6             
+3            2            59991.6             
+3            3            59991.6             
+4            0            59992.8             
+4            1            59992.8             
+4            2            59992.8             
+4            3            59992.8             
+5            0            59994               
+5            1            59994               
+5            2            59994               
+5            3            59994               
+6            0            59995.2             
+6            1            59995.2             
+6            2            59995.2             
+6            3            59995.2             
+7            0            59996.4             
+7            1            59996.4             
+7            2            59996.4             
+7            3            59996.4             
+8            0            59997.6             
+8            1            59997.6             
+8            2            59997.6             
+8            3            59997.6             
+9            0            59998.8             
+9            1            59998.8             
+9            2            59998.8             
+9            3            59998.8             
+
+40 rows fetched.
+
+SQL> drop table tbl_group;
+
+Succeed.
+
+SQL> 
+SQL> --plan_node_query_sort_par
+SQL> drop table if exists tbl_group;
+
+Succeed.
+
+SQL> create table tbl_group(a int, b int, c double);
+
+Succeed.
+
+SQL> create or replace PROCEDURE gen_data_tbl_group(a IN  INTEGER, min_b IN INTEGER, max_b IN  INTEGER)
+  2 as
+  3     i  INTEGER := 0;
+  4 begin
+  5     FOR i IN min_b..max_b LOOP
+  6             BEGIN
+  7                 insert into tbl_group values((a+i) % 10, i, (a+i)*1.2);
+  8             END;
+  9     END LOOP;
+ 10     commit;
+ 11     RETURN;
+ 12 END ;
+ 13 /
+
+Succeed.
+
+SQL> call gen_data_tbl_group(1,1,2000);
+
+PL/SQL procedure successfully completed.
+
+SQL> select /*+ parallel(4) */ a from tbl_group where a = 1 order by a;
+
+A           
+------------
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+1           
+
+200 rows fetched.
+
+SQL> drop table tbl_group;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_par_group_1;
+
+Succeed.
+
+SQL> drop table if exists t_par_group_2;
+
+Succeed.
+
+SQL> create table t_par_group_1(a int, b int, c varchar(10), d number, e blob);
+
+Succeed.
+
+SQL> create table t_par_group_2(a int, b int, c varchar(10), d number);
+
+Succeed.
+
+SQL> insert into t_par_group_1 values(1, 2, 'abc', 1.23, 'aaaaaaa');
+
+1 rows affected.
+
+SQL> insert into t_par_group_2 values(1, 2, 'abc', 1.23);
+
+1 rows affected.
+
+SQL> CREATE or replace procedure proc_insert(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5 		sqlst := 'insert into ' || tname ||' select a+'||i||', b+'||i||', c||'||i||', d+'||i||', e from '||tname|| ' where a=1';
+  6         execute immediate sqlst;
+  7 		execute immediate sqlst;
+  8   END LOOP;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> CREATE or replace procedure proc_insert1(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5 		sqlst := 'insert into ' || tname ||' select a+'||i||', b+'||i||', c||'||i||', d+'||i||' from '||tname|| ' where a=1';
+  6         execute immediate sqlst;
+  7 		execute immediate sqlst;
+  8   END LOOP;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> call proc_insert('t_par_group_1',1,10);
+
+PL/SQL procedure successfully completed.
+
+SQL> call proc_insert1('t_par_group_2',1,5);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select /*+parallel(2)*/ a, sum(b), avg(d),  max(c), stddev(b), stddev_samp(d), stddev_pop(a), var_pop(a), var_samp(distinct a) from t_par_group_2 group by a order by sum(b);
+
+A            SUM(B)               AVG(D)                                   MAX(C)     STDDEV(B)                                STDDEV_SAMP(D)                           STDDEV_POP(A)                            VAR_POP(A)                               VAR_SAMP(DISTINCT A)                    
+------------ -------------------- ---------------------------------------- ---------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+1            2                    1.23                                     abc        0                                                                                 0                                        0                                                                                
+2            6                    2.23                                     abc1       0                                        0                                        0                                        0                                                                                
+3            8                    3.23                                     abc2       0                                        0                                        0                                        0                                                                                
+4            10                   4.23                                     abc3       0                                        0                                        0                                        0                                                                                
+5            12                   5.23                                     abc4       0                                        0                                        0                                        0                                                                                
+6            14                   6.23                                     abc5       0                                        0                                        0                                        0                                                                                
+
+6 rows fetched.
+
+SQL> select /*+parallel(2)*/ array_agg(c), cume_dist(2)WITHIN GROUP (ORDER BY b asc) from t_par_group_2 group by a having CUME_DIST(2)WITHIN GROUP (ORDER BY B ASC) = 1;
+
+ARRAY_AGG(C)                                                     CUME_DIST(2)WITHIN GROUP (ORDER BY B ASC)
+---------------------------------------------------------------- -----------------------------------------
+{abc}                                                            1                                        
+
+1 rows fetched.
+
+SQL> select /*+parallel(8)*/ sum(a), count(a), avg(a), min(a), max(a), sum(b), count(b), avg(b), min(b), max(b), count(c), min(c), max(c),
+  2  sum(d), count(d), avg(d), min(d), max(d), count(e) from t_par_group_1 group by a order by var_pop(a),sum(a) limit 2 offset 4;
+
+SUM(A)               COUNT(A)             AVG(A)                                   MIN(A)       MAX(A)       SUM(B)               COUNT(B)             AVG(B)                                   MIN(B)       MAX(B)       COUNT(C)             MIN(C)     MAX(C)     SUM(D)                                   COUNT(D)             AVG(D)                                   MIN(D)                                   MAX(D)                                   COUNT(E)            
+-------------------- -------------------- ---------------------------------------- ------------ ------------ -------------------- -------------------- ---------------------------------------- ------------ ------------ -------------------- ---------- ---------- ---------------------------------------- -------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- --------------------
+10                   2                    5                                        5            5            12                   2                    6                                        6            6            2                    abc4       abc4       10.46                                    2                    5.23                                     5.23                                     5.23                                     2                   
+12                   2                    6                                        6            6            14                   2                    7                                        7            7            2                    abc5       abc5       12.46                                    2                    6.23                                     6.23                                     6.23                                     2                   
+
+2 rows fetched.
+
+SQL> select /*+parallel(8)*/ sum(t1.a), count(t1.a), avg(t1.a), min(t1.a), max(t1.a), sum(t1.b), count(t1.b), avg(t1.b), min(t1.b), max(t1.b), count(t1.c), min(t1.c), max(t1.c),
+  2 sum(t2.d), count(t2.d), avg(t2.d), min(t2.d), max(t2.d), count(t1.e),sum(t2.a+1), count(t2.a+1), avg(t2.a+1), min(t2.a+1), max(t2.a+1), sum(t2.b+1), count(t2.b+1), avg(t2.b+1), 
+  3 min(t2.b+1), max(t2.b+1),sum(t2.d+1), count(t2.d+1), avg(t2.d+1), min(t2.d+1), max(t2.d+1) from t_par_group_1 t1 left join t_par_group_2 t2 on t1.a = t2.a 
+  4 group by t1.a,t2.b,t1.c,t2.d order by 1,6,11 limit 6;
+
+SUM(T1.A)            COUNT(T1.A)          AVG(T1.A)                                MIN(T1.A)    MAX(T1.A)    SUM(T1.B)            COUNT(T1.B)          AVG(T1.B)                                MIN(T1.B)    MAX(T1.B)    COUNT(T1.C)          MIN(T1.C)  MAX(T1.C)  SUM(T2.D)                                COUNT(T2.D)          AVG(T2.D)                                MIN(T2.D)                                MAX(T2.D)                                COUNT(T1.E)          SUM(T2.A+1)                              COUNT(T2.A+1)        AVG(T2.A+1)                              MIN(T2.A+1)          MAX(T2.A+1)          SUM(T2.B+1)                              COUNT(T2.B+1)        AVG(T2.B+1)                              MIN(T2.B+1)          MAX(T2.B+1)          SUM(T2.D+1)                              COUNT(T2.D+1)        AVG(T2.D+1)                              MIN(T2.D+1)                              MAX(T2.D+1)                             
+-------------------- -------------------- ---------------------------------------- ------------ ------------ -------------------- -------------------- ---------------------------------------- ------------ ------------ -------------------- ---------- ---------- ---------------------------------------- -------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- -------------------- ---------------------------------------- -------------------- ---------------------------------------- -------------------- -------------------- ---------------------------------------- -------------------- ---------------------------------------- -------------------- -------------------- ---------------------------------------- -------------------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+1                    1                    1                                        1            1            2                    1                    2                                        2            2            1                    abc        abc        1.23                                     1                    1.23                                     1.23                                     1.23                                     1                    2                                        1                    2                                        2                    2                    3                                        1                    3                                        3                    3                    2.23                                     1                    2.23                                     2.23                                     2.23                                    
+8                    4                    2                                        2            2            12                   4                    3                                        3            3            4                    abc1       abc1       8.92                                     4                    2.23                                     2.23                                     2.23                                     4                    12                                       4                    3                                        3                    3                    16                                       4                    4                                        4                    4                    12.92                                    4                    3.23                                     3.23                                     3.23                                    
+12                   4                    3                                        3            3            16                   4                    4                                        4            4            4                    abc2       abc2       12.92                                    4                    3.23                                     3.23                                     3.23                                     4                    16                                       4                    4                                        4                    4                    20                                       4                    5                                        5                    5                    16.92                                    4                    4.23                                     4.23                                     4.23                                    
+14                   2                    7                                        7            7            16                   2                    8                                        8            8            2                    abc6       abc6                                                0                                                                                                                                               2                                                             0                                                                                                                                                0                                                                                                                                                0                                                                                                                                              
+16                   2                    8                                        8            8            18                   2                    9                                        9            9            2                    abc7       abc7                                                0                                                                                                                                               2                                                             0                                                                                                                                                0                                                                                                                                                0                                                                                                                                              
+16                   4                    4                                        4            4            20                   4                    5                                        5            5            4                    abc3       abc3       16.92                                    4                    4.23                                     4.23                                     4.23                                     4                    20                                       4                    5                                        5                    5                    24                                       4                    6                                        6                    6                    20.92                                    4                    5.23                                     5.23                                     5.23                                    
+
+6 rows fetched.
+
+SQL> select  /*+parallel(8)*/ max(a || b || c || d)  from t_par_group_1 group by c order by 1;
+
+MAX(A || B || C || D)                                           
+----------------------------------------------------------------
+1011abc910.23                                                   
+1112abc1011.23                                                  
+12abc1.23                                                       
+23abc12.23                                                      
+34abc23.23                                                      
+45abc34.23                                                      
+56abc45.23                                                      
+67abc56.23                                                      
+78abc67.23                                                      
+89abc78.23                                                      
+910abc89.23                                                     
+
+11 rows fetched.
+
+SQL> SELECT /*+parallel(4)*/ distinct mod(hash(a),5), max(sysdate) - min(sysdate) FROM t_par_group_1 GROUP BY a order by 1;
+
+MOD(HASH(A),5)                           MAX(SYSDATE) - MIN(SYSDATE)             
+---------------------------------------- ----------------------------------------
+0                                        0                                       
+2                                        0                                       
+3                                        0                                       
+4                                        0                                       
+
+4 rows fetched.
+
+SQL> select /*+parallel(5)*/ a, sum(distinct b) from t_par_group_2 group by (a),(c), ASCII(ASCII('='))  having sum(a) > 5 order by sum(distinct a);
+
+A            SUM(DISTINCT B)     
+------------ --------------------
+3            4                   
+4            5                   
+5            6                   
+6            7                   
+
+4 rows fetched.
+
+SQL> select /*+parallel(5)*/ sum(distinct b) from t_par_group_2 group by hex(a) order by 1;
+
+SUM(DISTINCT B)     
+--------------------
+2                   
+3                   
+4                   
+5                   
+6                   
+7                   
+
+6 rows fetched.
+
+SQL> select /*+parallel(4)*/ d, group_concat(d) from t_par_group_2 pivot(AVG(a) for b in (1,3,5)) group by d having d > 6;
+
+D                                        GROUP_CONCAT(D)                                                 
+---------------------------------------- ----------------------------------------------------------------
+6.23                                     6.23                                                            
+
+1 rows fetched.
+
+SQL> select /*+parallel(5)*/ avg(distinct b) from t_par_group_2 group by ROLLUP((a), (b, c)) order by 1;
+
+AVG(DISTINCT B)                         
+----------------------------------------
+2                                       
+2                                       
+3                                       
+3                                       
+4                                       
+4                                       
+4.5                                     
+5                                       
+5                                       
+6                                       
+6                                       
+7                                       
+7                                       
+
+13 rows fetched.
+
+SQL> select /*+parallel(5)*/ distinct avg(distinct t1.b) from t_par_group_2 t1,t_par_group_1 t2,t_par_group_2 t3 where t1.a > t3.a or t2.b < t3.b 
+  2 group by t1.a,t3.a,t2.b,t3.b order by 1 limit 5;
+
+AVG(DISTINCT T1.B)                      
+----------------------------------------
+2                                       
+3                                       
+4                                       
+5                                       
+6                                       
+
+5 rows fetched.
+
+SQL> select /*+parallel(4)*/ d, group_concat(distinct a,d) from t_par_group_2 group by d order by group_concat(a,d);
+
+D                                        GROUP_CONCAT(DISTINCT A,D)                                      
+---------------------------------------- ----------------------------------------------------------------
+1.23                                     11.23                                                           
+2.23                                     22.23                                                           
+3.23                                     33.23                                                           
+4.23                                     44.23                                                           
+5.23                                     55.23                                                           
+6.23                                     66.23                                                           
+
+6 rows fetched.
+
+SQL> 
+SQL> drop table t_par_group_1;
+
+Succeed.
+
+SQL> drop table t_par_group_2;
+Succeed.
+
+
+
+

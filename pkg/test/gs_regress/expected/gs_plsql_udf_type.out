@@ -1,0 +1,3012 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_plsql_udf_type cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_udf_type identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to gs_plsql_udf_type;
+
+Succeed.
+
+SQL> 
+SQL> conn gs_plsql_udf_type/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> --common test
+SQL> DECLARE
+  2   TYPE array IS VARRAY(10) OF Integer;
+  3   TYPE asso_array IS TABLE OF Integer INDEX BY varchar2(64);
+  4   va array := array(2,3,5);
+  5   aso asso_array;
+  6   i varchar2(64);
+  7   TYPE nest_table IS TABLE OF varchar2(15);
+  8   nest nest_table := nest_table('D Caruso', 'J Hamil', 'D Piro', 'R Singh');
+  9 BEGIN
+ 10   dbe_output.print_line('varray:');
+ 11   FOR i IN 1  ..    3 LOOP
+ 12     dbe_output.print_line(va(i));
+ 13   END LOOP;
+ 14   dbe_output.print_line('---');
+ 15   dbe_output.print_line('Associative Array:');
+ 16   aso('Smallville') := 2000; aso('Midland') := 3000; aso('Megalopolis') := 10000;
+ 17   i := aso.FIRST();
+ 18   WHILE i IS NOT NULL LOOP
+ 19 	dbe_output.print_line(i || ' is ' || aso(i));
+ 20     i := aso.NEXT(i); -- Get next element of array
+ 21   END LOOP;
+ 22   dbe_output.print_line('---');
+ 23   dbe_output.print_line('nested table:');
+ 24   FOR i IN nest.FIRST() .. nest.LAST() LOOP -- For first to last element
+ 25 	dbe_output.print_line(nest(i));
+ 26   END LOOP;
+ 27 END;
+ 28 /
+
+varray:
+2
+3
+5
+---
+Associative Array:
+Megalopolis is 10000
+Midland is 3000
+Smallville is 2000
+---
+nested table:
+D Caruso
+J Hamil
+D Piro
+R Singh
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> --test collection of nesting
+SQL> DECLARE
+  2   TYPE array IS VARRAY(10) OF INTEGER; -- varray of integer
+  3   va array := array(2,3,5);
+  4   TYPE nt1 IS VARRAY(10) OF array; -- varray of varray of integer
+  5   nva nt1 := nt1(va, array(55,6,73), array(2,4,3), va);
+  6   TYPE aso_array IS TABLE OF array INDEX BY varchar2(15); -- associative array of varray
+  7   aso aso_array;
+  8   TYPE nest_table IS TABLE OF array;
+  9   nest nest_table := nest_table(va, array(55,6,73), array(2,4,3), va);
+ 10   TYPE nest_table2 IS TABLE OF nest_table;
+ 11   nest2 nest_table2 := nest_table2(nest,nest_table(va, array(1,4,7)));
+ 12   i varchar2(64);
+ 13 BEGIN
+ 14   aso('Smallville') := va;
+ 15   aso('Megalopolis') := array(55,6,73); -- nested table of varray
+ 16   dbe_output.print_line('varray:');
+ 17   FOR i IN 1 .. 4 LOOP
+ 18      dbe_output.print_line(nva(i)(1) || ',' ||  nva(i)(2)|| ',' || nva(i)(3));
+ 19   END LOOP;
+ 20   dbe_output.print_line('---');
+ 21   dbe_output.print_line('Associative Array:');
+ 22   i := aso.FIRST();
+ 23   WHILE i IS NOT NULL LOOP
+ 24 	dbe_output.print_line(i || ' is ' || aso(i)(1)|| ',' ||  aso(i)(2)|| ',' || aso(i)(3));
+ 25     i := aso.NEXT(i); -- Get next element of array
+ 26   END LOOP;
+ 27   dbe_output.print_line('---');
+ 28   dbe_output.print_line('nested table:');
+ 29   FOR i IN 1 .. 4 LOOP
+ 30     dbe_output.print_line(nest(i)(1) || ',' ||  nest(i)(2)|| ',' || nest(i)(3));
+ 31   END LOOP;
+ 32   dbe_output.print_line('---');
+ 33   FOR j IN 1 .. nest2.COUNT() LOOP
+ 34     FOR m IN 1 .. nest2(j).COUNT() LOOP 
+ 35 	  FOR n IN 1 .. nest2(j)(m).COUNT() LOOP 
+ 36         dbe_output.print(nest2(j)(m)(n) || ' ');
+ 37 	  END LOOP;
+ 38 	  dbe_output.print_line('---' || j);
+ 39 	END LOOP;
+ 40   END LOOP;
+ 41 END;
+ 42 /
+
+varray:
+2,3,5
+55,6,73
+2,4,3
+2,3,5
+---
+Associative Array:
+Megalopolis is 55,6,73
+Smallville is 2,3,5
+---
+nested table:
+2,3,5
+55,6,73
+2,4,3
+2,3,5
+---
+2 
+3 
+5 
+---1
+55 
+6 
+73 
+---1
+2 
+4 
+3 
+---1
+2 
+3 
+5 
+---1
+2 
+3 
+5 
+---2
+1 
+4 
+7 
+---2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test deep copy
+SQL> DECLARE
+  2   TYPE array IS VARRAY(10) OF INTEGER; -- varray of integer
+  3   va array := array(2,3,5);
+  4   va_cp array;
+  5   TYPE asso_array IS TABLE OF Integer INDEX BY varchar2(64);
+  6   aso asso_array;
+  7   aso_cp asso_array;
+  8   TYPE nest_table IS TABLE OF varchar2(15);
+  9   nest nest_table := nest_table('D Caruso', 'J Hamil', 'D Piro', 'R Singh');
+ 10   nest_cp nest_table;
+ 11   j varchar2(64);
+ 12 BEGIN
+ 13   va_cp := va;
+ 14   va_cp(1) := 1; va_cp(2) := 4; va_cp(3) := 7;
+ 15   dbe_output.print_line('varray:');
+ 16   FOR i IN 1 .. va.COUNT() LOOP
+ 17      dbe_output.print_line(va(i) || ',' ||  va_cp(i));
+ 18   END LOOP;
+ 19   dbe_output.print_line('---');
+ 20   dbe_output.print_line('Associative Array:');
+ 21   aso('Smallville') := 2000; aso('Midland') := 3000; aso('Megalopolis') := 10000;
+ 22   aso_cp := aso;
+ 23   aso_cp('Smallville') := 1000; aso_cp('Midland') := 4000;
+ 24   j := aso.FIRST();
+ 25   WHILE j IS NOT NULL LOOP
+ 26 	dbe_output.print_line(j || ' is ' || aso(j) || ',' || aso_cp(j));
+ 27     j := aso.NEXT(j); 
+ 28   END LOOP;
+ 29   dbe_output.print_line('---');
+ 30   dbe_output.print_line('nested table:');
+ 31   nest_cp := nest;
+ 32   nest_cp(1) := 'A'; nest_cp(2) := 'B'; nest_cp(3) := 'C'; nest_cp(4) := 'D';
+ 33   FOR m IN 1 .. nest.COUNT() LOOP
+ 34      dbe_output.print_line(nest(m) || ',' ||  nest_cp(m));
+ 35   END LOOP;
+ 36 END;
+ 37 /
+
+varray:
+2,1
+3,4
+5,7
+---
+Associative Array:
+Megalopolis is 10000,10000
+Midland is 3000,4000
+Smallville is 2000,1000
+---
+nested table:
+D Caruso,A
+J Hamil,B
+D Piro,C
+R Singh,D
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test collection func(FIRST LAST COUNT LIMIT)
+SQL> DECLARE
+  2   TYPE array IS VARRAY(3) OF varchar(10);
+  3   va array := array('Smith','John','Merry');
+  4   TYPE asso_array IS TABLE OF Integer INDEX BY PLS_INTEGER;
+  5   aso asso_array;
+  6   TYPE nest_table IS TABLE OF varchar2(15);
+  7   nest nest_table := nest_table('D Caruso', 'J Hamil', 'D Piro', 'R Singh');
+  8 BEGIN
+  9   aso(1) := 2000; aso(2) := 3000; aso(3) := 10000;
+ 10   dbe_output.print_line(va.FIRST() || ',' || aso.FIRST() || ',' || nest.FIRST());
+ 11   --oracle support
+ 12   dbe_output.print_line(va.FIRST || ',' || aso.FIRST || ',' ||nest.FIRST);
+ 13   dbe_output.print_line(va.LAST()|| ',' ||aso.LAST() ||',' || nest.LAST());
+ 14   --oracle support
+ 15   dbe_output.print_line(va.LAST || ',' || aso.LAST || ',' || nest.LAST);
+ 16   dbe_output.print_line(va.COUNT() || ',' || aso.COUNT() || ',' || nest.COUNT());
+ 17   --oracle support
+ 18   dbe_output.print_line(va.COUNT || ',' || aso.COUNT || ',' || nest.COUNT);
+ 19   dbe_output.print_line(va.LIMIT() || ',' || aso.LIMIT() || ',' || nest.LIMIT());
+ 20   --oracle support
+ 21   dbe_output.print_line(va.LIMIT || ',' || aso.LIMIT || ',' || nest.LIMIT);
+ 22 END;
+ 23 /
+
+1,1,1
+1,1,1
+3,3,4
+3,3,4
+3,3,4
+3,3,4
+3,,
+3,,
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE OR REPLACE TYPE array IS VARRAY(10) OF Integer;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE print_arr (var array) IS
+  2   i NUMBER;
+  3 BEGIN
+  4   i := var.FIRST();
+  5   IF i IS NULL THEN
+  6     dbe_output.print_line('var is empty');
+  7   ELSE
+  8     WHILE i IS NOT NULL LOOP
+  9       dbe_output.print_line('var(' || i || ') = ' || var(i));
+ 10       i := var.NEXT(i);
+ 11     END LOOP;
+ 12   END IF;
+ 13     dbe_output.print_line('---');
+ 14 END print_arr;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TYPE nest_table IS TABLE OF Integer;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE print_nest (nest nest_table) IS
+  2   i NUMBER;
+  3 BEGIN
+  4   i := nest.FIRST();
+  5   IF i IS NULL THEN
+  6     dbe_output.print_line('nest is empty');
+  7   ELSE
+  8     WHILE i IS NOT NULL LOOP
+  9       dbe_output.print_line('nest(' || i || ') = ' || nest(i));
+ 10       i := nest.NEXT(i);
+ 11     END LOOP;
+ 12   END IF;
+ 13     dbe_output.print_line('---');
+ 14 END print_nest;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> --test collection func(DELETE)
+SQL> DECLARE
+  2   var array := array(11, 22, 33, 44, 55, 66);
+  3   nest nest_table := nest_table(11, 22, 33, 44, 55, 66);
+  4   TYPE aso_array IS TABLE OF INTEGER INDEX BY VARCHAR2(10);
+  5   aa aso_array;
+  6   PROCEDURE print_aa IS
+  7 	i VARCHAR2(10);
+  8   BEGIN
+  9 	i := aa.FIRST;
+ 10 	IF i IS NULL THEN
+ 11 	  dbe_output.print_line('aa is empty');
+ 12 	ELSE
+ 13 	  WHILE i IS NOT NULL LOOP
+ 14 	    dbe_output.print_line('aa.(' || i || ') = ' || aa(i));
+ 15 		  i := aa.NEXT(i);
+ 16 	  END LOOP;
+ 17 	END IF;
+ 18 	dbe_output.print_line('---');
+ 19   END print_aa;
+ 20 BEGIN
+ 21   print_arr(var);
+ 22   var.DELETE();
+ 23   print_arr(var);
+ 24   nest.DELETE(2); -- Delete second element
+ 25   print_nest(nest);
+ 26   nest(2) := 2222; -- Restore second element
+ 27   print_nest(nest);
+ 28   nest.DELETE(2, 4); -- Delete range of elements
+ 29   print_nest(nest);
+ 30   nest(3) := 3333; -- Restore third element
+ 31   print_nest(nest);
+ 32   nest.DELETE; -- Delete all elements
+ 33   print_nest(nest);
+ 34   aa('M') := 13; aa('Z') := 26; aa('C') := 3;
+ 35   print_aa;
+ 36   aa.DELETE; -- Delete all elements
+ 37   print_aa;
+ 38   aa('M') := 13; aa('Z') := 260; aa('C') := 30; aa('W') := 23; 
+ 39   aa('J') := 10; aa('N') := 14; aa('P') := 16; aa('W') := 23; aa('J') := 10; 
+ 40   print_aa;
+ 41   aa.DELETE('C'); -- Delete one element
+ 42   print_aa;
+ 43   aa.DELETE('N','W'); -- Delete range of elements
+ 44   print_aa;
+ 45   aa.DELETE('Z','M'); -- Does nothing
+ 46   print_aa;
+ 47 END;
+ 48 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[6:13] PLC-00958 Unsupported feature
+
+SQL> 
+SQL> --test varray or nested table func(TRIM)
+SQL> DECLARE
+  2   var array := array(11, 22, 33, 44, 55, 66);
+  3   nest nest_table := nest_table(11, 22, 33, 44, 55, 66);
+  4 BEGIN
+  5   print_arr(var);
+  6   var.TRIM; -- Trim last element
+  7   print_arr(var);
+  8   var.TRIM(2); -- Trim last two elements
+  9   print_arr(var);
+ 10   print_nest(nest);
+ 11   nest.TRIM; -- Trim last element
+ 12   print_nest(nest);
+ 13   nest.DELETE(4); -- Delete fourth element
+ 14   print_nest(nest);
+ 15   nest.TRIM(2); -- Trim last two elements
+ 16   print_nest(nest);
+ 17 END;
+ 18 /
+
+var(1) = 11
+var(2) = 22
+var(3) = 33
+var(4) = 44
+var(5) = 55
+var(6) = 66
+---
+var(1) = 11
+var(2) = 22
+var(3) = 33
+var(4) = 44
+var(5) = 55
+---
+var(1) = 11
+var(2) = 22
+var(3) = 33
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(4) = 44
+nest(5) = 55
+nest(6) = 66
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(4) = 44
+nest(5) = 55
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(5) = 55
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+---
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test varray or nested table func(EXTEND)
+SQL> DECLARE
+  2   var array := array(11, 22, 33);
+  3   nest nest_table := nest_table(11, 22, 33, 44, 55, 66);
+  4 BEGIN
+  5   print_arr(var);
+  6   var.EXTEND(2,1); -- Append two copies of first element
+  7   print_arr(var);
+  8   var.EXTEND(); -- Append one null element
+  9   print_arr(var);
+ 10   var.EXTEND(2); -- Append two null element
+ 11   print_arr(var);
+ 12   print_nest(nest);
+ 13   nest.EXTEND(2,1); -- Append two copies of first element 
+ 14   print_nest(nest);
+ 15   nest.DELETE(5); -- Delete fifth element
+ 16   print_nest(nest);
+ 17   nest.EXTEND; -- Append one null element
+ 18   print_nest(nest);
+ 19 END;
+ 20 /
+
+var(1) = 11
+var(2) = 22
+var(3) = 33
+---
+var(1) = 11
+var(2) = 22
+var(3) = 33
+var(4) = 11
+var(5) = 11
+---
+var(1) = 11
+var(2) = 22
+var(3) = 33
+var(4) = 11
+var(5) = 11
+var(6) = 
+---
+var(1) = 11
+var(2) = 22
+var(3) = 33
+var(4) = 11
+var(5) = 11
+var(6) = 
+var(7) = 
+var(8) = 
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(4) = 44
+nest(5) = 55
+nest(6) = 66
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(4) = 44
+nest(5) = 55
+nest(6) = 66
+nest(7) = 11
+nest(8) = 11
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(4) = 44
+nest(6) = 66
+nest(7) = 11
+nest(8) = 11
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(4) = 44
+nest(6) = 66
+nest(7) = 11
+nest(8) = 11
+nest(9) = 
+---
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test varray or nested table func(EXISTS)
+SQL> DECLARE
+  2   var array := array(1, 3, 5);
+  3   nest nest_table := nest_table(1,3,5,7);
+  4 BEGIN
+  5   FOR i IN 1..3 LOOP
+  6     IF var.EXISTS(i) THEN
+  7 	  dbe_output.print_line('var(' || i || ') = ' || var(i));
+  8 	ELSE
+  9 	  dbe_output.print_line('var(' || i || ') does not exist');
+ 10 	END IF;
+ 11   END LOOP;
+ 12   nest.DELETE(2); -- Delete second element
+ 13   FOR j IN 1..6 LOOP
+ 14     IF nest.EXISTS(j) THEN
+ 15       dbe_output.print_line('nest(' || j || ') = ' || nest(j));
+ 16     ELSE
+ 17       dbe_output.print_line('nest(' || j || ') does not exist');
+ 18     END IF;
+ 19   END LOOP;
+ 20 END;
+ 21 /
+
+var(1) = 1
+var(2) = 3
+var(3) = 5
+nest(1) = 1
+nest(2) does not exist
+nest(3) = 5
+nest(4) = 7
+nest(5) does not exist
+nest(6) does not exist
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test collection func(prior next)
+SQL> DECLARE
+  2   TYPE Arr_Type IS VARRAY(10) OF NUMBER;
+  3   v_Numbers Arr_Type := Arr_Type();
+  4   nest nest_table := nest_table(18, NULL, 36, 45, 54, 63);
+  5 BEGIN
+  6   v_Numbers.EXTEND(4);
+  7   v_Numbers (1) := 10; v_Numbers (2) := 20; v_Numbers (3) := 30; v_Numbers (4) := 40;
+  8   dbe_output.print_line(NVL(v_Numbers.prior (3400), 1));
+  9   dbe_output.print_line(NVL(v_Numbers.next (3400), 1));
+ 10   nest.DELETE(4);
+ 11   dbe_output.print_line('nest(4) was deleted.');
+ 12   FOR i IN 1..7 LOOP
+ 13     dbe_output.print_line('nest.PRIOR(' || i || ') = ' || nest.PRIOR(i)); 
+ 14     dbe_output.print_line('nest.NEXT(' || i || ') = ' || nest.NEXT(i));
+ 15   END LOOP;
+ 16 END;
+ 17 /
+
+4
+1
+nest(4) was deleted.
+nest.PRIOR(1) = 
+nest.NEXT(1) = 2
+nest.PRIOR(2) = 1
+nest.NEXT(2) = 3
+nest.PRIOR(3) = 2
+nest.NEXT(3) = 5
+nest.PRIOR(4) = 3
+nest.NEXT(4) = 5
+nest.PRIOR(5) = 3
+nest.NEXT(5) = 6
+nest.PRIOR(6) = 5
+nest.NEXT(6) = 
+nest.PRIOR(7) = 6
+nest.NEXT(7) = 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> DECLARE
+  2   TYPE rec_type IS RECORD ( -- RECORD type
+  3     f1 INTEGER,
+  4     f2 VARCHAR2(15)
+  5   );
+  6   value1 rec_type;
+  7   value2 rec_type;
+  8   TYPE nt1 IS VARRAY(10) OF rec_type;  -- varray of RECORD
+  9   nva nt1;
+ 10 BEGIN
+ 11   value1.f1 := 10;
+ 12   value1.f2 := 'John';
+ 13   value2.f1 := 20;
+ 14   value2.f2 := 'Smith';
+ 15   nva := nt1(value1, value2);
+ 16   FOR i IN 1 .. 2 LOOP
+ 17 	dbe_output.print_line(nva(i).f1 || '---' || nva(i).f2);
+ 18   END LOOP;
+ 19 END;
+ 20 /
+
+10---John
+20---Smith
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DROP TYPE array;
+
+Succeed.
+
+SQL> DROP TYPE nest_table;
+
+Succeed.
+
+SQL> DROP PROCEDURE print_arr;
+
+Succeed.
+
+SQL> DROP PROCEDURE print_nest;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists trigger8_bingfa_Tab_001;
+
+Succeed.
+
+SQL> drop table if exists trigger8_bingfa_Tab_002;
+
+Succeed.
+
+SQL> create table trigger8_bingfa_Tab_001(id int constraint trigger8_bingfa_Cons_001 primary key,sal number(10,2),name varchar(100),text clob default 'test',c_time date);
+
+Succeed.
+
+SQL> insert into trigger8_bingfa_Tab_001 values(1,123.11,'test','lob',to_date('2019-01-31 01:12:12'));
+
+1 rows affected.
+
+SQL> create table trigger8_bingfa_Tab_002(id int ,sal number(10,2),name varchar(100),text clob default 'test',c_time date);
+
+Succeed.
+
+SQL> drop sequence if exists trigger8_bingfa_Seq_01;
+
+Succeed.
+
+SQL> create sequence trigger8_bingfa_Seq_01 start  with 1 increment by 1;
+
+Succeed.
+
+SQL> create or replace function trigger8_bingfa_fun_01 return int is 
+  2 id int;
+  3 begin
+  4 select floor(avg(id)) into id from trigger8_bingfa_Tab_002;
+  5 return id;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> create or replace trigger trigger8_bingfa_02 before update on 
+  2 trigger8_bingfa_Tab_001 
+  3 declare
+  4 c trigger8_bingfa_Tab_001%rowtype;
+  5 cursor mycursor(p1 int) is select * from trigger8_bingfa_Tab_001 where id > p1 order by id;
+  6 begin
+  7 open mycursor(trigger8_bingfa_fun_01());
+  8 fetch mycursor into c;
+  9 loop 
+ 10 if mycursor%found
+ 11    then
+ 12    dbe_output.print_line('before update:'||c.id||c.name||c.sal);
+ 13    fetch mycursor into c;
+ 14 end if;
+ 15 exit when mycursor%notfound;
+ 16 end loop;
+ 17 insert into trigger8_bingfa_Tab_002(id,text) values (trigger8_bingfa_Seq_01.nextval,'before update on trigger8_bingfa_Tab_001 ');
+ 18 end;
+ 19 /
+
+Succeed.
+
+SQL> update trigger8_bingfa_Tab_001 set sal = 225 where id = 1;
+
+1 rows affected.
+
+SQL> select * from trigger8_bingfa_Tab_001;
+
+ID           SAL                                      NAME                                                             TEXT                                                             C_TIME                
+------------ ---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------
+1            225                                      test                                                             lob                                                              2019-01-31 01:12:12   
+
+1 rows fetched.
+
+SQL> select * from trigger8_bingfa_Tab_002;
+
+ID           SAL                                      NAME                                                             TEXT                                                             C_TIME                
+------------ ---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------
+1                                                                                                                      before update on trigger8_bingfa_Tab_001                                               
+
+1 rows fetched.
+
+SQL> drop table trigger8_bingfa_Tab_001;
+
+Succeed.
+
+SQL> drop table trigger8_bingfa_Tab_002;
+
+Succeed.
+
+SQL> drop sequence trigger8_bingfa_Seq_01;
+
+Succeed.
+
+SQL> drop function trigger8_bingfa_fun_01;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists CURSOR_FUNCTION_001_TAB_01;
+
+Succeed.
+
+SQL> create table CURSOR_FUNCTION_001_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create or replace function CURSOR_FUNCTION_001_FUN_01(str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor;
+  4 a int;
+  5 begin
+  6  select empno into a from CURSOR_FUNCTION_001_TAB_01;
+  7    dbe_output.print_line(a);
+  8    exception
+  9    when  TOO_MANY_ROWS  then
+ 10    begin
+ 11       select empno into a from CURSOR_FUNCTION_001_TAB_01 limit 1;
+ 12      dbe_output.print_line(a);
+ 13      return length(str1);
+ 14    end;
+ 15 end;
+ 16 /
+
+Succeed.
+
+SQL> create or replace function CURSOR_FUNCTION_001_FUN_02_3 (str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select CURSOR_FUNCTION_001_FUN_01('') from CURSOR_FUNCTION_001_TAB_01;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE CURSOR_FUNCTION_001_PROC_02_2(x BOOLEAN) AS
+  2 mycursor1 sys_refcursor ;
+  3 v_int int;
+  4 BEGIN
+  5   IF x THEN
+  6     dbe_output.print_line('x is true');
+  7   END IF;
+  8    select CURSOR_FUNCTION_001_FUN_02_3('aa') into mycursor1 from dual;
+  9   fetch mycursor1 into v_int;
+ 10    dbe_output.print_line('mycursor1='||v_int);
+ 11 END;
+ 12 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.CURSOR_FUNCTION_001_PROC_02_2) terminated with compiling errors
+[8:51] PLC-00951 The expression MYCURSOR1 was used as the assignment target of INTO.
+
+
+SQL> drop table CURSOR_FUNCTION_001_TAB_01;
+
+Succeed.
+
+SQL> drop function CURSOR_FUNCTION_001_FUN_01;
+
+Succeed.
+
+SQL> drop function CURSOR_FUNCTION_001_FUN_02_3;
+
+Succeed.
+
+SQL> drop PROCEDURE CURSOR_FUNCTION_001_PROC_02_2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists ARRAY_TAB_001;
+
+Succeed.
+
+SQL> create table ARRAY_TAB_001(f1 int);
+
+Succeed.
+
+SQL> create or replace procedure ARRAY_PRO_001(p0 int, p1 ARRAY_TAB_001%rowtype, p2 ARRAY_TAB_001%rowtype)
+  2 as
+  3 begin
+  4     dbe_output.print_line(p1.f1);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> declare
+  2 v1 ARRAY_TAB_001%rowtype;
+  3 v2 int := 2;
+  4 begin
+  5   v1.f1 := 5;
+  6   ARRAY_PRO_001(v2, v1, v1);
+  7 end;
+  8 /
+
+5
+
+PL/SQL procedure successfully completed.
+
+SQL> create or replace function ARRAY_FUNC_001(p1 ARRAY_TAB_001%rowtype) return int
+  2 as
+  3 begin
+  4     dbe_output.print_line(p1.f1);
+  5 return 3;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> declare
+  2 x ARRAY_TAB_001%rowtype;
+  3 d int;
+  4 begin
+  5 x.f1 := 1;
+  6 d := ARRAY_FUNC_001(x);
+  7 dbe_output.print_line(d);
+  8 end;
+  9 /
+
+1
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> drop procedure ARRAY_PRO_001;
+
+Succeed.
+
+SQL> drop function ARRAY_FUNC_001;
+
+Succeed.
+
+SQL> drop table ARRAY_TAB_001;
+
+Succeed.
+
+SQL> --DTS2019111300608
+SQL> CREATE OR REPLACE TYPE varray5 force is varray(4) of int;
+  2 / 
+
+Succeed.
+
+SQL> create or replace function fvt_func_05 (aa5 varray5) return varray5 is
+  2 var5 varray5;
+  3 begin
+  4 var5 := varray5(5, 6);
+  5 return var5;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> declare
+  2 v1 varray5:=varray5(1, 2, 3, 4);
+  3 id int;
+  4 begin
+  5 	select fvt_func_05(v1) into id from dual;  
+  6     dbe_output.print_line(id);
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:2] PLC-01304 Data type 'COLLECTION' is not supported
+
+SQL> 
+SQL> CREATE OR REPLACE TYPE varray5 force is object(id int);
+  2 / 
+
+Succeed.
+
+SQL> create or replace function fvt_func_05 (aa5 varray5) return varray5 is
+  2 var5 varray5 := varray5(3);
+  3 begin
+  4 var5 := varray5(3);
+  5 return var5;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> declare
+  2 v1 varray5:=varray5(1);
+  3 id int;
+  4 begin
+  5 	select fvt_func_05(v1) into id from dual;  
+  6     dbe_output.print_line(id);
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:2] PLC-01304 Data type 'OBJECT' is not supported
+
+SQL> drop type varray5 force;
+
+Succeed.
+
+SQL> drop function fvt_func_05;
+
+Succeed.
+
+SQL> 
+SQL> create or replace type varray_array_g force is varray(4) of int[];
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.VARRAY_ARRAY_G) terminated with compiling errors
+[1:61] PLC-01304 Data type 'ARRAY' is not supported
+
+
+SQL> create or replace type table_array_g force is table of int[];
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.TABLE_ARRAY_G) terminated with compiling errors
+[1:56] PLC-01304 Data type 'ARRAY' is not supported
+
+
+SQL> create or replace type object_array_g force is object(name char(10), id int[]);
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.OBJECT_ARRAY_G) terminated with compiling errors
+[1:73] PLC-01304 Data type 'ARRAY' is not supported
+
+
+SQL> declare
+  2 type varray_array is varray(4) of int[];
+  3 begin
+  4   dbe_output.print_line(1);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:35] PLC-01304 Data type 'ARRAY' is not supported
+
+SQL> declare
+  2 type table_array is table of int[];
+  3 begin
+  4   dbe_output.print_line(1);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:30] PLC-01304 Data type 'ARRAY' is not supported
+
+SQL> declare
+  2 type record_array is record(
+  3 id int[],
+  4 name char(10)
+  5 );
+  6 begin
+  7   dbe_output.print_line(1);
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:4] PLC-01304 Data type 'ARRAY' is not supported
+
+SQL> drop table if exists test_array;
+
+Succeed.
+
+SQL> create table test_array(id int, arr int[]);
+
+Succeed.
+
+SQL> insert into test_array values(1, array[1]);
+
+1 rows affected.
+
+SQL> insert into test_array values(2, array[2]);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> declare
+  2 type record_array1111 is table of test_array.arr%type;
+  3 v1 record_array1111;
+  4 begin
+  5   dbe_output.print_line(1);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:35] PLC-01304 Data type 'ARRAY' is not supported
+
+SQL> declare
+  2 v1 test_array%rowtype;
+  3 begin
+  4 select * into v1 from test_array where id=1;
+  5   dbe_output.print_line(v1.arr);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:4] PLC-01304 Data type 'ARRAY' is not supported
+
+SQL> drop table test_array;
+
+Succeed.
+
+SQL> 
+SQL> create or replace type table7777 force is table of varchar(100);
+  2 /
+
+Succeed.
+
+SQL> declare
+  2 dd table7777 := table7777('0110');
+  3 begin
+  4 dd:=dd;
+  5 dbe_output.print_line(dd(1));
+  6 end;
+  7 /
+
+0110
+
+PL/SQL procedure successfully completed.
+
+SQL> drop type table7777;
+
+Succeed.
+
+SQL> declare
+  2 type table7 is record(name varchar(100), id int);
+  3 dd table7;
+  4 begin
+  5 dd.name:='0110';
+  6 dd:=dd;
+  7 dbe_output.print_line(dd.name);
+  8 end;
+  9 /
+
+0110
+
+PL/SQL procedure successfully completed.
+
+SQL> --DTS2019113006407
+SQL> drop type if exists DATA_TYP_USING_REPLACE force;
+
+Succeed.
+
+SQL> drop type if exists DATA_TYP_USING_REPLACE_2 force;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE DATA_TYP_USING_REPLACE FORCE AS OBJECT
+  2 ( year NUMBER
+  3 );
+  4 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE DATA_TYP_USING_REPLACE_2 FORCE AS OBJECT
+  2 ( year DATA_TYP_USING_REPLACE
+  3 );
+  4 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE DATA_TYP_USING_REPLACE FORCE AS OBJECT
+  2 ( year NUMBER,
+  3   day NUMBER
+  4 );
+  5 /
+
+Succeed.
+
+SQL> declare
+  2     b DATA_TYP_USING_REPLACE:=DATA_TYP_USING_REPLACE(11, 22);
+  3 	a DATA_TYP_USING_REPLACE_2:=DATA_TYP_USING_REPLACE_2(b);
+  4 begin
+  5 	dbe_output.print_line(a.year.year);
+  6 end;
+  7 /
+
+11
+
+PL/SQL procedure successfully completed.
+
+SQL> drop type DATA_TYP_USING_REPLACE_2 force;
+
+Succeed.
+
+SQL> drop type DATA_TYP_USING_REPLACE force;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2020020800296
+SQL> declare
+  2        type ListType is table of int;
+  3 	   p_key ListType:= ListType(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34);
+  4 begin
+  5        p_key.delete;
+  6 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  7 	   p_key(1):=1;
+  8 end;
+  9 /
+
+p_key: 0
+CT-00932, [7:5] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[7:5] CT-00912, Subscript beyond count
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType(1,2,3);
+  4 begin
+  5        p_key.delete(3);
+  6        p_key(3) := 4;
+  7 	   dbe_output.print_line('p_key(3): ' ||p_key(3));
+  8 end;
+  9 /
+
+p_key(3): 4
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34);
+  4 begin
+  5        p_key.delete;
+  6 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  7 end;
+  8 /
+
+p_key: 0
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType();
+  4 begin
+  5 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  6        p_key.trim;
+  7 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  8 end;
+  9 /
+
+p_key: 0
+CT-00932, [6:8] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[6:8] CT-00912, Subscript beyond count
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType(1);
+  4 begin
+  5 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  6 	   p_key.delete;
+  7        p_key.trim;
+  8 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  9 end;
+ 10 /
+
+p_key: 1
+CT-00932, [7:8] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[7:8] CT-00912, Subscript beyond count
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType(1, 2);
+  4 begin
+  5 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  6 	   p_key.delete(2);
+  7        p_key.trim;
+  8 	   dbe_output.print_line('p_key1: ' ||p_key(1));
+  9 end;
+ 10 /
+
+p_key: 2
+p_key1: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType(1);
+  4 begin
+  5 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  6 	   p_key.delete(1);
+  7        p_key.extend;
+  8 	   p_key(1):=0;
+  9 	   p_key(2):=2;
+ 10 	   dbe_output.print_line('p_key: ' ||p_key.count);
+ 11 end;
+ 12 /
+
+p_key: 1
+p_key: 2
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType(1);
+  4 begin
+  5 	   dbe_output.print_line('p_key: ' ||p_key.count);
+  6 	   p_key.delete;
+  7        p_key.extend;
+  8 	   p_key(1):=0;
+  9 	   p_key(2):=2;
+ 10 	   dbe_output.print_line('p_key: ' ||p_key.count);
+ 11 end;
+ 12 /
+
+p_key: 1
+CT-00932, [9:5] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[9:5] CT-00912, Subscript beyond count
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType(1,2,3);
+  4 begin
+  5        p_key.delete;
+  6 	   dbe_output.print_line('last: ' ||p_key.last);
+  7 end;
+  8 /
+
+last: 
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2        type ListType is table of int;
+  3 	    p_key ListType:= ListType(1,2,3);
+  4 begin
+  5        p_key.delete;
+  6 	   dbe_output.print_line('3prior: ' ||p_key.prior(3));
+  7 end;
+  8 /
+
+3prior: 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --DTS2020021307176	
+SQL> CREATE OR REPLACE PROCEDURE Proc_Test_003()
+  2    IS
+  3    BEGIN
+  4      DECLARE
+  5        CURSOR C2 IS
+  6          select 1 from dual;
+  7        R_C2 C2%ROWTYPE;
+  8      BEGIN
+  9        OPEN C2;
+ 10       CLOSE C2;
+ 11     END;
+ 12   END Proc_Test_003;
+ 13   /
+
+Succeed.
+
+SQL> 
+SQL>   begin
+  2    Proc_Test_003;
+  3    Proc_Test_003;
+  4    end;
+  5    /
+
+PL/SQL procedure successfully completed.
+
+SQL> drop PROCEDURE Proc_Test_003;
+
+Succeed.
+
+SQL> drop table if exists my_tab_0217;
+
+Succeed.
+
+SQL> 
+SQL> create table my_tab_0217(f1 BINARY_UINT32, f2  INTERVAL YEAR(4) TO MONTH, f3 INTERVAL DAY(7) TO SECOND, f4 TIMESTAMP WITH LOCAL TIME ZONE, f5 clob);
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO  my_tab_0217 VALUES(1, '2009-10', '1231 12:3:4.1234', '2020-02-17 15:10:20.123000', 'aopPokjojgokj');
+
+1 rows affected.
+
+SQL> INSERT INTO  my_tab_0217 VALUES(1, '2009-10', '1231 12:3:4.1234', '2020-02-17 15:10:20.123000', 'aopPokjojgokj');
+
+1 rows affected.
+
+SQL> create or replace procedure my_proc_02171(v_refcur1 out sys_refcursor)
+  2 is
+  3 ppp my_tab_0217%rowtype;
+  4 begin
+  5 open v_refcur1 for select * from my_tab_0217;
+  6 fetch v_refcur1 into ppp;
+  7 dbe_output.print_line('f1 ' ||ppp.f1 ||' f2 ' ||ppp.f2 ||' f3 ' ||ppp.f3 ||' f4 ' ||ppp.f4 ||' f5 ' ||ppp.f5);
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 v_refcur1 sys_refcursor;
+  3 ppp my_tab_0217%rowtype;
+  4 begin
+  5 my_proc_02171(v_refcur1);
+  6 fetch v_refcur1 into ppp;
+  7 dbe_output.print_line('f1 ' ||ppp.f1 ||' f2 ' ||ppp.f2 ||' f3 ' ||ppp.f3 ||' f4 ' ||ppp.f4 ||' f5 ' ||ppp.f5);
+  8 end;
+  9 /
+
+f1 1 f2 +2009-10 f3 +1231 12:03:04.123400 f4 2020-02-17 07:10:20.123000 f5 aopPokjojgokj
+f1 1 f2 +2009-10 f3 +1231 12:03:04.123400 f4 2020-02-17 07:10:20.123000 f5 aopPokjojgokj
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop procedure my_proc_02171;
+
+Succeed.
+
+SQL> drop table my_tab_0217;
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2   TYPE rec_type1 IS RECORD ( 
+  3     f1 INTEGER,
+  4     f2 VARCHAR2(15)
+  5   );
+  6   TYPE rec_type IS RECORD ( 
+  7     a rec_type1,
+  8     b VARCHAR2(15)
+  9   );
+ 10   
+ 11   value1 rec_type1;
+ 12   value2 rec_type;
+ 13   TYPE nt1 IS VARRAY(10) OF rec_type;  -- varray of RECORD
+ 14   nva nt1;
+ 15 BEGIN
+ 16   value1.f1 := 10;
+ 17   value1.f2 := 'John';
+ 18   value2.a := value1;
+ 19   value2.b := 'Smith';
+ 20   nva := nt1(value2);
+ 21   dbe_output.print_line(nva(1).a.f1 || '---' || nva(1).a.f2 || '---' || nva(1).b);
+ 22 END;
+ 23 /
+
+10---John---Smith
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE OR REPLACE TYPE my_type_2020_01 force is object(f1 int, f2 varchar(10));
+  2 / 
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE my_type_2020_02 force is object(a my_type_2020_01, b varchar(10));
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE my_type_2020_03 force is table of my_type_2020_01;
+  2 / 
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE my_type_2020_04 force is table of my_type_2020_02;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE my_type_2020_05 force is table of int;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE my_type_2020_06 force is object(f1 my_type_2020_05);
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE my_type_2020_07 force is table of int;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE my_type_2020_08 force is object(f1 int, f2 varchar(10));
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE my_type_2020_09 force is object(a my_type_2020_08, b varchar(10));
+  2 /
+
+Succeed.
+
+SQL> create or replace function g_my_table311 return my_type_2020_02
+  2   is
+  3   value1 my_type_2020_01 := my_type_2020_01(10, 'jhon');
+  4   value2 my_type_2020_02;
+  5   nva my_type_2020_04;
+  6 BEGIN
+  7 	value2 := my_type_2020_02(value1, 'ero');
+  8   nva := my_type_2020_04(value2);
+  9   --dbe_output.print_line(nva(1).a.f1 || '---' || nva(1).a.f2 || '---' || nva(1).b);
+ 10   return value2;
+ 11  end;
+ 12  /
+
+Succeed.
+
+SQL>  create or replace function g_my_table411 return my_type_2020_09
+  2   is
+  3   value1 my_type_2020_08 := my_type_2020_08(10, 'jhon');
+  4   value2 my_type_2020_09;
+  5 BEGIN
+  6 	value2 := my_type_2020_09(value1, 'ero');
+  7   --dbe_output.print_line(nva(1).a.f1 || '---' || nva(1).a.f2 || '---' || nva(1).b);
+  8   return value2;
+  9  end;
+ 10  /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 ret my_type_2020_04;
+  3 begin
+  4 ret := my_type_2020_04(g_my_table311);
+  5 dbe_output.print_line(ret(1).a.f1);
+  6 end;
+  7 /
+
+10
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL>  create or replace function g_my_table511 return my_type_2020_07
+  2   is
+  3   value1 my_type_2020_07 := my_type_2020_07(10, 11);
+  4 BEGIN
+  5   return value1;
+  6  end;
+  7  /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 ret my_type_2020_06;
+  3 begin
+  4 ret := my_type_2020_06(g_my_table511);
+  5 dbe_output.print_line(ret.f1(1));
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[4:8] PLC-02601 Wrong number or types of arguments in call to 'MY_TYPE_2020_06'
+
+SQL> 
+SQL> declare
+  2 ret my_type_2020_04;
+  3 begin
+  4 ret := my_type_2020_04(g_my_table411);
+  5 dbe_output.print_line(ret(1).a.f1);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[4:8] PLC-02601 Wrong number or types of arguments in call to 'MY_TYPE_2020_04'
+
+SQL> 
+SQL> drop TYPE my_type_2020_01 force;
+
+Succeed.
+
+SQL> drop TYPE my_type_2020_02 force;
+
+Succeed.
+
+SQL> drop TYPE my_type_2020_03 force;
+
+Succeed.
+
+SQL> drop TYPE my_type_2020_04 force;
+
+Succeed.
+
+SQL> drop TYPE my_type_2020_05 force;
+
+Succeed.
+
+SQL> drop TYPE my_type_2020_06 force;
+
+Succeed.
+
+SQL> drop TYPE my_type_2020_07 force;
+
+Succeed.
+
+SQL> drop TYPE my_type_2020_08 force;
+
+Succeed.
+
+SQL> drop TYPE my_type_2020_09 force;
+
+Succeed.
+
+SQL> drop function g_my_table311;
+
+Succeed.
+
+SQL> drop function g_my_table411;
+
+Succeed.
+
+SQL> drop function g_my_table511;
+
+Succeed.
+
+SQL> 
+SQL> --scalar check
+SQL> declare
+  2    type ListType is table of varchar(10);
+  3    p_key ListType:=ListType('a');
+  4 begin
+  5    p_key(1):= '221sssssssss';
+  6    dbe_output.print_line
+  7 	   ('index: ' ||1 || ' is ' || p_key(1));
+  8 end;
+  9 /
+
+CT-00932, [5:4] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[5:4] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> declare
+  2    type ListType is varray(5) of binary(10);
+  3    p_key ListType:=ListType(1011);
+  4 begin
+  5    p_key(1):= 101111001101;
+  6    dbe_output.print_line
+  7 	   ('index: ' ||1 || ' is ' || p_key(1));
+  8 end;
+  9 /
+
+CT-00932, [5:4] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[5:4] CT-00635, Value error: binary buffer too small
+
+SQL> 
+SQL> declare
+  2    type ListType is record(
+  3    a varchar(10),
+  4    b int
+  5    );
+  6    p_key ListType;
+  7 begin
+  8    p_key.a:= '221sssssssss';
+  9    dbe_output.print_line
+ 10 	   ('index: ' ||1 || ' is ' || p_key.a);
+ 11 end;
+ 12 /
+
+CT-00932, [8:4] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[8:4] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> --test case by d00504205
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_user_2020 cascade;
+
+Succeed.
+
+SQL> create user gs_user_2020 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to gs_user_2020;
+
+Succeed.
+
+SQL> conn gs_user_2020/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> create or replace type my_type_345 is  table of number;
+  2  /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PAK1_DSH
+  2 IS
+  3  FUNCTION g_my_table1 return my_type_345;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK1_DSH
+  2 IS
+  3  FUNCTION g_my_table1 return my_type_345
+  4  IS
+  5   l_my_table_tab my_type_345 := my_type_345(1,2,3);
+  6   begin
+  7 	return l_my_table_tab;
+  8  end;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE PAK2_DSH
+  2 IS
+  3  PROCEDURE MY_PROC1 ;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK2_DSH
+  2 IS
+  3  PROCEDURE MY_PROC1
+  4  IS
+  5   xxx my_type_345 ;
+  6   begin
+  7 		xxx := PAK1_DSH.g_my_table1;
+  8  end;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> exec dbe_util.compile_schema('gs_user_2020');
+
+PL/SQL procedure successfully completed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK2_DSH
+  2 IS
+  3  PROCEDURE MY_PROC1
+  4  IS
+  5   xxx my_type_345 ;
+  6   begin
+  7 		xxx := PAK1_DSH.g_my_table1;
+  8  end;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> DROP PACKAGE IF EXISTS PAK1_DSH;
+
+Succeed.
+
+SQL> DROP PACKAGE IF EXISTS PAK2_DSH;
+
+Succeed.
+
+SQL> drop type my_type_345 force;
+
+Succeed.
+
+SQL> conn gs_plsql_udf_type/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_user_2020 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --test package core 
+SQL> CREATE OR REPLACE PACKAGE PAK_CORE_2020 IS 
+  2 FUNCTION AAA RETURN INT; 
+  3 FUNCTION BBB(a VARCHAR2, b VARCHAR2) RETURN INT ; 
+  4 END; 
+  5 / 
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK_CORE_2020 IS 
+  2 FUNCTION CCC RETURN INT 
+  3 IS 
+  4 V1 INT := 10;
+  5  BEGIN  
+  6  NULL;  
+  7  RETURN V1; 
+  8  END; 
+  9  
+ 10 FUNCTION BBB(a VARCHAR2, b VARCHAR2) RETURN INT  IS
+ 11 V1 INT; 
+ 12 BEGIN  
+ 13 SELECT CCC INTO  V1 FROM DUAL;  
+ 14 RETURN 1; 
+ 15 END; 
+ 16 END; 
+ 17 / 
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.PAK_CORE_2020) terminated with compiling errors
+[10:45] PLC-00944 PL/SQL(GS_PLSQL_UDF_TYPE.PAK_CORE_2020.BBB) terminated with compiling errors
+[13:8] PLC-00601 Sql syntax error: invalid column name 'CCC'
+
+
+
+SQL> DROP PACKAGE IF EXISTS PAK_CORE_2020;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE if exists t17534;
+
+Succeed.
+
+SQL> create table t17534 (a int, b int, c int, d varchar2(12));
+
+Succeed.
+
+SQL> create or replace type myarray345 is table of varchar(128);
+  2 /
+
+Succeed.
+
+SQL> declare
+  2 v1 myarray345;
+  3 begin
+  4 delete from t17534 returning a bulk collect into v1;
+  5 dbe_output.print_line(v1.count);
+  6 end;
+  7 /
+
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 v1 myarray345;
+  3 begin
+  4 update t17534 set a=1 where a=2 returning a bulk collect into v1;
+  5 dbe_output.print_line(v1.count);
+  6 end;
+  7 /
+
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 v1 myarray345;
+  3 begin
+  4 select 1 bulk collect into v1 from dual where 1=2;
+  5 dbe_output.print_line(v1.count);
+  6 end;
+  7 /
+
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> insert into t17534 values (2, 3, -2, 'a');
+
+1 rows affected.
+
+SQL> insert into t17534 values (3, 4, -2, 'a');
+
+1 rows affected.
+
+SQL> insert into t17534 values (4, 5, -5, 'a');
+
+1 rows affected.
+
+SQL> insert into t17534 values (5, 6, -6, 'b');
+
+1 rows affected.
+
+SQL> insert into t17534 values (6, 7, -7, 'b');
+
+1 rows affected.
+
+SQL> insert into t17534 values (7, 8, -88, 'b');
+
+1 rows affected.
+
+SQL> declare
+  2 cursor cur_object is  select a,b,d from t17534;
+  3 v1 myarray345;
+  4 v2 myarray345;
+  5 v3 myarray345;
+  6 begin
+  7 open cur_object;
+  8 loop
+  9 fetch cur_object bulk collect into v1,v2,v3 limit 2;
+ 10 exit when cur_object%notfound;
+ 11 end loop;
+ 12 close cur_object;
+ 13 end;
+ 14 /
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP TABLE t17534;
+
+Succeed.
+
+SQL> DROP TYPE  myarray345;
+
+Succeed.
+
+SQL> 
+SQL> --DTS20200708
+SQL> create or replace type abc FORCE is VARRAY(10) OF int;
+  2 /
+
+Succeed.
+
+SQL> create or replace type dcc FORCE is table OF int;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE ATTR_TY FORCE AS OBJECT
+  2 ( month int
+  3 );
+  4 /
+
+Succeed.
+
+SQL> --nvl() & complex type
+SQL> DECLARE 
+  2 s abc;
+  3 d dcc;
+  4 BEGIN
+  5 dbe_output.print_line(nvl(s, d));
+  6 END;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:27] PLC-00601 Sql syntax error: unsupported parameter type
+
+SQL> DECLARE
+  2 s abc := abc(1);
+  3 d dcc := dcc(2);
+  4 c abc;
+  5 BEGIN
+  6 dbe_output.print_line(nvl(s(1), d(1)));
+  7 END;
+  8 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> DECLARE
+  2 s ATTR_TY;
+  3 BEGIN
+  4 dbe_output.print_line(nvl(s.month, 1));
+  5 END;
+  6 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 type err is varray(10) of int;
+  3 v1 err;
+  4 v2 int;
+  5 begin
+  6   v1 := err();
+  7   v1.EXTEND(2);
+  8   dbe_output.print_line(nvl(v1(1), 1));
+  9 end;
+ 10 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 s ATTR_TY;
+  3 begin
+  4 if s is null then
+  5 dbe_output.print_line(1);
+  6 else
+  7 dbe_output.print_line(2);
+  8 end if;
+  9 end;
+ 10 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 s ATTR_TY;
+  3 begin
+  4 if s.month is null then
+  5 dbe_output.print_line(1);
+  6 else
+  7 dbe_output.print_line(2);
+  8 end if;
+  9 end;
+ 10 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 s ATTR_TY;
+  3 begin
+  4 if s.a is null then
+  5 dbe_output.print_line(1);
+  6 end if;
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[4:6] PLC-00916 PL/SQL:syntax error(invalid field name 'a')
+[6:5] PLC-00920 Undefined symbol IF
+
+SQL> --addressing
+SQL> declare
+  2 s ATTR_TY:=ATTR_TY(1);
+  3 c int;
+  4 begin
+  5 c:=s(a);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:6] PLC-00916 PL/SQL:syntax error(addressing of object type is '.')
+
+SQL> DECLARE
+  2 type sss is table of int index by binary_integer;
+  3 q sss;
+  4 c int;
+  5 begin
+  6 q(1) := 1;
+  7 c:=q(((1)));
+  8 END;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> DECLARE
+  2 type sss is table of int index by binary_integer;
+  3 type err is record(a sss);
+  4 e err;
+  5 q sss;
+  6 c int;
+  7 begin
+  8 q(1) := 1;
+  9 e.a := q;
+ 10 c:=q(e.a(1));
+ 11 dbe_output.print_line(c);
+ 12 END;
+ 13 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP TYPE abc FORCE;
+
+Succeed.
+
+SQL> DROP TYPE dcc FORCE;
+
+Succeed.
+
+SQL> DROP TYPE ATTR_TY FORCE;
+
+Succeed.
+
+SQL> 
+SQL> --------------------------------------------OBJECT test & coverage
+SQL> CREATE OR REPLACE TYPE OBJ_1 FORCE AS OBJECT
+  2 ( m int
+  3 );
+  4 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE OBJ_2 FORCE AS OBJECT
+  2 ( m int
+  3 );
+  4 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE OBJ_3 FORCE AS OBJECT
+  2 ( x OBJ_1
+  3 );
+  4 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE OBJ_4 FORCE AS OBJECT
+  2 ( x varchar(10)
+  3 );
+  4 /
+
+Succeed.
+
+SQL> declare
+  2 a OBJ_1 := OBJ_1(1);
+  3 b OBJ_2;
+  4 begin
+  5 b := a;
+  6 dbe_output.print_line(b.m);
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:6] PLC-00965 Expression is of wrong type
+
+SQL> declare
+  2 a OBJ_3 := OBJ_3(1);
+  3 begin
+  4 dbe_output.print_line(1);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:12] PLC-02601 Wrong number or types of arguments in call to 'OBJ_3'
+
+SQL> 
+SQL> declare
+  2 a OBJ_4 := OBJ_4('aaaaaaaaaa12');
+  3 begin
+  4 dbe_output.print_line(1);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:12] PLC-02601 Wrong number or types of arguments in call to 'OBJ_4'
+
+SQL> 
+SQL> --bulk
+SQL> drop table if exists bulk_t1;
+
+Succeed.
+
+SQL> create table bulk_t1(id int, name varchar(10));
+
+Succeed.
+
+SQL> insert into bulk_t1 values(1, 'a');
+
+1 rows affected.
+
+SQL> insert into bulk_t1 values(2, 'g');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE ATTR_T3  AS OBJECT
+  2 ( e int,
+  3   r varchar(10)
+  4 );
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 t1 ATTR_T3;
+  3 begin
+  4 select * into t1 from bulk_t1 limit 1;
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[4:18] PLC-00916 PL/SQL:syntax error(type mismatch found at OBJECT type between anonymous record and INTO variables)
+
+SQL> 
+SQL> declare
+  2 t1 ATTR_T3;
+  3 begin
+  4 execute immediate 'select * from bulk_t1 limit 1' into t1;
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[4:58] PLC-00916 PL/SQL:syntax error(type mismatch found at OBJECT type between anonymous record and INTO variables)
+
+SQL> 
+SQL> declare
+  2 type nstb is table of ATTR_T3;
+  3 t1 nstb;
+  4 begin
+  5 select * bulk collect into t1 from bulk_t1;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[5:31] PLC-00916 PL/SQL:syntax error(type mismatch found at OBJECT type between anonymous record and INTO variables)
+
+SQL> 
+SQL> declare
+  2 type nstb is table of ATTR_T3;
+  3 t1 nstb;
+  4 begin
+  5 execute immediate '
+  6 select * from bulk_t1
+  7 ' bulk collect into t1;
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:23] PLC-00916 PL/SQL:syntax error(type mismatch found at OBJECT type between anonymous record and INTO variables)
+
+SQL> 
+SQL> declare
+  2 type nstb is table of ATTR_T3;
+  3 t1 nstb;
+  4 begin
+  5 select * bulk collect into t1, t1 from bulk_t1;
+  6 dbe_output.print_line(t1(2).e);
+  7 end;
+  8 /
+
+CT-00932, [5:1] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[5:1] CT-00926, PL/SQL: Return types of Result Set variables or query do not match
+
+SQL> 
+SQL> declare
+  2 type rec is record(e int,
+  3   r varchar(10));
+  4 type nstb is table of rec;
+  5 t1 nstb;
+  6 t2 nstb;
+  7 begin
+  8 select * bulk collect into t2, t1 from bulk_t1;
+  9 end;
+ 10 /
+
+CT-00932, [8:1] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[8:1] CT-00926, PL/SQL: Return types of Result Set variables or query do not match
+
+SQL> 
+SQL> declare
+  2 type nstb is table of varchar(10);
+  3 t1 nstb;
+  4 type nstb2 is table of int;
+  5 t2 nstb2;
+  6 begin
+  7 select * bulk collect into t2, t1 from bulk_t1;
+  8 dbe_output.print_line(t1(2));
+  9 end;
+ 10 /
+
+g
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --cast & coll-object
+SQL> DROP TABLE IF EXISTS TEST_CAST;
+
+Succeed.
+
+SQL> CREATE TABLE TEST_CAST(F1 VARCHAR(30), F2 INT);
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE ATTR_T FORCE AS OBJECT (F1 VARCHAR(30), F2 INT);
+  2 /
+
+Succeed.
+
+SQL> create or replace type cast_type_target is table of ATTR_T;
+  2 /
+
+Succeed.
+
+SQL> create or replace type cast_type_origin is VARRAY(5) of ATTR_T;
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2     c ATTR_T := ATTR_T('aa', 1);
+  3     cast_type cast_type_origin;
+  4 BEGIN
+  5     cast_type := cast_type_origin(c, c);
+  6 	insert into TEST_CAST SELECT * FROM TABLE(CAST(cast_type as cast_type_target));
+  7 END;  
+  8 /
+
+CT-00932, [6:2] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[6:2] CT-00921, The PL/SQL values (the 2nd-arg's object data type should equal to 1st-arg's type) were incorrect.
+
+SQL> 
+SQL> DECLARE
+  2     c ATTR_T := ATTR_T('aa', 1);
+  3     cast_type cast_type_origin;
+  4 BEGIN
+  5     cast_type := cast_type_origin(c, c);
+  6 	insert into TEST_CAST SELECT * FROM TABLE(CAST(cast_type as cast_type_origin));
+  7 END;  
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace type cast_type is VARRAY(5) of ATTR_T;
+  2 /
+
+Succeed.
+
+SQL> DECLARE
+  2     d ATTR_T := ATTR_T('abc', 2);
+  3     e ATTR_T := ATTR_T('dge', 3);
+  4     cast1 cast_type := cast_type(d, e);
+  5 BEGIN
+  6 	insert into TEST_CAST SELECT * FROM TABLE(CAST(cast1 as cast_type));
+  7 END;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from TEST_CAST order by F2;
+
+F1                             F2          
+------------------------------ ------------
+aa                             1           
+aa                             1           
+abc                            2           
+dge                            3           
+
+4 rows fetched.
+
+SQL> 
+SQL> --object & %type
+SQL> DECLARE
+  2     d ATTR_T;
+  3     e d%type;
+  4 BEGIN
+  5     e := ATTR_T('abc', 2);
+  6     dbe_output.print_line(e.F1);
+  7 END;
+  8 /
+
+abc
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2     d ATTR_T;
+  3     e d.f1%type;
+  4 BEGIN
+  5     select f1 into e from TEST_CAST order by F2 limit 1;
+  6     dbe_output.print_line(e);
+  7 END;
+  8 /
+
+aa
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --default
+SQL> CREATE OR REPLACE TYPE OBJ_NULL FORCE AS OBJECT
+  2 ( m int not null
+  3 );
+  4 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.OBJ_NULL) terminated with compiling errors
+[2:5] PLC-00607 Invalid datatype for type defining, not null declaration must have default value
+
+
+SQL> CREATE OR REPLACE TYPE OBJ_NULL FORCE AS OBJECT
+  2 ( m int default 3
+  3 );
+  4 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.OBJ_NULL) terminated with compiling errors
+[2:5] PLC-00607 Invalid datatype for type defining, object attribute must not have default value
+
+
+SQL> CREATE OR REPLACE TYPE OBJ_NULL FORCE AS OBJECT
+  2 ( m int not null default 3
+  3 );
+  4 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.OBJ_NULL) terminated with compiling errors
+[2:5] PLC-00607 Invalid datatype for type defining, object attribute must not have default value
+
+
+SQL> 
+SQL> create or replace type tab_coll FORCE is table of varchar2(10);
+  2 /
+
+Succeed.
+
+SQL> create or replace type obj_de FORCE AS OBJECT(
+  2 oa int,
+  3 ob varchar(100),
+  4 oc number) not final;
+  5 /
+
+Succeed.
+
+SQL> declare
+  2 w obj_de:= obj_de(1, 'a', 0);
+  3 p tab_coll:=tab_coll('r', 't');
+  4 TYPE record_test IS RECORD(
+  5 x int,
+  6 z obj_de default w,
+  7 q int not null default 2,
+  8 d varchar(10) default 's',
+  9 e tab_coll default p
+ 10 );
+ 11 v1 record_test;
+ 12 begin
+ 13 dbe_output.print_line(v1.q);
+ 14 dbe_output.print_line(v1.d);
+ 15 dbe_output.print_line(v1.e(2));
+ 16 dbe_output.print_line(v1.z.ob);
+ 17 end;
+ 18 /
+
+2
+s
+t
+a
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --out & object
+SQL> create or replace procedure obj_proc(a OBJ_1, b out OBJ_3) is
+  2 str_l_querysql varchar(100);
+  3 begin
+  4     dbe_output.print_line(a.m);
+  5     str_l_querysql := 
+  6     'begin
+  7     :1 := OBJ_3(:2);
+  8     end;';
+  9     execute immediate str_l_querysql using out b, a;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> SELECT OBJECT_NAME, ARGUMENT_NAME, POSITION, DATA_TYPE FROM DB_ARGUMENTS WHERE OBJECT_NAME = 'OBJ_PROC' ORDER BY SEQUENCE;
+
+OBJECT_NAME                                                      ARGUMENT_NAME                                                    POSITION     DATA_TYPE                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+OBJ_PROC                                                         A                                                                0            OBJECT                                                          
+OBJ_PROC                                                         B                                                                1            OBJECT                                                          
+
+2 rows fetched.
+
+SQL> 
+SQL> create or replace function fvt_func_05(aa in out OBJ_1) return ATTR_T3 is
+  2 xx ATTR_T3 := ATTR_T3(8, 'iu');
+  3 begin
+  4 aa.m := 6;
+  5 return xx;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> SELECT OBJECT_NAME, ARGUMENT_NAME, POSITION, DATA_TYPE FROM DB_ARGUMENTS WHERE OBJECT_NAME = 'FVT_FUNC_05' ORDER BY SEQUENCE;
+
+OBJECT_NAME                                                      ARGUMENT_NAME                                                    POSITION     DATA_TYPE                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+FVT_FUNC_05                                                                                                                       0            OBJECT                                                          
+FVT_FUNC_05                                                      AA                                                               1            OBJECT                                                          
+
+2 rows fetched.
+
+SQL> 
+SQL> declare
+  2 a OBJ_1 := OBJ_1(9);
+  3 b OBJ_3;
+  4 c ATTR_T3;
+  5 begin
+  6 obj_proc(a, b);
+  7 dbe_output.print_line(b.x.m);
+  8 c := fvt_func_05(a);
+  9 dbe_output.print_line(a.m);
+ 10 dbe_output.print_line(c.e);
+ 11 end;
+ 12 /
+
+9
+9
+6
+8
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --record & %rowtype
+SQL> drop table if exists test_rec1;
+
+Succeed.
+
+SQL> drop table if exists test_rec2;
+
+Succeed.
+
+SQL> drop table if exists test_rec3;
+
+Succeed.
+
+SQL> create table test_rec1(id int, name varchar(10));
+
+Succeed.
+
+SQL> insert into test_rec1 values(1, 'a');
+
+1 rows affected.
+
+SQL> create table test_rec2 as select * from test_rec1;
+
+Succeed.
+
+SQL> create table test_rec3(a int, b varchar(10));
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 t1 test_rec2%rowtype;
+  3 type a is record (q int, w varchar(10));
+  4 s a;
+  5 begin
+  6 select * into t1 from test_rec1;
+  7 s := t1;
+  8 dbe_output.print_line(s.q);
+  9 end;
+ 10 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 t1 test_rec2%rowtype;
+  3 type a is record (q int, w varchar(10));
+  4 s a;
+  5 begin
+  6 select * into s from test_rec1;
+  7 t1 := s;
+  8 dbe_output.print_line(t1.id);
+  9 end;
+ 10 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 t1 test_rec3%rowtype;
+  3 s test_rec1%rowtype;
+  4 begin
+  5 select * into s from test_rec1;
+  6 t1 := s;
+  7 dbe_output.print_line(t1.a);
+  8 end;
+  9 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace type obj_de_test FORCE AS OBJECT(oa test_rec1%rowtype);
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_UDF_TYPE.OBJ_DE_TEST) terminated with compiling errors
+[1:55] PLC-00607 Invalid datatype for type defining
+
+
+SQL> 
+SQL> create or replace function fvt_func_row(aa in out test_rec1%rowtype) return test_rec3%rowtype is
+  2 xx test_rec1%rowtype;
+  3 begin
+  4 aa.id := 6;
+  5 aa.name := 'iu';
+  6 xx := aa;
+  7 return xx;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> SELECT OBJECT_NAME, ARGUMENT_NAME, POSITION, DATA_TYPE FROM DB_ARGUMENTS WHERE OBJECT_NAME = 'FVT_FUNC_ROW' ORDER BY SEQUENCE;
+
+OBJECT_NAME                                                      ARGUMENT_NAME                                                    POSITION     DATA_TYPE                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+FVT_FUNC_ROW                                                                                                                      0            RECORD                                                          
+FVT_FUNC_ROW                                                     AA                                                               1            RECORD                                                          
+
+2 rows fetched.
+
+SQL> 
+SQL> declare
+  2 a test_rec1%rowtype;
+  3 c test_rec3%rowtype;
+  4 begin
+  5 c := fvt_func_row(a);
+  6 dbe_output.print_line(a.id);
+  7 dbe_output.print_line(c.b);
+  8 end;
+  9 /
+
+6
+iu
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --DTS202009010PM8C0P1400
+SQL> drop table if exists FVT_TYPE_RECORD_2;
+
+Succeed.
+
+SQL> create table FVT_TYPE_RECORD_2(id int,name varchar2(20),omg_b clob,d_tel boolean);
+
+Succeed.
+
+SQL> insert into FVT_TYPE_RECORD_2 values(5,'aedgf','gcbDgh',1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> declare
+  2    type type_v_t_2 is record (
+  3         a            number,
+  4         type_col_3   FVT_TYPE_RECORD_2%rowtype);
+  5         v_type_1 type_v_t_2;
+  6 begin
+  7 select id,omg_b into v_type_1 from FVT_TYPE_RECORD_2 where length(name)>4;
+  8 for i in 1..v_type_1.type_col_1 loop
+  9 if i>4 then
+ 10 insert into FVT_TYPE_RECORD_2 values(1,'1','1',1);
+ 11 else
+ 12 insert into FVT_TYPE_RECORD_2 values(2,'2','2',0);
+ 13 end if;
+ 14 end loop;
+ 15 end;
+ 16 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[7:1] PLC-00606 Inconsistent datatypes, expected RECORD - got CLOB
+[8:13] PLC-00954 upper_bound expr expected but v_type_1 found
+[11:1] PLC-00955 Unexpected ELSE found
+
+SQL> 
+SQL> create or replace type test_ar is table of int;
+  2 /
+
+Succeed.
+
+SQL> create or replace type attr is object(a int);
+  2 /
+
+Succeed.
+
+SQL> declare
+  2    type type_v_t_2 is record (
+  3         a            number,
+  4         type_col_3   attr);
+  5         v_type_1 type_v_t_2;
+  6    type type_v_t_6 is record (
+  7         a            number,
+  8         type_col_5   test_ar);
+  9         v_type_6 type_v_t_6;
+ 10 begin
+ 11 select id,omg_b into v_type_1 from FVT_TYPE_RECORD_2 where length(name)>4;
+ 12 select id,omg_b into v_type_6 from FVT_TYPE_RECORD_2 where length(name)>4;
+ 13 end;
+ 14 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[11:1] PLC-00606 Inconsistent datatypes, expected OBJECT - got CLOB
+[12:1] PLC-00606 Inconsistent datatypes, expected COLLECTION - got CLOB
+
+SQL> 
+SQL> --not null & default
+SQL> create or replace function fun_for_sysfun_010(num int) return int
+  2 is
+  3 BEGIN
+  4  return num + 5;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> declare
+  2   c int default fun_for_sysfun_010(20);
+  3 begin
+  4    dbe_output.print_line('result is '||c);
+  5 end;
+  6 /
+
+result is 25
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2   c varchar(10) not null default '20';
+  3 begin
+  4    dbe_output.print_line('result is '||c);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:17] PLC-00601 Sql syntax error: ; expected
+
+SQL> 
+SQL> declare
+  2 type ba is table of int not null;
+  3   c ba := ba(1, 2);
+  4 begin
+  5    dbe_output.print_line('result is '||c(1));
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:25] PLC-00601 Sql syntax error: ; expected
+
+SQL> 
+SQL> declare
+  2   type xxx is record (c varchar(10) null);
+  3   a xxx;
+  4 begin
+  5    a.c := 6;
+  6    dbe_output.print_line('result is '||a.c);
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:41] PLC-00601 Sql syntax error: expected end but null found
+
+SQL> 
+SQL> declare
+  2   type xxx is record (c varchar(10) not null);
+  3   a xxx;
+  4 begin
+  5    a.c := 6;
+  6    dbe_output.print_line('result is '||a.c);
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:25] PLC-00607 Invalid datatype for type defining, not null declaration must have default value
+
+SQL> 
+SQL> declare
+  2   type xxx is record (c varchar(10) not null := 'a23');
+  3   a xxx;
+  4 begin
+  5    dbe_output.print_line('result is '||a.c);
+  6 end;
+  7 /
+
+result is a23
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2   type xxx is record (c varchar(10) default to_char(20));
+  3   a xxx;
+  4 begin
+  5    dbe_output.print_line('result is '||a.c);
+  6 end;
+  7 /
+
+result is 20
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop user if exists test_def cascade;
+
+Succeed.
+
+SQL> create user test_def identified by Cantian_234;
+
+Succeed.
+
+SQL> create or replace function test_def.fun_for_sysfun(num int) return clob
+  2 is
+  3  v_lang clob := '';
+  4 BEGIN
+  5  FOR I IN 1 .. num
+  6  LOOP
+  7   v_lang := v_lang || 'e';
+  8  END LOOP;
+  9  return v_lang;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> declare
+  2   type type_name is record(id int, c_clob clob not null default test_def.fun_for_sysfun(20) );
+  3   rd type_name;
+  4   c2 sys_refcursor;
+  5 begin
+  6    open c2 for select 10 from sys_dummy;
+  7    fetch c2 into rd.id;
+  8    close c2;
+  9    dbe_output.print_line('result is '||rd.id);
+ 10    dbe_output.print_line('result is '||rd.c_clob);
+ 11 end;
+ 12 /
+
+result is 10
+result is eeeeeeeeeeeeeeeeeeee
+
+PL/SQL procedure successfully completed.
+
+SQL> drop user test_def cascade;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure proc_for_sysfun_010(num int)
+  2 is
+  3 BEGIN
+  4  dbe_output.print_line('result is '||num);
+  5 END;
+  6 / 
+
+Succeed.
+
+SQL> declare
+  2   type xxx is record (c int default proc_for_sysfun_010(20));
+  3   a xxx;
+  4 begin
+  5    dbe_output.print_line('result is '||a.c);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:37] PLC-00828 function GS_PLSQL_UDF_TYPE.PROC_FOR_SYSFUN_010 does not exist
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', prior f1 + 1);
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:69] PLC-00601 Sql syntax error: 'prior' operator not allowed here
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', f1 + 1);
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:69] PLC-00601 Sql syntax error: invalid column name 'F1'
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', count(1)over());
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:77] PLC-01316 Unexpected windows sort analytic function
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', count(1));
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:69] PLC-01317 Unexpected aggregation 'COUNT'
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', level);
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:69] PLC-00601 Sql syntax error: CONNECT BY clause required in this query block
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', sys_connect_by_path('1','/'));
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:29] PLC-00243 SYS_CONNECT_BY_PATH function is not allowed here.
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', root);
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:69] PLC-00601 Sql syntax error: invalid column name 'ROOT'
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', array[1,2]);
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+CT-00932, [4:1] PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with execute errors
+[3:29] CT-00606, Inconsistent datatypes, expected NUMBER - got ARRAY
+
+SQL> drop sequence if exists slient_mode_seque_007;
+
+Succeed.
+
+SQL> CREATE SEQUENCE slient_mode_seque_007 START WITH 10 MAXVALUE 20 INCREMENT BY 1 CYCLE CACHE 19;
+
+Succeed.
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', slient_mode_seque_007.nextval);
+  4 BEGIN
+  5 var_test.delete(2);
+  6 DBE_OUTPUT.PRINT_LINE(var_test.count);
+  7 END;
+  8 /
+
+4
+
+PL/SQL procedure successfully completed.
+
+SQL> drop sequence slient_mode_seque_007;
+
+Succeed.
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', CONNECT_BY_ROOT);
+  4 BEGIN
+  5 NULL;
+  6 END;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:69] PLC-00601 Sql syntax error: CONNECT BY clause required in this query block
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', CONNECT_BY_isleaf);
+  4 BEGIN
+  5 NULL;
+  6 END;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:69] PLC-00601 Sql syntax error: CONNECT BY clause required in this query block
+
+SQL> DECLARE
+  2 type test_type_limit is table of number;
+  3 var_test test_type_limit := test_type_limit(123, 234, 345, '1.123', CONNECT_BY_isCYCLE);
+  4 BEGIN
+  5 NULL;
+  6 END;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[3:69] PLC-00601 Sql syntax error: CONNECT BY clause required in this query block
+
+SQL> DECLARE
+  2 type test_type_limit is table of number[];
+  3 var_test test_type_limit := test_type_limit(array[1,2],array[1,2]);
+  4 BEGIN
+  5 NULL;
+  6 END;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_UDF_TYPE.ANONYMOUS BLOCK) terminated with compiling errors
+[2:34] PLC-01304 Data type 'ARRAY' is not supported
+
+SQL> set serveroutput off;
+
+OFF
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user gs_plsql_udf_type cascade;
+Succeed.
+
+
+
+

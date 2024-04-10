@@ -1,0 +1,1010 @@
+
+
+SQL> --
+SQL> -- testing 'execute immediate'
+SQL> --
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> --BEGIN: TEST OUT PARAM
+SQL> declare
+  2 	a int;
+  3 	b char(16);
+  4 	c varchar(16);
+  5 begin
+  6 	a := 10;
+  7 	b := 'abc';
+  8 	c := 'efc';
+  9 	execute immediate 'begin :x := 1 + :x; :y := ''aaa''; :z := ''bbb'';end;' using in out a, out b, out c;
+ 10 	dbe_output.print_line('a='||a); 
+ 11 	dbe_output.print_line('b='||b);
+ 12 	dbe_output.print_line('c='||c);
+ 13 end;
+ 14 /
+
+a=11
+b=aaa             
+c=bbb
+
+PL/SQL procedure successfully completed.
+
+SQL> --END: TEST OUT PARAM
+SQL> 
+SQL> --test execute immediate(DDL)
+SQL> drop procedure if exists p_exec_immediate;
+
+Succeed.
+
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 sqlstr  varchar2(200);
+  4 tabname varchar2(200) := v_name;
+  5 begin
+  6 	sqlstr:='drop table '||tabname;
+  7 	execute immediate sqlstr;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int);
+
+Succeed.
+
+SQL> 
+SQL> select f_int1 from t_exec_immediate;
+
+F_INT1      
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select f_int1 from t_exec_immediate;
+
+CT-00843, [1:20]The table or view SYS.T_EXEC_IMMEDIATE does not exist.
+SQL> 
+SQL> --test execute immediate(DML)
+SQL> drop procedure if exists p_exec_immediate;
+
+Succeed.
+
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 sqlstr varchar2(200);
+  4 begin
+  5 	sqlstr:='delete from '||v_name;
+  6 	execute immediate sqlstr;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int);
+
+Succeed.
+
+SQL> 
+SQL> insert into t_exec_immediate(f_int1) values(0);
+
+1 rows affected.
+
+SQL> insert into t_exec_immediate(f_int1) values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select f_int1 from t_exec_immediate;
+
+F_INT1      
+------------
+0           
+1           
+
+2 rows fetched.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 	commit;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select f_int1 from t_exec_immediate;
+
+F_INT1      
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --test execute immediate(anonymous block)
+SQL> drop procedure if exists p_exec_immediate;
+
+Succeed.
+
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 AS
+  3   plsql_block VARCHAR2(500);
+  4   plsql_block1 VARCHAR2(500);
+  5   plsql_block2 VARCHAR2(500);
+  6   plsql_block3 VARCHAR2(500);
+  7 BEGIN
+  8   plsql_block1 := 'BEGIN ';
+  9   plsql_block2 := 'INSERT INTO '|| v_name ||'(F_INT1) VALUES(123456);commit;';
+ 10   plsql_block3 := 'END;';
+ 11   plsql_block := plsql_block1 || plsql_block2 || plsql_block3;
+ 12 	execute immediate plsql_block;
+ 13 END;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int);
+
+Succeed.
+
+SQL> 
+SQL> select f_int1 from t_exec_immediate;
+
+F_INT1      
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select f_int1 from t_exec_immediate;
+
+F_INT1      
+------------
+123456      
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --error,test execute immediate into cluase
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int,f_char1 char(16),f_varchar1 varchar(16));
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 sqlstr varchar2(200);
+  4 v_count1 int;
+  5 v_count2 int;
+  6 begin
+  7 	sqlstr:='select count(1) from '||v_name;
+  8 	execute immediate sqlstr into v_count1,v_count2;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 end;
+  4 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[8:2] PL/SQL(SYS.P_EXEC_IMMEDIATE) terminated with execute errors
+[8:2] CT-00926, PL/SQL: Return types of Result Set variables or query do not match
+
+SQL> 
+SQL> --error,test execute immediate into cluase
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int,f_char1 char(16),f_varchar1 varchar(16));
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 sqlstr varchar2(200);
+  4 v_count int;
+  5 begin
+  6 	sqlstr:='delete from '||v_name;
+  7 	execute immediate sqlstr into v_count;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 end;
+  4 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[7:2] PL/SQL(SYS.P_EXEC_IMMEDIATE) terminated with execute errors
+[7:2] CT-00972, The into clause and select need to appear together in 'execute immediate'
+
+SQL> 
+SQL> --test execute immediate into cluase
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int,f_char1 char(16),f_varchar1 varchar(16));
+
+Succeed.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(0,'abc','cde');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 sqlstr varchar2(200);
+  4 v_count int;
+  5 begin
+  6 	sqlstr:='select count(1) from '||v_name;
+  7 	execute immediate sqlstr into v_count;
+  8 	sqlstr:='insert into '||v_name||'(f_int1) values('||v_count||')';
+  9 	execute immediate sqlstr;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 	commit;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from t_exec_immediate order by f_int1,f_char1,f_varchar1;
+
+F_INT1       F_CHAR1          F_VARCHAR1      
+------------ ---------------- ----------------
+0            abc              cde             
+1                                             
+
+2 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --test execute immediate into cluase
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int,f_char1 char(16),f_varchar1 varchar(16));
+
+Succeed.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(1,'bbb','ccc');
+
+1 rows affected.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(0,'aaa','bbb');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 sqlstr varchar2(200);
+  4 f_int1 int;
+  5 f_char1 char(16);
+  6 f_varchar1 varchar(16);
+  7 begin
+  8 	sqlstr:='select f_int1,f_char1,f_varchar1 from '||v_name||' order by f_int1 limit 1';
+  9 	execute immediate sqlstr into f_int1,f_char1,f_varchar1;
+ 10 	sqlstr:='insert into '||v_name||'(f_int1,f_char1,f_varchar1) values('||f_int1||','''||f_char1||''','''||f_varchar1||''')';
+ 11 	execute immediate sqlstr;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 	commit;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from t_exec_immediate order by f_int1,f_char1,f_varchar1;
+
+F_INT1       F_CHAR1          F_VARCHAR1      
+------------ ---------------- ----------------
+0            aaa              bbb             
+0            aaa              bbb             
+1            bbb              ccc             
+
+3 rows fetched.
+
+SQL> 
+SQL> --begin: test execute immediate
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int,f_char1 char(16),f_varchar1 varchar(16));
+
+Succeed.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(1,'bbb','ccc');
+
+1 rows affected.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(0,'aaa','bbb');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function f_exec_immediate(v_name IN varchar)
+  2 return varchar
+  3 as
+  4 begin
+  5 	return v_name;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2    execute immediate 'insert into t_exec_immediate select f_int1 + 10,f_char1,f_varchar1 from t_exec_immediate where f_varchar1 = f_exec_immediate(f_varchar1)';
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from t_exec_immediate order by 1,2,3;
+
+F_INT1       F_CHAR1          F_VARCHAR1      
+------------ ---------------- ----------------
+0            aaa              bbb             
+1            bbb              ccc             
+10           aaa              bbb             
+11           bbb              ccc             
+
+4 rows fetched.
+
+SQL> --end: test
+SQL> 
+SQL> --begin:test CURRENT_TIMESTAMP
+SQL> CREATE OR REPLACE FUNCTION getutcdate
+  2 RETURN VARCHAR2
+  3 AS
+  4 	v_return timestamp;
+  5 	v_time_zone number;
+  6 	v_sql varchar2(200);
+  7 BEGIN
+  8 	v_time_zone := to_number(replace(to_char(SESSIONTIMEZONE), ':', '.'));
+  9 	v_sql := 'select :1 - interval '''||v_time_zone||''' hour from dual';
+ 10 	execute immediate v_sql into v_return using CURRENT_TIMESTAMP;
+ 11 	return v_return;
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> --error(select record count > 1),test execute immediate into cluase
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int,f_char1 char(16),f_varchar1 varchar(16));
+
+Succeed.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(1,'bbb','ccc');
+
+1 rows affected.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(0,'aaa','bbb');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 sqlstr varchar2(200);
+  4 f_int1 int;
+  5 f_char1 char(16);
+  6 f_varchar1 varchar(16);
+  7 begin
+  8 	sqlstr:='select f_int1,f_char1,f_varchar1 from '||v_name;
+  9 	execute immediate sqlstr into f_int1,f_char1,f_varchar1;
+ 10 	sqlstr:='insert into '||v_name||'(f_int1,f_char1,f_varchar1) values('||f_int1||','''||f_char1||''','''||f_varchar1||''')';
+ 11 	execute immediate sqlstr;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 	commit;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[9:2] PL/SQL(SYS.P_EXEC_IMMEDIATE) terminated with execute errors
+[9:2] CT-00915, More than one return value of SELECT INTO, EXECUTE IMMEDIATE, or a cursor was assigned to a common variable.
+
+SQL> 
+SQL> select * from t_exec_immediate order by f_int1,f_char1,f_varchar1;
+
+F_INT1       F_CHAR1          F_VARCHAR1      
+------------ ---------------- ----------------
+0            aaa              bbb             
+1            bbb              ccc             
+
+2 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --test execute immediate into cluase(record)
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int,f_char1 char(16),f_varchar1 varchar(16));
+
+Succeed.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(1,'bbb','ccc');
+
+1 rows affected.
+
+SQL> insert into t_exec_immediate(f_int1,f_char1,f_varchar1) values(0,'aaa','bbb');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 type t_exec_immediate_record is record
+  4 (
+  5 	f_int1 int,
+  6 	f_char1 char(16),
+  7 	f_varchar1 varchar(16);
+  8 );
+  9 sqlstr varchar2(200);
+ 10 item t_exec_immediate_record;
+ 11 begin
+ 12 	sqlstr:='select f_int1,f_char1,f_varchar1 from '||v_name||' order by f_int1 limit 1';
+ 13 	execute immediate sqlstr into item;
+ 14 	sqlstr:='insert into '||v_name||'(f_int1,f_char1,f_varchar1) values('||item.f_int1||','''||item.f_char1||''','''||item.f_varchar1||''')';
+ 15 	execute immediate sqlstr;
+ 16 end;
+ 17 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.P_EXEC_IMMEDIATE) terminated with compiling errors
+[7:24] PLC-00601 Sql syntax error: expected end but ; found
+
+
+SQL> 
+SQL> create or replace procedure p_exec_immediate(v_type IN int,v_name IN varchar2)
+  2 as
+  3 type t_exec_immediate_record is record
+  4 (
+  5 	f_int1 int,
+  6 	f_char1 char(16),
+  7 	f_varchar1 varchar(16)
+  8 );
+  9 sqlstr varchar2(200);
+ 10 item t_exec_immediate_record;
+ 11 begin
+ 12 	sqlstr:='select f_int1,f_char1,f_varchar1 from '||v_name||' order by f_int1 limit 1';
+ 13 	execute immediate sqlstr into item;
+ 14 	sqlstr:='insert into '||v_name||'(f_int1,f_char1,f_varchar1) values('||item.f_int1||','''||item.f_char1||''','''||item.f_varchar1||''')';
+ 15 	execute immediate sqlstr;
+ 16 end;
+ 17 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(0, 't_exec_immediate');
+  3 	commit;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from t_exec_immediate order by f_int1,f_char1,f_varchar1;
+
+F_INT1       F_CHAR1          F_VARCHAR1      
+------------ ---------------- ----------------
+0            aaa              bbb             
+0            aaa              bbb             
+1            bbb              ccc             
+
+3 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --error:test execute immediate using cluase
+SQL> declare
+  2 	a int;
+  3 	b char(16);
+  4 	c varchar(16);
+  5 begin
+  6 	a := 10;
+  7 	b := 'abc';
+  8 	c := 'efc';
+  9 	execute immediate 'begin dbe_output.print_line(:x||:y||:z);end;' using a,b;
+ 10 end;
+ 11 /
+
+CT-00932, [9:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[9:2] CT-00908, PL/SQL internal program error(The param count of dynamic sql is not same as the param count of using clause).
+
+SQL> 
+SQL> --error:test execute immediate using cluase
+SQL> declare
+  2 	a int;
+  3 	b char(16);
+  4 	c varchar(16);
+  5 begin
+  6 	a := 10;
+  7 	b := 'abc';
+  8 	c := 'efc';
+  9 	execute immediate 'begin dbe_output.print_line(:x||:y);end;' using a,b,c;
+ 10 end;
+ 11 /
+
+CT-00932, [9:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[9:2] CT-00908, PL/SQL internal program error(The param count of dynamic sql is not same as the param count of using clause).
+
+SQL> 
+SQL> --error:test execute immediate using cluase
+SQL> declare
+  2 	a int;
+  3 	b char(16);
+  4 	c varchar(16);
+  5 begin
+  6 	a := 10;
+  7 	b := 'abc';
+  8 	c := 'efc';
+  9 	execute immediate 'begin dbe_output.print_line(:x||:y||:z||:y);end;' using a,b,c,c;
+ 10 end;
+ 11 /
+
+CT-00932, [9:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[9:2] CT-00908, PL/SQL internal program error(The param count of dynamic sql is not same as the param count of using clause).
+
+SQL> 
+SQL> --error:test execute immediate using cluase
+SQL> declare
+  2 	a int;
+  3 	b char(16);
+  4 	c varchar(16);
+  5 begin
+  6 	a := 10;
+  7 	b := 'abc';
+  8 	c := 'efc';
+  9 	execute immediate 'begin dbe_output.print_line(:x||:y||:z||:y);end;' using a,b,c,out b;
+ 10 end;
+ 11 /
+
+CT-00932, [9:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[9:2] CT-00908, PL/SQL internal program error(The param count of dynamic sql is not same as the param count of using clause).
+
+SQL> 
+SQL> --test execute immediate using cluase
+SQL> declare
+  2 	aa int := 10;
+  3 	bb char(16) := 'abc';
+  4 	cc varchar(16) := 'efc';
+  5 	a int := aa;
+  6 	b char(16) := bb;
+  7 	c varchar(16) := cc;
+  8 begin
+  9 	a := 10;
+ 10 	b := 'abc';
+ 11 	c := 'efc';
+ 12 	execute immediate 'begin dbe_output.print_line(:x||:y||:z);end;' using a,b,c;
+ 13 	execute immediate 'begin dbe_output.print_line(:x||:y||:z||:y);end;' using a,b,c;
+ 14   execute immediate 'begin dbe_output.print_line(:x||:y||:z||:w);end;' using a,b,c,b;
+ 15 	execute immediate 'begin dbe_output.print_line(:x||:y||:z||:y||:x);end;' using a,b,c;
+ 16 	execute immediate 'begin dbe_output.print_line(:x||:y||:z||:w||:v);select :x + 1 into :x from dual;:y := ''aaa'';:z := ''bbb'';end;' using in out a,in out b,in out c,b,a;
+ 17 	dbe_output.print_line('a='||a);
+ 18 	dbe_output.print_line('b='||b);
+ 19 	dbe_output.print_line('c='||c);
+ 20 	execute immediate 'select length(:x) + length(:y) from dual' into a using b,c;
+ 21 	dbe_output.print_line('a='||a);
+ 22 end;
+ 23 /
+
+10abc             efc
+10abc             efcabc             
+10abc             efcabc             
+10abc             efcabc             10
+10abc             efcabc             10
+a=11
+b=aaa             
+c=bbb
+a=19
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test execute immediate using cluase
+SQL> declare
+  2 	a int;
+  3 	b char(16);
+  4 	c varchar(16);
+  5 begin
+  6 	a := 10;
+  7 	b := 'abc';
+  8 	c := 'efc';
+  9 	execute immediate 'declare xx int;yy varchar(16);begin xx := :x; yy := :y; :z := substr(yy,xx - :x + 2,1); :x := 0;end;' using a,b,out c;
+ 10 	dbe_output.print_line('a='||a);
+ 11 	dbe_output.print_line('b='||b);
+ 12 	dbe_output.print_line('c='||c);
+ 13 end;
+ 14 /
+
+CT-00932, [9:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[9:2] CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:89] PLC-00950 The expression A was used as the assignment target (left operand of the assignment statement).
+
+
+SQL> 
+SQL> --test execute immediate using cluase
+SQL> drop table if exists t_exec_immediate;
+
+Succeed.
+
+SQL> create table t_exec_immediate(f_int1 int,f_char1 char(16),f_varchar1 varchar(16));
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure p_exec_immediate(a IN int,b IN varchar2)
+  2 as
+  3 sqlstr varchar2(200);
+  4 v1 int;
+  5 begin
+  6 	sqlstr:='insert into t_exec_immediate values(:x,:y,:z)';
+  7 	execute immediate sqlstr using a,b,b;
+  8 	sqlstr:='begin :x := :x + length(:y);end;';
+  9 	v1 := a;
+ 10 	execute immediate sqlstr using in out v1,b;
+ 11   sqlstr:='insert into t_exec_immediate values(:x,:y,:z)';
+ 12 	execute immediate sqlstr using v1,b,b;
+ 13 end;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 	p_exec_immediate(10, 'test');
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from t_exec_immediate order by f_int1,f_char1,f_varchar1;
+
+F_INT1       F_CHAR1          F_VARCHAR1      
+------------ ---------------- ----------------
+10           test             test            
+14           test             test            
+
+2 rows fetched.
+
+SQL> --BEGIN test function return
+SQL> 
+SQL> create or replace function PRE_EXCEPTION_Fun_1210_1(a int,b out int) return int is
+  2 
+  3 BEGIN
+  4 b := a;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> create or replace function PRE_EXCEPTION_Fun_1210_2(c int) return int is
+  2 
+  3 d int;
+  4 e int;
+  5 BEGIN
+  6 d :=  PRE_EXCEPTION_Fun_1210_1(2,e) ;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> select PRE_EXCEPTION_Fun_1210_2(1);
+
+CT-00932, [6:1] PL/SQL(SYS.PRE_EXCEPTION_FUN_1210_2) terminated with execute errors
+[6:7] CT-00900, The user-defined function did not return any value.
+
+SQL> --END test function return
+SQL> 
+SQL> --PL/SQL using SQL Begin
+SQL> drop table if exists t_tmp_liu_1219;
+
+Succeed.
+
+SQL> create table t_tmp_liu_1219(a1 int);
+
+Succeed.
+
+SQL> create or replace function f_tmp_liu_1219(a int default 1)
+  2 return int
+  3 as
+  4 begin
+  5 insert into t_tmp_liu_1219 (select a1 from t_tmp_liu_1219 where a1 in (select * from t_tmp_liu_1219 where (a1<1) and rownum <= a)and a1 = 1);
+  6 return a;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> select f_tmp_liu_1219();
+
+F_TMP_LIU_1219()
+----------------
+1               
+
+1 rows fetched.
+
+SQL> select * from t_tmp_liu_1219;
+
+A1          
+------------
+
+0 rows fetched.
+
+SQL> select f_tmp_liu_1219(10);
+
+F_TMP_LIU_1219(10)
+------------------
+10                
+
+1 rows fetched.
+
+SQL> select * from t_tmp_liu_1219;
+
+A1          
+------------
+
+0 rows fetched.
+
+SQL> drop table t_tmp_liu_1219;
+
+Succeed.
+
+SQL> --PL/SQL using SQL End
+SQL> 
+SQL> -- test dynamic_sql+select+fetch
+SQL> drop table if exists dynamic_sql_select_fetch_t;
+
+Succeed.
+
+SQL> create table dynamic_sql_select_fetch_t(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into dynamic_sql_select_fetch_t values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into dynamic_sql_select_fetch_t values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into dynamic_sql_select_fetch_t values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> --create view
+SQL> create or replace view dynamic_sql_select_fetch_v as select * from dynamic_sql_select_fetch_t;
+
+Succeed.
+
+SQL> --functionA
+SQL> create or replace function dynamic_sql_select_fetch_f (str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor ;
+  4 a dynamic_sql_select_fetch_v%rowtype;
+  5 begin
+  6  open mycursor1 for select * from dynamic_sql_select_fetch_v;
+  7   fetch mycursor1 into a;
+  8   loop
+  9   if mycursor1%found
+ 10     then 
+ 11    dbe_output.print_line(a.empno||a.ename);
+ 12    fetch mycursor1 into a;
+ 13    else 
+ 14       exit;
+ 15   end if;    
+ 16   end loop;
+ 17   close mycursor1;
+ 18 return length(str1);
+ 19 end;
+ 20 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2   sql_str varchar(8000);
+  3 begin
+  4   sql_str := 'select dynamic_sql_select_fetch_f(ename) from dynamic_sql_select_fetch_t';
+  5   execute immediate sql_str;
+  6 end;
+  7 /
+
+1zhangsan
+2zhangsan2
+123zhangsan3
+1zhangsan
+2zhangsan2
+123zhangsan3
+1zhangsan
+2zhangsan2
+123zhangsan3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 v1 int;
+  3 begin
+  4   select dynamic_sql_select_fetch_f(ename) into v1 from dynamic_sql_select_fetch_t;
+  5 end;
+  6 /
+
+1zhangsan
+2zhangsan2
+123zhangsan3
+1zhangsan
+2zhangsan2
+123zhangsan3
+CT-00932, [4:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] CT-00915, More than one return value of SELECT INTO, EXECUTE IMMEDIATE, or a cursor was assigned to a common variable.
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> drop table if exists test_cur;
+
+Succeed.
+
+SQL> create table test_cur (a int, b int, c int,d VARCHAR2(10));
+
+Succeed.
+
+SQL> insert into test_cur values (1, 2, -2, 'a');
+
+1 rows affected.
+
+SQL> insert into test_cur values (1, 3, -2, 'a');
+
+1 rows affected.
+
+SQL> DECLARE
+  2        v3 int :=1;
+  3        c1 SYS_REFCURSOR;
+  4        CURSOR c2 is select * from test_cur where a = v3;
+  5             v1 int := 100;
+  6             v2 int;
+  7 BEGIN
+  8        OPEN c1 FOR 'SELECT :1 FROM DUAL' using v1;
+  9        fetch c1 into v2;
+ 10        close c1;
+ 11        for i in c2 loop
+ 12             dbe_output.print_line(i.b);
+ 13        end loop;
+ 14 END;
+ 15 /
+
+2
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table test_cur;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

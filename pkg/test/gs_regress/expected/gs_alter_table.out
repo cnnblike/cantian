@@ -1,0 +1,4052 @@
+
+
+SQL> --创建sys用户的预置环境
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> CREATE TABLE BOOK_TAB(BOOK_TABID INT, NAME VARCHAR(1024), CATEGORY_ID int);
+
+Succeed.
+
+SQL> --创建dba用户
+SQL> CREATE USER DBA_USER IDENTIFIED BY Changeme_123;
+
+Succeed.
+
+SQL> GRANT DBA TO DBA_USER;
+
+Succeed.
+
+SQL> --创建普通用户和表
+SQL> CREATE USER TEST_USER IDENTIFIED BY Changeme_123;
+
+Succeed.
+
+SQL> CREATE TABLE TEST_USER.CATEGORY(ID int primary key);
+
+Succeed.
+
+SQL> INSERT INTO TEST_USER.CATEGORY VALUES(1),(2),(3);
+
+3 rows affected.
+
+SQL> --DBA给sys用户赋予references权限
+SQL> CONN DBA_USER/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> GRANT REFERENCES ON TEST_USER.CATEGORY TO SYS;
+
+Succeed.
+
+SQL> --登录SYS用户进行操作
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> ALTER TABLE SYS.BOOK_TAB ADD CONSTRAINT FK_CATEGORY_ID1 FOREIGN KEY(CATEGORY_ID) REFERENCES TEST_USER.CATEGORY(ID);
+
+Succeed.
+
+SQL> INSERT INTO SYS.BOOK_TAB VALUES(1,'CANTIAN100 OLAP',2);
+
+CT-01223, Integrity constraint violated - parent key not found
+SQL> --恢复环境
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP TABLE BOOK_TAB;
+
+Succeed.
+
+SQL> DROP USER TEST_USER CASCADE;
+
+Succeed.
+
+SQL> DROP USER DBA_USER;
+
+Succeed.
+
+SQL> drop table if exists test_add_column;
+
+Succeed.
+
+SQL> create table test_add_column (id int);
+
+Succeed.
+
+SQL> insert into test_add_column values(1),(2);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test_add_column add (col_uint_2 binary_uint32 default convert(2345.45,uint) on update 56.57 comment 'uint type' COLLATE UTF8_BIN not null,col_uint_3 int default 234.565 on update 3.45 comment 'test_add_column uint' collate UTF8_GENERAL_CI check (col_uint_3>100));
+
+Succeed.
+
+SQL> insert into test_add_column(id,col_uint_2,col_uint_3) values(1000,1,101);
+
+1 rows affected.
+
+SQL> insert into test_add_column(id,col_uint_2,col_uint_3) values(1000,101,101);
+
+1 rows affected.
+
+SQL> select * from test_add_column where id = 1000;
+
+ID           COL_UINT_2   COL_UINT_3  
+------------ ------------ ------------
+1000         1            101         
+1000         101          101         
+
+2 rows fetched.
+
+SQL> drop table test_add_column;
+
+Succeed.
+
+SQL> --TEST
+SQL> DROP TABLE IF EXISTS RQG_ALL_TYPE_TABLE_GSQL; 
+
+Succeed.
+
+SQL> CREATE TABLE RQG_ALL_TYPE_TABLE_GSQL( 
+  2 ID BIGINT, 
+  3 C_INTEGER INTEGER , C_BIGINT BIGINT, 
+  4 C_NUMBER NUMBER, C_DOUBLE DOUBLE PRECISION,
+  5 C_CHAR20 CHAR(20), C_CHAR4000 CHAR(100), 
+  6 C_VARCHAR20 VARCHAR(20), C_VARCHAR4000 VARCHAR(100), 
+  7 C_TEXT TEXT,
+  8 C_BOOL BOOL, 
+  9 C_TIMESTAMP3 TIMESTAMP(3), C_TIMESTAMP6 TIMESTAMP(6) )
+ 10 --DISTRIBUTE BY HASH(C_INTEGER)
+ 11 PARTITION BY RANGE ( C_BIGINT)
+ 12 ( PARTITION PT1 VALUES LESS THAN ( 10000 ),
+ 13 PARTITION PT2 VALUES LESS THAN ( 20000 ),
+ 14 PARTITION PT3 VALUES LESS THAN ( 30000 ),
+ 15 PARTITION PT4 VALUES LESS THAN ( MAXVALUE ));
+
+Succeed.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_CHAR20) VALUES('CANTIANDB');
+
+1 rows affected.
+
+SQL> ALTER TABLE RQG_ALL_TYPE_TABLE_GSQL ADD COLUMN C_NUMBER_NEW NUMBER DEFAULT 10+100; 
+
+Succeed.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_BOOL) VALUES(FALSE);
+
+1 rows affected.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_NUMBER_NEW) VALUES(11);
+
+1 rows affected.
+
+SQL> SELECT * FROM RQG_ALL_TYPE_TABLE_GSQL ORDER BY C_CHAR20,C_NUMBER_NEW;
+
+ID                   C_INTEGER    C_BIGINT             C_NUMBER                                 C_DOUBLE             C_CHAR20             C_CHAR4000                                                       C_VARCHAR20          C_VARCHAR4000                                                    C_TEXT                                                           C_BOOL C_TIMESTAMP3                     C_TIMESTAMP6                     C_NUMBER_NEW                            
+-------------------- ------------ -------------------- ---------------------------------------- -------------------- -------------------- ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------ -------------------------------- -------------------------------- ----------------------------------------
+                                                                                                                     CANTIANDB                                                                                                                                                                                                                                                                                                               110
+                                                                                                                                                                                                                                                                                                                                                                                                                                           11                                      
+                                                                                                                                                                                                                                                                                                                                                                  FALSE                                                                    110                                     
+
+3 rows fetched.
+
+SQL> 
+SQL> --TEST
+SQL> DROP TABLE IF EXISTS RQG_ALL_TYPE_TABLE_GSQL; 
+
+Succeed.
+
+SQL> CREATE TABLE RQG_ALL_TYPE_TABLE_GSQL( 
+  2 ID BIGINT, 
+  3 C_INTEGER INTEGER , C_BIGINT BIGINT, 
+  4 C_NUMBER NUMBER, C_DOUBLE DOUBLE PRECISION,
+  5 C_CHAR20 CHAR(20), C_CHAR4000 CHAR(100), 
+  6 C_VARCHAR20 VARCHAR(20), C_VARCHAR4000 VARCHAR(100), 
+  7 C_TEXT TEXT,
+  8 C_BOOL BOOL, 
+  9 C_TIMESTAMP3 TIMESTAMP(3), C_TIMESTAMP6 TIMESTAMP(6) )
+ 10 --DISTRIBUTE BY HASH(C_INTEGER)
+ 11 PARTITION BY RANGE ( C_BIGINT)
+ 12 ( PARTITION PT1 VALUES LESS THAN ( 10000 ),
+ 13 PARTITION PT2 VALUES LESS THAN ( 20000 ),
+ 14 PARTITION PT3 VALUES LESS THAN ( 30000 ),
+ 15 PARTITION PT4 VALUES LESS THAN ( MAXVALUE ));
+
+Succeed.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_CHAR20) VALUES('CANTIANDB');
+
+1 rows affected.
+
+SQL> ALTER TABLE RQG_ALL_TYPE_TABLE_GSQL ADD COLUMN C_NUMBER_NEW NUMBER DEFAULT 110 NOT NULL; 
+
+Succeed.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_BOOL) VALUES(FALSE);
+
+1 rows affected.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_NUMBER_NEW) VALUES(11);
+
+1 rows affected.
+
+SQL> SELECT * FROM RQG_ALL_TYPE_TABLE_GSQL ORDER BY C_CHAR20,C_NUMBER_NEW;
+
+ID                   C_INTEGER    C_BIGINT             C_NUMBER                                 C_DOUBLE             C_CHAR20             C_CHAR4000                                                       C_VARCHAR20          C_VARCHAR4000                                                    C_TEXT                                                           C_BOOL C_TIMESTAMP3                     C_TIMESTAMP6                     C_NUMBER_NEW                            
+-------------------- ------------ -------------------- ---------------------------------------- -------------------- -------------------- ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------ -------------------------------- -------------------------------- ----------------------------------------
+                                                                                                                     CANTIANDB                                                                                                                                                                                                                                                                                                               110
+                                                                                                                                                                                                                                                                                                                                                                                                                                           11                                      
+                                                                                                                                                                                                                                                                                                                                                                  FALSE                                                                    110                                     
+
+3 rows fetched.
+
+SQL> 
+SQL> --TEST
+SQL> DROP TABLE IF EXISTS RQG_ALL_TYPE_TABLE_GSQL; 
+
+Succeed.
+
+SQL> CREATE TABLE RQG_ALL_TYPE_TABLE_GSQL( 
+  2 ID BIGINT, 
+  3 C_INTEGER INTEGER , C_BIGINT BIGINT, 
+  4 C_NUMBER NUMBER, C_DOUBLE DOUBLE PRECISION,
+  5 C_CHAR20 CHAR(20), C_CHAR4000 CHAR(100), 
+  6 C_VARCHAR20 VARCHAR(20), C_VARCHAR4000 VARCHAR(100), 
+  7 C_TEXT TEXT,
+  8 C_BOOL BOOL, 
+  9 C_TIMESTAMP3 TIMESTAMP(3), C_TIMESTAMP6 TIMESTAMP(6) )
+ 10 --DISTRIBUTE BY HASH(C_INTEGER)
+ 11 PARTITION BY RANGE ( C_BIGINT)
+ 12 ( PARTITION PT1 VALUES LESS THAN ( 10000 ),
+ 13 PARTITION PT2 VALUES LESS THAN ( 20000 ),
+ 14 PARTITION PT3 VALUES LESS THAN ( 30000 ),
+ 15 PARTITION PT4 VALUES LESS THAN ( MAXVALUE ));
+
+Succeed.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_CHAR20) VALUES('CANTIANDB');
+
+1 rows affected.
+
+SQL> ALTER TABLE RQG_ALL_TYPE_TABLE_GSQL ADD COLUMN C_NUMBER_NEW NUMBER NULL DEFAULT 110; 
+
+Succeed.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_BOOL) VALUES(FALSE);
+
+1 rows affected.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_NUMBER_NEW) VALUES(11);
+
+1 rows affected.
+
+SQL> SELECT * FROM RQG_ALL_TYPE_TABLE_GSQL ORDER BY C_CHAR20,C_NUMBER_NEW;
+
+ID                   C_INTEGER    C_BIGINT             C_NUMBER                                 C_DOUBLE             C_CHAR20             C_CHAR4000                                                       C_VARCHAR20          C_VARCHAR4000                                                    C_TEXT                                                           C_BOOL C_TIMESTAMP3                     C_TIMESTAMP6                     C_NUMBER_NEW                            
+-------------------- ------------ -------------------- ---------------------------------------- -------------------- -------------------- ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------ -------------------------------- -------------------------------- ----------------------------------------
+                                                                                                                     CANTIANDB                                                                                                                                                                                                                                                                                                               110
+                                                                                                                                                                                                                                                                                                                                                                                                                                           11                                      
+                                                                                                                                                                                                                                                                                                                                                                  FALSE                                                                    110                                     
+
+3 rows fetched.
+
+SQL> 
+SQL> --TEST
+SQL> DROP TABLE IF EXISTS RQG_ALL_TYPE_TABLE_GSQL; 
+
+Succeed.
+
+SQL> CREATE TABLE RQG_ALL_TYPE_TABLE_GSQL( 
+  2 ID BIGINT, 
+  3 C_INTEGER INTEGER , C_BIGINT BIGINT, 
+  4 C_NUMBER NUMBER, C_DOUBLE DOUBLE PRECISION,
+  5 C_CHAR20 CHAR(20), C_CHAR4000 CHAR(100), 
+  6 C_VARCHAR20 VARCHAR(20), C_VARCHAR4000 VARCHAR(100), 
+  7 C_TEXT TEXT,
+  8 C_BOOL BOOL, 
+  9 C_TIMESTAMP3 TIMESTAMP(3), C_TIMESTAMP6 TIMESTAMP(6) )
+ 10 --DISTRIBUTE BY HASH(C_INTEGER)
+ 11 PARTITION BY RANGE ( C_BIGINT)
+ 12 ( PARTITION PT1 VALUES LESS THAN ( 10000 ),
+ 13 PARTITION PT2 VALUES LESS THAN ( 20000 ),
+ 14 PARTITION PT3 VALUES LESS THAN ( 30000 ),
+ 15 PARTITION PT4 VALUES LESS THAN ( MAXVALUE ));
+
+Succeed.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_CHAR20) VALUES('CANTIANDB');
+
+1 rows affected.
+
+SQL> ALTER TABLE RQG_ALL_TYPE_TABLE_GSQL ADD COLUMN C_NUMBER_NEW NUMBER DEFAULT NULL; 
+
+Succeed.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_BOOL) VALUES(FALSE);
+
+1 rows affected.
+
+SQL> INSERT INTO RQG_ALL_TYPE_TABLE_GSQL(C_NUMBER_NEW) VALUES(11);
+
+1 rows affected.
+
+SQL> SELECT * FROM RQG_ALL_TYPE_TABLE_GSQL ORDER BY C_CHAR20,C_NUMBER_NEW;
+
+ID                   C_INTEGER    C_BIGINT             C_NUMBER                                 C_DOUBLE             C_CHAR20             C_CHAR4000                                                       C_VARCHAR20          C_VARCHAR4000                                                    C_TEXT                                                           C_BOOL C_TIMESTAMP3                     C_TIMESTAMP6                     C_NUMBER_NEW                            
+-------------------- ------------ -------------------- ---------------------------------------- -------------------- -------------------- ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------ -------------------------------- -------------------------------- ----------------------------------------
+                                                                                                                     CANTIANDB
+                                                                                                                                                                                                                                                                                                                                                                                                                                           11                                      
+                                                                                                                                                                                                                                                                                                                                                                  FALSE                                                                                                            
+
+3 rows fetched.
+
+SQL> DROP TABLE IF EXISTS RQG_ALL_TYPE_TABLE_GSQL; 
+
+Succeed.
+
+SQL> --TEST RENAME, the table name does not support case sensitive , DML not support single(double) quotes of table
+SQL> DROP TABLE IF EXISTS T_RENAME_1; 
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_RENAME_2; 
+
+Succeed.
+
+SQL> CREATE TABLE T_RENAME_1(i int,j int);
+
+Succeed.
+
+SQL> INSERT INTO T_RENAME_1 values(1,1);
+
+1 rows affected.
+
+SQL> SELECT * from T_RENAME_1;
+
+I            J           
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> SELECT NAME from SYS_TABLES where name like 'T_RENAME_%';
+
+NAME                                                            
+----------------------------------------------------------------
+T_RENAME_1                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE IF EXISTS "t_rename_1"; 
+
+Succeed.
+
+SQL> CREATE TABLE "t_rename_1" (a varchar2(10),b varchar2(10));
+
+Succeed.
+
+SQL> CREATE TABLE T_RENAME_2 (a varchar2(10),b varchar2(10));
+
+Succeed.
+
+SQL> INSERT INTO T_RENAME_2 values('a','a');
+
+1 rows affected.
+
+SQL> SELECT * from T_RENAME_2;
+
+A          B         
+---------- ----------
+a          a         
+
+1 rows fetched.
+
+SQL> SELECT NAME from SYS_TABLES where name like 'T_RENAME_%' ORDER BY name;
+
+NAME                                                            
+----------------------------------------------------------------
+T_RENAME_1                                                      
+T_RENAME_2                                                      
+
+2 rows fetched.
+
+SQL> DROP TABLE IF EXISTS  "t_rename_2";
+
+Succeed.
+
+SQL> ALTER TABLE T_RENAME_1 rename to T_RENAME_2;
+
+CT-01301, SYS.T_RENAME_2 already exists
+SQL> ALTER TABLE T_RENAME_1 rename to "t_rename_2";
+
+Succeed.
+
+SQL> SELECT NAME from SYS_TABLES where name like 'T_RENAME_%' ORDER BY name;
+
+NAME                                                            
+----------------------------------------------------------------
+T_RENAME_2                                                      
+
+1 rows fetched.
+
+SQL> SELECT * from T_RENAME_2;
+
+A          B         
+---------- ----------
+a          a         
+
+1 rows fetched.
+
+SQL> SELECT * from T_RENAME_1;
+
+CT-00843, [1:15]The table or view SYS.T_RENAME_1 does not exist.
+SQL> SELECT * from 't_rename_2';
+
+CT-00601, [1:15]Sql syntax error: table name or subselect expected but 't_rename_2' found.
+SQL> DROP TABLE T_RENAME_2; 
+
+Succeed.
+
+SQL> ---case 5 modify column type which column in index
+SQL> drop table STORAGE_ELSE_TABLE_047;
+
+CT-00843, The table or view SYS.STORAGE_ELSE_TABLE_047 does not exist.
+SQL> create table STORAGE_ELSE_TABLE_047(a int);
+
+Succeed.
+
+SQL> create index STORAGE_ELSE_IDX_047 on STORAGE_ELSE_TABLE_047(a);
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(1);
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A           
+------------
+1           
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a int;
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(111);
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A           
+------------
+111         
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a TIMESTAMP;
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(to_char(sysdate,'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> select count(*) from STORAGE_ELSE_TABLE_047;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a number;
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(2);
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A                                       
+----------------------------------------
+2                                       
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a numeric(12,2);
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values(3);
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A                                       
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a char(100);
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values('abcdefghe');
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A                                                               
+----------------------------------------------------------------
+abcdefghe                                                                                           
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> alter table STORAGE_ELSE_TABLE_047 modify a varchar2(200);
+
+Succeed.
+
+SQL> insert into STORAGE_ELSE_TABLE_047 values('varchar2-50000000000000');
+
+1 rows affected.
+
+SQL> select * from STORAGE_ELSE_TABLE_047;
+
+A                                                               
+----------------------------------------------------------------
+varchar2-50000000000000                                         
+
+1 rows fetched.
+
+SQL> delete from STORAGE_ELSE_TABLE_047;
+
+1 rows affected.
+
+SQL> drop table STORAGE_ELSE_TABLE_047;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> create table t1(a int, b int);
+
+Succeed.
+
+SQL> create index idx_t1_1 on t1(a);
+
+Succeed.
+
+SQL> alter index idx_t1_1 on t1 rebuild  tablespace 'xxx' online;
+
+CT-00601, [1:42]Sql syntax error: invalid variant/object name was found
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists resource_state_type;
+
+Succeed.
+
+SQL> CREATE TABLE resource_state_type
+  2 (
+  3    name VARCHAR(32) NOT NULL,
+  4    maxNumber INTEGER NOT NULL,
+  5    PRIMARY KEY (name)
+  6 );
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE IF NOT EXISTS resource_state_type
+  2 (
+  3    name VARCHAR(32) NOT NULL,
+  4    maxNumber INTEGER NOT NULL,
+  5    PRIMARY KEY (name)
+  6 );
+
+Succeed.
+
+SQL> drop table resource_state_type;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists test_part_if_not_exist;
+
+Succeed.
+
+SQL> CREATE TABLE IF NOT EXISTS test_part_if_not_exist(f1 int, f2 real, f3 number, f4 char(30), f5 varchar(30), f6 date, f7 timestamp)
+  2 PARTITION BY RANGE(f3)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> create table test_part_if_not_exist(f1 int, f2 real, f3 number, f4 char(30), f5 varchar(30), f6 date, f7 timestamp)
+  2 PARTITION BY RANGE(f3)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(MAXVALUE)
+  8 );
+
+CT-01301, SYS.TEST_PART_IF_NOT_EXIST already exists
+SQL> drop table test_part_if_not_exist;
+
+Succeed.
+
+SQL> 
+SQL> create table if not exists TEST (fd int);
+
+Succeed.
+
+SQL> alter table  TEST enable row movement;
+
+CT-00613, Invalid operation,unsupported alter table operation
+
+SQL> alter table  TEST DISABLE row movement;
+
+CT-00613, Invalid operation,unsupported alter table operation
+
+SQL> alter TABLE  TEST shrink SPACE;
+
+Succeed.
+
+SQL> alter TABLE  TEST shrink SPACE COMPACT;
+
+Succeed.
+
+SQL> alter TABLE  TEST shrink SPACE CASCADE;
+
+CT-00101, Capability: shrink cascade not supported
+SQL> alter TABLE  TEST shrink SPACE COMPACT CASCADE;
+
+CT-00101, Capability: shrink cascade not supported
+SQL> drop table TEST;
+
+Succeed.
+
+SQL> 
+SQL> --TEST for ALTER TABLE syntax
+SQL> DROP TABLE IF EXISTS test_brackets_tbl;
+
+Succeed.
+
+SQL> CREATE TABLE test_brackets_tbl(col1 INTEGER NOT NULL, col2 CHAR(8), col3 VARCHAR(32));
+
+Succeed.
+
+SQL> --for unique constrant
+SQL> ALTER TABLE test_brackets_tbl ADD CONSTRAINT const_brackets_uniq(col2);
+
+CT-00601, [1:66]Sql syntax error: , expected but col2 found
+SQL> ALTER TABLE test_brackets_tbl ADD (CONSTRAINT const_brackets_uniq UNIQUE(col3);
+
+CT-00601, [1:35]Sql syntax error: text is not completed
+SQL> ALTER TABLE test_brackets_tbl ADD (CONSTRAINT const_brackets_uniq UNIQUE(col3)));
+
+CT-00601, [1:80]Sql syntax error: text is incorrect
+SQL> ALTER TABLE test_brackets_tbl ADD (CONSTRAINT const_brackets_uniq UNIQUE(col3) enab);
+
+CT-00601, [1:80]Sql syntax error: unexpected text enab
+SQL> ALTER TABLE test_brackets_tbl ADD (CONSTRAINT const_brackets_uniq_01 UNIQUE(col3) ENABLE);
+
+Succeed.
+
+SQL> ALTER TABLE test_brackets_tbl ADD (CONSTRAINT const_brackets_uniq UNIQUE(col3) ) ENABLE;
+
+CT-00601, [1:88]Sql syntax error: expected end but ENABLE found
+SQL> ALTER TABLE test_brackets_tbl ADD ((CONSTRAINT const_brackets_uniq UNIQUE(col3) ) ENABLE);
+
+CT-00601, [1:89]Sql syntax error: expected end but ENABLE found
+SQL> ALTER TABLE test_brackets_tbl ADD ((CONSTRAINT const_brackets_uniq_02) UNIQUE(col2));
+
+CT-00601, [1:70]Sql syntax error: more text expected but terminated
+SQL> ALTER TABLE test_brackets_tbl ADD (CONSTRAINT const_brackets_uniq_02 UNIQUE(col2));
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE test_brackets_tbl DROP CONSTRAINT const_brackets_uniq_01;
+
+Succeed.
+
+SQL> ALTER TABLE test_brackets_tbl ADD ((CONSTRAINT const_brackets_uniq_03 UNIQUE(col3) VALIDATE /* COMMENT */ ) /* COMMENT */);
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE test_brackets_tbl DROP CONSTRAINT const_brackets_uniq_02;
+
+Succeed.
+
+SQL> ALTER TABLE test_brackets_tbl DROP CONSTRAINT const_brackets_uniq_03;
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE sys.test_brackets_tbl ADD ( CONSTRAINT const_brackets_uniq_02 UNIQUE (col2) NOT DEFERRABLE INITIALLY IMMEDIATE VALIDATE );    --esight's needs
+
+Succeed.
+
+SQL> ALTER TABLE test_brackets_tbl DROP CONSTRAINT const_brackets_uniq_02;
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE test_brackets_tbl ADD (CONSTRAINT const_brackets_uniq_02 UNIQUE(col2), CONSTRAINT const_brackets_uniq_03 UNIQUE(col3) RELY);  --only one constraint can be defined in add constraint clause
+
+CT-00601, [1:82]Sql syntax error: expected end but , found
+SQL> 
+SQL> ALTER TABLE test_brackets_tbl MODIFY (col1 BIGINT);
+
+Succeed.
+
+SQL> ALTER TABLE test_brackets_tbl MODIFY (col1 BIGINT)));
+
+CT-00601, [1:51]Sql syntax error: text is incorrect
+SQL> ALTER TABLE test_brackets_tbl MODIFY (col1 BIGINT), col2 VARCHAR(32);
+
+CT-00601, [1:51]Sql syntax error: expected end but , found
+SQL> ALTER TABLE test_brackets_tbl MODIFY (col1 BIGINT, col2 VARCHAR(32));
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE sys.test_brackets_tbl ADD ( CONSTRAINT const_brackets_uniq_02 UNIQUE (col2) NOT DEFERRABLE INITIALLY IMMEDIATE VALIDATE );
+
+Succeed.
+
+SQL> ALTER TABLE test_brackets_tbl MODIFY (UNIQUE(col2);
+
+CT-00601, [1:38]Sql syntax error: text is not completed
+SQL> ALTER TABLE test_brackets_tbl MODIFY (CONSTRAINT const_brackets_uniq_02 UNIQUE(col2) RELY) VALIDATE);
+
+CT-00601, [1:100]Sql syntax error: expected end but VALIDATE found
+SQL> 
+SQL> DROP TABLE test_brackets_tbl;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018062701679
+SQL> DROP TABLE IF EXISTS constraint_index_range_tbl_045;
+
+Succeed.
+
+SQL> create table constraint_index_range_tbl_045(c_id int,
+  2 c_d_id int NOT NULL,
+  3 c_w_id int,
+  4 c_first varchar(32),
+  5 c_middle char(2),
+  6 c_last varchar(32) NOT NULL,
+  7 c_street_1 varchar(20),
+  8 c_street_2 varchar(20),
+  9 c_city varchar(20) NOT NULL,
+ 10 c_state char(2) NOT NULL,
+ 11 c_zip char(9) NOT NULL,
+ 12 c_phone char(16) NOT NULL,
+ 13 c_since timestamp,
+ 14 c_credit char(2) NOT NULL,
+ 15 c_credit_lim numeric(12,2),
+ 16 c_discount numeric(4,4),
+ 17 c_balance numeric(12,2),
+ 18 c_ytd_payment real NOT NULL,
+ 19 c_payment_cnt number NOT NULL,
+ 20 c_delivery_cnt bool NOT NULL,
+ 21 c_end date NOT NULL,
+ 22 c_vchar varchar(1000),
+ 23 c_data clob,
+ 24 c_text blob) partition by range(c_d_id,c_last) (partition PART_1 values less than (101,'BBBAR101'),partition PART_2 values less than (201,'CCBAR201'),partition PART_3 values less than (301,'DDBAR301'),partition PART_4 values less than (401,'EEBAR401'),partition PART_5 values less than (maxvalue,maxvalue));
+
+Succeed.
+
+SQL> 
+SQL> select cons_name from SYS_CONSTRAINT_DEFS where cons_name like 'RGE_TBL_045%' order by 1;
+
+CONS_NAME                                                       
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> alter table constraint_index_range_tbl_045 add constraint rge_tbl_045_constraint_001 unique(c_first,c_last) local;  --syntax error
+
+CT-00601, [1:109]Sql syntax error: unexpected text local
+SQL> alter table constraint_index_range_tbl_045 add constraint rge_tbl_045_constraint_003 primary key(c_last) online;  --syntax error
+
+CT-00601, [1:106]Sql syntax error: unexpected text online
+SQL> alter table constraint_index_range_tbl_045 add constraint rge_tbl_045_constraint_004 primary key(c_last) online online;  --syntax error
+
+CT-00601, [1:106]Sql syntax error: unexpected text online
+SQL> alter table constraint_index_range_tbl_045 add constraint rge_tbl_045_constraint_005 primary key(c_last) local local;  --syntax error
+
+CT-00601, [1:106]Sql syntax error: unexpected text local
+SQL> alter table constraint_index_range_tbl_045 add constraint rge_tbl_045_constraint_005 primary key(c_last) ,,;  --syntax error
+
+CT-00601, [1:106]Sql syntax error: expected end but , found
+SQL> 
+SQL> alter table constraint_index_range_tbl_045 add constraint rge_tbl_045_constraint_002 primary key(c_last) enable;  --constraint state "enable" syntaxly compatable
+
+Succeed.
+
+SQL> 
+SQL> select cons_name from SYS_CONSTRAINT_DEFS where cons_name like 'RGE_TBL_045%' order by 1;
+
+CONS_NAME                                                       
+----------------------------------------------------------------
+RGE_TBL_045_CONSTRAINT_002                                      
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE constraint_index_range_tbl_045;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS  test;
+
+Succeed.
+
+SQL> create table test(id int constraint pk_id primary key, name varchar2(10));
+
+Succeed.
+
+SQL> alter table test Enable validate constraint ck_name;
+
+CT-00811, The constraint CK_NAME does not exist.
+SQL> alter table test Enable validate constraint pk_id;
+
+CT-00601, Sql syntax error: Cannot apply constaint state to primary/uniuqe constraint now.
+SQL> alter table test add constraint ck_id check(id > 10);
+
+Succeed.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'CK_ID';
+
+FLAGS       
+------------
+6           
+
+1 rows fetched.
+
+SQL> alter table test enable constraint ck_id;
+
+Succeed.
+
+SQL> select STATUS, VALIDATED from DBA_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+ENABLED  VALIDATED    
+
+1 rows fetched.
+
+SQL> select STATUS, VALIDATED from ALL_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+ENABLED  VALIDATED    
+
+1 rows fetched.
+
+SQL> select STATUS, VALIDATED from USER_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+ENABLED  VALIDATED    
+
+1 rows fetched.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'CK_ID';
+
+FLAGS       
+------------
+6           
+
+1 rows fetched.
+
+SQL> alter table test Enable validate constraint ck_id;
+
+Succeed.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'CK_ID';
+
+FLAGS       
+------------
+6           
+
+1 rows fetched.
+
+SQL> alter table test Enable NOVALIDATE constraint ck_id;
+
+Succeed.
+
+SQL> select STATUS, VALIDATED from DBA_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+ENABLED  NOT VALIDATED
+
+1 rows fetched.
+
+SQL> select STATUS, VALIDATED from ALL_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+ENABLED  NOT VALIDATED
+
+1 rows fetched.
+
+SQL> select STATUS, VALIDATED from USER_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+ENABLED  NOT VALIDATED
+
+1 rows fetched.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'CK_ID';
+
+FLAGS       
+------------
+2           
+
+1 rows fetched.
+
+SQL> alter table test disable  constraint ck_id;
+
+Succeed.
+
+SQL> select STATUS, VALIDATED from DBA_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+DISABLED NOT VALIDATED
+
+1 rows fetched.
+
+SQL> select STATUS, VALIDATED from ALL_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+DISABLED NOT VALIDATED
+
+1 rows fetched.
+
+SQL> select STATUS, VALIDATED from USER_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+DISABLED NOT VALIDATED
+
+1 rows fetched.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'CK_ID';
+
+FLAGS       
+------------
+0           
+
+1 rows fetched.
+
+SQL> alter table test disable validate  constraint ck_id;
+
+Succeed.
+
+SQL> select STATUS, VALIDATED from DBA_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+DISABLED VALIDATED    
+
+1 rows fetched.
+
+SQL> select STATUS, VALIDATED from ALL_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+DISABLED VALIDATED    
+
+1 rows fetched.
+
+SQL> select STATUS, VALIDATED from USER_CONSTRAINTS where CONSTRAINT_NAME = 'CK_ID';
+
+STATUS   VALIDATED    
+-------- -------------
+DISABLED VALIDATED    
+
+1 rows fetched.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'CK_ID';
+
+FLAGS       
+------------
+4           
+
+1 rows fetched.
+
+SQL> alter table test enable constraint ck_id;
+
+Succeed.
+
+SQL> insert into test values(5, 'Oracle');--failed
+
+CT-01222, Check constraint violated
+SQL> insert into test values(17,'ERP');--success
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test disable constraint ck_id;
+
+Succeed.
+
+SQL> insert into test values(5, 'Oracle');--success
+
+1 rows affected.
+
+SQL> select * from test  order by id;
+
+ID           NAME      
+------------ ----------
+5            Oracle    
+17           ERP       
+
+2 rows fetched.
+
+SQL> alter table test enable novalidate constraint ck_id;
+
+Succeed.
+
+SQL> insert into test values(32, 'SAP');
+
+1 rows affected.
+
+SQL> insert into test values(3, 'Linux');
+
+CT-01222, Check constraint violated
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test disable validate constraint ck_id;
+
+CT-01222, Check constraint violated
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'CK_ID';
+
+FLAGS       
+------------
+2           
+
+1 rows fetched.
+
+SQL> delete from test where id < 10;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test disable validate constraint ck_id;
+
+Succeed.
+
+SQL> select * from test  order by id;
+
+ID           NAME      
+------------ ----------
+17           ERP       
+32           SAP       
+
+2 rows fetched.
+
+SQL> update test set name = 'update' where id = 32;
+
+CT-00641, No insert/update/delete on table with some constraints disabled and validated
+SQL> insert into test values(18, 'insert');
+
+CT-00641, No insert/update/delete on table with some constraints disabled and validated
+SQL> delete from test where id = 17;
+
+CT-00641, No insert/update/delete on table with some constraints disabled and validated
+SQL> alter table test disable novalidate constraint ck_id;
+
+Succeed.
+
+SQL> insert into test values(2, 'Linux');
+
+1 rows affected.
+
+SQL> insert into test values(13, 'Windows');
+
+1 rows affected.
+
+SQL> update test set name = 'Change' where id = 17;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test  order by id;
+
+ID           NAME      
+------------ ----------
+2            Linux     
+13           Windows   
+17           Change    
+32           SAP       
+
+4 rows fetched.
+
+SQL> DROP TABLE test;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS  F_TAB;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS  C_TAB;
+
+Succeed.
+
+SQL> CREATE TABLE F_TAB(FD_INT INT, FD_VARCHAR VARCHAR(100), CONSTRAINT PK_F_TAB PRIMARY KEY (FD_INT, FD_VARCHAR));
+
+Succeed.
+
+SQL> CREATE TABLE C_TAB(FD_INT INT PRIMARY KEY, FD_VARCHAR_2 VARCHAR(50), FD_VARCHAR VARCHAR(100), FD_INT_2 INT, FD_CLOB CLOB, CONSTRAINT RF_C_TAB FOREIGN KEY (FD_INT_2, FD_VARCHAR) REFERENCES F_TAB ON DELETE SET NULL);
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE C_TAB disable CONSTRAINT RF_C_TAB;
+
+Succeed.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'RF_C_TAB';
+
+FLAGS       
+------------
+0           
+
+1 rows fetched.
+
+SQL> INSERT INTO F_TAB VALUES(1,'F_ABC');--success
+
+1 rows affected.
+
+SQL> INSERT INTO F_TAB VALUES(2,'F_ABC');--success
+
+1 rows affected.
+
+SQL> INSERT INTO C_TAB VALUES(1,'F_ABC', 'F_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'F_ABC','F_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(3,'F_ABC','F_ABC', 3, '1234354587643123455213445656723123424554566776763221132454566768767433242323');--success
+
+3 rows affected.
+
+SQL> INSERT INTO C_TAB VALUES(4,'C_ABC', 'C_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(5,'C_ABC','C_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');--success
+
+2 rows affected.
+
+SQL> UPDATE C_TAB SET FD_INT_2 = 4 WHERE FD_INT = 1;--success
+
+1 rows affected.
+
+SQL> SELECT * FROM C_TAB ORDER BY FD_INT;--success
+
+FD_INT       FD_VARCHAR_2                                       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ -------------------------------------------------- ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1            F_ABC                                              F_ABC                                                            4            1234354587643123455213445656723123424554566776763221132454566768767433242323
+2            F_ABC                                              F_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+3            F_ABC                                              F_ABC                                                            3            1234354587643123455213445656723123424554566776763221132454566768767433242323
+4            C_ABC                                              C_ABC                                                            1            1234354587643123455213445656723123424554566776763221132454566768767433242323
+5            C_ABC                                              C_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+5 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE C_TAB enable validate CONSTRAINT RF_C_TAB;
+
+CT-01223, Integrity constraint violated - parent key not found
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'RF_C_TAB';
+
+FLAGS       
+------------
+0           
+
+1 rows fetched.
+
+SQL> ALTER TABLE C_TAB enable novalidate CONSTRAINT RF_C_TAB;
+
+Succeed.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'RF_C_TAB';
+
+FLAGS       
+------------
+2           
+
+1 rows fetched.
+
+SQL> delete from C_TAB;
+
+5 rows affected.
+
+SQL> INSERT INTO C_TAB VALUES(1,'F_ABC', 'F_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(3,'F_ABC','F_ABC', 3, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'F_ABC','F_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');--failed
+
+CT-01223, Integrity constraint violated - parent key not found
+SQL> INSERT INTO C_TAB VALUES(1,'C_ABC', 'C_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'C_ABC','C_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');--failed
+
+CT-01223, Integrity constraint violated - parent key not found
+SQL> INSERT INTO C_TAB VALUES(1,'F_ABC', 'F_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'F_ABC','F_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');--success
+
+2 rows affected.
+
+SQL> UPDATE C_TAB SET FD_INT_2 = 4 WHERE FD_INT = 1;--failed
+
+CT-01223, Integrity constraint violated - parent key not found
+SQL> SELECT * FROM C_TAB ORDER BY FD_INT;
+
+FD_INT       FD_VARCHAR_2                                       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ -------------------------------------------------- ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1            F_ABC                                              F_ABC                                                            1            1234354587643123455213445656723123424554566776763221132454566768767433242323
+2            F_ABC                                              F_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+2 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE C_TAB disable validate CONSTRAINT RF_C_TAB;
+
+Succeed.
+
+SQL> select FLAGS from SYS_CONSTRAINT_DEFS join SYS_TABLES ON SYS_CONSTRAINT_DEFS.TABLE# = SYS_TABLES.ID and SYS_CONSTRAINT_DEFS.USER# = SYS_TABLES.USER# where SYS_CONSTRAINT_DEFS.CONS_NAME = 'RF_C_TAB';
+
+FLAGS       
+------------
+4           
+
+1 rows fetched.
+
+SQL> UPDATE C_TAB SET FD_INT_2 = 4 WHERE FD_INT = 1;--failed
+
+CT-00641, No insert/update/delete on table with some constraints disabled and validated
+SQL> INSERT INTO C_TAB VALUES(3,'F_ABC', 'F_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323');--failed
+
+CT-00641, No insert/update/delete on table with some constraints disabled and validated
+SQL> DELETE FROM C_TAB;--failed
+
+CT-00641, No insert/update/delete on table with some constraints disabled and validated
+SQL> DROP TABLE C_TAB;
+
+Succeed.
+
+SQL> DROP TABLE F_TAB;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TEST;
+
+Succeed.
+
+SQL> CREATE TABLE TEST(FD varchar(100) DEFAULT 10 NOT NULL);
+
+Succeed.
+
+SQL> DESC TEST;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+FD                                  NOT NULL VARCHAR(100 BYTE)                   
+
+SQL> select DEFAULT_TEXT from SYS_COLUMNS JOIN SYS_TABLES ON SYS_COLUMNS.USER#=SYS_TABLES.USER# AND SYS_COLUMNS.TABLE#=SYS_TABLES.ID where SYS_TABLES.NAME = 'TEST' AND SYS_COLUMNS.NAME='FD';
+
+DEFAULT_TEXT                                                    
+----------------------------------------------------------------
+10                                                              
+
+1 rows fetched.
+
+SQL> ALTER TABLE TEST MODIFY FD;
+
+Succeed.
+
+SQL> DESC TEST;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+FD                                  NOT NULL VARCHAR(100 BYTE)                   
+
+SQL> select DEFAULT_TEXT from SYS_COLUMNS JOIN SYS_TABLES ON SYS_COLUMNS.USER#=SYS_TABLES.USER# AND SYS_COLUMNS.TABLE#=SYS_TABLES.ID where SYS_TABLES.NAME = 'TEST' AND SYS_COLUMNS.NAME='FD';
+
+DEFAULT_TEXT                                                    
+----------------------------------------------------------------
+10                                                              
+
+1 rows fetched.
+
+SQL> ALTER TABLE TEST MODIFY FD CONSTRAINT CK_FD CHECK (FD IN ('SUCCESSFUL','FAILURE','PARTIAL_SUCCESS'));--todo alter table support inline constraint
+
+Succeed.
+
+SQL> DESC TEST;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+FD                                  NOT NULL VARCHAR(100 BYTE)                   
+
+SQL> SELECT count(*) FROM USER_CONSTRAINTS WHERE CONSTRAINT_NAME = 'CK_FD';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> ALTER TABLE TEST MODIFY FD varchar(50) default 20;
+
+Succeed.
+
+SQL> DESC TEST;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+FD                                  NOT NULL VARCHAR(50 BYTE)                    
+
+SQL> select DEFAULT_TEXT from SYS_COLUMNS JOIN SYS_TABLES ON SYS_COLUMNS.USER#=SYS_TABLES.USER# AND SYS_COLUMNS.TABLE#=SYS_TABLES.ID where SYS_TABLES.NAME = 'TEST' AND SYS_COLUMNS.NAME='FD';
+
+DEFAULT_TEXT                                                    
+----------------------------------------------------------------
+20                                                              
+
+1 rows fetched.
+
+SQL> DROP TABLE TEST;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS ALT_INLINE_CSTR;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_INLINE_CSTR(C1 INT);
+
+Succeed.
+
+SQL> ALTER TABLE ALT_INLINE_CSTR ADD C2 INT UNIQUE;
+
+Succeed.
+
+SQL> ALTER TABLE ALT_INLINE_CSTR ADD C3 INT PRIMARY KEY;
+
+Succeed.
+
+SQL> INSERT INTO ALT_INLINE_CSTR VALUES(1, 1, NULL);
+
+CT-00620, Can't set NULL value for column 'C3'
+SQL> ALTER TABLE ALT_INLINE_CSTR ADD C4 INT;
+
+Succeed.
+
+SQL> INSERT INTO ALT_INLINE_CSTR VALUES(1, 1, 1, 1);
+
+1 rows affected.
+
+SQL> ALTER TABLE ALT_INLINE_CSTR MODIFY C4 UNIQUE;
+
+Succeed.
+
+SQL> SELECT i.ID, i.COLS, i.IS_PRIMARY, i.IS_UNIQUE FROM SYS_INDEXES i, SYS_TABLES t WHERE t.name='ALT_INLINE_CSTR' AND t.USER#=i.USER# AND t.ID=i.TABLE# ORDER BY i.ID;
+
+ID           COLS         IS_PRIMARY   IS_UNIQUE   
+------------ ------------ ------------ ------------
+0            1            0            1           
+1            1            1            0           
+2            1            0            1           
+
+3 rows fetched.
+
+SQL> DROP TABLE ALT_INLINE_CSTR PURGE;
+
+Succeed.
+
+SQL> --multi-column support
+SQL> DROP TABLE IF EXISTS t_foobar;
+
+Succeed.
+
+SQL> CREATE TABLE t_foobar (col1 INTEGER NOT NULL, col2 VARCHAR(32));
+
+Succeed.
+
+SQL> DESC t_foobar;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL1                                NOT NULL BINARY_INTEGER                      
+COL2                                         VARCHAR(32 BYTE)                    
+
+SQL> 
+SQL> ALTER TABLE t_foobar MODIFY (col1 INTEGER DEFAULT 0, col1 CHAR(64) NOT NULL);
+
+CT-00601, [1:54]Sql syntax error: duplicated column name "col1"
+SQL> ALTER TABLE t_foobar MODIFY col1 INTEGER DEFAULT 0, col1 CHAR(64) NOT NULL;
+
+CT-00601, [1:51]Sql syntax error: unexpected "," found in the modify column clause
+SQL> ALTER TABLE t_foobar MODIFY (col1 REAL, col3 VARCHAR(32));
+
+CT-00844, The column T_FOOBAR.COL3 does not exist.
+SQL> DESC t_foobar;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL1                                NOT NULL BINARY_INTEGER                      
+COL2                                         VARCHAR(32 BYTE)                    
+
+SQL> ALTER TABLE t_foobar MODIFY (col1 INTEGER DEFAULT 0, col2 CHAR(64) NOT NULL);
+
+Succeed.
+
+SQL> DESC t_foobar;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL1                                NOT NULL BINARY_INTEGER                      
+COL2                                NOT NULL CHAR(64 BYTE)                       
+
+SQL> ALTER TABLE t_foobar MODIFY (col1 INTEGER NOT NULL);
+
+Succeed.
+
+SQL> DESC t_foobar;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL1                                NOT NULL BINARY_INTEGER                      
+COL2                                NOT NULL CHAR(64 BYTE)                       
+
+SQL> 
+SQL> ALTER TABLE t_foobar ADD (col3 INTEGER NOT NULL, col3 REAL);
+
+CT-00601, [1:50]Sql syntax error: duplicated column name "col3"
+SQL> ALTER TABLE t_foobar ADD col3 INTEGER NOT NULL, col4 REAL;
+
+CT-00601, [1:47]Sql syntax error: unexpected "," found in the add column clause
+SQL> ALTER TABLE t_foobar ADD (col3 INTEGER NOT NULL, col4 REAL);
+
+Succeed.
+
+SQL> ALTER TABLE t_foobar ADD (col5 INTEGER NOT NULL, COLUMN col6 REAL);
+
+Succeed.
+
+SQL> ALTER TABLE t_foobar ADD (COLUMN col7 INTEGER NOT NULL, COLUMN col8 REAL);
+
+Succeed.
+
+SQL> DESC t_foobar;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL1                                NOT NULL BINARY_INTEGER                      
+COL2                                NOT NULL CHAR(64 BYTE)                       
+COL3                                NOT NULL BINARY_INTEGER                      
+COL4                                         BINARY_DOUBLE                       
+COL5                                NOT NULL BINARY_INTEGER                      
+COL6                                         BINARY_DOUBLE                       
+COL7                                NOT NULL BINARY_INTEGER                      
+COL8                                         BINARY_DOUBLE                       
+
+SQL> 
+SQL> ALTER TABLE t_foobar ADD (UNIQUE (col3, col5), PRIMARY KEY(col1));
+
+CT-00601, [1:46]Sql syntax error: expected end but , found
+SQL> ALTER TABLE t_foobar ADD COLUMN UNIQUE (col3, col5);
+
+CT-00601, [1:40]Sql syntax error: datatype expected, but got '(col3'
+SQL> ALTER TABLE t_foobar ADD UNIQUE (col3, col5), PRIMARY KEY(col1);
+
+CT-00601, [1:45]Sql syntax error: expected end but , found
+SQL> ALTER TABLE t_foobar ADD UNIQUE (col3, col5);  --success
+
+Succeed.
+
+SQL> ALTER TABLE t_foobar MODIFY(col3 VARCHAR(10), c999 INTEGER); --error
+
+CT-00844, The column T_FOOBAR.C999 does not exist.
+SQL> DESC t_foobar;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL1                                NOT NULL BINARY_INTEGER                      
+COL2                                NOT NULL CHAR(64 BYTE)                       
+COL3                                NOT NULL BINARY_INTEGER                      
+COL4                                         BINARY_DOUBLE                       
+COL5                                NOT NULL BINARY_INTEGER                      
+COL6                                         BINARY_DOUBLE                       
+COL7                                NOT NULL BINARY_INTEGER                      
+COL8                                         BINARY_DOUBLE                       
+
+SQL> DROP TABLE t_foobar;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS t_foobar;
+
+Succeed.
+
+SQL> CREATE TABLE t_foobar(
+  2 c_id int, c_integer integer,
+  3 c_real real,c_float float, c_cdouble binary_double,
+  4 c_decimal decimal(38), c_number number(38),c_number1 number,c_number2 number(20,10),c_numeric numeric(38),
+  5 c_char char(50) default null, c_varchar varchar(20), c_varchar2 varchar2(4000),
+  6 c_clob clob,
+  7 c_raw raw(20),c_blob blob,
+  8 c_date date,c_timestamp timestamp
+  9 );
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE t_foobar MODIFY (c_id int,c_char char(50),c_cdouble not null, c_varchar varchar(22),c_numeric numeric);
+
+Succeed.
+
+SQL> ALTER TABLE t_foobar MODIFY (c_id int,c_char char(50));
+
+Succeed.
+
+SQL> ALTER TABLE t_foobar MODIFY (c_numeric numeric);
+
+Succeed.
+
+SQL> ALTER TABLE t_foobar MODIFY (c_cdouble not null, c_varchar varchar(22));
+
+Succeed.
+
+SQL> DROP TABLE t_foobar;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS test_multi_add;
+
+Succeed.
+
+SQL> CREATE TABLE test_multi_add(id INT, c1 VARCHAR(10), c2 BIGINT, c3 CHAR(10)) PARTITION BY RANGE(id) (PARTITION p1 VALUES LESS THAN(10), PARTITION p2 VALUES LESS THAN(20), PARTITION p3 VALUES LESS THAN(MAXVALUE));
+
+Succeed.
+
+SQL> INSERT INTO test_multi_add VALUES(1, 'c1', 111, 'c3'), (11, 'c1', 222, 'c3'), (21, 'c1', 333, 'c3');
+
+3 rows affected.
+
+SQL> ALTER TABLE test_multi_add DROP c1;
+
+Succeed.
+
+SQL> ALTER TABLE test_multi_add DROP c3;
+
+Succeed.
+
+SQL> ALTER TABLE test_multi_add ADD (col_1 INT, col_2 BIGINT DEFAULT 98765432123, col_3 CHAR(10) DEFAULT 'ABCDEFG', col_4 VARCHAR(10), col_5 CLOB DEFAULT 'STORM, EARTH AND FIRE, HEAR MY CALL');
+
+Succeed.
+
+SQL> SELECT * FROM test_multi_add ORDER BY id;
+
+ID           C2                   COL_1        COL_2                COL_3      COL_4      COL_5                                                           
+------------ -------------------- ------------ -------------------- ---------- ---------- ----------------------------------------------------------------
+1            111                               98765432123          ABCDEFG               STORM, EARTH AND FIRE, HEAR MY CALL                             
+11           222                               98765432123          ABCDEFG               STORM, EARTH AND FIRE, HEAR MY CALL                             
+21           333                               98765432123          ABCDEFG               STORM, EARTH AND FIRE, HEAR MY CALL                             
+
+3 rows fetched.
+
+SQL> DROP TABLE test_multi_add PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS test_multi_modify;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS test_index_entry1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS test_index_entry2;
+
+Succeed.
+
+SQL> CREATE TABLE test_index_entry1(table_name VARCHAR(100), index_name VARCHAR(100), entry BIGINT);
+
+Succeed.
+
+SQL> CREATE TABLE test_index_entry2(table_name VARCHAR(100), index_name VARCHAR(100), entry BIGINT);
+
+Succeed.
+
+SQL> CREATE TABLE test_multi_modify(id INT, col_1 INT, col_2 BIGINT DEFAULT 98765432123, col_3 CHAR(10) DEFAULT 'ABCDEFG', col_4 VARCHAR(10), col_5 CLOB DEFAULT 'I STAND READY');
+
+Succeed.
+
+SQL> INSERT INTO test_multi_modify(id, col_1, col_4) VALUES(1, 2, 'c4'), (11, 222, 'c3'), (21, 333, 'c4');
+
+3 rows affected.
+
+SQL> CREATE INDEX ix_test_multi_01 ON test_multi_modify(id, col_1);
+
+Succeed.
+
+SQL> CREATE INDEX ix_test_multi_02 ON test_multi_modify(col_1, col_2);
+
+Succeed.
+
+SQL> CREATE INDEX ix_test_multi_03 ON test_multi_modify(id, col_3);
+
+Succeed.
+
+SQL> INSERT INTO test_index_entry1 SELECT T.name, I.name, I.entry FROM sys_tables T, sys_indexes I WHERE T.user#=I.user# AND T.id = I.table# AND T.name='TEST_MULTI_MODIFY';
+
+3 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> UPDATE test_multi_modify SET col_1=null, col_2=null;
+
+3 rows affected.
+
+SQL> ALTER TABLE test_multi_modify MODIFY (col_1 NUMBER(10, 4), col_2 INTEGER, col_3 VARCHAR(100));
+
+Succeed.
+
+SQL> INSERT INTO test_index_entry2 SELECT T.name, I.name, I.entry FROM sys_tables T, sys_indexes I WHERE T.user#=I.user# AND T.id = I.table# AND T.name='TEST_MULTI_MODIFY';
+
+3 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT E1.table_name, E1.index_name FROM test_index_entry1 E1, test_index_entry2 E2 WHERE E1.table_name=E2.table_name AND E1.index_name = E2.index_name AND E1.entry = E2.entry;
+
+TABLE_NAME                                                       INDEX_NAME                                                      
+---------------------------------------------------------------- ----------------------------------------------------------------
+TEST_MULTI_MODIFY                                                IX_TEST_MULTI_03                                                
+
+1 rows fetched.
+
+SQL> SELECT * FROM test_multi_modify ORDER BY id;
+
+ID           COL_1                                    COL_2        COL_3                                                            COL_4      COL_5                                                           
+------------ ---------------------------------------- ------------ ---------------------------------------------------------------- ---------- ----------------------------------------------------------------
+1                                                                  ABCDEFG                                                          c4         I STAND READY                                                   
+11                                                                 ABCDEFG                                                          c3         I STAND READY                                                   
+21                                                                 ABCDEFG                                                          c4         I STAND READY                                                   
+
+3 rows fetched.
+
+SQL> DROP TABLE test_multi_modify PURGE;
+
+Succeed.
+
+SQL> DROP TABLE test_index_entry1 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE test_index_entry2 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> -- TEST alter table add column auto_increment
+SQL> -- 1 FAIL
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F1 INT NOT NULL AUTO_INCREMENT UNIQUE,
+  4 	F2 VARCHAR(10)
+  5 );
+
+Succeed.
+
+SQL> ALTER TABLE ALT_TEST ADD COLUMN F3 INT NOT NULL AUTO_INCREMENT UNIQUE;
+
+CT-01300, There can be only one auto column and it must be defined as a key
+SQL> 
+SQL> -- 2 FAIL
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F2 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> ALTER TABLE ALT_TEST ADD COLUMN F1 VARCHAR(10) AUTO_INCREMENT UNIQUE;
+
+CT-00601, [1:48]Sql syntax error: auto increment column F1 only support int type
+SQL> 
+SQL> -- 3 FAIL
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F2 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> ALTER TABLE ALT_TEST ADD (COLUMN F1 INT AUTO_INCREMENT UNIQUE, COLUMN F3 INT AUTO_INCREMENT);
+
+CT-01300, There can be only one auto column and it must be defined as a key
+SQL> 
+SQL> -- 4 FAIL
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F1 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> ALTER TABLE ALT_TEST ADD (COLUMN F2 INT AUTO_INCREMENT UNIQUE DEFAULT 0);
+
+CT-00652, Multiple default values specified for column "F2"
+SQL> 
+SQL> -- 5 SUCC
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F1 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> ALTER TABLE ALT_TEST ADD (COLUMN F2 INT AUTO_INCREMENT UNIQUE);
+
+Succeed.
+
+SQL> INSERT INTO ALT_TEST VALUES ('A', NULL), ('B', NULL), ('C', NULL);
+
+3 rows affected.
+
+SQL> SELECT * FROM ALT_TEST ORDER BY F2;
+
+F1         F2          
+---------- ------------
+A          1           
+B          2           
+C          3           
+
+3 rows fetched.
+
+SQL> 
+SQL> -- 6 SUCC
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F1 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> ALTER TABLE ALT_TEST ADD (COLUMN F2 BIGINT AUTO_INCREMENT UNIQUE, COLUMN F3 VARCHAR(10) DEFAULT 'AAAA');
+
+Succeed.
+
+SQL> INSERT INTO ALT_TEST (F1, F2) VALUES ('A', NULL), ('B', NULL), ('C', NULL);
+
+3 rows affected.
+
+SQL> SELECT * FROM ALT_TEST ORDER BY F2 DESC;
+
+F1         F2                   F3        
+---------- -------------------- ----------
+C          3                    AAAA      
+B          2                    AAAA      
+A          1                    AAAA      
+
+3 rows fetched.
+
+SQL> 
+SQL> -- 7 SUCC
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F1 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> ALTER TABLE ALT_TEST ADD COLUMN F2 INT AUTO_INCREMENT PRIMARY KEY;
+
+Succeed.
+
+SQL> INSERT INTO ALT_TEST (F1, F2) VALUES ('A', NULL), ('B', NULL), ('C', NULL);
+
+3 rows affected.
+
+SQL> SELECT * FROM ALT_TEST ORDER BY F2 ASC;
+
+F1         F2          
+---------- ------------
+A          1           
+B          2           
+C          3           
+
+3 rows fetched.
+
+SQL> 
+SQL> -- 8 SUCC, Oracle inline constraint关键字是 primary key/unique, 对于key/unique key不支持
+SQL> --         Mysql 支持key/primary key/unique key
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F1 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> ALTER TABLE ALT_TEST ADD COLUMN F2 INT AUTO_INCREMENT UNIQUE;
+
+Succeed.
+
+SQL> INSERT INTO ALT_TEST (F1, F2) VALUES ('A', NULL), ('B', NULL), ('C', NULL);
+
+3 rows affected.
+
+SQL> SELECT * FROM ALT_TEST ORDER BY F2 ASC;
+
+F1         F2          
+---------- ------------
+A          1           
+B          2           
+C          3           
+
+3 rows fetched.
+
+SQL> 
+SQL> 
+SQL> -- 9 FAIL
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F1 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> -- ERR, 只有 PRIMARY KEY/UNIQUE 合法; 跟oracle一致, 跟mysql有些出入
+SQL> ALTER TABLE ALT_TEST ADD COLUMN F2 INT AUTO_INCREMENT UNIQUE KEY;
+
+CT-00601, [1:62]Sql syntax error: constraint expected but KEY found
+SQL> ALTER TABLE ALT_TEST ADD COLUMN F2 INT AUTO_INCREMENT KEY;
+
+CT-00601, [1:55]Sql syntax error: constraint expected but KEY found
+SQL> ALTER TABLE ALT_TEST ADD COLUMN F2 INT AUTO_INCREMENT PRIMARY;
+
+CT-00601, [1:62]Sql syntax error: KEY expected
+SQL> 
+SQL> -- 10 SUCC
+SQL> DROP TABLE IF EXISTS ALT_TEST;
+
+Succeed.
+
+SQL> CREATE TABLE ALT_TEST
+  2 (
+  3 	F1 VARCHAR(10)
+  4 );
+
+Succeed.
+
+SQL> INSERT INTO ALT_TEST VALUES ('A'),('B'),('C'),('D');
+
+4 rows affected.
+
+SQL> ALTER TABLE ALT_TEST ADD COLUMN F2 INT AUTO_INCREMENT PRIMARY KEY;
+
+Succeed.
+
+SQL> SELECT * FROM ALT_TEST ORDER BY F2;
+
+F1         F2          
+---------- ------------
+A          1           
+B          2           
+C          3           
+D          4           
+
+4 rows fetched.
+
+SQL> INSERT INTO ALT_TEST (F1) VALUES ('D'),('E');
+
+2 rows affected.
+
+SQL> SELECT * FROM ALT_TEST ORDER BY F2 DESC;
+
+F1         F2          
+---------- ------------
+E          6           
+D          5           
+D          4           
+C          3           
+B          2           
+A          1           
+
+6 rows fetched.
+
+SQL> 
+SQL> INSERT INTO ALT_TEST VALUES ('P', NULL), ('Q', 1000), ('Z', NULL);
+
+3 rows affected.
+
+SQL> SELECT * FROM ALT_TEST ORDER BY F2 DESC;
+
+F1         F2          
+---------- ------------
+Z          1001        
+Q          1000        
+P          7           
+E          6           
+D          5           
+D          4           
+C          3           
+B          2           
+A          1           
+
+9 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS check_test_t;
+
+Succeed.
+
+SQL> CREATE TABLE check_test_t(a INT, CHECK(a IN(NULL, 2)), b INT);
+
+Succeed.
+
+SQL> ALTER TABLE check_test_t MODIFY a DATE;
+
+CT-00856, The current constraint forbids the column data type from being modified.
+SQL> drop table if exists cjb%  ;
+
+CT-00601, [1:25]Sql syntax error: expected end but % found
+SQL> drop table if exists cjb%  b;
+
+CT-00601, [1:25]Sql syntax error: expected end but % found
+SQL> 
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> create user test_altertable_dropcolumn identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to test_altertable_dropcolumn;
+
+Succeed.
+
+SQL> conn test_altertable_dropcolumn/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists YY;
+
+Succeed.
+
+SQL> drop table if exists YYY;
+
+Succeed.
+
+SQL> create table YY (id number,name varchar(13), create_time timestamp);
+
+Succeed.
+
+SQL> CREATE SEQUENCE k START WITH 1 INCREMENT BY 1;
+
+Succeed.
+
+SQL> create table YYY (id INT,name VARCHAR(30), sal int);
+
+Succeed.
+
+SQL> --创建view
+SQL> create or replace view YF_view_2 as select name from YY where length(name)>3;  
+
+Succeed.
+
+SQL> --创建触发器
+SQL> create or replace trigger DEL_YF_000 AFTER INSERT ON YYY
+  2 BEGIN
+  3   INSERT INTO YY VALUES(k.nextval,'after insert',systimestamp);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> insert into YYY values (2,'xiaoming',50);
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function YF_FUN(n number) 
+  2 return number is
+  3 v_n number;
+  4 begin
+  5 select length(name) into v_n  from YY where length(name)>2;
+  6 return v_n;
+  7 exception 
+  8 when no_data_found then
+  9 dbe_output.print_line('date not exists!');
+ 10 when others then
+ 11 dbe_output.print_line('other error!');
+ 12 commit;
+ 13 end;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE YF_cunchu_2 IS 
+  2 BEGIN  
+  3 update YY set name='tiantian' where name = 'after insert';  
+  4 COMMIT;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> alter table YY rename column name to myname;
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select status from all_objects where OBJECT_NAME='YF_VIEW_2';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> select status from all_objects where OBJECT_NAME='DEL_YF_000';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> select status from all_objects where OBJECT_NAME='YF_FUN';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> select status from all_objects where OBJECT_NAME='YF_CUNCHU_2';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists YY;
+
+Succeed.
+
+SQL> drop table if exists YYY;
+
+Succeed.
+
+SQL> drop sequence if exists k;
+
+Succeed.
+
+SQL> drop view if exists YF_view_2;
+
+Succeed.
+
+SQL> drop procedure if exists YF_cunchu_2;
+
+Succeed.
+
+SQL> drop function if exists YF_FUN;
+
+Succeed.
+
+SQL> drop trigger if exists del_YF_000;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user test_altertable_dropcolumn cascade;
+
+Succeed.
+
+SQL> 
+SQL> create user test_altertable_renamecolumn identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to test_altertable_renamecolumn;
+
+Succeed.
+
+SQL> conn test_altertable_renamecolumn/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists YY;
+
+Succeed.
+
+SQL> drop table if exists YYY;
+
+Succeed.
+
+SQL> create table YY (id number,name varchar(13), create_time timestamp);
+
+Succeed.
+
+SQL> CREATE SEQUENCE k START WITH 1 INCREMENT BY 1;
+
+Succeed.
+
+SQL> create table YYY (id INT,name VARCHAR(30), sal int);
+
+Succeed.
+
+SQL> --创建view
+SQL> create or replace view YF_view_2 as select name from YY where length(name)>3;  
+
+Succeed.
+
+SQL> --创建触发器
+SQL> create or replace trigger DEL_YF_000 AFTER INSERT ON YYY
+  2 BEGIN
+  3   INSERT INTO YY VALUES(k.nextval,'after insert',systimestamp);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> insert into YYY values (2,'xiaoming',50);
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function YF_FUN(n number) 
+  2 return number is
+  3 v_n number;
+  4 begin
+  5 select length(name) into v_n  from YY where length(name)>2;
+  6 return v_n;
+  7 exception 
+  8 when no_data_found then
+  9 dbe_output.print_line('date not exists!');
+ 10 when others then
+ 11 dbe_output.print_line('other error!');
+ 12 commit;
+ 13 end;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE YF_cunchu_2 IS 
+  2 BEGIN  
+  3 update YY set name='tiantian' where name = 'after insert';  
+  4 COMMIT;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> alter table YY drop name;
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select status from all_objects where OBJECT_NAME='YF_VIEW_2';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> select status from all_objects where OBJECT_NAME='DEL_YF_000';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> select status from all_objects where OBJECT_NAME='YF_FUN';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> select status from all_objects where OBJECT_NAME='YF_CUNCHU_2';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists YY;
+
+Succeed.
+
+SQL> drop table if exists YYY;
+
+Succeed.
+
+SQL> drop sequence if exists k;
+
+Succeed.
+
+SQL> drop view if exists YF_view_2;
+
+Succeed.
+
+SQL> drop procedure if exists YF_cunchu_2;
+
+Succeed.
+
+SQL> drop function if exists YF_FUN;
+
+Succeed.
+
+SQL> drop trigger if exists del_YF_000;
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user test_altertable_renamecolumn cascade;
+
+Succeed.
+
+SQL> 
+SQL> create table t1(c1 varbinary(16) not null, c2 varchar(60) not null, c3 bigint not null,
+  2            c4 varchar(8000), c5 varchar(128), c6 varchar(128), c7 varchar(256),
+  3           c8 varchar(128),c9 varchar(128),c10 varchar(128),c11 varchar(128));
+
+Succeed.
+
+SQL> 
+SQL> alter table t1 add column c12 varchar(128);
+
+Succeed.
+
+SQL> alter table t1 add column c13 varchar(128);
+
+Succeed.
+
+SQL> alter table t1 drop  c13;
+
+Succeed.
+
+SQL> alter table t1 drop  c12;
+
+Succeed.
+
+SQL> alter table t1 drop  c11;
+
+Succeed.
+
+SQL> alter table t1 drop  c10;
+
+Succeed.
+
+SQL> insert into t1(c1, c2 ,c3,c4,c5)  values('aaa','bbb',123,'ccccc','dddd');
+
+1 rows affected.
+
+SQL> alter table t1 modify  c8 varchar(1000) default 'auto';
+
+Succeed.
+
+SQL> select * from t1;
+
+C1                                                               C2                                                           C3                   C4                                                               C5                                                               C6                                                               C7                                                               C8                                                               C9                                                              
+---------------------------------------------------------------- ------------------------------------------------------------ -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+aaa                                                              bbb                                                          123                  ccccc                                                            dddd                                                                                                                                                                                                                                                                                                                                
+
+1 rows fetched.
+
+SQL> alter table t1 modify  c10 varchar(1000) default 'auto';
+
+CT-00844, The column T1.C10 does not exist.
+SQL> 
+SQL> create table test_default(a int, b int);
+
+Succeed.
+
+SQL> insert into test_default values(1, 1);
+
+1 rows affected.
+
+SQL> alter table test_default drop column b;
+
+Succeed.
+
+SQL> alter table test_default add column c int default 10;
+
+Succeed.
+
+SQL> select * from test_default;
+
+A            C           
+------------ ------------
+1            10          
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists test_char_char;
+
+Succeed.
+
+SQL> create table test_char_char(ic varchar(10 char), jc char(10 char), ib varchar(10 byte), jb char(10 byte));
+
+Succeed.
+
+SQL> desc test_char_char;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+IC                                           VARCHAR(10 CHAR)                    
+JC                                           CHAR(10 CHAR)                       
+IB                                           VARCHAR(10 BYTE)                    
+JB                                           CHAR(10 BYTE)                       
+
+SQL> alter table test_char_char modify ic char(100);
+
+Succeed.
+
+SQL> alter table test_char_char modify jc varchar(100);
+
+Succeed.
+
+SQL> alter table test_char_char modify ib char(100 char);
+
+Succeed.
+
+SQL> alter table test_char_char modify jb varchar(100 char);
+
+Succeed.
+
+SQL> desc test_char_char;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+IC                                           CHAR(100 BYTE)                      
+JC                                           VARCHAR(100 BYTE)                   
+IB                                           CHAR(100 CHAR)                      
+JB                                           VARCHAR(100 CHAR)                   
+
+SQL> alter table test_char_char modify ic nvarchar(10);
+
+Succeed.
+
+SQL> desc test_char_char;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+IC                                           VARCHAR(10 CHAR)                    
+JC                                           VARCHAR(100 BYTE)                   
+IB                                           CHAR(100 CHAR)                      
+JB                                           VARCHAR(100 CHAR)                   
+
+SQL> drop table test_char_char;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_con_base_001;
+
+Succeed.
+
+SQL> create table t_con_base_001(id int,c_int int,c_vchar varchar(100),c_clob clob,c_blob blob,c_date date) AUTO_INCREMENT=9;  
+
+Succeed.
+
+SQL> alter table t_con_base_001 add constraint t_con_base_001_con_001 check(c_int>10 and c_vchar>'a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a00000000000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
+
+CT-00601, [1:72]Sql syntax error: length of CHECK's value exceed maximum: 2048
+SQL> drop table t_con_base_001;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists t_abc_001;
+
+Succeed.
+
+SQL> create table t_abc_001(a varchar(10) null, b clob null);
+
+Succeed.
+
+SQL> alter table t_abc_001 modify a varchar(10) null;
+
+Succeed.
+
+SQL> alter table t_abc_001 modify b clob null;
+
+CT-00613, Invalid operation,invalid modification of columns
+SQL> alter table t_abc_001 modify b default 'abc';
+
+Succeed.
+
+SQL> desc t_abc_001;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+A                                            VARCHAR(10 BYTE)                    
+B                                            CLOB                                
+
+SQL> drop table t_abc_001;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists column_test;
+
+Succeed.
+
+SQL> create table column_test(c_id int, c_char1 varchar(10), c_char2 varchar(10), c_char3 varchar(10), c_char4 varchar(10));
+
+Succeed.
+
+SQL> declare 
+  2 i integer;
+  3 begin
+  4 for i in 1 .. 10 loop
+  5 insert into column_test values(1, 'a', null, 'c', 'd');
+  6 end loop;
+  7 commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> alter table column_test add col_uint_1 int;
+
+Succeed.
+
+SQL> alter table column_test add col_uint_2 int;
+
+Succeed.
+
+SQL> alter table column_test drop column col_uint_1;
+
+Succeed.
+
+SQL> alter table column_test drop column col_uint_2;
+
+Succeed.
+
+SQL> alter table column_test modify c_char2 varchar(10) default 'f';
+
+Succeed.
+
+SQL> drop  table  column_test;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists tbl_hash;
+
+Succeed.
+
+SQL> create table tbl_hash(col_int int, col_real real);
+
+Succeed.
+
+SQL> create index if not exists idx_tbl_hash_global_02 on tbl_hash(col_int,col_real asc);
+
+Succeed.
+
+SQL> insert into tbl_hash values (1,2.00);
+
+1 rows affected.
+
+SQL> insert into tbl_hash values (1,2.00);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table tbl_hash add col_uint_1 uint;
+
+Succeed.
+
+SQL> update tbl_hash set col_real=null;
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table tbl_hash modify (col_real uint default 67.34 on update convert(45.3,uint) comment 'real modify uint' collate UTF8_BIN check(col_real>3));
+
+Succeed.
+
+SQL> drop table if exists tbl_hash;
+
+Succeed.
+
+SQL>
+SQL> --test shrink system table
+SQL> alter table SYS_TABLES shrink space;
+
+CT-00130, Operation shrink table is not supported on view or system table
+SQL> alter table SYS_INDEXES shrink space;
+
+CT-00130, Operation shrink table is not supported on view or system table
+SQL> alter table SYS_SQL_MAPS shrink space;
+
+CT-00130, Operation shrink table is not supported on view or system table
+SQL> alter table WSR_SQL_LIST_PLAN shrink space;
+
+CT-00130, Operation shrink table is not supported on temp table
+SQL> alter table WSR_DBA_SEGMENTS shrink space;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists tbl_hash;
+
+Succeed.
+
+SQL> create table tbl_hash(
+  2 col_int int,
+  3 col_integer integer,
+  4 col_int_unsigned integer unsigned default 1,
+  5 col_binary_uint32 binary_uint32 not null default 4294967295,
+  6 col_uint UINT default 45465,
+  7 col_BINARY_INTEGER BINARY_INTEGER,
+  8 col_smallint smallint not null default '7',
+  9 col_bigint bigint not null default '3',
+ 10 col_BINARY_BIGINT BINARY_BIGINT,
+ 11 col_real real,
+ 12 col_double double,
+ 13 col_float float,
+ 14 col_BINARY_DOUBLE BINARY_DOUBLE,
+ 15 col_decimal decimal,
+ 16 col_number1 number,
+ 17 col_number2 number(38),
+ 18 col_number3 number(38,-84),
+ 19 col_number4 number(38,127),
+ 20 col_number5 number(38,7),
+ 21 col_numeric numeric,
+ 22 col_char1 char(100),
+ 23 col_char2 char(8000),
+ 24 col_nchar1 nchar(100),
+ 25 col_nchar2 nchar(8000),
+ 26 col_varchar_200 varchar(100),
+ 27 col_varchar_8000 varchar(8000) default 'aaaabbbb',
+ 28 col_varchar2_1000 varchar2(100) not null default 'aaaabbbb' comment 'varchar2(1000)',
+ 29 col_varchar2_8000 varchar2(8000),
+ 30 col_nvarchar1 nvarchar(100),
+ 31 col_nvarchar2 nvarchar(8000),
+ 32 col_nvarchar2_1000 nvarchar2(100),
+ 33 col_nvarchar2_8000 nvarchar2(8000),
+ 34 col_clob clob,
+ 35 col_text text,
+ 36 col_longtext longtext,
+ 37 col_image image,
+ 38 col_binary1 binary(100),
+ 39 col_binary2 binary(8000),
+ 40 col_varbinary1 varbinary(100),
+ 41 col_varbinary2 varbinary(8000),
+ 42 col_raw1 raw(100),
+ 43 col_raw2 raw(8000),
+ 44 col_blob blob,
+ 45 col_date date not null default '2018-01-07 08:08:08',
+ 46 col_datetime datetime default '2018-01-07 08:08:08',
+ 47 col_timestamp1 timestamp ,
+ 48 col_timestamp2 timestamp(6),
+ 49 col_timestamp3 TIMESTAMP WITH TIME ZONE,
+ 50 col_timestamp4 TIMESTAMP WITH LOCAL TIME ZONE,
+ 51 col_bool bool,
+ 52 col_boolean boolean,
+ 53 col_interval1 INTERVAL YEAR TO MONTH,
+ 54 col_interval2 INTERVAL DAY TO SECOND
+ 55 )
+ 56 partition by hash(col_int_unsigned,col_int,col_varchar_200)
+ 57 (
+ 58   partition p_hash_01 ,
+ 59   partition p_hash_02 ,
+ 60   partition p_hash_03 ,
+ 61   partition p_hash_04 ,
+ 62   partition p_hash_05 ,
+ 63   partition p_hash_06 ,
+ 64   partition p_hash_07 
+ 65 ) ;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure proc_insertdata(tablename varchar,start_num int,end_num int) is
+  2 i int :=1;
+  3 sql_str varchar(3000) ;
+  4 begin
+  5 for i in start_num..end_num loop
+  6     sql_str:='insert into ' || tablename || '(col_int,col_integer,col_int_unsigned ,col_binary_uint32,col_uint,col_BINARY_INTEGER,col_smallint,col_bigint,col_BINARY_BIGINT,col_real,col_double,col_float,col_BINARY_DOUBLE ,col_decimal,col_number1,col_number2,col_number3,col_number4,col_number5,col_numeric,col_char1,col_char2,col_nchar1,col_nchar2,col_varchar_200,col_varchar_8000,col_varchar2_1000,col_varchar2_8000,col_nvarchar1,col_nvarchar2,col_nvarchar2_1000,col_nvarchar2_8000,col_clob,col_text,col_longtext,col_image,col_binary1,col_binary2,col_varbinary1,col_varbinary2,col_raw1,col_raw2,col_blob,col_date,col_datetime,col_timestamp1,col_timestamp2,col_timestamp3,col_timestamp4,col_bool,col_boolean,col_interval1,col_interval2) values(' || i || ',' || i || ',' || i || ',' || i || ',' || i || ',' || i || ',' || i || ',' || i*1000 || ',' || i*100 || ',' || i*10 || ',' || i*5.32 || ',' || i*1.235 || ',' || i*2.546 || ',' || i*5.24 || ',' || i*6.65 || ',' || i*5.34 || ',' || i*56.45 || ',' || '0' || ',' || i*3.34 || ',' || i*50.2 || ',' || '''' || 'sdf' || '''||' || i || ',' || 'lpad(''we'',40,''gfgf'') ||' || i*13 || ',' || 'lpad(''cv'',20,''nhbn'') ||' || i*17 || ',' || i*160 || ',' || 'lpad(''dsfds'',50,''ghg'') ||' || i || ',' || 'lpad(''vngvf'',7000,''mbnyt'') ||' || i || ',' || 'lpad(''CN'',90,''vcQW'') ||' || i || ',' || 'rpad(''rtFD'',7500,''jkHU'') ||' || i || ',' || 'rpad(''fg'',50,''FDGs'') ||' || i || ',' || 'lpad(''hgjYU'',7800,''HWERa'') ||' || i || ',' || 'lpad(''OK'',60,''wqe'') ||' || i || ',' || 'lpad(''NOCN'',7900,''ewtwb'') ||' || i || ',' || 'lpad(''wtrew'',8000,''d345gfgd'') ||' || i || ',' || 'lpad(''g4gf5DF'',8000,''fg5D'') ||' || i || ',' || 'lpad(''fgdgtr'',8000,''fdgd5'') ||' || i || ',' || 'lpad(''dvgfsvgds'',8000,''retrbv'') ||' || i || ',' || i || ',' || i || ',' || i || ',' || i || ',' || '''' || i || '''' || ',' || '''' || i || '''' || ',' || '''' || i || '''' || ',' || 'add_months(''2018-01-01'',' || i || ')' || ',' || 'add_months(''2018-01-10 08:10:10'',' || i || ')' || ',' || 'add_months(to_timestamp(''2018-01-21 09:10:30.45'',''YYYY-MM-DD HH24:MI:SS.FF''),' || i || ')' || ',' || 'add_months(to_timestamp(''2007-05-06 11:30:20.56'',''YYYY-MM-DD HH24:MI:SS.FF''),' || i || ')' || ',' || 'add_months(''2008-08-08'',' || i || ')' || ',' || 'add_months(''2008-07-01'',' || i || ')' || ',' || 'true' || ',' || 'false' || ',' || 'numtoyminterval(' || i || ',''year'')+numtoyminterval(' || i || ',''month'')' || ',' || 'to_dsinterval(' || '''' || i || ' 05:30:56' || '''' || ')' || ')';
+  7   --dbe_output.print_line(sql_str);
+  8    execute immediate sql_str;
+  9 end loop;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> alter table tbl_hash modify col_real uint default 67.34 on update convert(45.3,uint);
+
+Succeed.
+
+SQL> call proc_insertdata('tbl_hash',1,50);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> update tbl_hash set col_uint=null where col_uint>20 and col_uint<25;
+
+4 rows affected.
+
+SQL> update tbl_hash set col_binary_uint32=0 where  col_binary_uint32=1;
+
+1 rows affected.
+
+SQL> update tbl_hash set col_binary_uint32=4294967295 where  col_binary_uint32=50;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table tbl_hash modify col_real uint default 67.34;
+
+Succeed.
+
+SQL> drop table tbl_hash;
+
+Succeed.
+
+SQL> drop procedure proc_insertdata;
+
+Succeed.
+
+SQL> 
+SQL> --more cases
+SQL> drop function if exists test_f1;
+
+Succeed.
+
+SQL> create function test_f1(a int) return int
+2 IS
+3 Begin
+4 return a*-1;
+5 End;
+6 /
+
+Succeed.
+
+SQL>
+SQL> drop function if exists test_f2;
+
+Succeed.
+
+SQL> create function test_f2() return int
+2 IS
+3 Begin
+4 return 566;
+5 End;
+6 /
+
+Succeed.
+
+SQL>
+SQL> drop table if exists test_t1;
+
+Succeed.
+
+SQL> create table test_t1 (
+2    c1 int not null default( 1     + 2  + sqrt(abs(test_f1(100+21)))),
+3    c2 int not null default (1+33*3+test_f2()) on update sqrt(abs(test_f1(-16)))*222,
+4    c3 int not null check(c3 < 63333 AND sqrt(abs(test_f1(c3))) > 2)
+5);
+
+Succeed.
+
+SQL>
+SQL> desc test_t1;
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+C1                                  NOT NULL BINARY_INTEGER
+C2                                  NOT NULL BINARY_INTEGER
+C3                                  NOT NULL BINARY_INTEGER
+
+SQL> alter table test_t1 add CONSTRAINT check_test1 check (c3 > 0);
+
+Succeed.
+
+SQL> insert into test_t1(c3) values(9);
+
+1 rows affected.
+
+SQL> insert into test_t1(c3) values(4);
+
+CT-01222, Check constraint violated
+SQL> insert into test_t1(c3) values(99);
+
+1 rows affected.
+
+SQL> insert into test_t1(c3) values(999);
+
+1 rows affected.
+
+SQL> insert into test_t1(c3) values(-999);
+
+CT-01222, Check constraint violated
+SQL> insert into test_t1(c3) values(99999);
+
+CT-01222, Check constraint violated
+SQL> alter table test_t1 drop CONSTRAINT check_test1;
+
+Succeed.
+
+SQL> insert into test_t1(c3) values(-999);
+
+1 rows affected.
+
+SQL> update test_t1 set c3=c3-1 where c3=999;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test_t1;
+
+C1           C2           C3
+------------ ------------ ------------
+14           666          9
+14           666          99
+14           888          998
+14           666          -999
+
+4 rows fetched.
+
+SQL> drop function if exists test_f2;
+
+Succeed.
+
+SQL> create function test_f2() return int
+  2 IS
+  3 Begin
+  4 return 766;
+  5 End;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> insert into test_t1(c3) values(1999);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test_t1;
+
+C1           C2           C3
+------------ ------------ ------------
+14           666          9
+14           666          99
+14           888          998
+14           666          -999
+14           866          1999
+
+5 rows fetched.
+
+SQL> alter table test_t1 add c4 varchar(100) default sys_guid();
+
+Succeed.
+
+SQL> drop table if exists test_t1;
+
+Succeed.
+
+SQL> drop function if exists test_f1;
+
+Succeed.
+
+SQL> drop function if exists test_f2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t1_jdd;
+
+Succeed.
+
+SQL> create table t1_jdd (c1 int default ( 1     + 2  + abs(100) ), c2 int default ( 100*58     + 201  + abs(100) ), c3 int default ( 111 *6    + 988  + abs(100) ), CONSTRAINT check_test1 check (c1 + c2 * c3 +     abs(c1) > 3));
+
+Succeed.
+
+SQL> alter table t1_jdd rename column c1 to col_integer_2;
+
+CT-00755, The column was referenced as a constraint.
+SQL> alter table t1_jdd drop column c1;
+
+CT-00755, The column was referenced as a constraint.
+SQL> desc t1_jdd;
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_INTEGER
+C2                                           BINARY_INTEGER
+C3                                           BINARY_INTEGER
+
+SQL> drop table if exists t1_jdd;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists test_jdd;
+
+Succeed.
+
+SQL> create table test_jdd(id int ,name varchar(10) constraint UNIQUE_001 unique);
+
+Succeed.
+
+SQL> alter table test_jdd add col_integer integer constraint check_add_001 check(col_integer>=10);
+
+Succeed.
+
+SQL> alter table test_jdd rename column id to id_2;
+
+Succeed.
+
+SQL> alter table test_jdd rename column col_integer to col_integer_2;
+
+CT-00755, The column was referenced as a constraint.
+SQL> desc test_jdd;
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+ID_2                                         BINARY_INTEGER
+NAME                                         VARCHAR(10 BYTE)
+COL_INTEGER                                  BINARY_INTEGER
+
+SQL> drop table if exists test_jdd;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_check_rename_jdd;
+
+Succeed.
+
+SQL> drop table if exists AAAAAAA;
+
+Succeed.
+
+SQL> create table AAAAAAA(id int not null primary key, name varchar(100));
+
+Succeed.
+
+SQL> create table test_check_rename_jdd(a int not null primary key, b int not null unique, c int check(c > 0), d int not null unique);
+
+Succeed.
+
+SQL> alter table test_check_rename_jdd add CONSTRAINT fffffffff FOREIGN KEY(d) REFERENCES AAAAAAA(id);
+
+Succeed.
+
+SQL> alter table test_check_rename_jdd rename column a to a_2;
+
+Succeed.
+
+SQL> alter table test_check_rename_jdd rename column b to b_2;
+
+Succeed.
+
+SQL> alter table test_check_rename_jdd rename column c to c_2;
+
+CT-00755, The column was referenced as a constraint.
+SQL> alter table test_check_rename_jdd rename column d to d_2;
+
+Succeed.
+
+SQL> desc test_check_rename_jdd;
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+A_2                                 NOT NULL BINARY_INTEGER
+B_2                                 NOT NULL BINARY_INTEGER
+C                                            BINARY_INTEGER
+D_2                                 NOT NULL BINARY_INTEGER
+
+SQL> drop table if exists test_check_rename_jdd;
+
+Succeed.
+
+SQL> drop table if exists AAAAAAA;
+
+Succeed.
+
+SQL> drop table if exists test_modify_lob;
+
+Succeed.
+
+SQL> create table test_modify_lob(a int, b clob) partition by hash(a)(partition p1, partition p2);
+
+Succeed.
+
+SQL> alter table test_modify_lob modify b int;
+
+Succeed.
+
+SQL> drop table if exists test_modify_lob;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_pct_free;
+
+Succeed.
+
+SQL> create table test_pct_free(a int);
+
+Succeed.
+
+SQL> insert into test_pct_free values(1);
+
+1 rows affected.
+
+SQL> alter table test_pct_free pctfree 15;
+
+Succeed.
+
+SQL> drop table if exists test_pct_free;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_shrink_lob;
+
+Succeed.
+
+SQL> create table test_shrink_lob(a clob);
+
+Succeed.
+
+SQL> create view view_test_shrink_lob(a) as select a from test_shrink_lob;
+
+Succeed.
+
+SQL> drop view if exists view_test_shrink_lob;
+
+Succeed.
+
+SQL> drop table if exists test_shrink_lob;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019080114849
+SQL> create or replace package pack1 is
+  2 function f2 return number;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> create or replace package body pack1 is
+  2 function f2 return number 
+  3 as
+  4 a number;
+  5 begin
+  6 a:= 1;
+  7 return(a);
+  8 end f2;
+  9 end pack1;
+ 10 /
+
+Succeed.
+
+SQL> select object_name,object_type from all_objects where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE    
+---------------------------------------------------------------- ---------------
+PACK1                                                            PACKAGE SPEC   
+PACK1                                                            PACKAGE BODY   
+
+2 rows fetched.
+
+SQL> select object_name,object_type from dba_objects where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE    
+---------------------------------------------------------------- ---------------
+PACK1                                                            PACKAGE SPEC   
+PACK1                                                            PACKAGE BODY   
+
+2 rows fetched.
+
+SQL> select object_name,object_type from user_objects where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE    
+---------------------------------------------------------------- ---------------
+PACK1                                                            PACKAGE SPEC   
+PACK1                                                            PACKAGE BODY   
+
+2 rows fetched.
+
+SQL> select object_name,object_type from adm_objects where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE    
+---------------------------------------------------------------- ------------------
+PACK1                                                            PACKAGE SPEC   
+PACK1                                                            PACKAGE BODY   
+
+2 rows fetched.
+
+SQL> select object_name,object_type from db_objects where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE    
+---------------------------------------------------------------- ------------------
+PACK1                                                            PACKAGE SPEC   
+PACK1                                                            PACKAGE BODY   
+
+2 rows fetched.
+
+SQL> select object_name,object_type from my_objects where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE    
+---------------------------------------------------------------- ------------------
+PACK1                                                            PACKAGE SPEC   
+PACK1                                                            PACKAGE BODY   
+
+2 rows fetched.
+
+SQL> drop package pack1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists TEST_DROP;
+
+Succeed.
+
+SQL> create table TEST_DROP(c_char1 varchar(8000), c_char2 varchar(8000),  c_char3 varchar(8000),  c_char4 varchar(8000),
+  2  c_char5 varchar(8000),  c_char6 varchar(8000),  c_char7 varchar(8000), c_char8 varchar(8000),
+  3  c_char9 varchar(8000), c_char10 varchar(8000), c_char11 varchar(8000), c_char12 varchar(8000),
+  4  c_char13 varchar(8000), c_char14 varchar(8000), c_char15 varchar(8000), c_char16 varchar(8000), id int) crmode page;
+
+Succeed.
+
+SQL>
+SQL> insert into TEST_DROP(id, c_char1,c_char2,c_char3,c_char4,c_char5,c_char6,c_char7,c_char8)  values(10, lpad('a', 7000, 'a'), lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),
+  2 lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'));
+
+1 rows affected.
+
+SQL> insert into TEST_DROP(id, c_char1,c_char2,c_char3,c_char4,c_char5,c_char6,c_char7,c_char8)  values(20, lpad('a', 7000, 'a'), lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),
+  2 lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> alter table TEST_DROP drop column c_char1;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char2;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char3;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char4;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char5;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char6;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char7;
+
+Succeed.
+SQL> alter table TEST_DROP drop column c_char8;
+
+Succeed.
+
+SQL>
+SQL> update TEST_DROP set id = 60, c_char9 = lpad('a', 7000, 'a'), c_char10 = lpad('a', 7000, 'a'), c_char11 = lpad('a', 7000, 'a'), c_char12 = lpad('a', 7000, 'a'),
+  2 c_char13 = lpad('a', 7000, 'a'), c_char14 = lpad('a', 7000, 'a'), c_char15 = lpad('a', 7000, 'a'), c_char16 = lpad('a', 7000, 'a');
+
+2 rows affected.
+
+SQL>
+SQL> drop table if exists TEST_DROP;
+
+Succeed.
+
+SQL> create table TEST_DROP(c_char1 varchar(8000), c_char2 varchar(8000),  c_char3 varchar(8000),  c_char4 varchar(8000),
+  2  c_char5 varchar(8000),  c_char6 varchar(8000),  c_char7 varchar(8000), c_char8 varchar(8000),
+  3  c_char9 varchar(8000), c_char10 varchar(8000), c_char11 varchar(8000), c_char12 varchar(8000),
+  4  c_char13 varchar(8000), c_char14 varchar(8000), c_char15 varchar(8000), c_char16 varchar(8000), id int) crmode row;
+
+Succeed.
+
+SQL>
+SQL> insert into TEST_DROP(id, c_char1,c_char2,c_char3,c_char4,c_char5,c_char6,c_char7,c_char8)  values(10, lpad('a', 7000, 'a'), lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),
+  2 lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'));
+
+1 rows affected.
+
+SQL> insert into TEST_DROP(id, c_char1,c_char2,c_char3,c_char4,c_char5,c_char6,c_char7,c_char8)  values(20, lpad('a', 7000, 'a'), lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),
+  2 lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'),lpad('a', 7000, 'a'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> alter table TEST_DROP drop column c_char1;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char2;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char3;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char4;
+
+Succeed.
+SQL> alter table TEST_DROP drop column c_char5;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char6;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char7;
+
+Succeed.
+
+SQL> alter table TEST_DROP drop column c_char8;
+
+Succeed.
+
+SQL>
+SQL> update TEST_DROP set id = 60, c_char9 = lpad('a', 7000, 'a'), c_char10 = lpad('a', 7000, 'a'), c_char11 = lpad('a', 7000, 'a'), c_char12 = lpad('a', 7000, 'a'),
+  2 c_char13 = lpad('a', 7000, 'a'), c_char14 = lpad('a', 7000, 'a'), c_char15 = lpad('a', 7000, 'a'), c_char16 = lpad('a', 7000, 'a');
+
+2 rows affected.
+
+SQL> drop table if exists TEST_DROP;
+
+Succeed.
+
+SQL> drop table if exists test_csf;
+
+Succeed.
+
+SQL> create table test_csf(c_id int, c_char1 varchar(100), c_char2 varchar(100)) format csf;
+
+Succeed.
+
+SQL>
+SQL> insert into test_csf values(1, 'a', 'a');
+
+1 rows affected.
+
+SQL> insert into test_csf values(2, 'b', 'b');
+
+1 rows affected.
+
+SQL>
+SQL> select flag from table$ where name = 'TEST_CSF';
+
+FLAG
+------------
+1
+
+1 rows fetched.
+
+SQL> drop table if exists test_csf;
+
+Succeed.
+
+SQL>
+SQL> --DTS2019101802654
+SQL> drop table if exists sc;
+
+Succeed.
+
+SQL> create table sc (
+  2     studentno    integer,
+  3     courseid    integer,
+  4     score    integer,
+  5     CONSTRAINT  aaab primary key (studentno) );
+
+Succeed.
+
+SQL>
+SQL> alter table sc modify studentno null;
+
+CT-00601, Sql syntax error:  primary key cannot be modified to null
+SQL> drop table if exists sc;
+
+Succeed.
+
+SQL>
+SQL> --DTS2019121004245
+SQL> create table test_tab(id int,name1 varchar(20) default 'aaa');
+
+Succeed.
+
+SQL> insert into test_tab(id) values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test_tab;
+
+ID           NAME1
+------------ --------------------
+1            aaa
+
+1 rows fetched.
+
+SQL> alter table test_tab add column name2 varchar(20) default 'aaa' on update 'bbb';
+
+Succeed.
+
+SQL> select * from test_tab;
+
+ID           NAME1                NAME2
+------------ -------------------- --------------------
+1            aaa                  aaa
+
+1 rows fetched.
+
+SQL> drop table test_tab;
+
+Succeed.
+
+SQL>
+SQL> --test example no index
+SQL> drop table if exists t_test;
+
+Succeed.
+
+SQL> create table t_test(a int, b int);
+
+Succeed.
+
+SQL> insert into t_test values (3,4),(5,6),(7,8);
+
+3 rows affected.
+
+SQL> alter table t_test modify a bigint;
+
+Succeed.
+
+SQL> select * from t_test where a>2 order by 1,2;
+
+A                    B           
+-------------------- ------------
+3                    4           
+5                    6           
+7                    8           
+
+3 rows fetched.
+
+SQL> update t_test set a=a+1 where a>2;
+
+3 rows affected.
+
+SQL> select * from t_test order by 1,2;
+
+A                    B           
+-------------------- ------------
+4                    4           
+6                    6           
+8                    8           
+
+3 rows fetched.
+
+SQL> delete from t_test where a>2;
+
+3 rows affected.
+
+SQL> select * from t_test order by 1,2;
+
+A                    B           
+-------------------- ------------
+
+0 rows fetched.
+
+SQL> insert into t_test values (3,4),(5,6),(7,8);
+
+3 rows affected.
+
+SQL> alter table t_test modify b bigint;
+
+Succeed.
+
+SQL> insert into t_test values (3,4),(5,6),(7,8);
+
+3 rows affected.
+
+SQL> select * from t_test order by 1,2;
+
+A                    B                   
+-------------------- --------------------
+3                    4                   
+3                    4                   
+5                    6                   
+5                    6                   
+7                    8                   
+7                    8                   
+
+6 rows fetched.
+
+SQL> 
+SQL> --test example index
+SQL> drop table if exists t_test_ind;
+
+Succeed.
+
+SQL> create table t_test_ind(a int, b int);
+
+Succeed.
+
+SQL> insert into t_test_ind values (3,4),(5,6),(7,8);
+
+3 rows affected.
+
+SQL> create index t_ind22 on t_test_ind(a);
+
+Succeed.
+
+SQL> select * from t_test_ind where a>2 order by 1,2;
+
+A            B           
+------------ ------------
+3            4           
+5            6           
+7            8           
+
+3 rows fetched.
+
+SQL> alter table t_test_ind modify a bigint;
+
+Succeed.
+
+SQL> select * from t_test_ind where a>2 order by 1,2;
+
+A                    B           
+-------------------- ------------
+3                    4           
+5                    6           
+7                    8           
+
+3 rows fetched.
+
+SQL> update t_test_ind set a=a+1 where a>2;
+
+3 rows affected.
+
+SQL> 
+SQL> --test example trigger
+SQL> drop table if exists t_test_trig;
+
+Succeed.
+
+SQL> create table t_test_trig(a int, b int,c int);
+
+Succeed.
+
+SQL> insert into t_test_trig values (3,4,4),(5,6,6),(7,8,8);
+
+3 rows affected.
+
+SQL> create index t_ind33 on t_test_trig(a);
+
+Succeed.
+
+SQL> create or replace trigger test_trigger before update on t_test_trig for each row
+  2 is
+  3 begin
+  4 dbe_output.print_line(:old.a||' '|| :old.b ||' '||:old.c);
+  5 dbe_output.print_line(:new.a||' '|| :new.b ||' '||:new.c);
+  6 :new.a := :new.a*100;
+  7 :new.b := :new.b*200;
+  8 :new.c := :new.c*300;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> alter table t_test_trig modify a bigint;
+
+Succeed.
+
+SQL> alter table t_test_trig modify b bigint;
+
+Succeed.
+
+SQL> set serveroutput on;
+
+ON
+SQL> insert into t_test_trig values (130000,1400000,200), (30000001,40000002,300);
+
+2 rows affected.
+
+SQL> update t_test_trig set a=a+1,b=b-1 where a>2 and b>2;
+
+3 4 4
+4 3 4
+5 6 6
+6 5 6
+7 8 8
+8 7 8
+130000 1400000 200
+130001 1399999 200
+30000001 40000002 300
+30000002 40000001 300
+
+5 rows affected.
+
+SQL> select  * from t_test_trig order by 1,2,3;
+A                    B                    C           
+-------------------- -------------------- ------------
+400                  600                  1200        
+600                  1000                 1800        
+800                  1400                 2400        
+13000100             279999800            60000       
+3000000200           8000000200           90000       
+
+5 rows fetched.
+
+SQL> drop table t_test_trig;
+
+Succeed.
+
+SQL> 
+SQL> --test shrink and truncate reuse storage
+SQL> CREATE TABLESPACE SPC DATAFILE 'FILE' SIZE 128M EXTENT AUTOALLOCATE;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS SHK_TABLE;
+
+Succeed.
+
+SQL> CREATE TABLE SHK_TABLE(C_ID INT, C_CHAR VARCHAR2(8000), C_CHAR1 VARCHAR2(8000),C_CHAR2 VARCHAR2(8000), C_CHAR3 VARCHAR2(8000)) TABLESPACE SPC;
+
+Succeed.
+
+SQL>
+SQL> DECLARE
+  2 I INTEGER;
+  3 BEGIN
+  4 FOR I IN 1 .. 140 LOOP
+  5 INSERT INTO SHK_TABLE VALUES(1, LPAD(' ', 5000, 'A'), NULL, NULL, NULL);
+  6 END LOOP;
+  7 COMMIT;
+  8 END;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> TRUNCATE TABLE SHK_TABLE REUSE STORAGE;
+
+Succeed.
+
+SQL>
+SQL> DECLARE
+  2 I INTEGER;
+  3 BEGIN
+  4 FOR I IN 1 .. 125 LOOP
+  5 INSERT INTO SHK_TABLE VALUES(1, LPAD(' ', 5000, 'A'), NULL, NULL, NULL);
+  6 END LOOP;
+  7 COMMIT;
+  8 END;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> DELETE FROM SHK_TABLE;
+
+125 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> ALTER TABLE SHK_TABLE SHRINK SPACE;
+
+Succeed.
+
+SQL>
+SQL> DECLARE
+  2 I INTEGER;
+  3 BEGIN
+  4 FOR I IN 1 .. 140 LOOP
+  5 INSERT INTO SHK_TABLE VALUES(1, LPAD(' ', 5000, 'A'), NULL, NULL, NULL);
+  6 END LOOP;
+  7 COMMIT;
+  8 END;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> DELETE FROM SHK_TABLE LIMIT 50;
+
+50 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> ALTER TABLE SHK_TABLE SHRINK SPACE;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS SHK_TABLE;
+
+Succeed.
+
+SQL>
+SQL> CREATE TABLE SHK_TABLE(C_ID INT, C_CHAR VARCHAR2(8000), C_CHAR1 VARCHAR2(8000),C_CHAR2 VARCHAR2(8000), C_CHAR3 VARCHAR2(8000)) TABLESPACE SPC;
+
+Succeed.
+
+SQL>
+SQL> DECLARE
+  2 I INTEGER;
+  3 BEGIN
+  4 FOR I IN 1 .. 5 LOOP
+  5 INSERT INTO SHK_TABLE VALUES(1, LPAD(' ', 5000, 'A'), NULL, NULL, NULL);
+  6 END LOOP;
+  7 COMMIT;
+  8 END;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> DELETE FROM SHK_TABLE;
+
+5 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> ALTER TABLE SHK_TABLE SHRINK SPACE;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS SHK_TABLE;
+
+Succeed.
+
+SQL> DROP TABLESPACE SPC INCLUDING CONTENTS AND DATAFILES;
+Succeed.
+
+SQL> 
+SQL> --test duplicate inline con 
+SQL> drop table if exists my_table_dsh;
+
+Succeed.
+
+SQL> CREATE TABLE my_table_dsh (
+  2  id int,
+  3  class varchar(8),
+  4  name varchar2(8),
+  5  gender int,
+  6  score number(10, 5)
+  7 );
+
+Succeed.
+
+SQL> ALTER TABLE my_table_dsh ADD COLUMN id1 int CONSTRAINT con PRIMARY KEY;
+
+Succeed.
+
+SQL> ALTER TABLE my_table_dsh ADD COLUMN id2 int CONSTRAINT con UNIQUE;
+
+CT-00753, The object constraint CON already exists.
+SQL> drop table my_table_dsh;
+Succeed.
+
+SQL> --
+SQL> drop table if exists test_null;
+
+Succeed.
+
+SQL> create table test_null (i int, j int);
+
+Succeed.
+
+SQL> insert into test_null values (1,2);
+
+1 rows affected.
+
+SQL> alter table test_null add column b int default null;
+
+Succeed.
+
+SQL> alter table test_null modify b not null;
+
+CT-00709, Found null value, cannot set not null constraint
+SQL> update test_null set b = 1;
+
+1 rows affected.
+
+SQL> update test_null set b = null;
+
+1 rows affected.
+
+SQL> alter table test_null modify b not null;
+
+CT-00709, Found null value, cannot set not null constraint
+SQL> update test_null set b = 1;
+
+1 rows affected.
+
+SQL> alter table test_null modify b not null;
+
+Succeed.
+
+SQL> alter table test_null add column c int default 1;
+
+Succeed.
+
+SQL> alter table test_null modify c not null;
+
+Succeed.
+
+SQL> drop table if exists test_null;
+Succeed.
+
+SQL> 
+SQL> --test alter table initrans
+SQL> DROP TABLE IF EXISTS TEST_TRANS;
+
+Succeed.
+
+SQL> DROP INDEX IF EXISTS IDX_TRANS ON TEST_TRANS;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS ALTRANS;
+
+Succeed.
+
+SQL> DROP INDEX IF EXISTS IDX_ALTRANS ON ALTRANS;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE TEST_TRANS(staff_id INT NOT NULL, highest_degree CHAR(8), graduate_school VARCHAR(64), graduate_date DATETIME,  NAME VARCHAR(20))
+  2 PARTITION BY LIST(highest_degree) SUBPARTITION BY HASH(NAME)
+  3 (
+  4 PARTITION TRANS_P1 VALUES ('博士') (SUBPARTITION TRANS_SP11,  SUBPARTITION TRANS_SP12),
+  5 PARTITION TRANS_P2 VALUES ('硕士') (SUBPARTITION TRANS_SP21,  SUBPARTITION TRANS_SP22),
+  6 PARTITION TRANS_P3 VALUES ('学士')  (SUBPARTITION TRANS_SP31,  SUBPARTITION TRANS_SP32)
+  7 );
+
+Succeed.
+
+SQL> CREATE INDEX IDX_TRANS ON TEST_TRANS(staff_id ASC, highest_degree) LOCAL 
+  2 (
+  3 PARTITION TRANS_P1 ( SUBPARTITION TRANS_SP11, SUBPARTITION TRANS_SP12), 
+  4 PARTITION TRANS_P2 ( SUBPARTITION TRANS_SP21, SUBPARTITION TRANS_SP22), 
+  5 PARTITION TRANS_P3 ( SUBPARTITION TRANS_SP31, SUBPARTITION TRANS_SP32)
+  6 );
+
+Succeed.
+
+SQL> ALTER TABLE TEST_TRANS INITRANS 3;
+
+Succeed.
+
+SQL> select INITRANS from SYS_TABLES where name = 'TEST_TRANS';
+
+INITRANS    
+------------
+3           
+
+1 rows fetched.
+
+SQL> select INITRANS from SYS_TABLE_PARTS where name = 'TRANS_P1' or  name = 'TRANS_P2' or name = 'TRANS_P3';
+
+INITRANS    
+------------
+3           
+3           
+3           
+
+3 rows fetched.
+
+SQL> select INITRANS from SYS_SUB_TABLE_PARTS where name = 'TRANS_SP11' or name = 'TRANS_SP12' or name = 'TRANS_SP21' or name = 'TRANS_SP22' or name = 'TRANS_SP31' or name = 'TRANS_SP32';
+
+INITRANS    
+------------
+3           
+3           
+3           
+3           
+3           
+3           
+
+6 rows fetched.
+
+SQL> ALTER INDEX IDX_TRANS ON TEST_TRANS INITRANS 4;
+
+Succeed.
+
+SQL> select INITRANS from SYS_INDEXES where name = 'IDX_TRANS';
+
+INITRANS    
+------------
+4           
+
+1 rows fetched.
+
+SQL> select INITRANS from SYS_INDEX_PARTS where name = 'TRANS_P1' or  name = 'TRANS_P2' or name = 'TRANS_P3';
+
+INITRANS    
+------------
+4           
+4           
+4           
+
+3 rows fetched.
+
+SQL> select INITRANS from SYS_SUB_INDEX_PARTS where name = 'TRANS_SP11' or name = 'TRANS_SP12' or name = 'TRANS_SP21' or name = 'TRANS_SP22' or name = 'TRANS_SP31' or name = 'TRANS_SP32';
+
+INITRANS    
+------------
+4           
+4           
+4           
+4           
+4           
+4           
+
+6 rows fetched.
+
+SQL> ALTER TABLE TEST_TRANS MODIFY PARTITION TRANS_P1 INITRANS 5;
+
+Succeed.
+
+SQL> select INITRANS from SYS_TABLE_PARTS where name = 'TRANS_P1';
+
+INITRANS    
+------------
+5           
+
+1 rows fetched.
+
+SQL> select INITRANS from SYS_SUB_TABLE_PARTS where name = 'TRANS_SP11' or name = 'TRANS_SP12';
+
+INITRANS    
+------------
+5           
+5           
+
+2 rows fetched.
+
+SQL> ALTER INDEX IDX_TRANS ON TEST_TRANS MODIFY PARTITION TRANS_P1 INITRANS 6;
+
+Succeed.
+
+SQL> select INITRANS from SYS_INDEX_PARTS where name = 'TRANS_P1';
+
+INITRANS    
+------------
+6           
+
+1 rows fetched.
+
+SQL> select INITRANS from SYS_SUB_INDEX_PARTS where name = 'TRANS_SP11' or name = 'TRANS_SP12';
+
+INITRANS    
+------------
+6           
+6           
+
+2 rows fetched.
+
+SQL> ALTER TABLE TEST_TRANS INITRANS 0;
+
+CT-00601, [1:24]Sql syntax error: INITRANS must between 1 and 255 
+SQL> ALTER INDEX IDX_TRANS ON TEST_TRANS INITRANS 256;
+
+CT-00601, [1:23]Sql syntax error: INITRANS must between 1 and 255 
+SQL> ALTER TABLE TEST_TRANS MODIFY PARTITION TRANS_P1 INITRANS 0;
+
+CT-00601, [1:50]Sql syntax error: INITRANS must between 1 and 255 
+SQL> ALTER INDEX IDX_TRANS ON TEST_TRANS MODIFY PARTITION TRANS_P1 INITRANS 256;
+
+CT-00601, [1:49]Sql syntax error: INITRANS must between 1 and 255 
+SQL> ALTER TABLE TEST_TRANS MODIFY PARTITION TRANS_P11 INITRANS 5;
+
+CT-00800, A table (sub)partition TRANS_P11 does not exist.
+SQL> ALTER INDEX IDX_TRANS ON TEST_TRANS MODIFY PARTITION TRANS_P11 INITRANS 6;
+
+CT-00800, A index (sub)partition TRANS_P11 does not exist.
+SQL> 
+SQL> CREATE TABLE ALTRANS(id INT, c INT);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_ALTRANS ON ALTRANS(id);
+
+Succeed.
+
+SQL> ALTER TABLE ALTRANS  MODIFY PARTITION P1 INITRANS 3;
+
+CT-00130, Operation modify part initrans is not supported on non-partitioned table
+SQL> ALTER INDEX IDX_ALTRANS ON ALTRANS MODIFY PARTITION P1 INITRANS 3;
+
+CT-01112, The common index was treated as a (sub)partitioned index
+SQL> 
+SQL> DROP TABLE IF EXISTS TEST_TRANS;
+
+Succeed.
+
+SQL> DROP INDEX IF EXISTS IDX_TRANS ON TEST_TRANS;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS ALTRANS;
+
+Succeed.
+
+SQL> DROP INDEX IF EXISTS IDX_ALTRANS ON ALTRANS;
+Succeed.
+
+SQL> --20201112
+SQL> CREATE TABLESPACE temp_tablespace_20201112 DATAFILE 'temp_tablespace_20201112' SIZE 8M AUTOEXTEND ON MAXSIZE 10G EXTENT AUTOALLOCATE;
+
+Succeed.
+
+SQL> alter TABLESPACE temp_tablespace_20201112 shrink space keep;
+
+CT-00601, [1:60]Sql syntax error: size must be a positive long integer
+SQL> alter TABLESPACE temp_tablespace_20201112 shrink space ke;
+
+CT-00601, [1:56]Sql syntax error: 'space keep' expected
+SQL> alter tablespace temp_tablespace_20201112 shrink;
+
+CT-00601, [1:49]Sql syntax error: 'space keep' expected
+SQL> alter tablespace temp_tablespace_20201112 shrink sdhsjd;
+
+CT-00601, [1:50]Sql syntax error: 'space keep' expected
+SQL> alter tablespace temp_tablespace_20201112 shrink space keep 8K;
+
+CT-00601, [1:61]Sql syntax error: size value is smaller than minimum(1048576) required
+SQL> alter tablespace temp_tablespace_20201112 shrink space keep 8M;
+
+Succeed.
+
+SQL> drop tablespace temp_tablespace_20201112;
+
+Succeed.
+
+
+

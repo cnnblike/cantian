@@ -1,0 +1,1382 @@
+
+
+SQL> drop user if exists number_dts cascade;
+
+Succeed.
+
+SQL> create user number_dts identified by 'Changeme_123';
+
+Succeed.
+
+SQL> grant dba to number_dts;
+
+Succeed.
+
+SQL> conn number_dts/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --datatype combine by sql_verify_select_rs_datatype
+SQL> drop table if exists num_comb2;
+
+Succeed.
+
+SQL> create table num_comb2(c NUMBER not null);
+
+Succeed.
+
+SQL> insert into num_comb2 values(99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999);  
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> drop table if exists num_comb3;
+
+Succeed.
+
+SQL> create table num_comb3(c3 NUMBER2 not null);
+
+Succeed.
+
+SQL> insert into num_comb3 values(999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999);  
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> desc -q select * from num_comb2 union all select * from num_comb3 order by 1; --NUMBER and NUMBER2 -> NUMBER
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C                                            NUMBER                              
+
+SQL> desc -q select * from num_comb3 union all select * from num_comb2 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C3                                           NUMBER                              
+
+SQL> select * from num_comb3 union all select * from num_comb2 order by 1;
+
+C3                                      
+----------------------------------------
+1.000000000000000000000000000000000E+107
+1.000000000000000000000000000000000E+108
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists num_comb1;
+
+Succeed.
+
+SQL> create table num_comb1(c2 BINARY(50) not null);
+
+Succeed.
+
+SQL> insert into num_comb1 values(900.98);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> desc -q select * from num_comb2 union all select * from num_comb1 order by 1; --BINARY and NUMBER -> BINARY
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C                                            BINARY(50)                          
+
+SQL> desc -q select * from num_comb1 union all select * from num_comb2 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C2                                           BINARY(50)                          
+
+SQL> select * from num_comb1 union all select * from num_comb2 order by 1;
+
+C2                                                              
+----------------------------------------------------------------
+1.000000000000000000000000000000000E+107                        
+900.98                                                          
+
+2 rows fetched.
+
+SQL> desc -q select * from num_comb3 union all select * from num_comb1 order by 1; --BINARY and NUMBER2 -> BINARY
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C3                                           BINARY(50)                          
+
+SQL> desc -q select * from num_comb1 union all select * from num_comb3 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C2                                           BINARY(50)                          
+
+SQL> select * from num_comb1 union all select * from num_comb3 order by 1;
+
+C2                                                              
+----------------------------------------------------------------
+1.000000000000000000000000000000000E+108                        
+900.98                                                          
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists num_comb1;
+
+Succeed.
+
+SQL> create table num_comb1(c2 INT not null);
+
+Succeed.
+
+SQL> insert into num_comb1 values(-900); 
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> desc -q select * from num_comb2 union all select * from num_comb1 order by 1; --INT and NUMBER -> NUMBER
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C                                            NUMBER                              
+
+SQL> desc -q select * from num_comb1 union all select * from num_comb2 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C2                                           NUMBER                              
+
+SQL> select * from num_comb1 union all select * from num_comb2 order by 1;
+
+C2                                      
+----------------------------------------
+-900                                    
+1.000000000000000000000000000000000E+107
+
+2 rows fetched.
+
+SQL> desc -q select * from num_comb3 union all select * from num_comb1 order by 1; --INT and NUMBER2 -> NUMBER2
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C3                                           NUMBER2                             
+
+SQL> desc -q select * from num_comb1 union all select * from num_comb3 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C2                                           NUMBER2                             
+
+SQL> select * from num_comb1 union all select * from num_comb3 order by 1;
+
+C2                                      
+----------------------------------------
+-900                                    
+1.000000000000000000000000000000000E+108
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists num_comb1;
+
+Succeed.
+
+SQL> create table num_comb1(c2 BINARY_UINT32 not null);
+
+Succeed.
+
+SQL> insert into num_comb1 values(900); 
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> desc -q select * from num_comb2 union all select * from num_comb1 order by 1; --BINARY_UINT32 and NUMBER -> NUMBER
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C                                            NUMBER                              
+
+SQL> desc -q select * from num_comb1 union all select * from num_comb2 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C2                                           NUMBER                              
+
+SQL> select * from num_comb1 union all select * from num_comb2 order by 1;
+
+C2                                      
+----------------------------------------
+900                                     
+1.000000000000000000000000000000000E+107
+
+2 rows fetched.
+
+SQL> desc -q select * from num_comb3 union all select * from num_comb1 order by 1; --BINARY_UINT32 and NUMBER2 -> NUMBER2
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C3                                           NUMBER2                             
+
+SQL> desc -q select * from num_comb1 union all select * from num_comb3 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C2                                           NUMBER2                             
+
+SQL> select * from num_comb1 union all select * from num_comb3 order by 1;
+
+C2                                      
+----------------------------------------
+900                                     
+1.000000000000000000000000000000000E+108
+
+2 rows fetched.
+
+SQL> drop table if exists num_comb1;
+
+Succeed.
+
+SQL> create table num_comb1(c2 varchar(30) not null);
+
+Succeed.
+
+SQL> insert into num_comb1 values('92000000000000000000'); 
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> desc -q select * from num_comb2 union all select * from num_comb1 order by 1; --STRING and NUMBER -> STRING
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C                                            VARCHAR(72 BYTE)                    
+
+SQL> desc -q select * from num_comb1 union all select * from num_comb2 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C2                                           VARCHAR(72 BYTE)                    
+
+SQL> select * from num_comb1 union all select * from num_comb2 order by 1;
+
+C2                                                              
+----------------------------------------------------------------
+1.000000000000000000000000000000000E+107                        
+92000000000000000000                                            
+
+2 rows fetched.
+
+SQL> desc -q select * from num_comb3 union all select * from num_comb1 order by 1; --STRING and NUMBER2 -> STRING
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C3                                           VARCHAR(72 BYTE)                    
+
+SQL> desc -q select * from num_comb1 union all select * from num_comb3 order by 1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C2                                           VARCHAR(72 BYTE)                    
+
+SQL> select * from num_comb1 union all select * from num_comb3 order by 1;
+
+C2                                                              
+----------------------------------------------------------------
+1.000000000000000000000000000000000E+108                        
+92000000000000000000                                            
+
+2 rows fetched.
+
+SQL> drop table if exists num_comb1;
+
+Succeed.
+
+SQL> drop table if exists num_comb2;
+
+Succeed.
+
+SQL> drop table if exists num_comb3;
+
+Succeed.
+
+SQL> 
+SQL> --DTS20210719074PEPP1D00
+SQL> drop table if exists number2_datatype1;
+
+Succeed.
+
+SQL> create table number2_datatype1(number_col1 number2 PRIMARY KEY);
+
+Succeed.
+
+SQL> insert into number2_datatype1 values(1.234556);
+
+1 rows affected.
+
+SQL> insert into number2_datatype1 values(1.0E-130);
+
+1 rows affected.
+
+SQL> insert into number2_datatype1 values(-1.0E-130);
+
+1 rows affected.
+
+SQL> select * from number2_datatype1;
+
+NUMBER_COL1                             
+----------------------------------------
+1.234556
+1.000000000000000000000000000000000E-130
+-1.00000000000000000000000000000000E-130
+
+3 rows fetched.
+
+SQL> drop table if exists number2_datatype1;
+
+Succeed.
+
+SQL> 
+SQL> --DTS202107200JF2FEP1400
+SQL> select sin(cast(1.0E-127 as decimal));
+
+SIN(CAST(1.0E-127 AS DECIMAL))          
+----------------------------------------
+1.000000000000000000000000000000000E-127
+
+1 rows fetched.
+
+SQL> desc -q select sin(cast(1.0E-127 as decimal));
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+SIN(CAST(1.0E-127 AS DECIMAL))               NUMBER                              
+
+SQL> select cos(cast(1.0E-127 as decimal));
+
+COS(CAST(1.0E-127 AS DECIMAL))          
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select tan(cast(1.0E-127 as decimal));
+
+TAN(CAST(1.0E-127 AS DECIMAL))          
+----------------------------------------
+1.000000000000000000000000000000000E-127
+
+1 rows fetched.
+
+SQL> select sin(cast(1.0E-130 as number2));
+
+SIN(CAST(1.0E-130 AS NUMBER2))          
+----------------------------------------
+0                                       
+
+1 rows fetched.
+
+SQL> desc -q select sin(cast(1.0E-130 as number2));
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+SIN(CAST(1.0E-130 AS NUMBER2))               NUMBER                              
+
+SQL> select cos(cast(1.0E-130 as number2));
+
+COS(CAST(1.0E-130 AS NUMBER2))          
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select tan(cast(1.0E-130 as number2));
+
+TAN(CAST(1.0E-130 AS NUMBER2))          
+----------------------------------------
+0                                       
+
+1 rows fetched.
+
+SQL> select ln(cast(9.999999999999999999E-129 as number2));
+
+LN(CAST(9.999999999999999999E-129 AS NUMBER2))
+----------------------------------------------
+-294.73089190323784755430290619959861857      
+
+1 rows fetched.
+
+SQL> select ceil(cast(9.9999999999E-128 as number));
+
+CEIL(CAST(9.9999999999E-128 AS NUMBER)) 
+----------------------------------------
+0                                       
+
+1 rows fetched.
+
+SQL> select ceil(cast(9.9999999999E-128 as number2));
+
+CEIL(CAST(9.9999999999E-128 AS NUMBER2))
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select round(cast(9.9999999999E-128 as number), 2);
+
+ROUND(CAST(9.9999999999E-128 AS NUMBER), 2)
+-------------------------------------------
+0                                          
+
+1 rows fetched.
+
+SQL> select round(cast(9.9999999999E-128 as number2), 2);
+
+ROUND(CAST(9.9999999999E-128 AS NUMBER2), 2)
+--------------------------------------------
+0                                           
+
+1 rows fetched.
+
+SQL> select trunc(cast(9.9999999999E-128 as number), 2);
+
+TRUNC(CAST(9.9999999999E-128 AS NUMBER), 2)
+-------------------------------------------
+0                                          
+
+1 rows fetched.
+
+SQL> select trunc(cast(9.9999999999E-128 as number2), 2);
+
+TRUNC(CAST(9.9999999999E-128 AS NUMBER2), 2)
+--------------------------------------------
+0                                           
+
+1 rows fetched.
+
+SQL> select round(cast(9.9999999999 as number), 2);
+
+ROUND(CAST(9.9999999999 AS NUMBER), 2)  
+----------------------------------------
+10                                      
+
+1 rows fetched.
+
+SQL> select round(cast(9.9999999999 as number2), 2);
+
+ROUND(CAST(9.9999999999 AS NUMBER2), 2) 
+----------------------------------------
+10                                      
+
+1 rows fetched.
+
+SQL> select trunc(cast(9.9999999999 as number), 2);
+
+TRUNC(CAST(9.9999999999 AS NUMBER), 2)  
+----------------------------------------
+9.99                                    
+
+1 rows fetched.
+
+SQL> select trunc(cast(9.9999999999 as number2), 2);
+
+TRUNC(CAST(9.9999999999 AS NUMBER2), 2) 
+----------------------------------------
+9.99                                    
+
+1 rows fetched.
+
+SQL> 
+SQL> --DTS202107220LJXUKP1F00
+SQL> drop table if exists tbl_number2_151;
+
+Succeed.
+
+SQL> create table tbl_number2_151(c NUMBER2 not null,b number2(10,2));
+
+Succeed.
+
+SQL> insert into tbl_number2_151 values(1.234,5.555);
+
+1 rows affected.
+
+SQL> insert into tbl_number2_151 values(-1.234,-5.555);
+
+1 rows affected.
+
+SQL> insert into tbl_number2_151 values(-1,100.111);
+
+1 rows affected.
+
+SQL> insert into tbl_number2_151 values(0,0);
+
+1 rows affected.
+
+SQL> select c,decode(c,-1,'A1',0,'B2','OK') "group" from tbl_number2_151 where b is not null order by 1;
+
+C                                        group
+---------------------------------------- -----
+-1.234                                   OK   
+-1                                       A1   
+0                                        B2   
+1.234                                    OK   
+
+4 rows fetched.
+
+SQL> drop table if exists tbl_number2_151;
+
+Succeed.
+
+SQL> drop table if exists tbl_number2_167;
+
+Succeed.
+
+SQL> create table tbl_number2_167(c NUMBER2 not null,b number2(10,2));
+
+Succeed.
+
+SQL> insert into tbl_number2_167 values(1.234,5.555);
+
+1 rows affected.
+
+SQL> select ln(b),ln(c) from tbl_number2_167;
+
+LN(B)                                    LN(C)                                   
+---------------------------------------- ----------------------------------------
+1.71559810826249100798726625242316850339 .210260925483196071360829436015274769987
+
+1 rows fetched.
+
+SQL> drop table if exists tbl_number2_167;
+
+Succeed.
+
+SQL> drop table if exists tbl_number2_169;
+
+Succeed.
+
+SQL> create table tbl_number2_169(c NUMBER2 not null,b number2(10,2));
+
+Succeed.
+
+SQL> insert into tbl_number2_169 values(1.234,5.555);
+
+1 rows affected.
+
+SQL> select LOG(b,c) from tbl_number2_169;
+
+LOG(B,C)                                
+----------------------------------------
+.122558380351761030599719521255650730913
+
+1 rows fetched.
+
+SQL> drop table if exists tbl_number2_169;
+
+Succeed.
+
+SQL> drop table if exists tbl_number2_181;
+
+Succeed.
+
+SQL> create table tbl_number2_181(c NUMBER2 not null,b number2(10,2));
+
+Succeed.
+
+SQL> insert into tbl_number2_181 values(1.234,5.555);
+
+1 rows affected.
+
+SQL> insert into tbl_number2_181 values(-1.234,-5.555);
+
+1 rows affected.
+
+SQL> insert into tbl_number2_181 values(-1,100.111);
+
+1 rows affected.
+
+SQL> insert into tbl_number2_181 values(0,0);
+
+1 rows affected.
+
+SQL> insert into tbl_number2_181 values(0,null);
+
+1 rows affected.
+
+SQL> select REGEXP_COUNT(b,'[^,]+',1,'i') from tbl_number2_181;
+
+REGEXP_COUNT(B,'[^,]+',1,'I')
+-----------------------------
+1                            
+1                            
+1                            
+1                            
+                             
+
+5 rows fetched.
+
+SQL> drop table if exists tbl_number2_181;
+
+Succeed.
+
+SQL> 
+SQL> select cast(true as number2);
+
+CT-00606, [1:13]Inconsistent datatypes, expected NUMBER2 - got BOOLEAN
+SQL> select cast(true as float);
+
+CT-00606, [1:13]Inconsistent datatypes, expected BINARY_DOUBLE - got BOOLEAN
+SQL> select abs(cast(-10 as number2));
+
+ABS(CAST(-10 AS NUMBER2))               
+----------------------------------------
+10                                      
+
+1 rows fetched.
+
+SQL> desc -q select abs(cast(10 as number2));
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+ABS(CAST(10 AS NUMBER2))                     NUMBER                              
+
+SQL> 
+SQL> select atan2(cast(-10 as number2), 0);
+
+ATAN2(CAST(-10 AS NUMBER2), 0)          
+----------------------------------------
+-1.5707963267948966192313216916397514421
+
+1 rows fetched.
+
+SQL> desc -q select atan2(cast(-10 as number2), 0);
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+ATAN2(CAST(-10 AS NUMBER2), 0)               NUMBER                              
+
+SQL> 
+SQL> select tanh(cast(-10 as number2));
+
+TANH(CAST(-10 AS NUMBER2))              
+----------------------------------------
+-.99999999587769276361959283713827574105
+
+1 rows fetched.
+
+SQL> desc -q select tanh(cast(-10 as number2));
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+TANH(CAST(-10 AS NUMBER2))                   NUMBER                              
+
+SQL> select char_length('9.999999999999999999999999999999999999999E+123');
+
+CHAR_LENGTH('9.999999999999999999999999999999999999999E+123')
+-------------------------------------------------------------
+46                                                           
+
+1 rows fetched.
+
+SQL> select char_length(cast(9.999999999999999999999999999999999999999E+123 as number2));
+
+CHAR_LENGTH(CAST(9.999999999999999999999999999999999999999E+123 
+----------------------------------------------------------------
+40                                                              
+
+1 rows fetched.
+
+SQL> select cast(9.9999999999999999999999999999999999999999E+123 as number2);
+
+CAST(9.9999999999999999999999999999999999999999E+123 AS NUMBER2)
+----------------------------------------------------------------
+1.000000000000000000000000000000000E+124                        
+
+1 rows fetched.
+
+SQL> select char_length(cast(9.888888888888888999999999999991237655555555555 as number2));
+
+CHAR_LENGTH(CAST(9.888888888888888999999999999991237655555555555
+----------------------------------------------------------------
+40                                                              
+
+1 rows fetched.
+
+SQL> DROP TABLE IF EXISTS staffS_xian;
+
+Succeed.
+
+SQL> CREATE TABLE  staffS_xian
+  2 (
+  3   staff_ID       NUMBER2(6) not null,
+  4   inter          interval day(7) to second,
+  5   EMAIL          VARCHAR2(25),
+  6   pb             bool,
+  7   HIRE_DATE      timestamp,
+  8   employment_ID  NUMBER2[10],
+  9   SALARY         double,
+ 10   MANAGER_ID     binary(20),
+ 11   section_ID     bigint,
+ 12   cb             clob,
+ 13   bb             blob,
+ 14   im             image
+ 15 );
+
+Succeed.
+
+SQL> INSERT INTO  staffS_xian values (198, '1231 12:3:4.1234', 'wangying@126.com', 'true', to_timestamp('21-06-1999', 'dd-mm-yyyy'), array[1,2], 2600.00, '124', 50, to_clob('bonus 8000'), to_blob('a12'), '12345');
+
+1 rows affected.
+
+SQL> INSERT INTO  staffS_xian values (199, '1231 12:3:4.1234', 'hekaipng02@126.com', 'true', to_timestamp('13-01-2000', 'dd-mm-yyyy'), array[1,2], 2600.00, '124', 50, to_clob('bonus 8000'), null, '89345');
+
+1 rows affected.
+
+SQL> INSERT INTO  staffS_xian values (200, '-P99DT655M999.99999S', 'lirui03@126.com', 'false', to_timestamp('17-09-1987', 'dd-mm-yyyy'), array[3,2], 4400.00, '101', 10, null, to_blob('a56'), '128745');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> SELECT staff_ID, DECODE (staff_ID, 198, 'A1', 199, 'B2', 'unknown') "GROUP" FROM staffS_xian WHERE staff_ID < 201   ORDER BY staff_ID;
+
+STAFF_ID                                 GROUP  
+---------------------------------------- -------
+198                                      A1     
+199                                      B2     
+200                                      unknown
+
+3 rows fetched.
+
+SQL> SELECT inter, DECODE (inter, '1231 12:3:4.1234', 'A1', '-P99DT655M999.99999S', 'B2', 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+INTER                    GROUP  
+------------------------ -------
++0001231 12:03:04.123400 A1     
++0001231 12:03:04.123400 A1     
+-0000099 11:11:39.999990 B2     
+
+3 rows fetched.
+
+SQL> SELECT pb, DECODE (pb, 'true', 'A1', 'false', 'B2', 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+PB     GROUP  
+------ -------
+TRUE   A1     
+TRUE   A1     
+FALSE  B2     
+
+3 rows fetched.
+
+SQL> SELECT cb, DECODE (cb, to_clob('bonus 8000'), 'A1', null, 'B2', 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+CB                                                               GROUP  
+---------------------------------------------------------------- -------
+bonus 8000                                                       A1     
+bonus 8000                                                       A1     
+                                                                 B2     
+
+3 rows fetched.
+
+SQL> SELECT bb, DECODE (bb, to_blob('a12'), 'A1', null, 'B2', 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+BB                                                               GROUP  
+---------------------------------------------------------------- -------
+0A12                                                             A1     
+                                                                 B2     
+0A56                                                             unknown
+
+3 rows fetched.
+
+SQL> SELECT im, DECODE (im, '12345', 'A1', '1345', 'B2', 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+IM                                                               GROUP  
+---------------------------------------------------------------- -------
+12345                                                            A1     
+89345                                                            unknown
+128745                                                           unknown
+
+3 rows fetched.
+
+SQL> SELECT employment_ID, DECODE (employment_ID, array[1,2], 'A1', array[3,2], 'B2', 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;--error
+
+CT-00607, Invalid datatype for comparision
+SQL> SELECT employment_ID, DECODE (employment_ID, 1, 'A1', 2, 'B2', 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;--error
+
+CT-00607, Invalid datatype for comparision
+SQL> SELECT employment_ID, DECODE (employment_ID[1], array[1,2], 'A1', array[3,2], 'B2', 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;--error
+
+CT-00607, Invalid datatype for comparision
+SQL> SELECT employment_ID, DECODE (employment_ID[1], 1, 10, array[1,2], 13, 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;--error
+
+CT-00607, Invalid datatype for comparision
+SQL> SELECT employment_ID, DECODE (employment_ID[1], 1, 10, 2, 13, 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+EMPLOYMENT_ID                                                    GROUP      
+---------------------------------------------------------------- -----------
+{1,2}                                                            10         
+{1,2}                                                            10         
+{3,2}                                                            unknown    
+
+3 rows fetched.
+
+SQL> desc -q SELECT employment_ID, DECODE (employment_ID[1], 1, 10, 2, 13, 'unknown') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+EMPLOYMENT_ID                                NUMBER2[]                           
+GROUP                                        VARCHAR(11 BYTE)                    
+
+SQL> desc -q SELECT employment_ID, DECODE (employment_ID[1], 1, null)  "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+EMPLOYMENT_ID                                NUMBER2[]                           
+GROUP                                        VARCHAR                             
+
+SQL> SELECT SALARY, DECODE (SALARY, 2600.00, true, 3600.00, 'B2', false) "GROUP" FROM staffS_xian ORDER BY staff_ID;--error
+
+SALARY               GROUP 
+-------------------- ------
+2600                 TRUE  
+2600                 TRUE  
+4400                 FALSE 
+
+3 rows fetched.
+
+SQL> SELECT SALARY, DECODE (SALARY, 2600.00, true, 3600.00, false, 'ok') "GROUP" FROM staffS_xian ORDER BY staff_ID;--error
+
+CT-00601, Sql syntax error: invalid BOOLEAN text
+SQL> SELECT SALARY, DECODE (SALARY, 5600.00, true, 3600.00, false, 'ok') "GROUP" FROM staffS_xian ORDER BY staff_ID;--error
+
+CT-00601, Sql syntax error: invalid BOOLEAN text
+SQL> SELECT SALARY, DECODE (SALARY, 2600.00, true, 4400.00, false, 'ok') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+SALARY               GROUP 
+-------------------- ------
+2600                 TRUE  
+2600                 TRUE  
+4400                 FALSE 
+
+3 rows fetched.
+
+SQL> desc -q SELECT SALARY, DECODE (SALARY, 2600.00, true, 4400.00, false, 'ok') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+SALARY                                       BINARY_DOUBLE                       
+GROUP                                        BOOLEAN                             
+
+SQL> SELECT SALARY, DECODE (SALARY, 2600.00, 100, 3600.00, 'a', 'ok') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+SALARY               GROUP      
+-------------------- -----------
+2600                 100        
+2600                 100        
+4400                 ok         
+
+3 rows fetched.
+
+SQL> desc -q SELECT SALARY, DECODE (SALARY, 2600.00, 100, 3600.00, 'a', 'ok') "GROUP" FROM staffS_xian ORDER BY staff_ID;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+SALARY                                       BINARY_DOUBLE                       
+GROUP                                        VARCHAR(11 BYTE)                    
+
+SQL> DROP TABLE IF EXISTS staffS_xian;
+
+Succeed.
+
+SQL> 
+SQL> select extract(year from cast(19910101 as number2));
+
+CT-00614, [1:26]Parameter error: illegal function argument: DATETIME argument expected - got NUMBER2
+SQL> select extract(year from to_clob('19900101'));
+
+CT-00614, [1:26]Parameter error: illegal function argument: DATETIME argument expected - got CLOB
+SQL> desc -q select extract(year from '19900101000001.123');
+
+Name                                       Null?    Type                                
+------------------------------------------ -------- ------------------------------------
+EXTRACT(YEAR FROM '19900101000001.123')             BINARY_INTEGER                      
+
+SQL> select extract(second from interval '-1 11:22:33.456' day to second);
+
+EXTRACT(SECOND FROM INTERVAL '-1 11:22:33.456' DAY TO SECOND)
+-------------------------------------------------------------
+-33.456                                                      
+
+1 rows fetched.
+
+SQL> desc -q select extract(second from interval '-1 11:22:33.456' day to second);
+
+Name                                                             Null?    Type                                
+---------------------------------------------------------------- -------- ------------------------------------
+EXTRACT(SECOND FROM INTERVAL '-1 11:22:33.456' DAY TO SECOND)             NUMBER                              
+
+SQL> 
+SQL> select ct_hash(cast(895687.89 as number2), 5);
+
+CT_HASH(CAST(895687.89 AS NUMBER2), 5)
+--------------------------------------
+4                                     
+
+1 rows fetched.
+
+SQL> select hash(cast(895687.89 as number2), cast(10 as number2), cast(56 as number2)) "A";
+
+A           
+------------
+937303033   
+
+1 rows fetched.
+
+SQL> desc -q select hash(cast(895687.89 as number2), cast(10 as number2), cast(56 as number2)) "A";
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+A                                            BINARY_UINT32                       
+
+SQL> 
+SQL> select isnumeric(cast(895687.89 as number2));
+
+ISNUMERIC(CAST(895687.89 AS NUMBER2))
+-------------------------------------
+1                                    
+
+1 rows fetched.
+
+SQL> select to_number(cast(1E-129 as number2));
+
+TO_NUMBER(CAST(1E-129 AS NUMBER2))      
+----------------------------------------
+0                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> select log(cast(1 as number2));
+
+LOG(CAST(1 AS NUMBER2))                 
+----------------------------------------
+0                                       
+
+1 rows fetched.
+
+SQL> select log(cast(1 as number2), cast(4 as number2));
+
+CT-00614, [1:8]Parameter error: the first argument can not be 0 or 1
+SQL> select log(cast(-1 as number2), cast(4 as number2));
+
+CT-00614, [1:8]Parameter error: argument must be greater than 0
+SQL> select log(cast(0.5 as number2), cast(4 as number2));
+
+LOG(CAST(0.5 AS NUMBER2), CAST(4 AS NUMBER2))
+---------------------------------------------
+-2                                           
+
+1 rows fetched.
+
+SQL> select log(cast(0.5 as number2), cast(0 as number2));
+
+CT-00614, [1:8]Parameter error: argument must be greater than 0
+SQL> 
+SQL> select type_id2name(20034);
+
+TYPE_ID2NAME(20034)                                             
+----------------------------------------------------------------
+NUMBER2                                                         
+
+1 rows fetched.
+
+SQL> select type_id2name(20043);
+
+TYPE_ID2NAME(20043)                                             
+----------------------------------------------------------------
+OBJECT                                                          
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists test_alt;
+
+Succeed.
+
+SQL> create table test_alt(c2 number2);
+
+Succeed.
+
+SQL> alter table test_alt modify c2 number;
+
+Succeed.
+
+SQL> insert into test_alt values(1E126);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test_alt;
+
+C2                                      
+----------------------------------------
+1.000000000000000000000000000000000E+126
+
+1 rows fetched.
+
+SQL> drop table if exists test_alt;
+
+Succeed.
+
+SQL> create table test_alt(c2 number2);
+
+Succeed.
+
+SQL> insert into test_alt values(10); 
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test_alt modify c2 number;
+
+CT-00805, Column C2 is not empty in table TEST_ALT
+SQL> alter table test_alt modify c2 number2(38);
+
+CT-00805, Column C2 is not empty in table TEST_ALT
+SQL> drop table if exists test_alt;
+
+Succeed.
+
+SQL> create table test_alt(c2 number2(10));
+
+Succeed.
+
+SQL> insert into test_alt values(10); 
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test_alt modify c2 number2(5);
+
+CT-00805, Column C2 is not empty in table TEST_ALT
+SQL> alter table test_alt modify c2 number2(20);
+
+Succeed.
+
+SQL> drop table if exists test_alt;
+
+Succeed.
+
+SQL> create table test_alt(c2 number2(10, 8));
+
+Succeed.
+
+SQL> insert into test_alt values(10.23); 
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test_alt modify c2 number2(10, 5);
+
+CT-00805, Column C2 is not empty in table TEST_ALT
+SQL> alter table test_alt modify c2 number2(10, 9);
+
+CT-00805, Column C2 is not empty in table TEST_ALT
+SQL> alter table test_alt modify c2 number2(20, 5);
+
+CT-00805, Column C2 is not empty in table TEST_ALT
+SQL> alter table test_alt modify c2 number2(20, 10);
+
+Succeed.
+
+SQL> drop table if exists test_alt;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2021072608DKS0P0H00
+SQL> drop table if exists TBL_NUMBER2_152;
+
+Succeed.
+
+SQL> create table tbl_number2_152(n1 NUMBER, n2 number(10,2), b1 NUMBER2, b2 number2(10,2));
+
+Succeed.
+
+SQL> select COLUMN_NAME, DATA_TYPE, DATA_LENGTH, DATA_PRECISION, DATA_SCALE from db_tab_columns where OWNER = 'NUMBER_DTS' and table_name = 'TBL_NUMBER2_152';
+
+COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------
+N1                                                               NUMBER                                                           24                                      
+N2                                                               NUMBER                                                           10           10             2           
+B1                                                               NUMBER2                                                          23                                      
+B2                                                               NUMBER2                                                          8            10             2           
+
+4 rows fetched.
+
+SQL> insert into tbl_number2_152 values(12.34, 12.56, 12.34, 12.56);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> drop table if exists TBL_NUMBER2_153;
+
+Succeed.
+
+SQL> create table TBL_NUMBER2_153 (f1, f2, f3, f4) as select ifnull(n1, n1), ifnull(n2, n2), ifnull(b1, b1), ifnull(b2, b2) from tbl_number2_152;
+
+Succeed.
+
+SQL> select COLUMN_NAME, DATA_TYPE, DATA_LENGTH, DATA_PRECISION, DATA_SCALE from db_tab_columns where OWNER = 'NUMBER_DTS' and table_name = 'TBL_NUMBER2_153';
+
+COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------
+F1                                                               NUMBER                                                           24                                      
+F2                                                               NUMBER                                                           10           10             2           
+F3                                                               NUMBER2                                                          23                                      
+F4                                                               NUMBER2                                                          8            10             2           
+
+4 rows fetched.
+
+SQL> drop table if exists TBL_NUMBER2_152;
+
+Succeed.
+
+SQL> drop table if exists TBL_NUMBER2_153;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2021080522717
+SQL> DROP TABLE IF EXISTS "TBL_NUMBER_100" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE "TBL_NUMBER_100"("COL_NUMBER1" NUMBER2);
+
+Succeed.
+
+SQL> INSERT INTO "TBL_NUMBER_100" ("COL_NUMBER1") values(-9.99999999999999999999999999999999999999900000E+125);
+
+1 rows affected.
+
+SQL> INSERT INTO "TBL_NUMBER_100" ("COL_NUMBER1") values(-10023);
+
+1 rows affected.
+
+SQL> INSERT INTO "TBL_NUMBER_100" ("COL_NUMBER1") values(9.999999999999999999999999999999999999999000000E+125);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> exec dbe_stats.collect_table_stats(schema=>'NUMBER_DTS', name=>'TBL_NUMBER_100',part_name=>null, sample_ratio=>100,method_opt=> 'for all columns');
+
+PL/SQL procedure successfully completed.
+
+SQL> select t.name,hh.col#,hh.MINVALUE,hh.MAXVALUE from SYS.SYS_HISTGRAM_ABSTR hh,SYS.sys_tables t where hh.tab#=t.id and t.name='TBL_NUMBER_100' and t.user# = (select id from sys.sys_users where name = 'NUMBER_DTS');
+
+NAME                                                             COL#         MINVALUE                                                         MAXVALUE                                                        
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+TBL_NUMBER_100                                                   0            -9.9999999999999999999999999999999999999990000000000000000000000000E+125 9.99999999999999999999999999999999999999900000000000000000000000000E+125
+
+1 rows fetched.
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> DROP TABLE IF EXISTS "TBL_NUMBER_100" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE "TBL_NUMBER_100"("COL_NUMBER1" NUMBER2 primary key);
+
+Succeed.
+
+SQL> INSERT INTO "TBL_NUMBER_100" ("COL_NUMBER1") values(-9.99999999999999999999999999999999999999900000E+125);
+
+1 rows affected.
+
+SQL> begin 
+  2 INSERT INTO "TBL_NUMBER_100" ("COL_NUMBER1") values(-9.99999999999999999999999999999999999999900000E+125);
+  3 exception
+  4  when others then
+  5  SYS.dbe_output.print_line('error code: ' || SQL_ERR_CODE);
+  6  SYS.dbe_output.print_line('error message: ' || left(SQL_ERR_MSG, 28)||right(SQL_ERR_MSG, 66));
+  7  end;
+  8 /
+
+error code: 729
+error message: Unique constraint violated, 9999999999999999999999999999999999990000000000000000000000000E+125
+
+PL/SQL procedure successfully completed.
+
+SQL> INSERT INTO "TBL_NUMBER_100" ("COL_NUMBER1") values(9.999999999999999999999999999999999999999000000E+125);
+
+1 rows affected.
+
+SQL> begin 
+  2 INSERT INTO "TBL_NUMBER_100" ("COL_NUMBER1") values(9.999999999999999999999999999999999999999000000E+125);
+  3 exception
+  4  when others then
+  5  SYS.dbe_output.print_line('error code: ' || SQL_ERR_CODE);
+  6  SYS.dbe_output.print_line('error message: ' || left(SQL_ERR_MSG, 28)||right(SQL_ERR_MSG, 66));
+  7  end;
+  8 /
+
+error code: 729
+error message: Unique constraint violated, 9999999999999999999999999999999999900000000000000000000000000E+125
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP TABLE IF EXISTS "TBL_NUMBER_100";
+
+Succeed.
+
+SQL> set serveroutput off;
+
+OFF
+SQL> 
+SQL> drop table  if exists t_part_csf3;
+
+Succeed.
+
+SQL> create table T_PART_CSF3(id number2, name varchar2(100)) PARTITION BY range(id) interval(1E125)
+  2 (
+  3 partition p1 VALUES LESS THAN (6.999999999999999999999999999999999999999000000E+125),
+  4 partition p2 VALUES LESS THAN (7.999999999999999999999999999999999999999000000E+125),
+  5 partition p3 VALUES LESS THAN (8.999999999999999999999999999999999999999000000E+125)
+  6 );
+
+Succeed.
+
+SQL> insert into t_part_csf3 values(1, 'a');
+
+1 rows affected.
+
+SQL> insert into t_part_csf3 values(2, 'b');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select hh.name, hh.HIBOUNDLEN, hh.HIBOUNDVAL from sys.sys_table_parts hh, SYS.sys_tables t where hh.table#=t.id and t.name='T_PART_CSF3' and t.user# = (select id from sys.sys_users where name = 'NUMBER_DTS') order by 1;
+
+NAME                                                             HIBOUNDLEN   HIBOUNDVAL                                                      
+---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+P1                                                               52           6.999999999999999999999999999999999999999000000E+125            
+P2                                                               52           7.999999999999999999999999999999999999999000000E+125            
+P3                                                               52           8.999999999999999999999999999999999999999000000E+125            
+
+3 rows fetched.
+
+SQL> update t_part_csf3 set id = (8.999999999999999999999999999999999999999000000E+125 :: number2) where id = 1;
+
+1 rows affected.
+
+SQL> select hh.name, hh.HIBOUNDLEN, hh.HIBOUNDVAL from sys.sys_table_parts hh, SYS.sys_tables t where hh.table#=t.id and t.name='T_PART_CSF3' and t.user# = (select id from sys.sys_users where name = 'NUMBER_DTS') order by 1;
+
+NAME                                                             HIBOUNDLEN   HIBOUNDVAL                                                      
+---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+P1                                                               52           6.999999999999999999999999999999999999999000000E+125            
+P2                                                               52           7.999999999999999999999999999999999999999000000E+125            
+P3                                                               52           8.999999999999999999999999999999999999999000000E+125            
+_SYS_P1                                                          72           9.99999999999999999999999999999999999999900000000000000000000000000E+125
+
+4 rows fetched.
+
+SQL> update t_part_csf3 set id = (9.999999999999999999999999999999999999999000000E+125 :: number2) where id = 2; --expect error: part_get_interval_boundval
+
+CT-01319, High-Precision numeric overflow
+SQL> drop table if exists t_part_csf3;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test1;
+
+Succeed.
+
+SQL> create table test1(f1 number);
+
+Succeed.
+
+SQL> insert into test1 values(cast(1.1 as real));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select vsize(f1) from test1;
+
+VSIZE(F1)           
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> select * from test1 where f1 = 1.1;
+
+F1                                      
+----------------------------------------
+1.1                                     
+
+1 rows fetched.
+
+SQL> drop table test1;
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists number_dts cascade;
+Succeed.
+
+
+
+

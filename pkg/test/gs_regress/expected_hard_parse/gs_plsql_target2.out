@@ -1,0 +1,483 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> -- plsql debug tool test
+SQL> -- test prepare start
+SQL> create or replace function is_target_create_session_id_table() return boolean is
+  2 begin
+  3   execute immediate 'create table if not exists target_session_id_t(id int)';
+  4   return true;
+  5 exception
+  6   when others then
+  7     return false;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   for i in 1..100000 loop
+  3     if is_target_create_session_id_table() then
+  4       execute immediate 'delete target_session_id_t';
+  5 	  commit;
+  6 	  exit;
+  7     end if;
+  8   end loop;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4 se_id := dbe_debug.init(10000);
+  5 dbe_debug.uninit();
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4   se_id := dbe_debug.init(10000);
+  5   insert into target_session_id_t values(se_id);
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_control_info());
+
+NAME                             VALUE       
+-------------------------------- ------------
+timeout                          10000       
+curr_count                       0           
+status                           0           
+is_force_pause                   0           
+is_force_terminate               0           
+is_attached                      0           
+debug_id                         -1          
+brk_flag                         0           
+brk_flag_stack_id                -1          
+max_stack_id                     0           
+max_break_id                     0           
+
+11 rows fetched.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function is_debug_session_attaching() return boolean is
+  2 v1_id int;
+  3 begin
+  4   select id into v1_id from target_session_id_t where id = 0;
+  5   return true;
+  6 exception
+  7   when others then
+  8     return false;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   for i in 1..10000000 loop
+  3     if is_debug_session_attaching() then
+  4 	  exit;
+  5 	end if;
+  6   end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table target_session_id_t;
+
+Succeed.
+
+SQL> -- test prepare end
+SQL> 
+SQL> -- test step1 start
+SQL> drop table if exists test_department_t;
+
+Succeed.
+
+SQL> create table test_department_t(id int, name varchar(20), province varchar(20), register_time date);
+
+Succeed.
+
+SQL> insert into test_department_t values(1, 'zyc', 'hunan', '2014-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_department_t values(2, 'whf', 'fujian', '2010-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_department_t values(3, 'pfa', 'sichuan', '2018-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_department_t values(4, 'fc', 'jiangsu', '2015-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_department_t values(4, 'hsf', 'fujian', '2018-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function test_lv2_func1(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   <<test_lv2_func1_for>>
+  5   for i in 1..1 loop
+  6     v1 := p1 * 2;
+  7   end loop;
+  8   return v1;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function test_lv1_func1(p1 int, p2 number) return int is
+  2 begin
+  3   return test_lv2_func1(p1) + p2;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_lv2_proc1(p1 varchar, resultSet out sys_refcursor) is
+  2 begin
+  3   open resultSet for select * from test_department_t where province = p1;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE function test_lv1_func2(p1 varchar) return boolean is
+  2 v1_cur sys_refcursor;
+  3 type place is record(
+  4   province varchar(20),
+  5   city varchar(20));
+  6 type employee is record(
+  7   id int,
+  8   name varchar(20),
+  9   home place,
+ 10   register_time date);
+ 11 v2_record employee;
+ 12 begin
+ 13   for item in (select * from test_department_t where province = p1) 
+ 14   loop
+ 15     if (item.name = p1) then
+ 16       return true;
+ 17     end if;
+ 18   end loop;
+ 19   test_lv2_proc1('fujian', v1_cur);
+ 20   fetch v1_cur into v2_record.id, v2_record.name, v2_record.home.province, v2_record.register_time;
+ 21   v2_record.home.city := 'fuzhou';
+ 22   return false;
+ 23 exception
+ 24   when others then
+ 25     return false;
+ 26 end;
+ 27 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger test_lvx_trigger1 before insert on test_department_t FOR EACH ROW is
+  2 v1 int;
+  3 begin
+  4   select count(*) into v1 from test_department_t;
+  5   :new.id := v1;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_lv1_proc1(p1 varchar) is
+  2 begin
+  3   insert into test_department_t values(0, p1, 'fujian', '2019-01-01 00:00:00');
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> <<test_step1_begin>>
+  2 declare
+  3 v1_int int;
+  4 v2_num number(20,5);
+  5 v3_varc varchar(20);
+  6 v4_c char(20);
+  7 v5_date date;
+  8 v6_doub double;
+  9 begin
+ 10   v2_num := 6.7;
+ 11   v1_int := test_lv1_func1(3, v2_num);
+ 12   v3_varc := 'pfa';
+ 13   if test_lv1_func2(v3_varc) then
+ 14     return;
+ 15   end if;
+ 16   test_lv1_proc1(v3_varc);
+ 17 end;
+ 18 /
+
+CT-00932, [16:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] PL/SQL(SYS.TEST_LV1_PROC1) terminated with execute errors
+[4:1] CT-00979, Program has been forced to terminate
+
+SQL> 
+SQL> drop trigger test_lvx_trigger1;
+
+Succeed.
+
+SQL> drop table if exists test_department_t;
+
+Succeed.
+
+SQL> -- test step1 end
+SQL> 
+SQL> -- test step2 start
+SQL> create or replace procedure dbe_debug_006_PROC(a int,b int)
+  2 is
+  3 c int;
+  4 begin
+  5 for i in 1..4
+  6 loop
+  7 dbe_output.print_line('i='||i);  
+  8 c:=b+a+i;
+  9 end loop;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> call dbe_debug_006_PROC(3,5);
+
+i=1
+i=2
+i=3
+i=4
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> call dbe_debug_006_PROC(3,5);
+
+i=1
+i=2
+i=3
+i=4
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> call dbe_debug_006_PROC(3,8);
+
+i=1
+i=2
+i=3
+i=4
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- test step2 end
+SQL> 
+SQL> -- test step3 start
+SQL> create or replace function FVT_FUN2_002 return int is 
+  2 a int;
+  3 begin
+  4 select count(*) into a from dual;
+  5 return a ;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists FVT_FUN1_02;
+
+Succeed.
+
+SQL> CREATE TABLE FVT_FUN1_02 (ID INT);
+
+Succeed.
+
+SQL> 
+SQL> create or replace function FVT_FUN_01_b(a int) return INT  
+  2 is
+  3 m int :=0;
+  4 e int :=100;
+  5 s int :=-1;
+  6 c int ;
+  7 begin
+  8 c :=a;
+  9 if c = 0 then 
+ 10 
+ 11 SELECT  ID  INTO  m  FROM FVT_FUN1_02 WHERE ID=0;
+ 12   return m;
+ 13 else 
+ 14 execute immediate ' select FVT_FUN2_002() from dual ';
+ 15 return s;
+ 16 end if ;
+ 17 exception
+ 18   when others then return e;
+ 19 end;
+ 20 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 a int;
+  3 begin
+  4   a := FVT_FUN_01_b(0);
+  5   dbe_output.print_line(a);
+  6 end;
+  7 /
+
+100
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists FVT_FUN1_02;
+
+Succeed.
+
+SQL> -- test step3 end
+SQL> 
+SQL> -- test step4 start
+SQL> create or replace procedure SET_DELETE_BREAK_PROC()
+  2 is
+  3 a int;
+  4 b int;
+  5 c int;
+  6 d int;
+  7 begin
+  8 a := 0;
+  9 b := 1;
+ 10 c := 2;
+ 11 d := 3;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   SET_DELETE_BREAK_PROC();
+  3 end;
+  4 /
+
+CT-00932, [2:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[10:1] PL/SQL(SYS.SET_DELETE_BREAK_PROC) terminated with execute errors
+[10:1] CT-00979, Program has been forced to terminate
+
+SQL> 
+SQL> create or replace procedure SET_DELETE_BREAK_PROC()
+  2 is
+  3 a int;
+  4 b int;
+  5 c int;
+  6 begin
+  7 a := 0;
+  8 b := 1;
+  9 c := 2;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 a int;
+  3 begin
+  4   a := 0;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step4 end
+SQL> 
+SQL> -- test step5 start
+SQL> create or replace function dbe_debug_010_FUN return sys_refcursor
+  2 is
+  3 cursorv1 sys_refcursor;
+  4 begin
+  5 open cursorv1 for select 1, 2, 3 from dual;
+  6 return cursorv1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> select dbe_debug_010_FUN() from dual;
+
+DBE_DEBUG_010_FUN()                                             
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+1            2            3           
+------------ ------------ ------------
+1            2            3           
+
+1 rows fetched.
+
+
+SQL> -- test step5 end
+SQL> 
+SQL> -- test step6 start
+SQL> call dbe_debug.uninit();
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_DEBUG.UNINIT) terminated with execute errors
+CT-00986, Session can not be uninited, because target session is attached
+
+SQL> -- test step6 end
+SQL> 
+SQL> -- test step7 start
+SQL> declare
+  2 a int;
+  3 begin
+  4   a := 0;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step7 end
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

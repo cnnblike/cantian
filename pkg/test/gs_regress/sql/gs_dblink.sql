@@ -1,0 +1,700 @@
+CREATE DATABASE LINK TEST_LINK connect to sys identified by sys using '127.0.0.1:1611';
+DROP TABLE IF EXISTS T1_DBLINK;
+CREATE TABLE T1_DBLINK(f1 int);
+INSERT INTO T1_DBLINK(f1) values(1);
+INSERT INTO T1_DBLINK(f1) values(7);
+INSERT INTO T1_DBLINK(f1) values(8);
+SELECT f1 FROM T1_DBLINK@test_link order by f1;
+COMMIT;
+SELECT f1 FROM T1_DBLINK@test_link order by f1;
+
+--multi dblink
+CREATE DATABASE LINK TEST_LINK connect to sys identified by sys using '127.0.0.1:1611';
+CREATE DATABASE LINK dbl_1 connect to sys identified by sys using '127.0.0.1:1611';
+SELECT f1 FROM T1_DBLINK@dbl_1 order by f1;
+
+--alter
+ALTER DATABASE LINK TEST_LINK connect to sys1 identified by sys;
+ALTER DATABASE LINK TEST_LINK connect to sys identified by sys1;
+SELECT f1 FROM T1_DBLINK@test_link order by f1;
+ALTER DATABASE LINK TEST_LINK connect to sys identified by sys;
+SELECT f1 FROM T1_DBLINK@test_link order by f1;
+SELECT OWNER, DB_LINK, USERNAME, HOST FROM ADM_DB_LINKS ORDER BY DB_LINK;
+SELECT NODE_NAME, NODE_TYPE, NODE_HOST, NODE_PORT FROM SYS_DATA_NODES ORDER BY NODE_NAME;
+
+--in brackets
+select f1 FROM (T1_DBLINK@test_link) order by f1;
+select * FROM (T1_DBLINK@test_link a) where a.f1 = 7;
+explain select * FROM T1_DBLINK@test_link join T1_DBLINK@test_link;
+select * FROM T1_DBLINK@test_link join T1_DBLINK@test_link;
+
+--error name
+CREATE DATABASE LINK dblink@ CONNECT TO bpm IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+CREATE DATABASE LINK d#$%^&* CONNECT TO bpm IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+CREATE DATABASE LINK dblink9 CONNECT TO d#$%^&* IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+CREATE DATABASE LINK d/*@*/uu CONNECT TO bpm IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+CREATE DATABASE LINK db/*542510*/! CONNECT TO bpm IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+CREATE DATABASE LINK dblinkdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd CONNECT TO bpm IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+
+--Assert raised, expect: remote_cursor->current_stmt_index < remote_cursor->stmt_count
+DROP TABLE IF EXISTS T2_DBLINK;
+CREATE TABLE T2_DBLINK(F1 INT);
+explain SELECT 1 AS C0 FROM (T2_DBLINK@TEST_LINK CROSS JOIN T1_DBLINK@dbl_1) FULL OUTER JOIN SYS_DUMMY ON (true);
+SELECT 1 AS C0 FROM (T2_DBLINK@TEST_LINK CROSS JOIN T1_DBLINK@dbl_1) FULL OUTER JOIN SYS_DUMMY ON (true);
+DROP TABLE T2_DBLINK;
+
+--deparse error
+drop table if exists temp001_0526;
+create table temp001_0526(f1 int, f2 varchar(100), f3 raw(100));
+explain select case when max(f2) over(partition by f1 order by f2 asc) > max(f2) then 1 else 2 end from temp001_0526@TEST_LINK group by f2,f1;
+select case when max(f2) over(partition by f1 order by f2 asc) > max(f2) then 1 else 2 end from temp001_0526@TEST_LINK group by f2,f1;
+drop table temp001_0526;
+
+--not support
+DROP TABLE IF EXISTS T_FOR_PIVOT;
+CREATE TABLE T_FOR_PIVOT (CITY VARCHAR(10),DAY_1 VARCHAR(20),TEMPERATURE INT);
+INSERT INTO T_FOR_PIVOT VALUES('BJ','MONDAY','30');
+INSERT INTO T_FOR_PIVOT VALUES('BJ','TUESDAY','32');
+COMMIT;
+DROP TABLE IF EXISTS T_FOR_UNPIVOT;
+CREATE TABLE T_FOR_UNPIVOT(CITY VARCHAR(10),MONDAY INT,TUESDAY INT);
+INSERT INTO T_FOR_UNPIVOT VALUES ('BJ','30','32');
+INSERT INTO T_FOR_UNPIVOT VALUES ('BJ','','');
+COMMIT;
+SELECT * FROM T_FOR_PIVOT@dbl_1 PIVOT(MAX(TEMPERATURE) FOR DAY_1 IN ('MONDAY','TUESDAY'));
+SELECT * FROM T_FOR_UNPIVOT@dbl_1 UNPIVOT EXCLUDE NULLS(TEMPERATURE FOR DAY_1 IN (MONDAY, TUESDAY));
+--join +
+select * from T1_DBLINK@test_link l,T1_DBLINK@test_link m where l.f1=m.f1(+);
+--json
+drop table if exists tbl_json_memy_002;
+create table tbl_json_memy_002(id int,c_bigint bigint,c_json clob check(c_json is json));
+select t2.* from tbl_json_memy_002@test_link t1,json_table(t1.c_json,'$' null on error columns(f1 varchar2(100) path '$.A10000.k50000',f2 varchar2(100) path '$.A20000.k100000',f3 varchar2(100) path '$.A30000.k150000',f4 varchar2(100) path '$.A40000.k200000',f5 varchar2(100) path '$.A60000.k300000',f6 varchar2(100) path '$.A70000.k350000',f7 varchar2(100) path '$.A80000.k400000') ) t2 where t1.id>13;
+drop table if exists t_DBLINK_001;
+CREATE TABLE t_DBLINK_001(
+COL_1 int,
+COL_2 integer,
+COL_3 int,
+COL_4 real,
+COL_5 number,
+COL_6 float,
+COL_7 decimal(12,6),
+COL_8 number,
+COL_9 numeric,
+COL_10 char(30),
+COL_11 varchar(30),
+COL_12 varchar2(4000 char),
+COL_13 blob,
+COL_14 date,
+COL_15 date,
+COL_16 timestamp,
+COL_17 timestamp with time zone,
+COL_18 timestamp with local time zone,
+COL_19 char(30),
+COL_20 char(30),
+COL_21 interval year to month,
+COL_22 interval day to second,
+col_23 blob,
+col_24 clob
+);
+--error
+select 
+distinct 
+min(COL_2) over (partition by (select COL_2 from t_DBLINK_001@test_link where COL_2 =y.COL_2) ) AS COL_2 ,
+(select COL_5 from t_DBLINK_001 where COL_2 =y.COL_2) AS c3 
+from t_DBLINK_001 y group  by COL_2;
+--error
+select 
+distinct 
+(select COL_2 from t_DBLINK_001@test_link where COL_2 =y.COL_2)  AS COL_2 ,
+(select COL_5 from t_DBLINK_001 where COL_2 =y.COL_2) AS c3 
+from t_DBLINK_001 y group by COL_2;
+--error
+select 
+distinct 
+min(COL_2) over (partition by (select COL_2 from t_DBLINK_001@test_link where COL_2 =y.COL_2) ) AS COL_2 
+from t_DBLINK_001 y group by COL_2;
+--predicate
+EXPLAIN SELECT
+STDDEV_SAMP(CAST(NULL AS BINARY_INTEGER)) AS C0 
+FROM
+(t_DBLINK_001@test_link AS REF_0)       
+ LEFT OUTER JOIN 
+((SELECT 'a' AS C3 FROM T1_DBLINK@test_link ) AS SUBQ_0)
+ON (SUBQ_0.C3 REGEXP '.*')     
+WHERE 
+exists ( SELECT 1 FROM tbl_json_memy_002 AS REF_3 WHERE SUBQ_0.C3 in ( 'a', 'b'));
+--rewrite core
+SELECT
+ SUBQ_1.C2 | SUBQ_1.C2
+FROM
+(SELECT
+ SUBQ_0.C3 AS C2
+ FROM
+ (SELECT
+  NULL AS C1,
+  NULL AS C3
+  FROM
+  t_DBLINK_001@test_link
+ ) AS SUBQ_0
+) AS SUBQ_1
+ORDER BY 1;
+--project_col_info->col not set in subselect
+SELECT
+    SUBQ_1.C2 | SUBQ_1.C3 as XXX
+FROM
+    (SELECT
+        1 AS C0,
+        TRUE AS C1,
+        SUBQ_0.C0 AS C2,
+        SUBQ_0.C0 AS C3
+      FROM
+        (SELECT NULL AS C0 FROM t_DBLINK_001@test_link) AS SUBQ_0
+    ) AS SUBQ_1
+ORDER BY 1, SUBQ_1.C1;
+
+--sqlkiller core
+drop TABLE if exists "OM_PROVISION_TEST_RECORD";
+CREATE TABLE "OM_PROVISION_TEST_RECORD"
+(
+  "SEQ_ID" NUMBER(20) NOT NULL,
+  "BE_ID" NUMBER(10) NOT NULL,
+  "TEST_NAME" VARCHAR(256 BYTE) NOT NULL,
+  "ORDER_ID" NUMBER(20) NOT NULL,
+  "PROV_REQ_SEQ" NUMBER(20) NOT NULL,
+  "OPERATOR_ID" NUMBER(20),
+  "CREATE_TIME" DATE NOT NULL,
+  "LAST_MODIFY_TIME" DATE NOT NULL,
+  "TENANT_ID" NUMBER(20),
+  "C_EX_FIELD1" VARCHAR(255 BYTE),
+  "C_EX_FIELD2" VARCHAR(255 BYTE),
+  "C_EX_FIELD3" VARCHAR(255 BYTE),
+  "C_EX_FIELD4" VARCHAR(255 BYTE),
+  "C_EX_FIELD5" VARCHAR(255 BYTE)
+);
+drop TABLE if exists "OM_PROVISION_REQ_PROP";
+CREATE TABLE "OM_PROVISION_REQ_PROP"
+(
+  "SEQ_ID" NUMBER(20) NOT NULL,
+  "BE_ID" NUMBER(10) NOT NULL,
+  "PROV_REQ_SEQ" NUMBER(20) NOT NULL,
+  "SUB_ORDER_ID" NUMBER(20) NOT NULL,
+  "SUB_EXTERNAL_ID" VARCHAR(256 BYTE),
+  "TRANSFERMATION_REF" VARCHAR(256 BYTE),
+  "FORMAT_LINE" VARCHAR(4000 BYTE),
+  "CREATE_TIME" DATE NOT NULL,
+  "ORDER_MODEL_ATTACH_ID" VARCHAR(32 BYTE),
+  "FORMAT_LINE1" VARCHAR(4000 BYTE),
+  "FORMAT_LINE2" VARCHAR(4000 BYTE),
+  "FORMAT_LINE3" VARCHAR(4000 BYTE),
+  "FORMAT_LINE4" VARCHAR(4000 BYTE),
+  "TENANT_ID" NUMBER(20),
+  "C_EX_FIELD1" VARCHAR(255 BYTE),
+  "C_EX_FIELD2" VARCHAR(255 BYTE),
+  "C_EX_FIELD3" VARCHAR(255 BYTE),
+  "C_EX_FIELD4" VARCHAR(255 BYTE),
+  "C_EX_FIELD5" VARCHAR(255 BYTE),
+  "FORMAT_LINE5" VARCHAR(4000 BYTE),
+  "FORMAT_LINE6" VARCHAR(4000 BYTE),
+  "FORMAT_LINE7" VARCHAR(4000 BYTE),
+  "FORMAT_LINE8" VARCHAR(4000 BYTE)
+);
+drop TABLE if exists "D_RNC";
+CREATE TABLE "D_RNC"
+(
+  "NEID" NUMBER,
+  "RNCNAME" VARCHAR(10 BYTE)
+);
+drop TABLE if exists "OM_RES_BUSI_HIS";
+CREATE TABLE "OM_RES_BUSI_HIS"("NEID" NUMBER, "RNCNAME" VARCHAR(10 BYTE));
+drop TABLE if exists "OM_SHIPPING_INFO_HIS";
+CREATE TABLE "OM_SHIPPING_INFO_HIS"
+(
+  "SHIPPING_ID" NUMBER(20) NOT NULL,
+  "ORDER_ID" NUMBER(20) NOT NULL,
+  "SHIPPING_CARRIER_ID" VARCHAR(16 BYTE) NOT NULL,
+  "SHIPPING_MODE_ID" VARCHAR(20 BYTE),
+  "SHIPPING_METHOD_ID" VARCHAR(16 BYTE),
+  "CONTACT_INFO_ID" NUMBER(20),
+  "ADDR_ID" NUMBER(20),
+  "SHIPPING_TIME_LIMIT" VARCHAR(4 BYTE),
+  "SHIPPING_FROM_DATE" DATE,
+  "SHIPPING_TO_DATE" DATE,
+  "REMARK" VARCHAR(255 BYTE),
+  "PRINT_INVOICE_FLAG" VARCHAR(1 BYTE),
+  "FULFILLMENT_CENTER" VARCHAR(64 BYTE),
+  "CREATE_TIME" DATE,
+  "SHIPPING_STATUS" VARCHAR(32 BYTE),
+  "BE_ID" NUMBER(10),
+  "PARTITION_ID" NUMBER(8) NOT NULL,
+  "EX_FIELD1" VARCHAR(32 BYTE),
+  "EX_FIELD2" VARCHAR(32 BYTE),
+  "EX_FIELD3" VARCHAR(32 BYTE),
+  "EX_FIELD4" VARCHAR(32 BYTE),
+  "EX_FIELD5" VARCHAR(32 BYTE),
+  "EX_FIELD6" VARCHAR(32 BYTE),
+  "EX_FIELD7" VARCHAR(32 BYTE),
+  "EX_FIELD8" VARCHAR(32 BYTE),
+  "EX_FIELD9" VARCHAR(32 BYTE),
+  "EX_FIELD10" VARCHAR(32 BYTE),
+  "EX_FIELD11" VARCHAR(32 BYTE),
+  "EX_FIELD12" VARCHAR(32 BYTE),
+  "EX_FIELD13" VARCHAR(32 BYTE),
+  "EX_FIELD14" VARCHAR(32 BYTE),
+  "EX_FIELD15" VARCHAR(32 BYTE),
+  "EX_FIELD16" VARCHAR(32 BYTE),
+  "EX_FIELD17" VARCHAR(32 BYTE),
+  "EX_FIELD18" VARCHAR(32 BYTE),
+  "EX_FIELD19" VARCHAR(32 BYTE),
+  "EX_FIELD20" VARCHAR(32 BYTE),
+  "HIS_DATE" DATE,
+  "TENANT_ID" NUMBER(20),
+  "C_EX_FIELD1" VARCHAR(32 BYTE),
+  "C_EX_FIELD2" VARCHAR(32 BYTE),
+  "C_EX_FIELD3" VARCHAR(32 BYTE),
+  "C_EX_FIELD4" VARCHAR(32 BYTE),
+  "C_EX_FIELD5" VARCHAR(32 BYTE),
+  "C_EX_FIELD6" VARCHAR(32 BYTE),
+  "C_EX_FIELD7" VARCHAR(32 BYTE),
+  "C_EX_FIELD8" VARCHAR(32 BYTE),
+  "C_EX_FIELD9" VARCHAR(32 BYTE),
+  "C_EX_FIELD10" VARCHAR(32 BYTE),
+  "C_EX_FIELD11" VARCHAR(32 BYTE),
+  "C_EX_FIELD12" VARCHAR(32 BYTE),
+  "C_EX_FIELD13" VARCHAR(32 BYTE),
+  "C_EX_FIELD14" VARCHAR(32 BYTE),
+  "C_EX_FIELD15" VARCHAR(32 BYTE),
+  "C_EX_FIELD16" VARCHAR(32 BYTE),
+  "C_EX_FIELD17" VARCHAR(32 BYTE),
+  "C_EX_FIELD18" VARCHAR(32 BYTE),
+  "C_EX_FIELD19" VARCHAR(32 BYTE),
+  "C_EX_FIELD20" VARCHAR(32 BYTE),
+  "RETURN_FLAG" VARCHAR(32 BYTE),
+  "OP_CODE" VARCHAR(1 BYTE),
+  "REF_SHIPPING_ID" NUMBER(20),
+  "INVOICE_URL" VARCHAR(1024 BYTE),
+  "EXTERNAL_SHIPPING_ID" VARCHAR(32 BYTE),
+  "RESOURCE_RESERVE_NO" VARCHAR(32 BYTE)
+);
+SELECT
+	MAX( CAST( NULL AS TIMESTAMP( 6 ) WITH TIME ZONE )) AS C0
+FROM
+	(( OM_PROVISION_TEST_RECORD@test_link AS REF_0 ) FULL
+OUTER JOIN ( D_RNC@test_link AS REF_1 ) ON
+	( TO_BLOB( '' ) IN (
+	SELECT
+		'0' AS C1
+	FROM
+		OM_PROVISION_REQ_PROP@test_link AS REF_2
+	WHERE
+		TRUE
+	LIMIT 28 OFFSET 85 )))
+INNER JOIN ( OM_SHIPPING_INFO_HIS@test_link AS REF_3 ) ON
+	( FALSE )
+WHERE
+	CURRENT_TIMESTAMP() < CAST( '2021-05-25 17:55:07' AS TIMESTAMP( 6 ))
+ORDER BY
+	MAX( CAST( NULL AS TIMESTAMP( 6 ) WITH TIME ZONE )) DESC LIMIT 55;
+
+--winsort
+insert into D_RNC values (1,'123'),(2,'asdfasdf'),(3,'dfdd');
+insert into OM_RES_BUSI_HIS values (1,'123'),(2,'asdfasdf'),(3,'dfdd');
+commit;
+--origin sql
+SELECT
+COUNT(CAST(NULL AS VARBINARY(100))) OVER 
+(PARTITION BY SUBQ_0.C4 
+ ORDER BY SUBQ_0.C0 DESC,SUBQ_0.C3 DESC NULLS LAST ROWS 
+ BETWEEN NVL2( CAST(CASE WHEN  SUBQ_0.C1 REGEXP '.*' THEN  SUBQ_0.C3 ELSE SUBQ_0.C3 END AS BINARY_UINT32), 
+               CAST(SUBQ_0.C3 AS BINARY_UINT32), 
+			   CAST(CASE WHEN  SUBQ_0.C1 = SUBQ_0.C1 THEN  SUBQ_0.C3 ELSE  SUBQ_0.C3 END AS BINARY_UINT32)
+			  ) FOLLOWING AND UNBOUNDED FOLLOWING
+) AS C0, 
+SUBQ_0.C4 AS C1, 
+SUBQ_0.C4 AS C2 
+FROM (D_RNC@test_link AS REF_0)
+FULL OUTER JOIN 
+((SELECT
+   CAST('313634 8:34:55' AS INTERVAL DAY(7) TO SECOND) AS C0,            
+   NULL AS C1,            
+   NULL AS C2,            
+   NULL AS C3,            
+   CAST('2021-05-27 02:27:06' AS TIMESTAMP WITH TIME ZONE) AS C4         
+   FROM            
+  OM_RES_BUSI_HIS@test_link AS REF_1         
+   WHERE 'v74(vg$s)J_&;MZ-sxl0HiEy@h3N_{5G%qsj1OtZRB4/#1C5?g' LIKE '%') AS SUBQ_0)
+ON (SUBQ_0.C1 REGEXP '.*') 
+WHERE TRUE ORDER BY SUBQ_0.C2 NULLS LAST,3 DESC;
+--simple sql
+SELECT
+COUNT(CAST(NULL AS VARBINARY(100))) OVER 
+(ORDER BY SUBQ_0.C3 ROWS BETWEEN NVL2(SUBQ_0.C3, 1, 0) FOLLOWING AND UNBOUNDED FOLLOWING) AS C0
+FROM 
+D_RNC@test_link AS REF_0
+,
+(SELECT 
+ NULL AS C3
+ FROM OM_RES_BUSI_HIS@test_link AS REF_1 
+) AS SUBQ_0;
+--group by NULL
+SELECT
+  NULL AS C0,
+  MIN(
+    CAST(CURRENT_TIMESTAMP() AS TIMESTAMP)) AS C1
+FROM
+  D_RNC@test_link AS REF_0
+WHERE CAST('2021-06-02 09:45:00' AS TIMESTAMP(6) WITH TIME ZONE) BETWEEN
+  NULL AND
+  CURRENT_TIMESTAMP()
+GROUP BY
+  NULL
+LIMIT 19, 58;
+explain SELECT
+  NULL AS C0,
+  MIN(
+    CAST(CURRENT_TIMESTAMP() AS TIMESTAMP)) AS C1
+FROM
+  D_RNC@test_link AS REF_0
+WHERE CAST('2021-06-02 09:45:00' AS TIMESTAMP(6) WITH TIME ZONE) BETWEEN
+  NULL AND
+  CURRENT_TIMESTAMP()
+GROUP BY
+  NULL
+LIMIT 19, 58;
+--no arg func
+SELECT DISTINCT
+  SUM(
+   CAST(CURRENT_LOCAL_SCN() AS BINARY_BIGINT)) AS C0,
+  AVG(
+    CAST(CURRENT_LOCAL_SCN() AS BINARY_BIGINT)) AS C1
+FROM
+  D_RNC@test_link AS REF_0
+WHERE TRUE
+ORDER BY
+  SUM(
+    CAST(CURRENT_LOCAL_SCN() AS BINARY_BIGINT))  NULLS FIRST,
+  1 DESC NULLS FIRST
+LIMIT 42 OFFSET 58;
+
+--local table subselect join dblink table
+drop table if exists par_group1;
+create table par_group1(a int, b int ,c int);
+insert into par_group1 values(1,2,3); 
+insert into par_group1 values(1,2,3); 
+commit;
+drop table if exists par_group_link;
+create table par_group_link(a int, b int ,c int);
+insert into par_group_link values(1,2,3); 
+commit;
+explain select * from (select b from par_group1 group by b) join par_group_link@TEST_LINK;
+select * from (select b from par_group1 group by b) join par_group_link@TEST_LINK;
+explain select count(*) from par_group_link@TEST_LINK union all select count(*) from (select 1 from sys_dummy);
+select count(*) from par_group_link@TEST_LINK union all select count(*) from (select 1 from sys_dummy);
+select count(*) from par_group_link@TEST_LINK union all select max(3) from (select 1 from sys_dummy);
+select count(*) from par_group_link@TEST_LINK union all select 1 from (select 1 from sys_dummy);
+
+--patition
+drop table if exists t_base_001;
+create table t_base_001(id number,c_int decimal,c_vchar varchar(100),c_clob clob,c_blob blob,c_date date) 
+PARTITION BY RANGE(id)
+(
+PARTITION p1 VALUES LESS THAN(5),
+PARTITION p2 VALUES LESS THAN(50),
+PARTITION p3 VALUES LESS THAN(maxvalue)
+);
+insert into t_base_001 values(-100,-110,-120,lpad('123abc',50,'abc'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+CREATE or replace procedure proc_insert(tname varchar,startall int,endall int) as
+sqlst varchar(500);
+BEGIN
+  FOR i IN startall..endall LOOP
+		sqlst := 'insert into ' || tname ||' select id+'||i||',c_int+'||i||',c_vchar+'||i||',c_clob||'||i||',c_blob'||',c_date from '||tname|| ' where id=-100';
+        execute immediate sqlst;
+  END LOOP;
+END;
+/
+call proc_insert('t_base_001',1,250);
+commit;
+create index idx_t_base_001_001 on t_base_001(id);
+select count(*) from t_base_001@test_link t1 join t_base_001 partition(p2) t2 on t1.id=t2.id where t1.id<10 or t2.id<'-20';
+
+--drop
+drop table t_base_001;
+drop procedure proc_insert;
+DROP TABLE "OM_PROVISION_TEST_RECORD";
+DROP TABLE "OM_PROVISION_REQ_PROP";
+DROP TABLE "D_RNC";
+DROP TABLE "OM_RES_BUSI_HIS";
+DROP TABLE "OM_SHIPPING_INFO_HIS";
+DROP DATABASE LINK TEST_LINK;
+DROP DATABASE LINK dbl_1;
+drop table par_group1;
+drop table par_group_link;
+SELECT F1 FROM T1_DBLINK@test_link;
+SELECT OWNER, DB_LINK, USERNAME, HOST FROM ADM_DB_LINKS ORDER BY DB_LINK;
+SELECT NODE_NAME, NODE_TYPE, NODE_HOST, NODE_PORT FROM SYS_DATA_NODES ORDER BY NODE_NAME;
+
+ALTER DATABASE LINK dblink1 connect to sys identified by sys;
+CREATE DATABASE LINK dblink1 connect to sys identified by sys using '127.0.0.1:1611';
+CREATE DATABASE LINK dblink1 connect to sys identified by sys using '127.0.0.1:1611';
+ALTER DATABASE LINK dblink1 connect to sys identified by sys;
+drop DATABASE LINK dblink1;
+drop DATABASE LINK dblink1;
+ALTER DATABASE LINK dblink1 connect to sys identified by sys;
+DROP TABLE T1_DBLINK;
+DROP TABLE T_FOR_PIVOT;
+DROP TABLE T_FOR_UNPIVOT;
+drop table tbl_json_memy_002;
+DROP TABLE t_DBLINK_001;
+
+--2pc core
+drop user if exists pp cascade;
+create user pp identified by Cantian_234;
+grant dba to pp;
+drop user if exists qq cascade;
+create user qq identified by Cantian_234;
+grant dba to qq;
+conn pp/Cantian_234@127.0.0.1:1611
+drop table if exists t_DBLINK_001;
+CREATE TABLE t_DBLINK_001(COL_1 int);
+insert into t_DBLINK_001 values (10);
+commit;
+conn qq/Cantian_234@127.0.0.1:1611
+drop table if exists t_DBLINK_002;
+CREATE TABLE t_DBLINK_002(COL_1 int);
+insert into t_DBLINK_002 values (10);
+commit;
+CREATE DATABASE LINK dblink1 CONNECT TO pp IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+CREATE DATABASE LINK dblink2 CONNECT TO qq IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+select count(*) from t_DBLINK_001@DBLINK1;
+select count(*) from (t_DBLINK_001@DBLINK1);
+select t0.COL_1,t1.col_1 from t_DBLINK_002@DBLINK2 t0,t_DBLINK_001@DBLINK1 t1 where t0.COL_1=t1.col_1;
+--create/alter/drop dblink for other user
+CREATE DATABASE LINK pp.dblink1 CONNECT TO pp IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+ALTER DATABASE LINK pp.dblink1 CONNECT TO pp IDENTIFIED BY Cantian_2345;
+DROP DATABASE LINK pp.dblink1;
+drop table t_DBLINK_002;
+DROP DATABASE LINK dblink1;
+DROP DATABASE LINK dblink2;
+conn sys/Huawei@123@127.0.0.1:1611
+drop user pp cascade;
+drop user qq cascade;
+
+create user u_drop identified by Cantian_234;
+grant dba to u_drop;
+conn u_drop/Cantian_234@127.0.0.1:1611
+CREATE DATABASE LINK dblink_drop CONNECT TO u_drop IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+conn sys/Huawei@123@127.0.0.1:1611
+drop user u_drop cascade;
+select count(*) from sys_links where name = 'DBLINK_DROP';
+--20210803
+drop user if exists test0803 cascade;
+create user test0803 identified by Cantian_234;
+grant dba to test0803;
+CREATE DATABASE LINK dblink1 CONNECT TO test0803 IDENTIFIED BY Cantian_234 USING '127.0.0.1:1611';
+drop table if exists test0803.t_DBLINK_001;
+CREATE TABLE  test0803.t_DBLINK_001(
+     COL_1 int,
+     COL_2 integer,
+     COL_3 int,
+     COL_4 real,
+     COL_5 number
+);
+begin
+    for i in 1..20 loop
+      insert into test0803.t_DBLINK_001 values(
+      i,
+      i+1,
+      i+2,
+      i+3.1415926,
+      i+445.255
+      );
+      commit;
+    end loop;
+end;
+/
+select  t0.COL_1 ,f3 from (select  to_char(COL_1) new_COL_1, COL_1,nvl(sum(COL_1),0) f1, nvl(sum(COL_2),0) f2, nvl(sum(COL_1) / sum(COL_2),0) f3 from test0803.t_DBLINK_001@dblink1 where COL_1 <20 group by COL_1) t0 cross join test0803.t_DBLINK_001@dblink1 t where t.COL_1=t0.COL_1 order by t0.COL_1 limit 12;
+explain select  t0.COL_1 ,f3 from (select  to_char(COL_1) new_COL_1, COL_1,nvl(sum(COL_1),0) f1, nvl(sum(COL_2),0) f2, nvl(sum(COL_1) / sum(COL_2),0) f3 from test0803.t_DBLINK_001@dblink1 where COL_1 <20 group by COL_1) t0 cross join test0803.t_DBLINK_001@dblink1 t where t.COL_1=t0.COL_1 order by t0.COL_1 limit 12;
+explain select  t0.COL_1 ,f3 from (select  to_char(COL_1) new_COL_1, COL_1,nvl(sum(COL_1),0) f1, nvl(sum(COL_2),0) f2, nvl(sum(COL_1) / sum(COL_2),0) f3 from test0803.t_DBLINK_001@dblink1 where COL_1 <20 group by COL_1) t0 left join test0803.t_DBLINK_001@dblink1 t2 on t2.COL_1=t0.COL_1 cross join test0803.t_DBLINK_001@dblink1 t where t.COL_1=t0.COL_1 order by t0.COL_1 limit 12;
+DROP DATABASE LINK dblink1;
+conn sys/Huawei@123@127.0.0.1:1611
+drop user test0803 cascade;
+
+--DTS2021091321795
+DROP TABLE IF EXISTS "OM_PAYMENT_PROP";
+DROP TABLE IF EXISTS "OM_WORK_ORDER";
+DROP TABLE IF EXISTS "OM_ORDER_VERTICAL";
+DROP TABLE IF EXISTS "OM_INTERACTION_LOG_HIS";
+CREATE DATABASE LINK dblink1 CONNECT TO sys IDENTIFIED BY sys USING '127.0.0.1:1611';
+CREATE DATABASE LINK dblink2 CONNECT TO sys IDENTIFIED BY sys USING '127.0.0.1:1611';
+CREATE DATABASE LINK dblink3 CONNECT TO sys IDENTIFIED BY sys USING '127.0.0.1:1611';
+CREATE TABLE "OM_WORK_ORDER"
+(
+  "WORK_ORDER_ID" NUMBER(20) NOT NULL,
+  "ORDER_ID" NUMBER(20) NOT NULL,
+  "FULFILLMENT_UNIT_ID" VARCHAR(128 BYTE) NOT NULL,
+  "WORK_ORDER_TYPE" VARCHAR(16 BYTE),
+  "CREATE_TIME" DATE NOT NULL,
+  "STATUS" VARCHAR(4 BYTE),
+  "STATUS_TIME" DATE,
+  "START_TIME" DATE,
+  "END_TIME" DATE,
+  "VERSION_ID" NUMBER(20) NOT NULL,
+  "BE_ID" NUMBER(10) NOT NULL,
+  "EXTERNAL_ID" VARCHAR(32 BYTE),
+  "EX_FIELD1" VARCHAR(32 BYTE),
+  "EX_FIELD2" VARCHAR(32 BYTE),
+  "EX_FIELD3" VARCHAR(32 BYTE),
+  "EX_FIELD4" VARCHAR(32 BYTE),
+  "EX_FIELD5" VARCHAR(32 BYTE),
+  "EX_FIELD6" VARCHAR(32 BYTE),
+  "EX_FIELD7" VARCHAR(32 BYTE),
+  "EX_FIELD8" VARCHAR(32 BYTE),
+  "EX_FIELD9" VARCHAR(32 BYTE),
+  "EX_FIELD10" VARCHAR(32 BYTE),
+  "EX_FIELD11" VARCHAR(32 BYTE),
+  "EX_FIELD12" VARCHAR(32 BYTE),
+  "EX_FIELD13" VARCHAR(32 BYTE),
+  "EX_FIELD14" VARCHAR(32 BYTE),
+  "EX_FIELD15" VARCHAR(32 BYTE),
+  "EX_FIELD16" VARCHAR(32 BYTE),
+  "EX_FIELD17" VARCHAR(32 BYTE),
+  "EX_FIELD18" VARCHAR(32 BYTE),
+  "EX_FIELD19" VARCHAR(32 BYTE),
+  "EX_FIELD20" VARCHAR(32 BYTE),
+  "TENANT_ID" NUMBER(20),
+  "C_EX_FIELD1" VARCHAR(32 BYTE),
+  "C_EX_FIELD2" VARCHAR(32 BYTE),
+  "C_EX_FIELD3" VARCHAR(32 BYTE),
+  "C_EX_FIELD4" VARCHAR(32 BYTE),
+  "C_EX_FIELD5" VARCHAR(32 BYTE),
+  "C_EX_FIELD6" VARCHAR(32 BYTE),
+  "C_EX_FIELD7" VARCHAR(32 BYTE),
+  "C_EX_FIELD8" VARCHAR(32 BYTE),
+  "C_EX_FIELD9" VARCHAR(32 BYTE),
+  "C_EX_FIELD10" VARCHAR(32 BYTE),
+  "C_EX_FIELD11" VARCHAR(32 BYTE),
+  "C_EX_FIELD12" VARCHAR(32 BYTE),
+  "C_EX_FIELD13" VARCHAR(32 BYTE),
+  "C_EX_FIELD14" VARCHAR(32 BYTE),
+  "C_EX_FIELD15" VARCHAR(32 BYTE),
+  "C_EX_FIELD16" VARCHAR(32 BYTE),
+  "C_EX_FIELD17" VARCHAR(32 BYTE),
+  "C_EX_FIELD18" VARCHAR(32 BYTE),
+  "C_EX_FIELD19" VARCHAR(32 BYTE),
+  "C_EX_FIELD20" VARCHAR(32 BYTE),
+  "C_EX_FIELD21" VARCHAR(32 BYTE),
+  "C_EX_FIELD22" VARCHAR(32 BYTE),
+  "C_EX_FIELD23" VARCHAR(32 BYTE),
+  "C_EX_FIELD24" VARCHAR(32 BYTE),
+  "C_EX_FIELD25" VARCHAR(32 BYTE),
+  "C_EX_FIELD26" VARCHAR(32 BYTE),
+  "C_EX_FIELD27" VARCHAR(32 BYTE),
+  "C_EX_FIELD28" VARCHAR(32 BYTE),
+  "C_EX_FIELD29" VARCHAR(32 BYTE),
+  "C_EX_FIELD30" VARCHAR(32 BYTE)
+);
+CREATE TABLE "OM_PAYMENT_PROP"
+(
+  "PAYMENT_PROP_ID" NUMBER(20) NOT NULL,
+  "PAYMENT_ID" NUMBER(20) NOT NULL,
+  "ATTR_ID" NUMBER(20) NOT NULL,
+  "PAYMENT_ATTR_DEF_ID" NUMBER(20) NOT NULL,
+  "PAYMENT_METHOD" VARCHAR(16 BYTE) NOT NULL,
+  "ATTR_VALUE" VARCHAR(128 BYTE),
+  "BE_ID" NUMBER(10),
+  "CREATE_TIME" DATE,
+  "TENANT_ID" NUMBER(20),
+  "C_EX_FIELD1" VARCHAR(255 BYTE),
+  "C_EX_FIELD2" VARCHAR(255 BYTE),
+  "C_EX_FIELD3" VARCHAR(255 BYTE),
+  "C_EX_FIELD4" VARCHAR(255 BYTE),
+  "C_EX_FIELD5" VARCHAR(255 BYTE)
+);
+CREATE TABLE "OM_ORDER_VERTICAL"
+(
+  "ID" NUMBER(20),
+  "FIELD_NAME" VARCHAR(64 BYTE),
+  "CREATE_TIME" DATE,
+  "BE_ID" NUMBER(10),
+  "FIELD0" VARCHAR(4000 BYTE),
+  "FIELD1" VARCHAR(4000 BYTE),
+  "FIELD2" VARCHAR(4000 BYTE),
+  "FIELD3" VARCHAR(4000 BYTE),
+  "FIELD4" VARCHAR(4000 BYTE),
+  "FIELD5" VARCHAR(4000 BYTE),
+  "FIELD6" VARCHAR(4000 BYTE),
+  "FIELD7" VARCHAR(4000 BYTE),
+  "FIELD8" VARCHAR(4000 BYTE),
+  "FIELD9" VARCHAR(4000 BYTE),
+  "FIELD10" VARCHAR(4000 BYTE),
+  "FIELD11" VARCHAR(4000 BYTE),
+  "FIELD12" VARCHAR(4000 BYTE),
+  "FIELD13" VARCHAR(4000 BYTE),
+  "FIELD14" VARCHAR(4000 BYTE),
+  "FIELD15" VARCHAR(4000 BYTE),
+  "FIELD16" VARCHAR(4000 BYTE),
+  "FIELD17" VARCHAR(4000 BYTE),
+  "FIELD18" VARCHAR(4000 BYTE),
+  "FIELD19" VARCHAR(4000 BYTE),
+  "TENANT_ID" NUMBER(20),
+  "C_EX_FIELD1" VARCHAR(255 BYTE),
+  "C_EX_FIELD2" VARCHAR(255 BYTE),
+  "C_EX_FIELD3" VARCHAR(255 BYTE),
+  "C_EX_FIELD4" VARCHAR(255 BYTE),
+  "C_EX_FIELD5" VARCHAR(255 BYTE),
+  "HIS_DATE" DATE
+);
+CREATE TABLE "OM_INTERACTION_LOG_HIS"
+(
+  "INTERACTION_LOG_ID" NUMBER(20) NOT NULL,
+  "ORDER_ID" NUMBER(20) NOT NULL,
+  "SEQUENCE_ID" NUMBER(10) NOT NULL,
+  "OPU_NAME" VARCHAR(256 BYTE) NOT NULL,
+  "ACTIVITY_ID" VARCHAR(256 BYTE),
+  "INTERFACE_NAME" VARCHAR(256 BYTE),
+  "REQUEST_DATE" DATE,
+  "RESPONSE_DATE" DATE,
+  "STATUS" VARCHAR(32 BYTE),
+  "LAST_RETRY_DATE" DATE,
+  "RETRY_TIMES" NUMBER(4),
+  "BE_ID" NUMBER(10) NOT NULL,
+  "CREATE_TIME" DATE,
+  "TENANT_ID" NUMBER(20),
+  "C_EX_FIELD1" VARCHAR(255 BYTE),
+  "C_EX_FIELD2" VARCHAR(255 BYTE),
+  "C_EX_FIELD3" VARCHAR(255 BYTE),
+  "C_EX_FIELD4" VARCHAR(255 BYTE),
+  "C_EX_FIELD5" VARCHAR(255 BYTE)
+);
+SELECT
+  COUNT(CAST(CAST('8328-2' AS INTERVAL YEAR(4) TO MONTH) AS INTERVAL YEAR(4) TO MONTH)) AS C0
+FROM
+  (((OM_INTERACTION_LOG_HIS@dblink2 AS REF_0) CROSS JOIN (OM_ORDER_VERTICAL@dblink3 AS REF_1))
+   FULL OUTER JOIN 
+   (OM_WORK_ORDER@dblink2 AS REF_2)
+   ON (CAST('2021-09-13 14:51:13' AS TIMESTAMP WITH LOCAL TIME ZONE) <> NULL))
+  CROSS JOIN 
+  (OM_PAYMENT_PROP@dblink1 AS REF_3)
+WHERE REGEXP_LIKE(CONCAT(
+    CAST(CAST('282541 17:17:33' AS INTERVAL DAY(7) TO SECOND) AS INTERVAL DAY(7) TO SECOND),
+    CAST(NULL AS CHAR(100))),'.*')
+OFFSET 39 LIMIT 18;
+explain SELECT
+  COUNT(CAST(CAST('8328-2' AS INTERVAL YEAR(4) TO MONTH) AS INTERVAL YEAR(4) TO MONTH)) AS C0
+FROM
+  (((OM_INTERACTION_LOG_HIS@dblink2 AS REF_0) CROSS JOIN (OM_ORDER_VERTICAL@dblink3 AS REF_1))
+   FULL OUTER JOIN 
+   (OM_WORK_ORDER@dblink2 AS REF_2)
+   ON (CAST('2021-09-13 14:51:13' AS TIMESTAMP WITH LOCAL TIME ZONE) <> NULL))
+  CROSS JOIN 
+  (OM_PAYMENT_PROP@dblink1 AS REF_3)
+WHERE REGEXP_LIKE(CONCAT(
+    CAST(CAST('282541 17:17:33' AS INTERVAL DAY(7) TO SECOND) AS INTERVAL DAY(7) TO SECOND),
+    CAST(NULL AS CHAR(100))),'.*')
+OFFSET 39 LIMIT 18;
+DROP DATABASE LINK dblink1;
+DROP DATABASE LINK dblink2;
+DROP DATABASE LINK dblink3;
+DROP TABLE "OM_PAYMENT_PROP";
+DROP TABLE "OM_WORK_ORDER";
+DROP TABLE "OM_ORDER_VERTICAL";
+DROP TABLE "OM_INTERACTION_LOG_HIS";

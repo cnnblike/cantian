@@ -1,0 +1,2 @@
+alter database add standby logfile ('standbylog1' size 128M blocksize 4096,'standbylog2' size 128M blocksize 4096,'standbylog3' size 128M blocksize 4096);
+select  ID,TYPE,BYTES  from v$logfile where TYPE = 'STANDBY' order by id;

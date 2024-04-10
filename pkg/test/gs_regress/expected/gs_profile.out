@@ -1,0 +1,1117 @@
+
+
+SQL> conn / as sysdba 
+
+connected.
+
+SQL> ALTER PROFILE DEFAULT LIMIT PASSWORD_REUSE_MAX 1;
+
+Succeed.
+
+SQL> ALTER PROFILE default LIMIT PASSWORD_REUSE_MAX UNLIMITED;
+
+Succeed.
+
+SQL> alter profile "DEFAULT" limit PASSWORD_REUSE_TIME 1;
+
+Succeed.
+
+SQL> alter profile "default" limit PASSWORD_REUSE_TIME UNLIMITED;
+
+CT-00785, Profile default does not exist
+SQL> alter profile "DEFAULT" limit PASSWORD_REUSE_TIME UNLIMITED;
+
+Succeed.
+
+SQL> -- TESTCASE: USER& PROFILE
+SQL> SET CTSQL_SSL_MODE=DISABLED;
+
+CTSQL_SSL_MODE = DISABLED
+
+SQL> CREATE PROFILE PROFILE1 LIMIT PASSWORD_GRACE_TIME 0 PASSWORD_GRACE_TIME 20;
+
+CT-00675, [1:73]Values in resource limit settings were invalid
+SQL> CREATE PROFILE PROFILE1 LIMIT PASSWORD_GRACE_TIME 10 PASSWORD_GRACE_TIME 20;
+
+CT-00601, [1:54]Sql syntax error: keyword "PASSWORD_GRACE_TIME" cannot be appear more than once
+SQL> CREATE PROFILE PROFILE1 LIMIT PASSWORD_GRACE_TIME 1 FAILED_LOGIN_ATTEMPTS -1;
+
+CT-00675, [1:77]Values in resource limit settings were invalid
+SQL> CREATE PROFILE PROFILE1 LIMIT FAILED_LOGIN_ATTEMPTS 999999999999999999;
+
+CT-00675, [1:71]Values in resource limit settings were invalid
+SQL> CREATE PROFILE PROFILE1 LIMIT FAILED_LOGIN_ATTEMPTS 2147483647;
+
+CT-00675, [1:63]Values in resource limit settings were invalid
+SQL> CREATE PROFILE PROFILE1 LIMIT FAILED_LOGIN_ATTEMPTS 1;
+
+Succeed.
+
+SQL> CREATE PROFILE PROFILE1 LIMIT PASSWORD_GRACE_TIME 10 PASSWORD_GRACE_TIME1 20;
+
+CT-00601, [1:54]Sql syntax error: FAILED_LOGIN_ATTEMPTS or PASSWORD_LIFE_TIME or PASSWORD_REUSE_TIME or PASSWORD_REUSE_MAX or PASSWORD_LOCK_TIME or PASSWORD_GRACE_TIME or SESSIONS_PER_USER or PASSWORD_MIN_LEN expected
+SQL> CREATE PROFILE PROFILE1 LIMIT PASSWORD_GRACE_TIME 10  PASSWORD_LOCK_TIME DEFAULT PASSWORD_LIFE_TIME UNLIMITED;
+
+CT-00753, The object profile PROFILE1 already exists.
+SQL> CREATE PROFILE PROFILE1 LIMIT PASSWORD_GRACE_TIME 10  PASSWORD_LOCK_TIME DEFAULT PASSWORD_LIFE_TIME UNLIMITED;
+
+CT-00753, The object profile PROFILE1 already exists.
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE1' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+PROFILE1                                                         FAILED_LOGIN_ATTEMPTS                                            PASSWORD      1                                                               
+PROFILE1                                                         PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+PROFILE1                                                         PASSWORD_LIFE_TIME                                               PASSWORD      180                                                             
+PROFILE1                                                         PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+PROFILE1                                                         PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+PROFILE1                                                         PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+PROFILE1                                                         PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+PROFILE1                                                         SESSIONS_PER_USER                                                KERNEL        UNLIMITED                                                       
+
+8 rows fetched.
+
+SQL> 
+SQL> ALTER PROFILE "DEFAULT" LIMIT SESSIONS_PER_USER 99999;
+
+CT-00210, The value of parameter "SESSIONS_PER_USER" is too large, at most 19380
+SQL> ALTER PROFILE "DEFAULT" LIMIT SESSIONS_PER_USER 4096;
+
+Succeed.
+
+SQL> ALTER PROFILE "DEFAULT" LIMIT SESSIONS_PER_USER 8192;
+
+Succeed.
+
+SQL> ALTER PROFILE PROFILE1 LIMIT PASSWORD_LIFE_TIME 180 PASSWORD_GRACE_TIME1 DEFAULT PASSWORD_LOCK_TIME 1;
+
+CT-00601, [1:53]Sql syntax error: FAILED_LOGIN_ATTEMPTS or PASSWORD_LIFE_TIME or PASSWORD_REUSE_TIME or PASSWORD_REUSE_MAX or PASSWORD_LOCK_TIME or PASSWORD_GRACE_TIME or SESSIONS_PER_USER or PASSWORD_MIN_LEN expected
+SQL> ALTER PROFILE PROFILE2 LIMIT PASSWORD_LIFE_TIME 180 PASSWORD_GRACE_TIME DEFAULT PASSWORD_LOCK_TIME 1;
+
+CT-00785, Profile PROFILE2 does not exist
+SQL> ALTER PROFILE PROFILE1 LIMIT PASSWORD_LIFE_TIME 180 PASSWORD_GRACE_TIME DEFAULT PASSWORD_LOCK_TIME 1;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE1' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+PROFILE1                                                         FAILED_LOGIN_ATTEMPTS                                            PASSWORD      1                                                               
+PROFILE1                                                         PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+PROFILE1                                                         PASSWORD_LIFE_TIME                                               PASSWORD      180                                                             
+PROFILE1                                                         PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+PROFILE1                                                         PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+PROFILE1                                                         PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+PROFILE1                                                         PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+PROFILE1                                                         SESSIONS_PER_USER                                                KERNEL        UNLIMITED                                                       
+
+8 rows fetched.
+
+SQL> 
+SQL> DROP PROFILE PROFILE1;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE1' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> DROP PROFILE PROFILE1;
+
+CT-00785, Profile PROFILE1 does not exist
+SQL> 
+SQL> DROP USER IF EXISTS TEST CASCADE;
+
+Succeed.
+
+SQL> CREATE USER TEST IDENTIFIED BY Root1234 PROFILE PROFILE1;
+
+CT-00785, Profile PROFILE1 does not exist
+SQL> CREATE PROFILE PROFILE1 LIMIT PASSWORD_GRACE_TIME DEFAULT;
+
+Succeed.
+
+SQL> CREATE USER TEST IDENTIFIED BY Root1234 PROFILE PROFILE1;
+
+Succeed.
+
+SQL> GRANT DBA TO TEST;
+
+Succeed.
+
+SQL> SELECT * FROM DB_PROFILES WHERE OWNER = 'TEST' order by RESOURCE_NAME;
+
+OWNER                                                            PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+TEST                                                             PROFILE1                                                         FAILED_LOGIN_ATTEMPTS                                            PASSWORD      10                                                              
+TEST                                                             PROFILE1                                                         PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+TEST                                                             PROFILE1                                                         PASSWORD_LIFE_TIME                                               PASSWORD      180                                                             
+TEST                                                             PROFILE1                                                         PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+TEST                                                             PROFILE1                                                         PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+TEST                                                             PROFILE1                                                         PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+TEST                                                             PROFILE1                                                         PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+TEST                                                             PROFILE1                                                         SESSIONS_PER_USER                                                KERNEL        UNLIMITED                                                       
+
+8 rows fetched.
+
+SQL> 
+SQL> CREATE PROFILE PROFILE2 LIMIT PASSWORD_LIFE_TIME DEFAULT;
+
+Succeed.
+
+SQL> ALTER USER TEST PROFILE PROFILE2;
+
+Succeed.
+
+SQL> SELECT * FROM DB_PROFILES WHERE OWNER = 'TEST' order by RESOURCE_NAME;
+
+OWNER                                                            PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+TEST                                                             PROFILE2                                                         FAILED_LOGIN_ATTEMPTS                                            PASSWORD      10                                                              
+TEST                                                             PROFILE2                                                         PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+TEST                                                             PROFILE2                                                         PASSWORD_LIFE_TIME                                               PASSWORD      180                                                             
+TEST                                                             PROFILE2                                                         PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+TEST                                                             PROFILE2                                                         PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+TEST                                                             PROFILE2                                                         PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+TEST                                                             PROFILE2                                                         PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+TEST                                                             PROFILE2                                                         SESSIONS_PER_USER                                                KERNEL        UNLIMITED                                                       
+
+8 rows fetched.
+
+SQL> 
+SQL> DROP PROFILE PROFILE1;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE1' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE PROFILE PROFILE3 LIMIT PASSWORD_LIFE_TIME 181;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE3' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+PROFILE3                                                         FAILED_LOGIN_ATTEMPTS                                            PASSWORD      10                                                              
+PROFILE3                                                         PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+PROFILE3                                                         PASSWORD_LIFE_TIME                                               PASSWORD      181                                                             
+PROFILE3                                                         PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+PROFILE3                                                         PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+PROFILE3                                                         PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+PROFILE3                                                         PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+PROFILE3                                                         SESSIONS_PER_USER                                                KERNEL        UNLIMITED                                                       
+
+8 rows fetched.
+
+SQL> ALTER PROFILE PROFILE3 LIMIT PASSWORD_LIFE_TIME 182;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE3' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+PROFILE3                                                         FAILED_LOGIN_ATTEMPTS                                            PASSWORD      10                                                              
+PROFILE3                                                         PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+PROFILE3                                                         PASSWORD_LIFE_TIME                                               PASSWORD      182                                                             
+PROFILE3                                                         PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+PROFILE3                                                         PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+PROFILE3                                                         PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+PROFILE3                                                         PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+PROFILE3                                                         SESSIONS_PER_USER                                                KERNEL        UNLIMITED                                                       
+
+8 rows fetched.
+
+SQL> DROP PROFILE PROFILE3;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE3' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> CONNECT  sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> ALTER PROFILE PROFILE2 LIMIT FAILED_LOGIN_ATTEMPTS 2;
+
+Succeed.
+
+SQL> CONNECT  TEST/Root12345@127.0.0.1:1611
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT  TEST/Root12345@127.0.0.1:1611
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT  TEST/Root12345@127.0.0.1:1611
+
+CT-00328, The account was locked
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611
+
+CT-00328, The account was locked
+
+SQL> CONNECT  sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP PROFILE PROFILE2;
+
+CT-00818, Profile has been assigned to user, can not been dropped without cascade option
+SQL> DROP PROFILE PROFILE2 CASCADE;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE2' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM DB_PROFILES WHERE OWNER = 'TEST' order by RESOURCE_NAME;
+
+OWNER                                                            PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+TEST                                                             DEFAULT                                                          FAILED_LOGIN_ATTEMPTS                                            PASSWORD      10                                                              
+TEST                                                             DEFAULT                                                          PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+TEST                                                             DEFAULT                                                          PASSWORD_LIFE_TIME                                               PASSWORD      180                                                             
+TEST                                                             DEFAULT                                                          PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+TEST                                                             DEFAULT                                                          PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+TEST                                                             DEFAULT                                                          PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+TEST                                                             DEFAULT                                                          PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+TEST                                                             DEFAULT                                                          SESSIONS_PER_USER                                                KERNEL        8192                                                            
+
+8 rows fetched.
+
+SQL> DROP USER TEST CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> create profile "DEFAULT" limit PASSWORD_REUSE_TIME DEFAULT;
+
+CT-00753, The object profile DEFAULT already exists.
+SQL> create profile "default" limit PASSWORD_REUSE_TIME DEFAULT;
+
+Succeed.
+
+SQL> create profile DEFAULT limit PASSWORD_REUSE_TIME DEFAULT;
+
+CT-00753, The object profile DEFAULT already exists.
+SQL> DROP profile "DEFAULT" cascade;
+
+CT-00601, Sql syntax error: cannot drop PUBLIC_DEFAULT profile
+SQL> DROP profile DEFAULT cascade;
+
+CT-00601, Sql syntax error: cannot drop PUBLIC_DEFAULT profile
+SQL> DROP profile "default" cascade;
+
+Succeed.
+
+SQL> alter profile "DEFAULT" limit PASSWORD_REUSE_TIME 365;
+
+Succeed.
+
+SQL> alter profile "DEFAULT" limit PASSWORD_REUSE_MAX 20;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'DEFAULT' ORDER BY RESOURCE_NAME; 
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+DEFAULT                                                          FAILED_LOGIN_ATTEMPTS                                            PASSWORD      10                                                              
+DEFAULT                                                          PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+DEFAULT                                                          PASSWORD_LIFE_TIME                                               PASSWORD      180                                                             
+DEFAULT                                                          PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+DEFAULT                                                          PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+DEFAULT                                                          PASSWORD_REUSE_MAX                                               PASSWORD      20                                                              
+DEFAULT                                                          PASSWORD_REUSE_TIME                                              PASSWORD      365                                                             
+DEFAULT                                                          SESSIONS_PER_USER                                                KERNEL        8192                                                            
+
+8 rows fetched.
+
+SQL> alter profile "DEFAULT" limit PASSWORD_REUSE_TIME UNLIMITED;
+
+Succeed.
+
+SQL> alter profile "DEFAULT" limit PASSWORD_REUSE_MAX UNLIMITED;
+
+Succeed.
+
+SQL> alter profile profile_a limit SESSIONS_PER_USER unlimited;
+
+CT-00785, Profile PROFILE_A does not exist
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'DEFAULT' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+DEFAULT                                                          FAILED_LOGIN_ATTEMPTS                                            PASSWORD      10                                                              
+DEFAULT                                                          PASSWORD_GRACE_TIME                                              PASSWORD      7                                                               
+DEFAULT                                                          PASSWORD_LIFE_TIME                                               PASSWORD      180                                                             
+DEFAULT                                                          PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+DEFAULT                                                          PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+DEFAULT                                                          PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+DEFAULT                                                          PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+DEFAULT                                                          SESSIONS_PER_USER                                                KERNEL        8192                                                            
+
+8 rows fetched.
+
+SQL> 
+SQL> CREATE PROFILE PROFILE1 LIMIT PASSWORD_LIFE_TIME 3/86400 PASSWORD_GRACE_TIME 3/86400;
+
+Succeed.
+
+SQL> CREATE USER TEST IDENTIFIED BY Root1234 PROFILE PROFILE1;
+
+Succeed.
+
+SQL> GRANT DBA TO TEST;
+
+Succeed.
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'PROFILE1' ORDER BY RESOURCE_NAME;
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+PROFILE1                                                         FAILED_LOGIN_ATTEMPTS                                            PASSWORD      10                                                              
+PROFILE1                                                         PASSWORD_GRACE_TIME                                              PASSWORD      .000035                                                         
+PROFILE1                                                         PASSWORD_LIFE_TIME                                               PASSWORD      .000035                                                         
+PROFILE1                                                         PASSWORD_LOCK_TIME                                               PASSWORD      1                                                               
+PROFILE1                                                         PASSWORD_MIN_LEN                                                 PASSWORD      8                                                               
+PROFILE1                                                         PASSWORD_REUSE_MAX                                               PASSWORD      UNLIMITED                                                       
+PROFILE1                                                         PASSWORD_REUSE_TIME                                              PASSWORD      UNLIMITED                                                       
+PROFILE1                                                         SESSIONS_PER_USER                                                KERNEL        UNLIMITED                                                       
+
+8 rows fetched.
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --success
+
+connected.
+
+SQL> select sleep(3) from dual;
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611  --success,but warning left 2 seconds
+
+Warnning:password will expire within 0 days
+
+SQL> select sleep(4) from dual;
+
+SLEEP(4)
+--------
+        
+
+1 rows fetched.
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed
+
+CT-00327, The user password has expired
+
+SQL> CONNECT  sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root12345;
+
+Succeed.
+
+SQL> CONNECT  TEST/Root12345@127.0.0.1:1611 --success
+
+connected.
+
+SQL> ALTER PROFILE PROFILE1 LIMIT FAILED_LOGIN_ATTEMPTS 3 PASSWORD_LOCK_TIME 3/86400 PASSWORD_LIFE_TIME DEFAULT PASSWORD_GRACE_TIME DEFAULT;
+
+Succeed.
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed
+
+CT-00329, Incorrect user or password
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant select on sys.SYS_USERS to TEST;
+
+Succeed.
+
+SQL> CONNECT  TEST/Root12345@127.0.0.1:1611 --success
+
+connected.
+
+SQL> select ASTATUS, LCOUNT from sys.SYS_USERS where NAME = 'TEST';
+
+ASTATUS      LCOUNT      
+------------ ------------
+0            0           
+
+1 rows fetched.
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed, but lock
+
+CT-00328, The account was locked
+
+SQL> CONNECT  TEST/Root12345@127.0.0.1:1611 --failed,but lock
+
+CT-00328, The account was locked
+
+SQL> CONNECT  sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select ASTATUS, LCOUNT from SYS_USERS where NAME = 'TEST';
+
+ASTATUS      LCOUNT      
+------------ ------------
+4            4           
+
+1 rows fetched.
+
+SQL> select sleep(1) from dual;
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> CONNECT  TEST/Root12345@127.0.0.1:1611 --failed
+
+CT-00328, The account was locked
+
+SQL> CONNECT  sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select sleep(3) from dual;
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT  TEST/Root1234@127.0.0.1:1611 --failed, lock
+
+CT-00328, The account was locked
+
+SQL> CONNECT  sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select ASTATUS, LCOUNT from SYS_USERS where NAME = 'TEST';
+
+ASTATUS      LCOUNT      
+------------ ------------
+4            4           
+
+1 rows fetched.
+
+SQL> ALTER USER TEST ACCOUNT UNLOCK;
+
+Succeed.
+
+SQL> CONNECT TEST/Root12345@127.0.0.1:1611
+
+connected.
+
+SQL> ALTER USER TEST ACCOUNT LOCK;
+
+Succeed.
+
+SQL> CONNECT TEST/Root12345@127.0.0.1:1611 -- failed
+
+CT-00328, The account was locked
+
+SQL> CONNECT  sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select ASTATUS from SYS_USERS where NAME = 'TEST';
+
+ASTATUS     
+------------
+8           
+
+1 rows fetched.
+
+SQL> ALTER USER TEST ACCOUNT UNLOCK PASSWORD EXPIRE;
+
+Succeed.
+
+SQL> ALTER PROFILE PROFILE1 LIMIT FAILED_LOGIN_ATTEMPTS DEFAULT PASSWORD_LOCK_TIME DEFAULT;
+
+Succeed.
+
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1234;
+
+Succeed.
+
+SQL> CONNECT TEST/Root12345@127.0.0.1:1611 --failed
+
+CT-00329, Incorrect user or password
+
+SQL> CONNECT TEST/Root1234@127.0.0.1:1611  --success
+
+connected.
+
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop profile profile1 cascade;
+
+Succeed.
+
+SQL> drop user test cascade;
+
+Succeed.
+
+SQL> 
+SQL> CREATE PROFILE PROFILE_PASSWD LIMIT PASSWORD_REUSE_TIME DEFAULT PASSWORD_REUSE_MAX DEFAULT;
+
+Succeed.
+
+SQL> CREATE USER TEST IDENTIFIED BY Root1234 PROFILE PROFILE_PASSWD;
+
+Succeed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1234;--SUCCESS
+
+Succeed.
+
+SQL> ALTER PROFILE PROFILE_PASSWD LIMIT PASSWORD_REUSE_TIME 1/1440 PASSWORD_REUSE_MAX UNLIMITED;
+
+Succeed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1235;--SUCCESS
+
+Succeed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1235;--FAILED
+
+CT-00111, Can not reused the password
+SQL> ALTER PROFILE PROFILE_PASSWD LIMIT PASSWORD_REUSE_TIME UNLIMITED PASSWORD_REUSE_MAX 10;
+
+Succeed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1236;--SUCCESS
+
+Succeed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1236;--FAILED
+
+CT-00111, Can not reused the password
+SQL> ALTER PROFILE PROFILE_PASSWD LIMIT PASSWORD_REUSE_TIME 3/86400 PASSWORD_REUSE_MAX 2;
+
+Succeed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1237;--SUCCESS
+
+Succeed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1235;--FAILED
+
+CT-00111, Can not reused the password
+SQL> connect TEST/Root1235@127.0.0.1:1611
+
+CT-00329, Incorrect user or password
+
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> SELECT sleep(4) from dual;
+
+SLEEP(4)
+--------
+        
+
+1 rows fetched.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1235;--SUCCESS
+
+Succeed.
+
+SQL> ALTER PROFILE PROFILE_PASSWD LIMIT PASSWORD_REUSE_MAX 10;
+
+Succeed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1236;--FAILED
+
+CT-00111, Can not reused the password
+SQL> CREATE or replace procedure profile_passwd_000(startnum int, endall int) is
+  2 i INT :=1;
+  3 j varchar(20);
+  4 str varchar(100);
+  5 BEGIN
+  6   FOR i IN startnum..endall LOOP
+  7     select 'Changeme_' || i into j from dual;
+  8     str := 'ALTER USER TEST IDENTIFIED BY ' || j;
+  9     execute immediate str;
+ 10   END LOOP;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> call profile_passwd_000(1, 6);
+
+PL/SQL procedure successfully completed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1236;--FAILED
+
+CT-00111, Can not reused the password
+SQL> call profile_passwd_000(8, 9);
+
+PL/SQL procedure successfully completed.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root1236;--SUCCESS
+
+Succeed.
+
+SQL> drop procedure profile_passwd_000;
+
+Succeed.
+
+SQL> drop profile PROFILE_PASSWD cascade;
+
+Succeed.
+
+SQL> drop user TEST cascade;
+
+Succeed.
+
+SQL> 
+SQL> CREATE PROFILE PROFILE_CHG_PSW_LOCK LIMIT FAILED_LOGIN_ATTEMPTS 2 PASSWORD_LOCK_TIME 2/86400;
+
+Succeed.
+
+SQL> CREATE USER TEST IDENTIFIED BY Root1234 PROFILE PROFILE_CHG_PSW_LOCK;
+
+Succeed.
+
+SQL> grant dba to test;
+
+Succeed.
+
+SQL> connect TEST/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root12356789 REPLACE Root1235;--FAILED
+
+CT-00822, When the password of an existing database user was changed, the original password was incorrectly entered.
+SQL> ALTER USER TEST IDENTIFIED BY Root12356789 REPLACE Root1235;--FAILED
+
+CT-00822, When the password of an existing database user was changed, the original password was incorrectly entered.
+SQL> ALTER USER TEST IDENTIFIED BY Root12356789 REPLACE Root1235;--LOCK
+
+CT-00328, The account was locked
+SQL> connect TEST/Root1234@127.0.0.1:1611 --FAILED
+
+CT-00339, tcp connection is closed, reason: 32
+
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select sleep(3) from dual;
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> connect TEST/Root1234@127.0.0.1:1611 --SUCCESS
+
+connected.
+
+SQL> connect TEST/Root1235@127.0.0.1:1611 --FAILED
+
+CT-00329, Incorrect user or password
+
+SQL> connect TEST/Root1234@127.0.0.1:1611 --SUCCESS
+
+connected.
+
+SQL> ALTER USER TEST IDENTIFIED BY Root12356789 REPLACE Root1235;--FAILED
+
+CT-00822, When the password of an existing database user was changed, the original password was incorrectly entered.
+SQL> ALTER USER TEST IDENTIFIED BY Root12356789 REPLACE Root1234;--LOCK
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant select on sys.SYS_USERS to TEST;
+
+Succeed.
+
+SQL> connect TEST/Root12356789@127.0.0.1:1611 --SUCCESS
+
+connected.
+
+SQL> select ASTATUS, LCOUNT from sys.SYS_USERS where NAME = 'TEST'; 
+
+ASTATUS      LCOUNT      
+------------ ------------
+0            0           
+
+1 rows fetched.
+
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop profile PROFILE_CHG_PSW_LOCK cascade;
+
+Succeed.
+
+SQL> drop user TEST cascade;
+
+Succeed.
+
+SQL> SET CTSQL_SSL_MODE=PREFERRED;
+
+CTSQL_SSL_MODE = PREFERRED
+
+SQL> 
+SQL> --TEST the  maximum of profile, MAX_PROFILE_SIZE=4096=CT_SHARED_PAGE_SIZE / sizeof(pointer_t)
+SQL> create or replace procedure batch_create_test_profile
+  2 is
+  3     v_createsql varchar2(400);
+  4  v_count number(9);
+  5 begin
+  6     select count(distinct profile) into v_count from dba_profiles;
+  7  if v_count < 4096 then
+  8     FOR i IN v_count+1..4096 LOOP
+  9     v_createsql:='CREATE PROFILE PROFILETESTMAX'||i||' LIMIT PASSWORD_GRACE_TIME 10';
+ 10     execute immediate v_createsql;
+ 11  END LOOP;
+ 12  end if;
+ 13 end;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure batch_drop_test_profile
+  2 is
+  3     v_createsql varchar2(400);
+  4  cursor c_profile is select distinct profile from  dba_profiles where profile  like 'PROFILETESTMAX%';
+  5  profie_t c_profile%rowtype;
+  6 begin
+  7     FOR profie_t IN c_profile   LOOP
+  8     v_createsql:='drop profile '||profie_t.profile||'';
+  9     execute immediate v_createsql;
+ 10  END LOOP;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> call batch_drop_test_profile;
+
+PL/SQL procedure successfully completed.
+
+SQL> call batch_create_test_profile;
+
+PL/SQL procedure successfully completed.
+
+SQL> select count(distinct profile)  from dba_profiles; 
+
+COUNT(DISTINCT PROFILE)
+-----------------------
+4096                   
+
+1 rows fetched.
+
+SQL> create profile PROFILETESTMAX4097 LIMIT PASSWORD_GRACE_TIME 10;--error max exceeded
+
+CT-00706, The number 4096 reached the upper limit of profiles.
+SQL> call batch_drop_test_profile;
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop procedure if exists batch_create_test_profile;
+
+Succeed.
+
+SQL> drop procedure if exists batch_drop_test_profile;
+
+Succeed.
+
+SQL> 
+SQL> CREATE PROFILE P_User_A_01 LIMIT PASSWORD_REUSE_TIME 3/8640 PASSWORD_REUSE_MAX 3;
+
+Succeed.
+
+SQL> drop user if exists User_A_01 cascade;
+
+Succeed.
+
+SQL> create user User_A_01 identified by Cantian_234 profile P_User_A_01;
+
+Succeed.
+
+SQL> select sleep(3);
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> alter user User_A_01 identified by Gauaa_234 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user User_A_01 identified by Cantian_234 replace Gauaa_234;
+
+CT-00111, Can not reused the password
+SQL> drop user if exists User_A_01 cascade;
+
+Succeed.
+
+SQL> drop profile P_User_A_01 cascade;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create  profile TEST_SESSIONS_PER_USER_PROFILE limit SESSIONS_PER_USER default;
+
+Succeed.
+
+SQL> select * from dba_profiles where profile = 'TEST_SESSIONS_PER_USER_PROFILE' and resource_name ='SESSIONS_PER_USER';
+
+PROFILE                                                          RESOURCE_NAME                                                    RESOURCE_TYPE THRESHOLD                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ----------------------------------------------------------------
+TEST_SESSIONS_PER_USER_PROFILE                                   SESSIONS_PER_USER                                                KERNEL        UNLIMITED                                                       
+
+1 rows fetched.
+
+SQL> drop profile TEST_SESSIONS_PER_USER_PROFILE;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019061801185
+SQL> drop user if exists test_0001;
+
+Succeed.
+
+SQL> create  profile test_0001_profile limit PASSWORD_REUSE_TIME 1/86400 PASSWORD_REUSE_MAX 1;
+
+Succeed.
+
+SQL> create user test_0001 identified by 'cantian_234';
+
+Succeed.
+
+SQL> ALTER USER test_0001 PROFILE test_0001_profile;
+
+Succeed.
+
+SQL> alter user test_0001 identified by 'cantian_234';
+
+CT-00111, Can not reused the password
+SQL> select sleep(5);
+
+SLEEP(5)
+--------
+        
+
+1 rows fetched.
+
+SQL> alter user test_0001 identified by 'cantian_234';
+
+CT-00111, Can not reused the password
+SQL> DROP USER test_0001 CASCADE;
+
+Succeed.
+
+SQL> DROP PROFILE test_0001_profile CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE PROFILE PROFILE_ligang003 LIMIT PASSWORD_LIFE_TIME 180;
+
+Succeed.
+
+SQL> drop user if exists ligang_test003;
+
+Succeed.
+
+SQL> CREATE USER ligang_test003 IDENTIFIED BY Root1234 PROFILE PROFILE_ligang003;
+
+Succeed.
+
+SQL> drop profile PROFILE_ligang003;
+
+CT-00818, Profile has been assigned to user, can not been dropped without cascade option
+SQL> drop profile PROFILE_ligang003 cascade;
+
+Succeed.
+
+SQL> drop user if exists ligang_test003;
+
+Succeed.
+
+SQL> 
+SQL> CREATE PROFILE PROFILE_ligang002 LIMIT PASSWORD_REUSE_TIME 1/86400 PASSWORD_REUSE_MAX 2;
+
+Succeed.
+
+SQL> drop user if exists ligang_test002 cascade;
+
+Succeed.
+
+SQL> create user ligang_test002 identified by Gauaa_234 profile PROFILE_ligang002;
+
+Succeed.
+
+SQL> select sleep(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> alter user ligang_test002 identified by Cantian_234 replace Gauaa_234;
+
+Succeed.
+
+SQL> alter user ligang_test002 identified by aass_234 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user ligang_test002 identified by Gauaa_234 replace aass_234;
+
+Succeed.
+
+SQL> drop user if exists ligang_test002 cascade;
+
+Succeed.
+
+SQL> drop profile PROFILE_ligang002 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019082600671
+SQL> CREATE PROFILE PROFILE_lingfeng001 LIMIT PASSWORD_LIFE_TIME  24856;
+
+CT-00675, [1:67]Values in resource limit settings were invalid
+SQL> CREATE PROFILE PROFILE_lingfeng001 LIMIT PASSWORD_REUSE_TIME 24856;
+
+CT-00675, [1:67]Values in resource limit settings were invalid
+SQL> CREATE PROFILE PROFILE_lingfeng001 LIMIT PASSWORD_LOCK_TIME  24856;
+
+CT-00675, [1:67]Values in resource limit settings were invalid
+SQL> CREATE PROFILE PROFILE_lingfeng001 LIMIT PASSWORD_GRACE_TIME 24856;
+
+CT-00675, [1:67]Values in resource limit settings were invalid
+SQL> CREATE PROFILE PROFILE_lingfeng001 LIMIT PASSWORD_LIFE_TIME 24855 PASSWORD_REUSE_TIME 24855 PASSWORD_LOCK_TIME 24855 PASSWORD_GRACE_TIME 24855;
+
+Succeed.
+
+SQL> alter PROFILE PROFILE_lingfeng001 limit PASSWORD_LIFE_TIME 24856;
+
+CT-00675, [1:65]Values in resource limit settings were invalid
+SQL> alter PROFILE PROFILE_lingfeng001 limit PASSWORD_REUSE_TIME 24856;
+
+CT-00675, [1:66]Values in resource limit settings were invalid
+SQL> alter PROFILE PROFILE_lingfeng001 limit PASSWORD_LOCK_TIME 24856;
+
+CT-00675, [1:65]Values in resource limit settings were invalid
+SQL> alter PROFILE PROFILE_lingfeng001 limit PASSWORD_GRACE_TIME 24856;
+
+CT-00675, [1:66]Values in resource limit settings were invalid
+SQL> alter PROFILE PROFILE_lingfeng001 limit PASSWORD_LIFE_TIME 24855;
+
+Succeed.
+
+SQL> alter PROFILE PROFILE_lingfeng001 limit PASSWORD_REUSE_TIME 24855;
+
+Succeed.
+
+SQL> alter PROFILE PROFILE_lingfeng001 limit PASSWORD_LOCK_TIME 24855;
+
+Succeed.
+
+SQL> alter PROFILE PROFILE_lingfeng001 limit PASSWORD_GRACE_TIME 24855;
+
+Succeed.
+
+SQL> drop profile PROFILE_lingfeng001 cascade;
+Succeed.
+
+
+
+

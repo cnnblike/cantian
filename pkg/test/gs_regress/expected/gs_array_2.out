@@ -1,0 +1,384 @@
+
+
+SQL> drop user if exists wanggang cascade;
+
+Succeed.
+
+SQL> create user wanggang identified by 'Changeme_123';
+
+Succeed.
+
+SQL> grant dba to wanggang;
+
+Succeed.
+
+SQL> conn wanggang/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists test_a;
+
+Succeed.
+
+SQL> create table test_a(f1 int[]);
+
+Succeed.
+
+SQL> insert into test_a values('{1,2,3}');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select SEGMENT_NAME,SEGMENT_TYPE,BYTES,PAGES,EXTENTS from my_segments where SEGMENT_NAME like '%TEST_A%' order by SEGMENT_NAME; -- actual size is 16 + 3 * 16 + 3 * 4 = 76byte, occupy 192k in lob space before enable ARRAY_STORAGE_OPTIMIZATION  
+
+SEGMENT_NAME                                                     SEGMENT_TYPE BYTES                PAGES                EXTENTS             
+---------------------------------------------------------------- ------------ -------------------- -------------------- --------------------
+LOB_TEST_A_F1                                                    LOB          196608               24                   3                   
+TEST_A                                                           TABLE        65536                8                    1                   
+
+2 rows fetched.
+
+SQL> 
+SQL> alter system set ARRAY_STORAGE_OPTIMIZATION = FALSE;
+
+Succeed.
+
+SQL> show parameter ARRAY_STORAGE_OPTIMIZATION
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+ARRAY_STORAGE_OPTIMIZATION                                       CT_TYPE_BOOLEAN      FALSE                                                            FALSE                                                            immediately         
+
+
+SQL> alter system set ARRAY_STORAGE_OPTIMIZATION = false;
+
+Succeed.
+
+SQL> show parameter ARRAY_STORAGE_OPTIMIZATION
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+ARRAY_STORAGE_OPTIMIZATION                                       CT_TYPE_BOOLEAN      FALSE                                                            FALSE                                                            immediately         
+
+
+SQL> alter system set ARRAY_STORAGE_OPTIMIZATION = TRUE;
+
+Succeed.
+
+SQL> show parameter ARRAY_STORAGE_OPTIMIZATION
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+ARRAY_STORAGE_OPTIMIZATION                                       CT_TYPE_BOOLEAN      TRUE                                                             TRUE                                                             immediately         
+
+
+SQL> alter system set ARRAY_STORAGE_OPTIMIZATION = true;
+
+Succeed.
+
+SQL> show parameter ARRAY_STORAGE_OPTIMIZATION
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+ARRAY_STORAGE_OPTIMIZATION                                       CT_TYPE_BOOLEAN      TRUE                                                             TRUE                                                             immediately         
+
+
+SQL> alter system set ARRAY_STORAGE_OPTIMIZATION = false;
+
+CT-90002, [NOTICE]parameter ARRAY_STORAGE_OPTIMIZATION is TRUE now, and it is forbidden to set back to FALSE, or there is compatible problem for array data
+SQL> show parameter ARRAY_STORAGE_OPTIMIZATION
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+ARRAY_STORAGE_OPTIMIZATION                                       CT_TYPE_BOOLEAN      TRUE                                                             TRUE                                                             immediately         
+
+
+SQL> alter system set ARRAY_STORAGE_OPTIMIZATION = FALSE;
+
+CT-90002, [NOTICE]parameter ARRAY_STORAGE_OPTIMIZATION is TRUE now, and it is forbidden to set back to FALSE, or there is compatible problem for array data
+SQL> show parameter ARRAY_STORAGE_OPTIMIZATION
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+ARRAY_STORAGE_OPTIMIZATION                                       CT_TYPE_BOOLEAN      TRUE                                                             TRUE                                                             immediately         
+
+
+SQL> alter system set ARRAY_STORAGE_OPTIMIZATION = 0;
+
+CT-00601, [1:47]Sql syntax error: FALSE or TRUE expected
+SQL> 
+SQL> drop table if exists test_b;
+
+Succeed.
+
+SQL> create table test_b as select * from test_a;
+
+Succeed.
+
+SQL> drop table if exists test_c;
+
+Succeed.
+
+SQL> create table test_c(f1 int[]);
+
+Succeed.
+
+SQL> insert into test_c (select * from test_a);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select SEGMENT_NAME,SEGMENT_TYPE,BYTES,PAGES,EXTENTS from my_segments where SEGMENT_NAME like '%TEST_%' order by SEGMENT_NAME; -- actual size is 16 + 3 * 16 + 3 * 4 = 76byte, occupy 0 in lob space after enable ARRAY_STORAGE_OPTIMIZATION
+
+SEGMENT_NAME                                                     SEGMENT_TYPE BYTES                PAGES                EXTENTS             
+---------------------------------------------------------------- ------------ -------------------- -------------------- --------------------
+LOB_TEST_A_F1                                                    LOB          196608               24                   3                   
+LOB_TEST_B_F1                                                    LOB          0                    0                    0                   
+LOB_TEST_C_F1                                                    LOB          0                    0                    0                   
+TEST_A                                                           TABLE        65536                8                    1                   
+TEST_B                                                           TABLE        65536                8                    1                   
+TEST_C                                                           TABLE        65536                8                    1                   
+
+6 rows fetched.
+
+SQL> select * from test_a;
+
+F1                                                              
+----------------------------------------------------------------
+{1,2,3}                                                         
+
+1 rows fetched.
+
+SQL> select * from test_b;
+
+F1                                                              
+----------------------------------------------------------------
+{1,2,3}                                                         
+
+1 rows fetched.
+
+SQL> select * from test_c;
+
+F1                                                              
+----------------------------------------------------------------
+{1,2,3}                                                         
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists t_arr1;
+
+Succeed.
+
+SQL> drop table if exists t_arr1_bk;
+
+Succeed.
+
+SQL> create table t_arr1(f1 int[]);
+
+Succeed.
+
+SQL> insert into t_arr1 values(array[1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0]);
+
+1 rows affected.
+
+SQL> select SEGMENT_NAME,SEGMENT_TYPE,BYTES,PAGES,EXTENTS from my_segments where SEGMENT_NAME like '%T_ARR1%' order by SEGMENT_NAME; -- actual size is 16 + 100 * 16 + 100 * 4 = 2016 < 4K , inline lob
+
+SEGMENT_NAME                                                     SEGMENT_TYPE BYTES                PAGES                EXTENTS             
+---------------------------------------------------------------- ------------ -------------------- -------------------- --------------------
+LOB_T_ARR1_F1                                                    LOB          0                    0                    0                   
+T_ARR1                                                           TABLE        65536                8                    1                   
+
+2 rows fetched.
+
+SQL> update t_arr1 set f1[101:200] = f1[1:100];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[201:400] = f1[1:200];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[401:800] = f1[1:400];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[801:1600] = f1[1:800];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[1601:3200] = f1[1:1600];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[3201:6400] = f1[1:3200];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[6401:8100] = f1[1:1700];
+
+1 rows affected.
+
+SQL> select f1[8099] from (select f1 from t_arr1); -- trig memmove_s in sql_mv_arr_ele_between_two_vm
+
+F1          
+------------
+9           
+
+1 rows fetched.
+
+SQL> update t_arr1 set f1[8101:8190] = f1[1:90];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[8191:8191] = f1[1:1];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[8192:8192] = f1[2:2];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[8193:16382] = f1[3:8192];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[16383:16383] = f1[3:3];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[16384:16390] = f1[4:10];
+
+1 rows affected.
+
+SQL> update t_arr1 set f1[16391:26390] = f1[1:10000];
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table t_arr1_bk as select * from t_arr1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_arr2;
+
+Succeed.
+
+SQL> drop table if exists t_arr2_bk;
+
+Succeed.
+
+SQL> create table t_arr2(f1 varchar(8000)[]);
+
+Succeed.
+
+SQL> insert into t_arr2 values(array['1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890','1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890']);
+
+1 rows affected.
+
+SQL> update t_arr2 set f1[11:20] = f1[1:10];
+
+1 rows affected.
+
+SQL> update t_arr2 set f1[21:40] = f1[1:20];
+
+1 rows affected.
+
+SQL> update t_arr2 set f1[41:80] = f1[1:40];
+
+1 rows affected.
+
+SQL> select SEGMENT_NAME,SEGMENT_TYPE,BYTES,PAGES,EXTENTS from my_segments where SEGMENT_NAME like '%T_ARR2%' order by SEGMENT_NAME; -- actual size is 16 + 80 * 16 + 100 * 80 = 9296 > 4K , outline lob
+
+SEGMENT_NAME                                                     SEGMENT_TYPE BYTES                PAGES                EXTENTS             
+---------------------------------------------------------------- ------------ -------------------- -------------------- --------------------
+LOB_T_ARR2_F1                                                    LOB          65536                8                    1                   
+T_ARR2                                                           TABLE        65536                8                    1                   
+
+2 rows fetched.
+
+SQL> update t_arr2 set f1[81:160] = f1[1:80];
+
+1 rows affected.
+
+SQL> update t_arr2 set f1[161:320] = f1[1:160];
+
+1 rows affected.
+
+SQL> update t_arr2 set f1[321:640] = f1[1:320];
+
+1 rows affected.
+
+SQL> update t_arr2 set f1[641:1200] = f1[1:560];
+
+1 rows affected.
+
+SQL> update t_arr2 set f1[1201:2400] = f1[1:1200];
+
+1 rows affected.
+
+SQL> update t_arr2 set f1[2401:4000] = f1[1:1600];
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table t_arr2_bk as select * from t_arr2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_arr_null;
+
+Succeed.
+
+SQL> drop table if exists t_arr_null_bk;
+
+Succeed.
+
+SQL> create  table t_arr_null(f1 int[]);
+
+Succeed.
+
+SQL> insert into t_arr_null values(array[NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL]);
+
+1 rows affected.
+
+SQL> update t_arr_null set f1[101:200] = f1[1:100];
+
+1 rows affected.
+
+SQL> update t_arr_null set f1[201:400] = f1[1:200];
+
+1 rows affected.
+
+SQL> update t_arr_null set f1[401:800] = f1[1:400];
+
+1 rows affected.
+
+SQL> update t_arr_null set f1[801:1600] = f1[1:800];
+
+1 rows affected.
+
+SQL> update t_arr_null set f1[1601:3200] = f1[1:1600];
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+

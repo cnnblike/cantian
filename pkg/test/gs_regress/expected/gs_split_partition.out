@@ -1,0 +1,2076 @@
+
+
+SQL> drop table if exists test_split_part_table ;
+
+Succeed.
+
+SQL> create table test_split_part_table(id int, name varchar(20)) partition by range(id)
+  2 (
+  3 partition p1 values less than(50)
+  4 );
+
+Succeed.
+
+SQL> insert into test_split_part_table values(10, 'aaaaaaaaa');
+
+1 rows affected.
+
+SQL> insert into test_split_part_table values(30, 'bbbbbbbbb');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test_split_part_table split partition p1 at(60) into (partition p_l0, partition p_r0);    --fail
+
+CT-00601, Sql syntax error: split partition value invalid
+SQL> alter table test_split_part_table split partition p1 at(25) into (partition p_l0, partition p_r0);
+
+Succeed.
+
+SQL> select * from test_split_part_table partition(p1);	--fail
+
+CT-00800, A table (sub)partition P1 does not exist.
+SQL> select * from test_split_part_table partition(p_l0);
+
+ID           NAME                
+------------ --------------------
+10           aaaaaaaaa           
+
+1 rows fetched.
+
+SQL> select * from test_split_part_table partition(p_r0);
+
+ID           NAME                
+------------ --------------------
+30           bbbbbbbbb           
+
+1 rows fetched.
+
+SQL> insert into test_split_part_table values(15, 'cccccccccc');
+
+1 rows affected.
+
+SQL> insert into test_split_part_table values(35, 'dddddddddd');
+
+1 rows affected.
+
+SQL> select * from test_split_part_table partition(p_l0) order by id;
+
+ID           NAME                
+------------ --------------------
+10           aaaaaaaaa           
+15           cccccccccc          
+
+2 rows fetched.
+
+SQL> select * from test_split_part_table partition(p_r0) order by id;
+
+ID           NAME                
+------------ --------------------
+30           bbbbbbbbb           
+35           dddddddddd          
+
+2 rows fetched.
+
+SQL> drop table if exists test_split_part_table ;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_split_part_table;
+
+Succeed.
+
+SQL> create table test_split_part_table(id int, c_id int, name varchar(20)) partition by range(id)
+  2 (
+  3 partition p1 values less than(50)
+  4 );
+
+Succeed.
+
+SQL> create unique index index_unique_global on test_split_part_table(id);
+
+Succeed.
+
+SQL> insert into test_split_part_table values(10,10,'aaaaaaaaa');
+
+1 rows affected.
+
+SQL> insert into test_split_part_table values(30,30,'bbbbbbbbb');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test_split_part_table split partition p1 at(25) into (partition p_l0, partition p_r0);
+
+Succeed.
+
+SQL> insert into test_split_part_table values(15,15, 'cccccccccc');	--fail
+
+CT-00823, Index INDEX_UNIQUE_GLOBAL is unusable, need to rebuild index first.
+SQL> alter index index_unique_global on test_split_part_table rebuild;
+
+Succeed.
+
+SQL> insert into test_split_part_table values(15,15, 'cccccccccc');
+
+1 rows affected.
+
+SQL> insert into test_split_part_table values(35, 35,'dddddddddd');
+
+1 rows affected.
+
+SQL> select * from test_split_part_table partition(p_l0) order by id;
+
+ID           C_ID         NAME                
+------------ ------------ --------------------
+10           10           aaaaaaaaa           
+15           15           cccccccccc          
+
+2 rows fetched.
+
+SQL> select * from test_split_part_table partition(p_20) order by id;
+
+CT-00800, A table (sub)partition P_20 does not exist.
+SQL> commit;
+
+Succeed.
+
+SQL> savepoint aa;
+
+Succeed.
+
+SQL> update test_split_part_table set id = id + 25 where id < 25;
+
+CT-00729, Unique constraint violated
+SQL> insert into test_split_part_table values(15, 15, 'cccccccccc');
+
+CT-00729, Unique constraint violated, index INDEX_UNIQUE_GLOBAL, duplicate key 15
+SQL> insert into test_split_part_table values(35, 35,'dddddddddd');
+
+CT-00729, Unique constraint violated, index INDEX_UNIQUE_GLOBAL, duplicate key 35
+SQL> delete from test_split_part_table where id = 15;
+
+1 rows affected.
+
+SQL> select * from test_split_part_table order by id;
+
+ID           C_ID         NAME                
+------------ ------------ --------------------
+10           10           aaaaaaaaa           
+30           30           bbbbbbbbb           
+35           35           dddddddddd          
+
+3 rows fetched.
+
+SQL> rollback to savepoint aa;
+
+Succeed.
+
+SQL> select * from test_split_part_table order by id;
+
+ID           C_ID         NAME                
+------------ ------------ --------------------
+10           10           aaaaaaaaa           
+15           15           cccccccccc          
+30           30           bbbbbbbbb           
+35           35           dddddddddd          
+
+4 rows fetched.
+
+SQL> drop table if exists test_split_part_table;
+
+Succeed.
+
+SQL> 
+SQL> alter tablespace USERS autopurge off;purge recyclebin;
+
+Succeed.
+
+
+Succeed.
+
+SQL> drop table if exists ACID_HASH_DML_TBL_000;
+
+Succeed.
+
+SQL> CREATE TABLE ACID_HASH_DML_TBL_000(C_ID INT,
+  2 C_D_ID INT NOT NULL,
+  3 C_W_ID INT NOT NULL,
+  4 C_FIRST VARCHAR(64) NOT NULL,
+  5 C_MIDDLE CHAR(2),
+  6 C_LAST VARCHAR(64) NOT NULL,
+  7 C_STREET_1 VARCHAR(20) NOT NULL,
+  8 C_STREET_2 VARCHAR(20),
+  9 C_CITY VARCHAR(20) NOT NULL,
+ 10 C_STATE CHAR(2) NOT NULL,
+ 11 C_ZIP CHAR(9) NOT NULL,
+ 12 C_PHONE CHAR(16) NOT NULL,
+ 13 C_SINCE TIMESTAMP,
+ 14 C_CREDIT CHAR(2) NOT NULL,
+ 15 C_CREDIT_LIM NUMERIC(12,2),
+ 16 C_DISCOUNT NUMERIC(4,4),
+ 17 C_BALANCE NUMERIC(12,2),
+ 18 C_YTD_PAYMENT REAL NOT NULL,
+ 19 C_PAYMENT_CNT NUMBER NOT NULL,
+ 20 C_DELIVERY_CNT BOOL NOT NULL,
+ 21 C_END DATE NOT NULL,
+ 22 C_VCHAR VARCHAR(1000),
+ 23 C_DATA CLOB,
+ 24 C_TEXT BLOB,
+ 25 C_CLOB CLOB,
+ 26 primary key (c_id,c_d_id,c_w_id));
+
+Succeed.
+
+SQL> insert into ACID_HASH_DML_TBL_000 select 0,0,0,'AA'||'is0cmvls','OE','AA'||'BAR0BARBAR','bkili'||'0'||'fcxcle'||'0','pmbwo'||'0'||'vhvpaj'||'0','dyf'||'0'||'rya'||'0','uq',4800||'0',940||'0'||205||'0','2017-12-31 10:51:47','GC',50000.0,0.4361328,-10.0,10.0,1,true,'2017-12-31 10:51:47','QVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECC348493214893542NPFZCSYKXXYSCDSF'||'0','QVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSF1','1234354587643123455213445656723123424554566776763221132454566768767433242323445453565654542323','QVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSFQVLDETANRBRBURBMZQUJSHOQNGGSMNTECCIPRIIRDHIRWIYNPFZCSYKXXYSCDSF1CLOB';
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> CREATE or replace procedure nebula_dml_interval_func_001(startall int,endall int)  as 
+  2 i INT;
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5 	insert into ACID_HASH_DML_TBL_000 select c_id+i,c_d_id+i,c_w_id+i,'AA'||'iscmvls',c_middle,'AA'||'BAR'||i||'ddBARBAR',c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since+i,c_credit,c_credit_lim,c_discount,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_end+i,c_vchar,c_data,c_text,c_clob from ACID_HASH_DML_TBL_000 where c_id=0;commit;
+  6   END LOOP;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> call nebula_dml_interval_func_001(1,2000);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> delete from ACID_HASH_DML_TBL_000 where c_id=0;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select count(*) from ACID_HASH_DML_TBL_000;
+
+COUNT(*)            
+--------------------
+2000                
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> drop table if exists test_split;
+
+Succeed.
+
+SQL> create table test_split(C_ID INT,
+  2 C_D_ID INT NOT NULL,
+  3 C_W_ID INT NOT NULL,
+  4 C_FIRST VARCHAR(64) NOT NULL,
+  5 C_MIDDLE CHAR(2),
+  6 C_LAST VARCHAR(64) NOT NULL,
+  7 C_STREET_1 VARCHAR(20) NOT NULL,
+  8 C_STREET_2 VARCHAR(20),
+  9 C_CITY VARCHAR(20) NOT NULL,
+ 10 C_STATE CHAR(2) NOT NULL,
+ 11 C_ZIP CHAR(9) NOT NULL,
+ 12 C_PHONE CHAR(16) NOT NULL,
+ 13 C_SINCE TIMESTAMP,
+ 14 C_CREDIT CHAR(2) NOT NULL,
+ 15 C_CREDIT_LIM NUMERIC(12,2),
+ 16 C_DISCOUNT NUMERIC(4,4),
+ 17 C_BALANCE NUMERIC(12,2),
+ 18 C_YTD_PAYMENT REAL NOT NULL,
+ 19 C_PAYMENT_CNT NUMBER NOT NULL,
+ 20 C_DELIVERY_CNT BOOL NOT NULL,
+ 21 C_END DATE NOT NULL,
+ 22 C_VCHAR VARCHAR(1000),
+ 23 C_DATA CLOB,
+ 24 C_TEXT BLOB,
+ 25 C_CLOB CLOB,
+ 26 primary key (c_id,c_d_id,c_w_id)) partition by range(c_id) (partition p1 values less than(10), partition p2 values less than(20),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> 
+SQL> insert into test_split select * from ACID_HASH_DML_TBL_000;
+
+2000 rows affected.
+
+SQL> alter table test_split split partition p3 at(1000) into (partition p3_1, partition p3_2);
+
+Succeed.
+
+SQL> select count(*) from test_split partition(p3_1);
+
+COUNT(*)            
+--------------------
+980                 
+
+1 rows fetched.
+
+SQL> select count(*) from test_split partition(p3_2);
+
+COUNT(*)            
+--------------------
+1001                
+
+1 rows fetched.
+
+SQL> alter table test_split split partition p3_2 at(1500) into (partition p3_11, partition p3_12);
+
+Succeed.
+
+SQL> drop table test_split;
+
+Succeed.
+
+SQL> 
+SQL> create table test_split_space(c1 int, c2 int) partition by range(c1) (partition p1 values less than(20), partition p2 values less than(50));
+
+Succeed.
+
+SQL> insert into test_split_space values(10,10);
+
+1 rows affected.
+
+SQL> insert into test_split_space values(40,40);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test_split_space split partition p2 at(30) into (partition p2_1 tablespace users, partition p2_2);
+
+Succeed.
+
+SQL> select space# from tablepart$ where table# = (select id from table$ where name=upper('test_split_space')) order by space#;
+
+SPACE#      
+------------
+0           
+0           
+3           
+
+3 rows fetched.
+
+SQL> drop table test_split_space;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_index;
+
+Succeed.
+
+SQL> create table test_index(C_ID INT,
+  2 C_D_ID INT NOT NULL,
+  3 C_W_ID INT NOT NULL,
+  4 C_FIRST VARCHAR(64) NOT NULL,
+  5 C_MIDDLE CHAR(2),
+  6 C_LAST VARCHAR(64) NOT NULL,
+  7 C_STREET_1 VARCHAR(20) NOT NULL,
+  8 C_STREET_2 VARCHAR(20),
+  9 C_CITY VARCHAR(20) NOT NULL,
+ 10 C_STATE CHAR(2) NOT NULL,
+ 11 C_ZIP CHAR(9) NOT NULL,
+ 12 C_PHONE CHAR(16) NOT NULL,
+ 13 C_SINCE TIMESTAMP,
+ 14 C_CREDIT CHAR(2) NOT NULL,
+ 15 C_CREDIT_LIM NUMERIC(12,2),
+ 16 C_DISCOUNT NUMERIC(4,4),
+ 17 C_BALANCE NUMERIC(12,2),
+ 18 C_YTD_PAYMENT REAL NOT NULL,
+ 19 C_PAYMENT_CNT NUMBER NOT NULL,
+ 20 C_DELIVERY_CNT BOOL NOT NULL,
+ 21 C_END DATE NOT NULL,
+ 22 C_VCHAR VARCHAR(1000),
+ 23 C_DATA CLOB,
+ 24 C_TEXT BLOB,
+ 25 C_CLOB CLOB,
+ 26 primary key (c_id,c_d_id,c_w_id)) partition by range(c_id) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> 
+SQL> CREATE UNIQUE INDEX ACID_XA_DATE_INVAL_DML_IDX_002_1 ON test_index(C_END) LOCAL;
+
+CT-00816, Table partition key should be subsets of local primary or unique index
+SQL> CREATE UNIQUE INDEX ACID_XA_DATE_INVAL_DML_IDX_002_2 ON test_index(C_ID,C_FIRST,C_SINCE,C_END) LOCAL;
+
+Succeed.
+
+SQL> CREATE INDEX ACID_XA_DATE_INVAL_DML_IDX_002_0 ON test_index(C_VCHAR,C_FIRST,C_LAST);
+
+Succeed.
+
+SQL> 
+SQL> insert into test_index select * from ACID_HASH_DML_TBL_000;
+
+2000 rows affected.
+
+SQL> 
+SQL> 
+SQL> alter table test_index split partition p2 at(500) into (partition p2_1 tablespace users, partition p2_2);
+
+Succeed.
+
+SQL> select c_id from test_index partition(p2_1);
+
+C_ID        
+------------
+10          
+11          
+12          
+13          
+14          
+15          
+16          
+17          
+18          
+19          
+20          
+21          
+22          
+23          
+24          
+25          
+26          
+27          
+28          
+29          
+30          
+31          
+32          
+33          
+34          
+35          
+36          
+37          
+38          
+39          
+40          
+41          
+42          
+43          
+44          
+45          
+46          
+47          
+48          
+49          
+50          
+51          
+52          
+53          
+54          
+55          
+56          
+57          
+58          
+59          
+60          
+61          
+62          
+63          
+64          
+65          
+66          
+67          
+68          
+69          
+70          
+71          
+72          
+73          
+74          
+75          
+76          
+77          
+78          
+79          
+80          
+81          
+82          
+83          
+84          
+85          
+86          
+87          
+88          
+89          
+90          
+91          
+92          
+93          
+94          
+95          
+96          
+97          
+98          
+99          
+100         
+101         
+102         
+103         
+104         
+105         
+106         
+107         
+108         
+109         
+110         
+111         
+112         
+113         
+114         
+115         
+116         
+117         
+118         
+119         
+120         
+121         
+122         
+123         
+124         
+125         
+126         
+127         
+128         
+129         
+130         
+131         
+132         
+133         
+134         
+135         
+136         
+137         
+138         
+139         
+140         
+141         
+142         
+143         
+144         
+145         
+146         
+147         
+148         
+149         
+150         
+151         
+152         
+153         
+154         
+155         
+156         
+157         
+158         
+159         
+160         
+161         
+162         
+163         
+164         
+165         
+166         
+167         
+168         
+169         
+170         
+171         
+172         
+173         
+174         
+175         
+176         
+177         
+178         
+179         
+180         
+181         
+182         
+183         
+184         
+185         
+186         
+187         
+188         
+189         
+190         
+191         
+192         
+193         
+194         
+195         
+196         
+197         
+198         
+199         
+200         
+201         
+202         
+203         
+204         
+205         
+206         
+207         
+208         
+209         
+210         
+211         
+212         
+213         
+214         
+215         
+216         
+217         
+218         
+219         
+220         
+221         
+222         
+223         
+224         
+225         
+226         
+227         
+228         
+229         
+230         
+231         
+232         
+233         
+234         
+235         
+236         
+237         
+238         
+239         
+240         
+241         
+242         
+243         
+244         
+245         
+246         
+247         
+248         
+249         
+250         
+251         
+252         
+253         
+254         
+255         
+256         
+257         
+258         
+259         
+260         
+261         
+262         
+263         
+264         
+265         
+266         
+267         
+268         
+269         
+270         
+271         
+272         
+273         
+274         
+275         
+276         
+277         
+278         
+279         
+280         
+281         
+282         
+283         
+284         
+285         
+286         
+287         
+288         
+289         
+290         
+291         
+292         
+293         
+294         
+295         
+296         
+297         
+298         
+299         
+300         
+301         
+302         
+303         
+304         
+305         
+306         
+307         
+308         
+309         
+310         
+311         
+312         
+313         
+314         
+315         
+316         
+317         
+318         
+319         
+320         
+321         
+322         
+323         
+324         
+325         
+326         
+327         
+328         
+329         
+330         
+331         
+332         
+333         
+334         
+335         
+336         
+337         
+338         
+339         
+340         
+341         
+342         
+343         
+344         
+345         
+346         
+347         
+348         
+349         
+350         
+351         
+352         
+353         
+354         
+355         
+356         
+357         
+358         
+359         
+360         
+361         
+362         
+363         
+364         
+365         
+366         
+367         
+368         
+369         
+370         
+371         
+372         
+373         
+374         
+375         
+376         
+377         
+378         
+379         
+380         
+381         
+382         
+383         
+384         
+385         
+386         
+387         
+388         
+389         
+390         
+391         
+392         
+393         
+394         
+395         
+396         
+397         
+398         
+399         
+400         
+401         
+402         
+403         
+404         
+405         
+406         
+407         
+408         
+409         
+410         
+411         
+412         
+413         
+414         
+415         
+416         
+417         
+418         
+419         
+420         
+421         
+422         
+423         
+424         
+425         
+426         
+427         
+428         
+429         
+430         
+431         
+432         
+433         
+434         
+435         
+436         
+437         
+438         
+439         
+440         
+441         
+442         
+443         
+444         
+445         
+446         
+447         
+448         
+449         
+450         
+451         
+452         
+453         
+454         
+455         
+456         
+457         
+458         
+459         
+460         
+461         
+462         
+463         
+464         
+465         
+466         
+467         
+468         
+469         
+470         
+471         
+472         
+473         
+474         
+475         
+476         
+477         
+478         
+479         
+480         
+481         
+482         
+483         
+484         
+485         
+486         
+487         
+488         
+489         
+490         
+491         
+492         
+493         
+494         
+495         
+496         
+497         
+498         
+499         
+
+490 rows fetched.
+
+SQL> select c_id from test_index partition(p2_2);
+
+C_ID        
+------------
+500         
+501         
+502         
+503         
+504         
+505         
+506         
+507         
+508         
+509         
+510         
+511         
+512         
+513         
+514         
+515         
+516         
+517         
+518         
+519         
+520         
+521         
+522         
+523         
+524         
+525         
+526         
+527         
+528         
+529         
+530         
+531         
+532         
+533         
+534         
+535         
+536         
+537         
+538         
+539         
+540         
+541         
+542         
+543         
+544         
+545         
+546         
+547         
+548         
+549         
+550         
+551         
+552         
+553         
+554         
+555         
+556         
+557         
+558         
+559         
+560         
+561         
+562         
+563         
+564         
+565         
+566         
+567         
+568         
+569         
+570         
+571         
+572         
+573         
+574         
+575         
+576         
+577         
+578         
+579         
+580         
+581         
+582         
+583         
+584         
+585         
+586         
+587         
+588         
+589         
+590         
+591         
+592         
+593         
+594         
+595         
+596         
+597         
+598         
+599         
+600         
+601         
+602         
+603         
+604         
+605         
+606         
+607         
+608         
+609         
+610         
+611         
+612         
+613         
+614         
+615         
+616         
+617         
+618         
+619         
+620         
+621         
+622         
+623         
+624         
+625         
+626         
+627         
+628         
+629         
+630         
+631         
+632         
+633         
+634         
+635         
+636         
+637         
+638         
+639         
+640         
+641         
+642         
+643         
+644         
+645         
+646         
+647         
+648         
+649         
+650         
+651         
+652         
+653         
+654         
+655         
+656         
+657         
+658         
+659         
+660         
+661         
+662         
+663         
+664         
+665         
+666         
+667         
+668         
+669         
+670         
+671         
+672         
+673         
+674         
+675         
+676         
+677         
+678         
+679         
+680         
+681         
+682         
+683         
+684         
+685         
+686         
+687         
+688         
+689         
+690         
+691         
+692         
+693         
+694         
+695         
+696         
+697         
+698         
+699         
+700         
+701         
+702         
+703         
+704         
+705         
+706         
+707         
+708         
+709         
+710         
+711         
+712         
+713         
+714         
+715         
+716         
+717         
+718         
+719         
+720         
+721         
+722         
+723         
+724         
+725         
+726         
+727         
+728         
+729         
+730         
+731         
+732         
+733         
+734         
+735         
+736         
+737         
+738         
+739         
+740         
+741         
+742         
+743         
+744         
+745         
+746         
+747         
+748         
+749         
+750         
+751         
+752         
+753         
+754         
+755         
+756         
+757         
+758         
+759         
+760         
+761         
+762         
+763         
+764         
+765         
+766         
+767         
+768         
+769         
+770         
+771         
+772         
+773         
+774         
+775         
+776         
+777         
+778         
+779         
+780         
+781         
+782         
+783         
+784         
+785         
+786         
+787         
+788         
+789         
+790         
+791         
+792         
+793         
+794         
+795         
+796         
+797         
+798         
+799         
+800         
+801         
+802         
+803         
+804         
+805         
+806         
+807         
+808         
+809         
+810         
+811         
+812         
+813         
+814         
+815         
+816         
+817         
+818         
+819         
+820         
+821         
+822         
+823         
+824         
+825         
+826         
+827         
+828         
+829         
+830         
+831         
+832         
+833         
+834         
+835         
+836         
+837         
+838         
+839         
+840         
+841         
+842         
+843         
+844         
+845         
+846         
+847         
+848         
+849         
+850         
+851         
+852         
+853         
+854         
+855         
+856         
+857         
+858         
+859         
+860         
+861         
+862         
+863         
+864         
+865         
+866         
+867         
+868         
+869         
+870         
+871         
+872         
+873         
+874         
+875         
+876         
+877         
+878         
+879         
+880         
+881         
+882         
+883         
+884         
+885         
+886         
+887         
+888         
+889         
+890         
+891         
+892         
+893         
+894         
+895         
+896         
+897         
+898         
+899         
+900         
+901         
+902         
+903         
+904         
+905         
+906         
+907         
+908         
+909         
+910         
+911         
+912         
+913         
+914         
+915         
+916         
+917         
+918         
+919         
+920         
+921         
+922         
+923         
+924         
+925         
+926         
+927         
+928         
+929         
+930         
+931         
+932         
+933         
+934         
+935         
+936         
+937         
+938         
+939         
+940         
+941         
+942         
+943         
+944         
+945         
+946         
+947         
+948         
+949         
+950         
+951         
+952         
+953         
+954         
+955         
+956         
+957         
+958         
+959         
+960         
+961         
+962         
+963         
+964         
+965         
+966         
+967         
+968         
+969         
+970         
+971         
+972         
+973         
+974         
+975         
+976         
+977         
+978         
+979         
+980         
+981         
+982         
+983         
+984         
+985         
+986         
+987         
+988         
+989         
+990         
+991         
+992         
+993         
+994         
+995         
+996         
+997         
+998         
+999         
+
+500 rows fetched.
+
+SQL> select c_id from test_index partition(p2);
+
+CT-00800, A table (sub)partition P2 does not exist.
+SQL> alter table test_index split partition p2_2 at(700) into (partition p2_21 tablespace users, partition p2_22);
+
+Succeed.
+
+SQL> alter table test_index split partition p2_22 at(900) into (partition p2_221 tablespace users, partition p2_222);
+
+Succeed.
+
+SQL> drop table test_index;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_index;
+
+Succeed.
+
+SQL> create table test_index(C_ID INT,
+  2 C_D_ID INT NOT NULL,
+  3 C_W_ID INT NOT NULL,
+  4 C_FIRST VARCHAR(64) NOT NULL,
+  5 C_MIDDLE CHAR(2),
+  6 C_LAST VARCHAR(64) NOT NULL,
+  7 C_STREET_1 VARCHAR(20) NOT NULL,
+  8 C_STREET_2 VARCHAR(20),
+  9 C_CITY VARCHAR(20) NOT NULL,
+ 10 C_STATE CHAR(2) NOT NULL,
+ 11 C_ZIP CHAR(9) NOT NULL,
+ 12 C_PHONE CHAR(16) NOT NULL,
+ 13 C_SINCE TIMESTAMP,
+ 14 C_CREDIT CHAR(2) NOT NULL,
+ 15 C_CREDIT_LIM NUMERIC(12,2),
+ 16 C_DISCOUNT NUMERIC(4,4),
+ 17 C_BALANCE NUMERIC(12,2),
+ 18 C_YTD_PAYMENT REAL NOT NULL,
+ 19 C_PAYMENT_CNT NUMBER NOT NULL,
+ 20 C_DELIVERY_CNT BOOL NOT NULL,
+ 21 C_END DATE NOT NULL,
+ 22 C_VCHAR VARCHAR(1000),
+ 23 C_DATA CLOB,
+ 24 C_TEXT BLOB,
+ 25 C_CLOB CLOB,
+ 26 primary key (c_id,c_d_id,c_w_id)) partition by range(c_id) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> 
+SQL> CREATE UNIQUE INDEX ACID_XA_DATE_INVAL_DML_IDX_002_1 ON test_index(C_END) LOCAL;
+
+CT-00816, Table partition key should be subsets of local primary or unique index
+SQL> CREATE UNIQUE INDEX ACID_XA_DATE_INVAL_DML_IDX_002_2 ON test_index(C_ID,C_FIRST,C_SINCE,C_END) LOCAL;
+
+Succeed.
+
+SQL> CREATE INDEX ACID_XA_DATE_INVAL_DML_IDX_002_0 ON test_index(C_VCHAR,C_FIRST,C_LAST);
+
+Succeed.
+
+SQL> 
+SQL> insert into test_index select * from ACID_HASH_DML_TBL_000;
+
+2000 rows affected.
+
+SQL> 
+SQL> alter table test_index split partition p2 at(500) into (partition p2_1 tablespace users, partition p2_2) update global indexes;
+
+Succeed.
+
+SQL> alter table test_index split partition p2_2 at(700) into (partition p2_21 tablespace users, partition p2_22);
+
+Succeed.
+
+SQL> alter table test_index split partition p2_22 at(800) into (partition p2_221 tablespace users, partition p2_222);
+
+Succeed.
+
+SQL> alter table test_index split partition p2_222 at(900) into (partition p2_2221 tablespace users, partition p2_2222);
+
+Succeed.
+
+SQL> alter table test_index split partition p2_2222 at(920) into (partition p2_22221 tablespace users, partition p2_22222);
+
+Succeed.
+
+SQL> drop table test_index;
+
+Succeed.
+
+SQL> 
+SQL> create table test_hash_split(c1 int, c2 int) partition by hash(c1) (partition p1, partition p2);
+
+Succeed.
+
+SQL> alter table test_hash_split split partition p1 at(100) into (partition p1_1, partition p1_2);
+
+CT-00130, Operation split partition is not supported on non-range partitioned table
+SQL> drop table test_hash_split;
+
+Succeed.
+
+SQL> 
+SQL> create table test_interval_split(c1 int, c2 int) partition by range(c1) interval (2) (partition p1 values less than(100));
+
+Succeed.
+
+SQL> alter table test_interval_split split partition p1 at(50) into (partition p11, partition p21);
+
+CT-00130, Operation split partition is not supported on non-range partitioned table
+SQL> drop table test_interval_split;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_split;
+
+Succeed.
+
+SQL> create table test_split(C_ID INT, C_D_ID INT NOT NULL, C_W_ID INT NOT NULL, C_FIRST VARCHAR(64) NOT NULL, C_MIDDLE CHAR(2), C_LAST VARCHAR(64) NOT NULL, C_STREET_1 VARCHAR(20) NOT NULL, C_STREET_2 VARCHAR(20), C_CITY VARCHAR(20) NOT NULL, C_STATE CHAR(2) NOT NULL, C_ZIP CHAR(9) NOT NULL, C_PHONE CHAR(16) NOT NULL, C_SINCE TIMESTAMP, C_CREDIT CHAR(2) NOT NULL,C_CREDIT_LIM NUMERIC(12,2), C_DISCOUNT NUMERIC(4,4), C_BALANCE NUMERIC(12,2), C_YTD_PAYMENT REAL NOT NULL, C_PAYMENT_CNT NUMBER NOT NULL, C_DELIVERY_CNT BOOL NOT NULL, C_END DATE NOT NULL, C_VCHAR VARCHAR(1000), C_DATA CLOB, C_TEXT BLOB, C_CLOB CLOB, primary key (c_id,c_d_id,c_w_id)) partition by range(c_id) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> create index test_index_split on test_split(c_id) local;
+
+Succeed.
+
+SQL> alter table test_split split partition p2 at(500) into (partition p2_1 tablespace users, partition p2_2);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_2 at(700) into (partition p2_21 tablespace users, partition p2_22);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_22 at(800) into (partition p2_221 tablespace users, partition p2_222);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_222 at(900) into (partition p2_2221 tablespace users, partition p2_2222);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_2222 at(920) into (partition p2_22221 tablespace users, partition p2_22222);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_22222 at(930) into (partition p2_222221 tablespace users, partition p2_222222);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_222222 at(940) into (partition p2_2222221 tablespace users, partition p2_2222222);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_2222222 at(950) into (partition p2_22222221 tablespace users, partition p2_22222222);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_22222222 at(960) into (partition p2_222222221 tablespace users, partition p2_222222222);
+
+Succeed.
+
+SQL> alter table test_split split partition p2_222222222 at(970) into (partition p2_2222222221 tablespace users, partition p2_2222222222);
+
+Succeed.
+
+SQL> drop table test_split;
+
+Succeed.
+
+SQL> 
+SQL> drop table ACID_HASH_DML_TBL_000;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_space;
+
+Succeed.
+
+SQL> create table test_space(c1 int, c2 int) tablespace swap_00 partition by range(c1) (partition p1 values less than(10) tablespace users, partition p2 values less than(1000),partition p3 values less than(3000));
+
+CT-00853, Attempt to create permanent object in a temporary tablespace
+SQL> alter table test_space add partition p4 values less than(4000) tablespace users;
+
+CT-00843, The table or view SYS.TEST_SPACE does not exist.
+SQL> drop table test_space;
+
+CT-00843, The table or view SYS.TEST_SPACE does not exist.
+SQL> 
+SQL> drop table if exists test_space;
+
+Succeed.
+
+SQL> create table test_space(c1 int, c2 int) tablespace swap_00 partition by range(c1) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+CT-00853, Attempt to create permanent object in a temporary tablespace
+SQL> alter table test_space add partition p4 values less than(4000) tablespace users;
+
+CT-00843, The table or view SYS.TEST_SPACE does not exist.
+SQL> drop table test_space;
+
+CT-00843, The table or view SYS.TEST_SPACE does not exist.
+SQL> 
+SQL> drop table if exists test_space;
+
+Succeed.
+
+SQL> create table test_space(c1 int, c2 int) tablespace users partition by range(c1) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> alter table test_space add partition p4 values less than(4000) tablespace users;
+
+Succeed.
+SQL> drop table test_space;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_space1;
+
+Succeed.
+
+SQL> create table test_space1(c1 int, c2 int)tablespace users partition by range(c1) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> alter table test_space1 add partition p4 values less than(4000) tablespace swap_00;
+
+CT-00130, Operation add logging partition is not supported on temp tablespace
+SQL> drop table test_space1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_space2;
+
+Succeed.
+
+SQL> create table test_space2(c1 int, c2 int)tablespace users partition by range(c1) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> alter table test_space2 split partition p2 AT(100) INTO (partition p2_1 tablespace swap_00,partition p2_2);
+
+CT-00130, Operation add logging partition is not supported on temp tablespace
+SQL> drop table test_space2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_space3;
+
+Succeed.
+
+SQL> create table test_space3(c1 int, c2 int)tablespace swap_00 partition by range(c1) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+CT-00853, Attempt to create permanent object in a temporary tablespace
+SQL> alter table test_space3 split partition p2 AT(100) INTO (partition p2_1 tablespace users,partition p2_2);
+
+CT-00843, The table or view SYS.TEST_SPACE3 does not exist.
+SQL> drop table test_space3;
+
+CT-00843, The table or view SYS.TEST_SPACE3 does not exist.
+SQL> 
+SQL> drop table if exists test_space4;
+
+Succeed.
+
+SQL> create table test_space4(c1 int, c2 int)tablespace users partition by range(c1) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> alter table test_space4 split partition p2 AT(100) INTO (partition p2_1 tablespace users,partition p2_2);
+
+Succeed.
+SQL> drop table test_space4;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_space5;
+
+Succeed.
+
+SQL> create table test_space5(c1 int, c2 int)tablespace users partition by range(c1) (partition p1 values less than(10), partition p2 values less than(1000),partition p3 values less than(3000));
+
+Succeed.
+
+SQL> alter table test_space5 split partition p2 AT(100) INTO (partition p2_1 tablespace temp2,partition p2_2);
+
+CT-00130, Operation add logging partition is not supported on nologging tablespace
+SQL> drop table test_space5;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_duplicate;
+
+Succeed.
+
+SQL> create table test_duplicate(c1 int, c2 int) partition by range(c1) 
+  2 (partition p1 values less than(100));
+
+Succeed.
+
+SQL> 
+SQL> alter table test_duplicate split partition p1 at(50) into(partition p2, partition p3);
+
+Succeed.
+
+SQL> alter table test_duplicate split partition p2 at(30) into(partition p1, partition p3); 
+
+CT-01107, There were duplicate partition or subpartition names.
+SQL> 
+SQL> drop table if exists test_duplicate;
+
+Succeed.
+
+SQL> create table test_duplicate(c1 int, c2 int) partition by range(c1) 
+  2 (partition p1 values less than(1000));
+
+Succeed.
+
+SQL> insert into test_duplicate values(10,10);
+
+1 rows affected.
+
+SQL> insert into test_duplicate values(50,50);
+
+1 rows affected.
+
+SQL> insert into test_duplicate values(150,150);
+
+1 rows affected.
+
+SQL> insert into test_duplicate values(800,800);
+
+1 rows affected.
+
+SQL> insert into test_duplicate values(900,900);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table test_duplicate split partition p1 at(500) into(partition p2, partition p1);
+
+Succeed.
+
+SQL> select * from test_duplicate partition(p1) order by c1;
+
+C1           C2          
+------------ ------------
+800          800         
+900          900         
+
+2 rows fetched.
+
+SQL> select * from test_duplicate partition(p2) order by c1;
+
+C1           C2          
+------------ ------------
+10           10          
+50           50          
+150          150         
+
+3 rows fetched.
+
+SQL> alter table test_duplicate split partition p2 at(300) into(partition p1, partition p3); 
+
+CT-01107, There were duplicate partition or subpartition names.
+SQL> drop table test_duplicate;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists range_partition_split_tablespace_008;
+
+Succeed.
+
+SQL> create table range_partition_split_tablespace_008(C_ID INT,
+  2 C_D_ID bigint NOT NULL,
+  3 C_W_ID tinyint unsigned NOT NULL,
+  4 C_FIRST VARCHAR(64) NOT NULL,
+  5 C_MIDDLE CHAR(2),
+  6 C_LAST VARCHAR(64) NOT NULL,
+  7 C_STREET VARCHAR(20) NOT NULL,
+  8 C_STREET_2 VARCHAR(20),
+  9 C_CITY VARCHAR(20) NOT NULL,
+ 10 C_STATE CHAR(2) NOT NULL,
+ 11 C_ZIP CHAR(9) NOT NULL,
+ 12 C_PHONE CHAR(16) NOT NULL,
+ 13 C_SINCE TIMESTAMP,
+ 14 C_CREDIT CHAR(2) NOT NULL,
+ 15 C_CREDIT_LIM NUMERIC(12,2),
+ 16 C_DISCOUNT NUMERIC(4,4),
+ 17 C_BALANCE NUMERIC(12,2),
+ 18 C_YTD_PAYMENT REAL NOT NULL,
+ 19 C_PAYMENT_CNT NUMBER NOT NULL,
+ 20 C_DELIVERY_CNT BOOL NOT NULL,
+ 21 C_END DATE NOT NULL,
+ 22 C_VCHAR VARCHAR(1000),
+ 23 C_VARCHAR1 VARCHAR2(3000),
+ 24 C_VARCHAR2 VARCHAR2(3000),
+ 25 C_VARCHAR3 VARCHAR2(3000),
+ 26 C_VARCHAR4 VARCHAR2(3000),
+ 27 C_DATA LONG,
+ 28 C_TEXT BLOB,
+ 29 C_CLOB CLOB,
+ 30 C_VARCHAR5 VARCHAR2(100 BYTE) DEFAULT LPAD('AA',30,'BB'),
+ 31 C_FLOAT FLOAT DEFAULT 0.005,
+ 32 C_DOUBLE DOUBLE DEFAULT 1.005,
+ 33 C_DECIMAL DECIMAL DEFAULT 1.005,
+ 34 C_BINARY BINARY(100) DEFAULT LPAD('101',30,'201'),
+ 35 C_VARBINARY VARBINARY(100) DEFAULT LPAD('101',30,'201'),
+ 36 C_BOOLEAN BOOLEAN DEFAULT TRUE,
+ 37 C_LONG LONG DEFAULT LPAD('AA',100,'BB'),
+ 38 C_RAW RAW(100) DEFAULT LPAD('101',50,'201'),
+ 39 C_IMAGE IMAGE DEFAULT LPAD('101',50,'201')) partition by range(c_id)
+ 40   ( partition part_1 values less than(300)) tablespace users;
+
+Succeed.
+
+SQL> 
+SQL> alter table range_partition_split_tablespace_008 split partition part_1
+  2 at(150)
+  3 into
+  4 (partition part_2
+  5 tablespace swap_00,
+  6 partition part_3
+  7 tablespace swap_00
+  8 );
+
+CT-00130, Operation add nologging partition is not supported on temp tablespace
+SQL> 
+SQL> alter table range_partition_split_tablespace_008 split partition part_1
+  2 at(150)
+  3 into
+  4 (partition part_2
+  5 tablespace temp2_undo,
+  6 partition part_3
+  7 tablespace temp2_undo
+  8 );
+
+CT-00130, Operation add logging partition is not supported on temp tablespace
+SQL> 
+SQL> alter table range_partition_split_tablespace_008 split partition part_1
+  2 at(150)
+  3 into
+  4 (partition part_2
+  5 tablespace undo_00,
+  6 partition part_3
+  7 tablespace undo_00
+  8 );
+
+CT-00130, Operation add nologging partition is not supported on logging tablespace
+SQL> 
+SQL> drop user if exists nebula cascade;
+
+Succeed.
+
+SQL> create user nebula identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to nebula;
+
+Succeed.
+
+SQL> drop table if exists nebula.test;
+
+Succeed.
+
+SQL> create table nebula.test(c_id number) partition by range(c_id)(partition part_1 values less than(20),partition part_2 values less than(40));
+
+Succeed.
+
+SQL> create index index_1 on nebula.test(c_id) local;
+
+Succeed.
+
+SQL> alter index nebula.index_1 on nebula.test modify partition part_2 unusable;
+
+Succeed.
+
+SQL> select index_name,status from adm_indexes where owner=upper('nebula') and index_name=upper('index_1') order by 1,2;
+
+INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- -------
+INDEX_1                                                          VALID  
+
+1 rows fetched.
+
+SQL> select index_name,partition_name,status from adm_ind_partitions where index_owner=upper('nebula') and index_name=upper('index_1') order by 1,2;
+
+INDEX_NAME                                                       PARTITION_NAME                                                   STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+INDEX_1                                                          PART_1                                                           VALID  
+INDEX_1                                                          PART_2                                                           INVALID
+
+2 rows fetched.
+
+SQL> alter table nebula.test split partition part_2 at(30) into (partition part_21,partition part_22);
+
+Succeed.
+
+SQL> select index_name,status from adm_indexes where owner=upper('nebula') and index_name=upper('index_1') order by 1,2;
+
+INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- -------
+INDEX_1                                                          VALID  
+
+1 rows fetched.
+
+SQL> select index_name,partition_name,status from adm_ind_partitions where index_owner=upper('nebula') and index_name=upper('index_1') order by 1,2;
+
+INDEX_NAME                                                       PARTITION_NAME                                                   STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+INDEX_1                                                          PART_1                                                           VALID  
+INDEX_1                                                          PART_21                                                          INVALID
+INDEX_1                                                          PART_22                                                          INVALID
+
+3 rows fetched.
+
+SQL> drop table if exists nebula.test1;
+
+Succeed.
+
+SQL> create table nebula.test1(c_id number,c_d_id number) partition by range(c_id) subpartition by range(c_d_id) ( partition part_1 values less than (80) format csf ( subpartition p11 values less than(40),subpartition p12 values less than(80),subpartition p13 values less than(maxvalue) ),partition part_2 values less than (160) format csf ( subpartition p21 values less than(40), subpartition p22 values less than(80),subpartition p23 values less than(maxvalue)));
+
+Succeed.
+
+SQL> create index index_2 on nebula.test1(c_id) local;
+
+Succeed.
+
+SQL> alter index nebula.index_2 on nebula.test1 modify partition part_2 unusable;
+
+Succeed.
+
+SQL> select index_name,partition_name,status from adm_ind_partitions where index_owner=upper('nebula') and index_name=upper('index_2') order by 1,2;
+
+INDEX_NAME                                                       PARTITION_NAME                                                   STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+INDEX_2                                                          PART_1                                                           VALID  
+INDEX_2                                                          PART_2                                                           VALID  
+
+2 rows fetched.
+
+SQL> select index_name,partition_name,status from adm_ind_subpartitions where index_owner=upper('nebula') and index_name=upper('index_2') order by 1,2;
+
+INDEX_NAME                                                       PARTITION_NAME                                                   STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+INDEX_2                                                          P11                                                              VALID  
+INDEX_2                                                          P12                                                              VALID  
+INDEX_2                                                          P13                                                              VALID  
+INDEX_2                                                          P21                                                              INVALID
+INDEX_2                                                          P22                                                              INVALID
+INDEX_2                                                          P23                                                              INVALID
+
+6 rows fetched.
+
+SQL> alter table nebula.test1 split partition part_2 at(120) into (partition part_21,partition part_22);
+
+Succeed.
+
+SQL> select index_name,partition_name,status from adm_ind_partitions where index_owner=upper('nebula') and index_name=upper('index_2') order by 1,2;
+
+INDEX_NAME                                                       PARTITION_NAME                                                   STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+INDEX_2                                                          PART_1                                                           VALID  
+INDEX_2                                                          PART_21                                                          VALID  
+INDEX_2                                                          PART_22                                                          VALID  
+
+3 rows fetched.
+
+SQL> select index_name,partition_name,status from adm_ind_subpartitions where index_owner=upper('nebula') and index_name=upper('index_2') and partition_name not like 'SYS_%' order by 1,2;
+
+INDEX_NAME                                                       PARTITION_NAME                                                   STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+INDEX_2                                                          P11                                                              VALID  
+INDEX_2                                                          P12                                                              VALID  
+INDEX_2                                                          P13                                                              VALID  
+INDEX_2                                                          P21                                                              INVALID
+INDEX_2                                                          P22                                                              INVALID
+INDEX_2                                                          P23                                                              INVALID
+
+6 rows fetched.
+
+SQL> alter index nebula.index_2 on nebula.test1 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.index_2 on nebula.test1 modify partition part_22 unusable;
+
+Succeed.
+
+SQL> alter table nebula.test1 split subpartition p23 at(90) into (subpartition p23_1,subpartition p23_2);
+
+Succeed.
+
+SQL> select index_name,partition_name,status from adm_ind_partitions where index_owner=upper('nebula') and index_name=upper('index_2') order by 1,2;
+
+INDEX_NAME                                                       PARTITION_NAME                                                   STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+INDEX_2                                                          PART_1                                                           VALID  
+INDEX_2                                                          PART_21                                                          VALID  
+INDEX_2                                                          PART_22                                                          VALID  
+
+3 rows fetched.
+
+SQL> select index_name,partition_name,status from adm_ind_subpartitions where index_owner=upper('nebula') and index_name=upper('index_2') and partition_name not like 'SYS_%' order by 1,2;
+
+INDEX_NAME                                                       PARTITION_NAME                                                   STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+INDEX_2                                                          P11                                                              VALID  
+INDEX_2                                                          P12                                                              VALID  
+INDEX_2                                                          P13                                                              VALID  
+INDEX_2                                                          P21                                                              INVALID
+INDEX_2                                                          P22                                                              INVALID
+INDEX_2                                                          P23_1                                                            INVALID
+INDEX_2                                                          P23_2                                                            INVALID
+
+7 rows fetched.
+
+SQL> drop user if exists nebula cascade;
+
+Succeed.
+
+SQL> 
+
+

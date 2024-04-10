@@ -1,0 +1,500 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> select dbe_debug.get_version() as debug_version from dual;
+
+DEBUG_VERSION
+-------------
+0            
+
+1 rows fetched.
+
+SQL> 
+SQL> -- plsql debug tool test
+SQL> -- test prepare start
+SQL> drop table if exists target_session_id_t;
+
+Succeed.
+
+SQL> create table target_session_id_t(id int);
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4   se_id := dbe_debug.init(10000);
+  5   insert into target_session_id_t values(se_id);
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function is_debug_session_attaching() return boolean is
+  2 v1_id int;
+  3 begin
+  4   select id into v1_id from target_session_id_t where id = 0;
+  5   return true;
+  6 exception
+  7   when others then
+  8     return false;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   for i in 1..10000000 loop
+  3     if is_debug_session_attaching() then
+  4 	  exit;
+  5 	end if;
+  6   end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test prepare end
+SQL> 
+SQL> -- test step1 start
+SQL> drop table if exists test_department_t;
+
+Succeed.
+
+SQL> create table test_department_t(id int, name varchar(20), province varchar(20), register_time date);
+
+Succeed.
+
+SQL> insert into test_department_t values(1, 'zyc', 'hunan', '2014-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_department_t values(2, 'whf', 'fujian', '2010-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_department_t values(3, 'pfa', 'sichuan', '2018-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_department_t values(4, 'fc', 'jiangsu', '2015-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_department_t values(4, 'hsf', 'fujian', '2018-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function test_lv2_func1(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   <<test_lv2_func1_for>>
+  5   for i in 1..1 loop
+  6     v1 := p1 * 2;
+  7   end loop;
+  8   return v1;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function test_lv1_func1(p1 int, p2 number) return int is
+  2 begin
+  3   return test_lv2_func1(p1) + p2;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_lv2_proc1(p1 varchar, resultSet out sys_refcursor) is
+  2 begin
+  3   open resultSet for select * from test_department_t where province = p1;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE function test_lv1_func2(p1 varchar) return boolean is
+  2 v1_cur sys_refcursor;
+  3 type place is record(
+  4   province varchar(20),
+  5   city varchar(20));
+  6 type employee is record(
+  7   id int,
+  8   name varchar(20),
+  9   home place,
+ 10   register_time date);
+ 11 v2_record employee;
+ 12 begin
+ 13   for item in (select * from test_department_t where province = p1) 
+ 14   loop
+ 15     if (item.name = p1) then
+ 16       return true;
+ 17     end if;
+ 18   end loop;
+ 19   test_lv2_proc1('fujian', v1_cur);
+ 20   fetch v1_cur into v2_record.id, v2_record.name, v2_record.home.province, v2_record.register_time;
+ 21   v2_record.home.city := 'fuzhou';
+ 22   return false;
+ 23 exception
+ 24   when others then
+ 25     return false;
+ 26 end;
+ 27 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger test_lvx_trigger1 before insert on test_department_t FOR EACH ROW is
+  2 v1 int;
+  3 begin
+  4   select count(*) into v1 from test_department_t;
+  5   :new.id := v1;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_lv1_proc1(p1 varchar) is
+  2 begin
+  3   insert into test_department_t values(0, p1, 'fujian', '2019-01-01 00:00:00');
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> <<test_step1_begin>>
+  2 declare
+  3 v1_int int;
+  4 v2_num number(20,5);
+  5 v3_varc varchar(20);
+  6 v4_c char(20);
+  7 v5_date date;
+  8 v6_doub double;
+  9 begin
+ 10   v2_num := 6.7;
+ 11   v1_int := test_lv1_func1(3, v2_num);
+ 12   v3_varc := 'pfa';
+ 13   if test_lv1_func2(v3_varc) then
+ 14     return;
+ 15   end if;
+ 16   test_lv1_proc1(v3_varc);
+ 17 end;
+ 18 /
+
+CT-00932, [16:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] PL/SQL(SYS.TEST_LV1_PROC1) terminated with execute errors
+[4:1] CT-00979, Program has been forced to terminate
+
+SQL> 
+SQL> drop trigger test_lvx_trigger1;
+
+Succeed.
+
+SQL> drop table if exists target_session_id_t;
+
+Succeed.
+
+SQL> drop table if exists test_department_t;
+
+Succeed.
+
+SQL> -- test step1 end
+SQL> 
+SQL> -- test step2 start
+SQL> CREATE OR REPLACE PROCEDURE test_lv2_debug(p1 in out varchar, p2 int) is
+  2 v1 int := 1;
+  3 begin
+  4   v1 := v1 / p2;
+  5   p1 := p1 || ' debug coming...';
+  6 exception
+  7   when others then
+  8     p1 := p1 || ' debug came!!!';
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_lv2_world(p1 in out varchar) is
+  2 begin
+  3   p1 := p1 || ' world';
+  4   test_lv2_debug(p1, 0);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_lv1_hello is
+  2 v1 varchar(100);
+  3 begin
+  4   v1 := 'hello';
+  5   test_lv2_world(v1);
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> call test_lv1_hello();
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[6:1] PL/SQL(SYS.TEST_LV1_HELLO) terminated with execute errors
+[6:1] CT-00979, Program has been forced to terminate
+
+SQL> -- test step2 end
+SQL> 
+SQL> -- test step3 start
+SQL> CREATE OR REPLACE PROCEDURE test_record_var() is
+  2 type record_type is record(
+  3   r_int int,
+  4   r_num number(20,5),
+  5   r_varc varchar(20),
+  6   r_c char(20),
+  7   r_date date,
+  8   r_doub double);
+  9 v1_record record_type;
+ 10 begin
+ 11   dbe_output.print_line('v1_record.r_int: ' || v1_record.r_int);
+ 12   dbe_output.print_line('v1_record.r_num: ' || v1_record.r_num);
+ 13   dbe_output.print_line('v1_record.r_varc: ' || v1_record.r_varc);
+ 14   dbe_output.print_line('v1_record.r_c: ' || v1_record.r_c);
+ 15   dbe_output.print_line('v1_record.r_date: ' || v1_record.r_date);
+ 16   dbe_output.print_line('v1_record.r_doub: ' || v1_record.r_doub);
+ 17 end;
+ 18 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 v1_int int;
+  3 v2_num number(20,5);
+  4 v3_varc varchar(20);
+  5 v4_c char(20);
+  6 v5_date date;
+  7 v6_doub double;
+  8 begin
+  9   dbe_output.print_line('v1_int: ' || v1_int);
+ 10   dbe_output.print_line('v2_num: ' || v2_num);
+ 11   dbe_output.print_line('v3_varc: ' || v3_varc);
+ 12   dbe_output.print_line('v4_c: ' || v4_c);
+ 13   dbe_output.print_line('v5_date: ' || v5_date);
+ 14   dbe_output.print_line('v6_doub: ' || v6_doub);
+ 15   test_record_var();
+ 16 end;
+ 17 /
+
+v1_int: 1
+v2_num: 2.85
+v3_varc: abcdefghijk
+v4_c: debug               
+v5_date: 2019-01-01 00:00:00
+v6_doub: 36.9
+v1_record.r_int: 2
+v1_record.r_num: 2.5
+v1_record.r_varc: 0xabcd
+v1_record.r_c: kssss               
+v1_record.r_date: 2019-01-01 00:00:00
+v1_record.r_doub: 36.9
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step3 end
+SQL> 
+SQL> -- test step4 start
+SQL> drop table if exists  test_breakpoint_t;
+
+Succeed.
+
+SQL> create table test_breakpoint_t(id int, name varchar(20), place varchar(20), register_time date);
+
+Succeed.
+
+SQL> insert into test_breakpoint_t values(1, 'zyc', 'hunan', '2014-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_breakpoint_t values(2, 'whf', 'fujian', '2010-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_breakpoint_t values(3, 'pfa', 'sichuan', '2018-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_breakpoint_t values(4, 'fc', 'jiangsu', '2015-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into test_breakpoint_t values(4, 'hsf', 'fujian', '2018-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create or replace function TEST_BREAK_LV3_FUNC1(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   v1 := p1 * 2;
+  5   SYS.dbe_output.print_line('v1 = ' || v1);
+  6   return v1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function TEST_BREAK_LV2_FUNC1(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   v1 := TEST_BREAK_LV3_FUNC1(p1) * 2;
+  5   SYS.dbe_output.print_line('v1 = ' || v1);
+  6   return v1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function TEST_BREAK_LV1_FUNC1(p1 int, p2 number) return int is
+  2 begin
+  3   SYS.dbe_output.print_line('execute test_break_lv1_func1');
+  4   return TEST_BREAK_LV2_FUNC1(p1) + p2;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_break_lv2_proc1(p1 varchar, resultSet out sys_refcursor) is
+  2 begin
+  3   open resultSet for select * from test_breakpoint_t where place = p1;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE function test_break_lv1_func2(p1 varchar) return boolean is
+  2 v1_cur sys_refcursor;
+  3 type employee is record(
+  4   id int,
+  5   name varchar(20),
+  6   place varchar(20),
+  7   register_time date);
+  8 v2_record employee;
+  9 begin
+ 10   for item in (select * from test_breakpoint_t where place = p1) 
+ 11   loop
+ 12     if (item.name = p1) then
+ 13       return true;
+ 14     end if;
+ 15   end loop;
+ 16   test_break_lv2_proc1('fujian', v1_cur);
+ 17   fetch v1_cur into v2_record;
+ 18   return false;
+ 19 exception
+ 20   when others then
+ 21     return false;
+ 22 end;
+ 23 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_break_lv1_proc1(p1 varchar) is
+  2 begin
+  3   insert into test_breakpoint_t values(0, p1, 'fujian', '2019-01-01 00:00:00');
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger test_break_lvx_trigger1 before insert on test_breakpoint_t FOR EACH ROW is
+  2 v1 int;
+  3 begin
+  4   select count(*) into v1 from test_breakpoint_t;
+  5   :new.id := v1;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 v1_int int;
+  3 v2_num number(20,5);
+  4 v3_varc varchar(20);
+  5 v4_c char(20);
+  6 v5_date date;
+  7 v6_doub double;
+  8 begin
+  9   v2_num := 6.7;
+ 10   v1_int := TEST_BREAK_LV1_FUNC1(3, v2_num);
+ 11   v3_varc := 'pfa';
+ 12   if test_break_lv1_func2(v3_varc) then
+ 13     return;
+ 14   end if;
+ 15   test_break_lv1_proc1(v3_varc);
+ 16 end;
+ 17 /
+
+execute test_break_lv1_func1
+v1 = 6
+v1 = 12
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> drop trigger if exists test_lvx_trigger1;
+
+Succeed.
+
+SQL> drop trigger if exists test_break_lvx_trigger1;
+
+Succeed.
+
+SQL> drop table if exists target_session_id_t;
+
+Succeed.
+
+SQL> drop table if exists test_department_t;
+
+Succeed.
+
+SQL> drop table if exists test_breakpoint_t;
+
+Succeed.
+
+SQL> -- test step4 end
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

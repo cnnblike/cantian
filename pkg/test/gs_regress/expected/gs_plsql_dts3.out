@@ -1,0 +1,3239 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_plsql_dts3 cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_dts3 identified by Lh00420062;
+
+Succeed.
+
+SQL> grant all privileges to gs_plsql_dts3;
+
+Succeed.
+
+SQL> grant CREATE SESSION CREATE USER CREATE CREATE SESSION CREATE USER CREATE CREATE SESSION CREATE USER CREATE CREATE SESSION CREATE USER to gs_plsql_dts3;
+
+CT-00107, [1:75]Current text buffer is 74, longer than the maximum 68
+SQL> 
+SQL> conn gs_plsql_dts3/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> --1.1 pl_exec core, return cursor without args
+SQL> drop table if exists table_core_1;
+
+Succeed.
+
+SQL> create table table_core_1(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into table_core_1 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into table_core_1 values(2,'zhangsan2','doctor2',20000);
+
+1 rows affected.
+
+SQL> insert into table_core_1 values(3,'zhangsan2','doctor3',30000);
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function fun_core_length(str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor;
+  4 a int;
+  5 begin
+  6    select empno into a from table_core_1 limit 1;
+  7    dbe_output.print_line('fun_core_length '||a);
+  8 return length(str1);
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function fun_core_return_cur_noargs return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin 
+  5    dbe_output.print_line('fun_core_return_cur_noargs print 1');
+  6    dbe_output.print_line('fun_core_return_cur_noargs print 2');
+  7     open cursor1 for select fun_core_length(ename) from table_core_1;
+  8 return cursor1;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> create or replace procedure proc_core_1_1 is 
+  2 mycursor1 sys_refcursor ;
+  3 begin 
+  4    dbe_output.print_line('proc_core_1_1 print 1');
+  5    dbe_output.print_line('proc_core_1_1 print 2');
+  6    mycursor1 := fun_core_return_cur_noargs();
+  7    dbe_sql.return_cursor(mycursor1);
+  8    dbe_output.print_line('proc_core_1_1 print 3');
+  9    dbe_output.print_line('proc_core_1_1 print 4');
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> exec proc_core_1_1; 
+
+proc_core_1_1 print 1
+proc_core_1_1 print 2
+fun_core_return_cur_noargs print 1
+fun_core_return_cur_noargs print 2
+proc_core_1_1 print 3
+proc_core_1_1 print 4
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+FUN_CORE_LENGTH(ENAME)
+----------------------
+8                     
+9                     
+9                     
+
+3 rows fetched.
+
+fun_core_length 1
+fun_core_length 1
+fun_core_length 1
+
+
+SQL> 
+SQL> --1.2 pl_exec core, return cursor with args
+SQL> create or replace function fun_core_return_cur_args(cmp int) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin 
+  5    dbe_output.print_line('fun_core_return_cur_args print 1');
+  6    dbe_output.print_line('fun_core_return_cur_args print 2');
+  7    open cursor1 for select fun_core_length(ename) from table_core_1 where empno > cmp;
+  8 return cursor1;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> create or replace procedure proc_core_1_2 is 
+  2 mycursor1 sys_refcursor ;
+  3 begin 
+  4    dbe_output.print_line('proc_core_1_2 print 3');
+  5    dbe_output.print_line('proc_core_1_2 print 4');
+  6    mycursor1 := fun_core_return_cur_args(1);
+  7    dbe_sql.return_cursor(mycursor1);
+  8    dbe_output.print_line('proc_core_1_2 print 3');
+  9    dbe_output.print_line('proc_core_1_2 print 4');
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> exec proc_core_1_2; 
+
+proc_core_1_2 print 3
+proc_core_1_2 print 4
+fun_core_return_cur_args print 1
+fun_core_return_cur_args print 2
+proc_core_1_2 print 3
+proc_core_1_2 print 4
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+FUN_CORE_LENGTH(ENAME)
+----------------------
+9                     
+9                     
+
+2 rows fetched.
+
+fun_core_length 1
+fun_core_length 1
+
+
+SQL> 
+SQL> select fun_core_return_cur_args(1) from dual;
+
+FUN_CORE_RETURN_CUR_ARGS(1)                                     
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+fun_core_return_cur_args print 1
+fun_core_return_cur_args print 2
+
+ResultSet #1
+
+FUN_CORE_LENGTH(ENAME)
+----------------------
+9                     
+9                     
+
+2 rows fetched.
+
+fun_core_length 1
+fun_core_length 1
+
+
+SQL> 
+SQL> --new problem, 0130
+SQL> create or replace function fun_core_return_cur_args2 return int
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 var varchar(20);
+  5 begin 
+  6     cursor1 := fun_core_return_cur_args(1);
+  7     loop
+  8     exit when cursor1%notfound;
+  9     fetch cursor1 into var;
+ 10     dbe_output.print_line(var);
+ 11     end loop;
+ 12 return length(var);
+ 13 end;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> select fun_core_return_cur_args2();
+
+FUN_CORE_RETURN_CUR_ARGS2()
+---------------------------
+1                          
+
+1 rows fetched.
+
+fun_core_return_cur_args print 1
+fun_core_return_cur_args print 2
+fun_core_length 1
+9
+fun_core_length 1
+9
+9
+
+SQL> 
+SQL> drop table if exists DEPENDENCY_COMPILE_001_TAB_01;
+
+Succeed.
+
+SQL> create table DEPENDENCY_COMPILE_001_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(11,'zhansi','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(22,'lisiabc','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(33,'zhangwu123','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(10,'abc','worker',9000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(76,'ZHANGSAN','leader',20000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> --create view
+SQL> create or replace view DEPENDENCY_COMPILE_001_VIEW_01 as select * from DEPENDENCY_COMPILE_001_TAB_01;
+
+Succeed.
+
+SQL> --functionA
+SQL> create or replace function DEPENDENCY_COMPILE_001_FUN_01 (str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor ;
+  4 a DEPENDENCY_COMPILE_001_VIEW_01%rowtype;
+  5 begin
+  6  open mycursor1 for select * from DEPENDENCY_COMPILE_001_VIEW_01;
+  7   fetch mycursor1 into a;
+  8   loop
+  9   if mycursor1%found
+ 10     then 
+ 11    dbe_output.print_line(a.empno||a.ename);
+ 12    fetch mycursor1 into a;
+ 13    else 
+ 14       exit;
+ 15   end if;    
+ 16   end loop;
+ 17   close mycursor1;
+ 18 return length(str1);
+ 19 end;
+ 20 /
+
+Succeed.
+
+SQL> 
+SQL> --functionB
+SQL> create or replace function DEPENDENCY_COMPILE_001_FUN_02 (str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select DEPENDENCY_COMPILE_001_FUN_01(ename) from DEPENDENCY_COMPILE_001_TAB_01;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> select DEPENDENCY_COMPILE_001_FUN_02('a') from dual;
+
+DEPENDENCY_COMPILE_001_FUN_02('A')                              
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+DEPENDENCY_COMPILE_001_FUN_01(ENAME)
+------------------------------------
+8                                   
+9                                   
+9                                   
+6                                   
+7                                   
+10                                  
+3                                   
+8                                   
+
+8 rows fetched.
+
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --DTS2019012807698
+SQL> drop table if exists FVT_TRIGGER_TABLE_yf_044;
+
+Succeed.
+
+SQL> create table FVT_TRIGGER_TABLE_yf_044 (id int,name varchar(50),sal int);
+
+Succeed.
+
+SQL> insert into FVT_TRIGGER_TABLE_yf_044 values(10,'xg',5000);
+
+1 rows affected.
+
+SQL> insert into FVT_TRIGGER_TABLE_yf_044 values(20,'xig',8000);
+
+1 rows affected.
+
+SQL> insert into FVT_TRIGGER_TABLE_yf_044 values(30,'xia',5800);
+
+1 rows affected.
+
+SQL> insert into FVT_TRIGGER_TABLE_yf_044 values(40,'xing',6600);
+
+1 rows affected.
+
+SQL> insert into FVT_TRIGGER_TABLE_yf_044 values(50,'xiwsg',7000); 
+
+1 rows affected.
+
+SQL> drop table if exists FVT_TRIGGER_TABLE_yf_045;
+
+Succeed.
+
+SQL> create table FVT_TRIGGER_TABLE_yf_045 (id int,name varchar(50),sal int);
+
+Succeed.
+
+SQL> insert into FVT_TRIGGER_TABLE_yf_045 values(50,'xiwsg',7000);
+
+1 rows affected.
+
+SQL> 
+SQL> set serveroutput on
+
+ON
+SQL> 
+SQL> create or replace trigger FVT_TRIGGER_yf_045 after update on FVT_TRIGGER_TABLE_yf_045 for each row as
+  2  a int;
+  3  b int;
+  4  begin
+  5  b:=0;
+  6  loop 
+  7  b:=b+3;
+  8  if b <4 then
+  9  select id into a from FVT_TRIGGER_TABLE_yf_044 where rowid = 123;
+ 10  dbe_output.print_line('b='||b);
+ 11  end if;
+ 12  end loop;
+ 13  exception
+ 14 	 when SYS_INVALID_ROWID then
+ 15 	  dbe_output.print_line('error: SYS_INVALID_ROWID');
+ 16 	   dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG); 
+ 17 	   declare
+ 18 	   c1 sys_refcursor;
+ 19        a int;	   
+ 20 		begin
+ 21 		 open c1 for select* from FVT_TRIGGER_TABLE_yf_044;
+ 22 		  fetch c1 into a;
+ 23 		   close c1;
+ 24 	exception
+ 25 	  when  ROWTYPE_MISMATCH then 
+ 26 		dbe_output.print_line('error: ROWTYPE_MISMATCH');
+ 27          dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG);
+ 28 		  declare
+ 29 		  a int;
+ 30 		  b int;
+ 31 		  c varchar(30);
+ 32 		  d int;
+ 33 		  begin
+ 34 	        EXECUTE IMMEDIATE  'BEGIN
+ 35 			 :x := 1; :y := 2; :z :=3;
+ 36 			   END;'
+ 37 			     USING out a,out b,out c,out d;
+ 38 			      dbe_output.print_line('a='||a);
+ 39 			       dbe_output.print_line('b='||b);
+ 40                     dbe_output.print_line('c='||c);  
+ 41 	         exception 
+ 42 	            when  PROGRAM_ERROR then
+ 43 				  dbe_output.print_line('error: PROGRAM_ERROR');
+ 44 				   dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG);
+ 45 	      end;
+ 46 	end;
+ 47  end;
+ 48  /
+
+Succeed.
+
+SQL> 
+SQL> update FVT_TRIGGER_TABLE_yf_045 set name='ds' where id=50;
+
+error: SYS_INVALID_ROWID
+639 error The row ID was invalid
+error: ROWTYPE_MISMATCH
+926 error PL/SQL: Return types of Result Set variables or query do not match
+error: PROGRAM_ERROR
+908 error PL/SQL internal program error(The param count of dynamic sql is not same as the param count of using clause).
+
+1 rows affected.
+
+SQL> drop table if exists CURSOR_FUNCTION_001_TAB_01;
+
+Succeed.
+
+SQL> create table CURSOR_FUNCTION_001_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(11,'zhansi','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(22,'lisiabc','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(33,'zhangwu123','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(10,'abc','worker',9000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_FUNCTION_001_TAB_01 values(76,'ZHANGSAN','leader',20000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --create view
+SQL> create or replace view CURSOR_FUNCTION_001_VIEW_01 as select * from CURSOR_FUNCTION_001_TAB_01;
+
+Succeed.
+
+SQL> --functionA
+SQL> create or replace function CURSOR_FUNCTION_001_FUN_01 (str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor;
+  4 a int;
+  5 begin
+  6  select empno into a from CURSOR_FUNCTION_001_VIEW_01;
+  7    dbe_output.print_line(a);
+  8    exception
+  9    when  TOO_MANY_ROWS  then
+ 10    begin
+ 11       select empno into a from CURSOR_FUNCTION_001_VIEW_01 limit 1;
+ 12      dbe_output.print_line(a);
+ 13      return length(str1);
+ 14    end;
+ 15 end;
+ 16 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function CURSOR_FUNCTION_001_FUN_02 (str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select CURSOR_FUNCTION_001_FUN_01(ename) from CURSOR_FUNCTION_001_TAB_01;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function CURSOR_FUNCTION_001_FUN_02_3 (str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select CURSOR_FUNCTION_001_FUN_01('') from CURSOR_FUNCTION_001_TAB_01;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure CURSOR_FUNCTION_001_PROC_01(P_TNAME varchar) is 
+  2 mycursor1 sys_refcursor ;
+  3 a varchar(100);
+  4 begin
+  5    a:=P_TNAME;
+  6    mycursor1 := CURSOR_FUNCTION_001_FUN_02('aa');
+  7    dbe_sql.return_cursor(mycursor1);
+  8    dbe_output.print_line(a);
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE CURSOR_FUNCTION_001_PROC_02 (x BOOLEAN) AS
+  2 mycursor1 sys_refcursor ;
+  3 mycursor2 sys_refcursor ;
+  4 v_int int;
+  5 v_int_2 int;
+  6 BEGIN
+  7   sys.CURSOR_FUNCTION_001_PROC_01('exec CURSOR_FUNCTION_001_PROC_01');
+  8   IF x THEN
+  9     dbe_output.print_line('x is true');
+ 10   END IF;
+ 11   mycursor1 := CURSOR_FUNCTION_001_FUN_02_3('aa');
+ 12   mycursor2 := CURSOR_FUNCTION_001_FUN_02('cantian!@#$% ');
+ 13   fetch mycursor1 into v_int;
+ 14   loop
+ 15   if mycursor1%found then 
+ 16         loop
+ 17         fetch mycursor2 into v_int_2;  --core
+ 18         if mycursor2%found then 
+ 19             dbe_output.print_line('mycursor2='||v_int_2);
+ 20         else 
+ 21         exit;
+ 22         end if;
+ 23         end loop;
+ 24    dbe_output.print_line('mycursor1='||v_int);
+ 25    fetch mycursor1 into v_int;
+ 26   else  
+ 27     exit;
+ 28   end if;
+ 29   end loop;
+ 30 END;
+ 31 /
+
+Succeed.
+
+SQL> 
+SQL> call  CURSOR_FUNCTION_001_PROC_02('T');
+
+exec CURSOR_FUNCTION_001_PROC_01
+x is true
+1
+1
+mycursor2=8
+1
+mycursor2=9
+1
+mycursor2=9
+1
+mycursor2=6
+1
+mycursor2=7
+1
+mycursor2=10
+1
+mycursor2=3
+1
+mycursor2=8
+mycursor1=
+1
+mycursor1=
+1
+mycursor1=
+1
+mycursor1=
+1
+mycursor1=
+1
+mycursor1=
+1
+mycursor1=
+1
+mycursor1=
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+CURSOR_FUNCTION_001_FUN_01(ENAME)
+---------------------------------
+8                                
+9                                
+9                                
+6                                
+7                                
+10                               
+3                                
+8                                
+
+8 rows fetched.
+
+1
+1
+1
+1
+1
+1
+1
+1
+
+
+SQL> 
+SQL> select length(space(423.999));
+
+LENGTH(SPACE(423.999))
+----------------------
+424                   
+
+1 rows fetched.
+
+SQL> select t1.name, t2.event from v$sysstat t1,v$system_event t2 
+  2 where UPPER(t1.NAME)=UPPER('sql execution total time') and UPPER(t2.EVENT)=UPPER('db file sequential read') and t1.value > t2.TIME_WAITED_MIRCO;
+
+NAME                                                             EVENT                                                           
+---------------------------------------------------------------- ----------------------------------------------------------------
+sql execution total time                                         db file sequential read                                         
+
+1 rows fetched.
+
+SQL> 
+SQL> declare
+  2 a int :=1;
+  3 begin
+  4 <<'aaa'>>
+  5 dbe_output.print_line(a);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:3] PLC-00975 Label type is invalid
+
+SQL> 
+SQL> declare
+  2 a int :=1;
+  3 begin
+  4 goto "aaa";
+  5 <<"aaa">>
+  6 dbe_output.print_line(a);
+  7 end;
+  8 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists tab_test_2;
+
+Succeed.
+
+SQL> create table tab_test_2(a int);
+
+Succeed.
+
+SQL> CREATE OR REPLACE SYNONYM syn_tab_1 FOR tab_test_2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_SYN_5 BEFORE INSERT OR UPDATE on syn_tab_1
+  2 BEGIN
+  3 INSERT INTO tab_test_2 VALUES(8);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> insert into syn_tab_1 values(20);
+
+CT-00932, [3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[3:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+[1:1] PL/SQL(SYS.TRIG_SYN_5) terminated with execute errors
+CT-00027, Stack depth limit exceeded
+
+SQL> select trig_table from SYS_PROCS where type='T' and name='TRIG_SYN_5';
+
+TRIG_TABLE                                                      
+----------------------------------------------------------------
+TAB_TEST_2                                                      
+
+1 rows fetched.
+
+SQL> 
+SQL> select case when count(accumulative) > 0 then 1 end from v$system;
+
+CASE WHEN COUNT(ACCUMULATIVE) > 0 THEN 1 END
+--------------------------------------------
+1                                           
+
+1 rows fetched.
+
+SQL> 
+SQL> drop user if exists gs_plsql_dts3 cascade;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2019022704715
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop user if exists DTS2019022704715 cascade;
+
+Succeed.
+
+SQL> create user DTS2019022704715 identified by Root1234;
+
+Succeed.
+
+SQL> grant connect, resource to DTS2019022704715;
+
+Succeed.
+
+SQL> 
+SQL> conn DTS2019022704715/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> -- no privileges
+SQL> create or replace function CURSOR_FUNCTION_001_FUN_03(str1 varchar) return sys_refcursor
+  2 is
+  3     cursor1 sys_refcursor;
+  4 begin
+  5     open cursor1 for select sys.CURSOR_FUNCTION_001_FUN_01(ename) from sys.CURSOR_FUNCTION_001_TAB_01;
+  6     return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(DTS2019022704715.CURSOR_FUNCTION_001_FUN_03) terminated with compiling errors
+[5:29] PLC-01001 Permissions were insufficient
+
+
+SQL> 
+SQL> -- succeed
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> create or replace function DTS2019022704715.CURSOR_FUNCTION_001_FUN_03(str1 varchar) return sys_refcursor
+  2 is
+  3     cursor1 sys_refcursor;
+  4 begin
+  5     open cursor1 for select sys.CURSOR_FUNCTION_001_FUN_01(ename) from sys.CURSOR_FUNCTION_001_TAB_01;
+  6     return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(DTS2019022704715.CURSOR_FUNCTION_001_FUN_03) terminated with compiling errors
+[5:29] PLC-01001 Permissions were insufficient
+
+
+SQL> 
+SQL> conn DTS2019022704715/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> -- no privileges
+SQL> create or replace function CURSOR_FUNCTION_001_FUN_03(str1 varchar) return sys_refcursor
+  2 is
+  3     cursor1 sys_refcursor;
+  4 begin
+  5     open cursor1 for select sys.CURSOR_FUNCTION_001_FUN_01(ename) from sys.CURSOR_FUNCTION_001_TAB_01;
+  6     return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(DTS2019022704715.CURSOR_FUNCTION_001_FUN_03) terminated with compiling errors
+[5:29] PLC-01001 Permissions were insufficient
+
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user DTS2019022704715 cascade;
+
+Succeed.
+
+SQL> create user plsql_dts_u1 identified by 'wW00174302!';
+
+Succeed.
+
+SQL> grant all privileges to plsql_dts_u1;
+
+Succeed.
+
+SQL> grant dba to plsql_dts_u1;
+
+Succeed.
+
+SQL> grant create session,create table,CREATE PROCEDURE,EXECUTE ANY PROCEDURE,
+  2 READ ANY TABLE,CREATE TRIGGER ,INSERT ANY TABLE to plsql_dts_u1;
+
+Succeed.
+
+SQL> create user plsql_dts_u2 identified by 'wW00174302!';
+
+Succeed.
+
+SQL> grant all privileges to plsql_dts_u2; 
+
+Succeed.
+
+SQL> grant dba to plsql_dts_u2;
+
+Succeed.
+
+SQL> grant create session,create table,CREATE PROCEDURE,EXECUTE ANY PROCEDURE,
+  2 READ ANY TABLE,CREATE TRIGGER ,INSERT ANY TABLE to plsql_dts_u2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists plsql_dts_u1.t1;
+
+Succeed.
+
+SQL> drop table if exists plsql_dts_u2.t1;
+
+Succeed.
+
+SQL> create table plsql_dts_u1.t1(a int);
+
+Succeed.
+
+SQL> create table plsql_dts_u2.t1(a int);
+
+Succeed.
+
+SQL> insert into plsql_dts_u1.t1 values(1);
+
+1 rows affected.
+
+SQL> insert into plsql_dts_u2.t1 values(2);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop procedure if exists plsql_dts_u1.t1;
+
+Succeed.
+
+SQL> drop procedure if exists plsql_dts_u2.t1;
+
+Succeed.
+
+SQL> 
+SQL> conn plsql_dts_u1/wW00174302!@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace procedure plsql_dts_u1.p1 
+  2 as
+  3 b int;
+  4 begin
+  5   select a into b from t1;
+  6   dbe_output.print_line(b);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure plsql_dts_u2.p1 
+  2 as
+  3 b int;
+  4 begin
+  5   select a into b from t1;
+  6   dbe_output.print_line(b);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> conn plsql_dts_u2/wW00174302!@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on
+
+ON
+SQL> begin
+  2 plsql_dts_u1.p1;
+  3 end;
+  4 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> begin
+  2 plsql_dts_u2.p1;
+  3 end;
+  4 /
+
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_p1(i int)
+  2 is
+  3 a int;
+  4 begin
+  5 if(i>0) then
+  6 test_p1(i-1);
+  7 end if;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> create or replace procedure test_p2(i int)
+  2 is
+  3 a int;
+  4 begin
+  5 if(i>0) then
+  6 test_p1(i-1);
+  7 end if;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant select on sys.SYS_PROCS to plsql_dts_u2;
+
+Succeed.
+
+SQL> conn plsql_dts_u2/wW00174302!@127.0.0.1:1611
+
+connected.
+
+SQL> select status from sys.SYS_PROCS where name=upper('test_p2');
+
+STATUS      
+------------
+1           
+
+1 rows fetched.
+
+SQL> create or replace procedure test_p1(i int)
+  2 is
+  3 a int;
+  4 begin
+  5 if(i>0) then
+  6 test_p2(i-1);
+  7 end if;
+  8 end;
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(PLSQL_DTS_U2.TEST_P1) terminated with compiling errors
+[6:1] PLC-00944 PL/SQL(PLSQL_DTS_U2.TEST_P2) terminated with compiling errors
+[6:1] PLC-00916 PL/SQL:syntax error(PLSQL_DTS_U2.TEST_P1 cannot be intergenerational called)
+[9:1] PLC-00954 more text expected but EOF found
+
+[9:1] PLC-00954 more text expected but EOF found
+
+
+SQL> select status from sys.SYS_PROCS where name=upper('test_p2');
+
+STATUS      
+------------
+0           
+
+1 rows fetched.
+
+SQL> 
+SQL> -------------- BEGIN test for loop index ---------------------------
+SQL> drop table if exists liu_tab;
+
+Succeed.
+
+SQL> create table liu_tab(a int , c varchar(50));
+
+Succeed.
+
+SQL> insert into liu_tab values(1,'liu');
+
+1 rows affected.
+
+SQL> insert into liu_tab values(2,'liu');
+
+1 rows affected.
+
+SQL> insert into liu_tab values(3,'test');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function liu_func (a int) return int
+  2 is 
+  3 begin
+  4 return a;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 begin
+  3 	for i in i..10 loop
+  4         dbe_output.print_line(i);
+  5 	end loop;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(PLSQL_DTS_U2.ANONYMOUS BLOCK) terminated with compiling errors
+[3:11] PLC-00976 The using of loop index I is invalid
+
+SQL> 
+SQL> declare
+  2 begin
+  3 	for i in liu_func(i)..10 loop
+  4         dbe_output.print_line(i);
+  5 	end loop;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(PLSQL_DTS_U2.ANONYMOUS BLOCK) terminated with compiling errors
+[3:20] PLC-00976 The using of loop index I is invalid
+
+SQL> 
+SQL> begin
+  2   for i in (select i+2 from dual) loop
+  3     null;
+  4   end loop;
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(PLSQL_DTS_U2.ANONYMOUS BLOCK) terminated with compiling errors
+[2:19] PLC-00976 The using of loop index I is invalid
+
+SQL> 
+SQL> begin
+  2   for i in (select a from liu_tab where a > i) loop
+  3     dbe_output.print_line('here wrong');
+  4   end loop;
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(PLSQL_DTS_U2.ANONYMOUS BLOCK) terminated with compiling errors
+[2:42] PLC-00976 The using of loop index I is invalid
+
+SQL> 
+SQL> BEGIN  
+  2     execute immediate '
+  3     declare
+  4     begin
+  5         for i in i..10 loop
+  6         dbe_output.print_line(i);
+  7     end loop;
+  8     end;'; 
+  9 END;
+ 10 /
+
+CT-00932, [2:5] PL/SQL(PLSQL_DTS_U2.ANONYMOUS BLOCK) terminated with execute errors
+[2:5] CT-00944, PL/SQL(PLSQL_DTS_U2.ANONYMOUS BLOCK) terminated with compiling errors
+[4:18] PLC-00976 The using of loop index I is invalid
+
+
+SQL> 
+SQL> declare
+  2 cursor a is select 1 from sys_dummy;
+  3 begin
+  4 for a in a loop
+  5 dbe_output.print_line(1);
+  6 end loop;
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(PLSQL_DTS_U2.ANONYMOUS BLOCK) terminated with compiling errors
+[4:10] PLC-00976 The using of loop index A is invalid
+
+SQL> -------------- END test for loop index ---------------------------
+SQL> 
+SQL> declare
+  2 v_refcur2 SYS_REFCURSOR;
+  3 begin
+  4 OPEN v_refcur2 FOR SELECT 1 FROM dual;
+  5 OPEN v_refcur2 FOR dbe_sql.return_cursor(v_refcur2);
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(PLSQL_DTS_U2.ANONYMOUS BLOCK) terminated with compiling errors
+[5:20] PLC-00601 Sql syntax error: procedure is not allowed here.
+[7:1] PLC-00954 more text expected but EOF found
+
+SQL> 
+SQL> declare
+  2 v_refcur2 SYS_REFCURSOR;
+  3 begin
+  4 OPEN v_refcur2 FOR select 1 from dual;
+  5 dbe_sql.return_cursor(v_refcur2, null);
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+
+SQL> 
+SQL> declare
+  2 v_refcur2 SYS_REFCURSOR;
+  3 begin
+  4 OPEN v_refcur2 FOR select 1 from dual;
+  5 dbe_sql.return_cursor(v_refcur2, '');
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+
+SQL> 
+SQL> declare
+  2 v_refcur2 SYS_REFCURSOR;
+  3 s varchar(100);
+  4 o int;
+  5 begin
+  6 s := 'select 100 from dual';
+  7 OPEN v_refcur2 FOR to_char(s);
+  8 while v_refcur2%found loop
+  9 fetch v_refcur2 into o;
+ 10 dbe_output.print_line(o);
+ 11 end loop;
+ 12 close v_refcur2;
+ 13 end;
+ 14 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test get_lock, release_lock
+SQL> declare
+  2 res bigint :=0;
+  3 acc bigint :=0;
+  4 begin
+  5 for i in 1..10000 loop
+  6     select get_lock(to_char(i),1) into res from dual;
+  7     acc := acc+res;
+  8     select release_lock(to_char(i)) into res from dual;
+  9     acc := acc+res;
+ 10 end loop;
+ 11 dbe_output.print_line('acc = '||acc);
+ 12 end;
+ 13 /
+
+acc = 20000
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists meger_into_bracket;
+
+Succeed.
+
+SQL> drop table if exists meger_into_bracket_cmp;
+
+Succeed.
+
+SQL> create table meger_into_bracket(a int, c varchar(100));
+
+Succeed.
+
+SQL> insert into meger_into_bracket values(1,'liu');
+
+1 rows affected.
+
+SQL> insert into meger_into_bracket values(2,'zhang');
+
+1 rows affected.
+
+SQL> create table meger_into_bracket_cmp(a int, c varchar(100));
+
+Succeed.
+
+SQL> insert into meger_into_bracket_cmp values(2,'liu');
+
+1 rows affected.
+
+SQL> insert into meger_into_bracket_cmp values(3,'li');
+
+1 rows affected.
+
+SQL> 
+SQL> declare
+  2 begin
+  3 merge into meger_into_bracket t1
+  4 using meger_into_bracket_cmp t2
+  5 on (t1.a = t2.a)
+  6 when matched then update
+  7 set t1.c = (select c from meger_into_bracket_cmp where a=3 limit 1);
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from meger_into_bracket;
+
+A            C                                                               
+------------ ----------------------------------------------------------------
+1            liu                                                             
+2            li                                                              
+
+2 rows fetched.
+
+SQL> 
+SQL> 
+SQL> declare
+  2   type type_name is record(c_id int,c_num numeric(12,2),c_vchars varchar(32),c_vchar_c varchar2(3000 char),c_vchar_b varchar2(3000 byte),c_ts timestamp,c_blob blob,c_clob clob);
+  3   rd type_name;
+  4   c2 sys_refcursor;
+  5 begin
+  6    open c2 for select 1,1000.56,'AA'||'BAR1BARBAR',lpad('1234567890abcdfe',3000,'abc1d2fb456cdef'),lpad('1234567890abcdfe',3000,'abc1d2fb456cdef'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),lpad('123abc',3000,'abc'),lpad('12345abcde',32767,'abcde') from dual;
+  7    fetch c2 into rd;
+  8    close c2;
+  9    dbe_output.print_line('result is '||rd.c_id);
+ 10    dbe_output.print_line('result is '||length(rd.c_clob));
+ 11 end;
+ 12 /
+
+result is 1
+result is 8000
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE Zenith_Test_004_inout_char(param1 in out char) 
+  2 IS
+  3     tmp varchar2(20) :='12345678';
+  4 begin
+  5         param1:=tmp||'A';
+  6 end Zenith_Test_004_inout_char;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE Zenith_Test_004_inout_varchar(param1 in out varchar) 
+  2 IS
+  3     tmp varchar2(20) :='12345678';
+  4 begin
+  5         param1:=tmp||'A';
+  6 end Zenith_Test_004_inout_varchar;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE Zenith_Test_004_out_char(param1 out char) 
+  2 IS
+  3     tmp varchar2(20) :='12345678';
+  4 begin
+  5         param1:=tmp||'A';
+  6 end Zenith_Test_004_out_char;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE Zenith_Test_004_out_varchar(param1 out varchar) 
+  2 IS
+  3     tmp varchar2(20) :='12345678';
+  4 begin
+  5         param1:=tmp||'A';
+  6 end Zenith_Test_004_out_varchar;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> Declare
+  2     v_char1 char(9) :='A';
+  3     v_char2 char(9) :='B';
+  4     v_varchar1 varchar(9) :='C';
+  5     v_varchar2 varchar(9) :='D';
+  6 begin 
+  7     Zenith_Test_004_out_char(v_char1);
+  8     Zenith_Test_004_inout_char(v_char2);
+  9     Zenith_Test_004_out_varchar(v_varchar1);
+ 10     Zenith_Test_004_inout_varchar(v_varchar2);
+ 11     dbe_output.print_line(v_char1);
+ 12     dbe_output.print_line(v_char2);
+ 13     dbe_output.print_line(v_varchar1);
+ 14     dbe_output.print_line(v_varchar2);
+ 15 end;
+ 16 /
+
+12345678A
+12345678A
+12345678A
+12345678A
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace function test_arg_duplicate_f(a int, a varchar) return int
+  2 as
+  3 begin
+  4 null;
+  5 return 1;
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(PLSQL_DTS_U2.TEST_ARG_DUPLICATE_F) terminated with compiling errors
+[1:56] PLC-00604 Duplicate argument name a
+
+
+SQL> create or replace procedure test_arg_duplicate_p(a int, a varchar)
+  2 as
+  3 begin
+  4 null;
+  5 end;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(PLSQL_DTS_U2.TEST_ARG_DUPLICATE_P) terminated with compiling errors
+[1:57] PLC-00604 Duplicate argument name a
+
+
+SQL> drop table if exists test_sql_t;
+
+Succeed.
+
+SQL> create table test_sql_t(a int);
+
+Succeed.
+
+SQL> create or replace trigger TEST_TRIGGER before 
+  2 insert or delete or update on test_sql_t for each row 
+  3 begin
+  4   :NEW.A := 10; 
+  5   dbe_output.print_line(:New."A");
+  6   :NEW.A := 20; 
+  7   dbe_output.print_line(:NEW.a);
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> insert into test_sql_t values (1);
+
+10
+20
+
+1 rows affected.
+
+SQL> select * from test_sql_t;
+
+A           
+------------
+20          
+
+1 rows fetched.
+
+SQL> update test_sql_t set a = 100;
+
+10
+20
+
+1 rows affected.
+
+SQL> delete from test_sql_t;
+
+10
+20
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists PACK_BODY_FUN_SELECT_002_TAB_01;
+
+Succeed.
+
+SQL> create table PACK_BODY_FUN_SELECT_002_TAB_01(id int,name varchar2(100));
+
+Succeed.
+
+SQL> insert into PACK_BODY_FUN_SELECT_002_TAB_01 values(1,'jim'),(1,'marry'),(9,'sfdsfdf');
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PACK_BODY_FUN_SELECT_002
+  2 IS
+  3 FUNCTION test_outf(p1 int,p2 int)   return int ;
+  4 procedure proc1(canshu1 int,canshu2 int) ;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE body PACK_BODY_FUN_SELECT_002
+  2 IS
+  3 function test_outf(p1 int,p2 int)   return int is 
+  4 begin
+  5 return p1-p2;
+  6 end;
+  7 procedure proc1(canshu1 int,canshu2 int) is 
+  8 c int;
+  9 begin
+ 10 c:=test_outf(canshu1,canshu2);
+ 11 dbe_output.print_line(c);
+ 12 end;
+ 13 END PACK_BODY_FUN_SELECT_002;
+ 14 /
+
+Succeed.
+
+SQL> exec PACK_BODY_FUN_SELECT_002.proc1(4,1);
+
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> CREATE OR REPLACE PACKAGE body PACK_BODY_FUN_SELECT_002
+  2 IS
+  3 function test_outf(p1 int,p2 int)   return int is 
+  4 begin
+  5 return p1-p2;
+  6 end;
+  7 procedure proc1(canshu1 int,canshu2 int) is 
+  8 cur1 sys_refcursor;
+  9 begin
+ 10 open cur1 for select * from PACK_BODY_FUN_SELECT_002_TAB_01 where id < test_outf(canshu1,canshu2);
+ 11 dbe_sql.return_cursor(cur1);
+ 12 end;
+ 13 END PACK_BODY_FUN_SELECT_002;
+ 14 /
+
+Succeed.
+
+SQL> select PACK_BODY_FUN_SELECT_002.test_outf(3,1);
+
+PACK_BODY_FUN_SELECT_002.TEST_OUTF(3,1)
+---------------------------------------
+2                                      
+
+1 rows fetched.
+
+SQL> select PACK_BODY_FUN_SELECT_002.test_outf(null,'');
+
+PACK_BODY_FUN_SELECT_002.TEST_OUTF(NULL,'')
+-------------------------------------------
+                                           
+
+1 rows fetched.
+
+SQL> select PACK_BODY_FUN_SELECT_002.test_outf(1,3);
+
+PACK_BODY_FUN_SELECT_002.TEST_OUTF(1,3)
+---------------------------------------
+-2                                     
+
+1 rows fetched.
+
+SQL> exec PACK_BODY_FUN_SELECT_002.proc1(3,1);
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+ID           NAME                                                            
+------------ ----------------------------------------------------------------
+1            jim                                                             
+1            marry                                                           
+
+2 rows fetched.
+
+
+SQL> exec PACK_BODY_FUN_SELECT_002.proc1(null,'');
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+ID           NAME                                                            
+------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+
+SQL> exec PACK_BODY_FUN_SELECT_002.proc1(1,3);
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+ID           NAME                                                            
+------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+
+SQL> 
+SQL> drop table if exists BODY_DML_002_TAB_01;
+
+Succeed.
+
+SQL> create table BODY_DML_002_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into BODY_DML_002_TAB_01 values(1,'zhangsan','doctor1',10000),(2,'zhangsan2','doctor2',10000),(123,'zhangsan3','doctor3',10000);
+
+3 rows affected.
+
+SQL> insert into BODY_DML_002_TAB_01 values(1,'zhansi','doctor1',10000),(2,'lisiabc','doctor2',10000),(123,'zhangwu123','doctor3',10000);
+
+3 rows affected.
+
+SQL> insert into BODY_DML_002_TAB_01 values(10,'abc','worker',9000);
+
+1 rows affected.
+
+SQL> insert into BODY_DML_002_TAB_01 values(716,'ZHANGSAN','leader',20000);
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists BODY_DML_002_TAB_02;
+
+Succeed.
+
+SQL> create table BODY_DML_002_TAB_02(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into BODY_DML_002_TAB_02 values(100,'marry','teacher',9600);
+
+1 rows affected.
+
+SQL> insert into BODY_DML_002_TAB_02 values(716,'ZHANGSAN','leader',20000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2      c int :=100;
+  3 begin
+  4 delete from BODY_DML_002_TAB_01 using (select * from BODY_DML_002_TAB_01 where empno < c) as T2 left outer join BODY_DML_002_TAB_01 on BODY_DML_002_TAB_01.sal=T2.sal;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select count(1) from BODY_DML_002_TAB_01;
+
+COUNT(1)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table BODY_DML_002_TAB_01;
+
+Succeed.
+
+SQL> drop table BODY_DML_002_TAB_02;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user plsql_dts_u1 cascade;
+
+Succeed.
+
+SQL> drop user plsql_dts_u2 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019080508002
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop user if exists DTS2019080508002 cascade;
+
+Succeed.
+
+SQL> create user DTS2019080508002 identified by Root1234;
+
+Succeed.
+
+SQL> grant all privileges to DTS2019080508002;
+
+Succeed.
+
+SQL> 
+SQL> conn DTS2019080508002/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists PROC_DML_KEY_001_TAB_01;
+
+Succeed.
+
+SQL> create table PROC_DML_KEY_001_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists PROC_DML_KEY_001_TAB_02;
+
+Succeed.
+
+SQL> create table PROC_DML_KEY_001_TAB_02(empno int primary key ,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE PACK_PROC_DML_KEY_001
+  2 IS
+  3 FUNCTION PACK_PROC_DML_KEY_001_FUN_01(p1 int,p2 int,p3 number)
+  4 RETURN int;
+  5 
+  6 procedure PACK_PROC_DML_KEY_001_PRO_01(p_no int,p_sal integer);
+  7 END PACK_PROC_DML_KEY_001;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE body PACK_PROC_DML_KEY_001
+  2 IS
+  3 function PACK_PROC_DML_KEY_001_FUN_01(p1 int,p2 int,p3 number)   return int is 
+  4 c int;
+  5 begin
+  6 c:=mod(p1,p2)+trunc(p3);
+  7 insert into PROC_DML_KEY_001_TAB_02 values(716,'insert','leader',c);
+  8 return c;
+  9 end;
+ 10 procedure PACK_PROC_DML_KEY_001_PRO_01(p_no int,p_sal integer)   is
+ 11 begin
+ 12 insert into PROC_DML_KEY_001_TAB_02 T2 (empno,ename) select * from  PROC_DML_KEY_001_TAB_01; 
+ 13 commit;
+ 14 end;
+ 15 END PACK_PROC_DML_KEY_001;
+ 16 /
+
+Succeed.
+Warning:
+PL/SQL(DTS2019080508002.PACK_PROC_DML_KEY_001) terminated with compiling errors
+[10:62] PLC-00944 PL/SQL(DTS2019080508002.PACK_PROC_DML_KEY_001.PACK_PROC_DML_KEY_001_PRO_01) terminated with compiling errors
+[12:1] PLC-00687 Values were too many
+
+
+
+SQL> 
+SQL> drop table PROC_DML_KEY_001_TAB_01;
+
+Succeed.
+
+SQL> drop table PROC_DML_KEY_001_TAB_02;
+
+Succeed.
+
+SQL> drop package PACK_PROC_DML_KEY_001;
+
+Succeed.
+
+SQL> 
+SQL> create table tt1_dts3(a1 int);
+
+Succeed.
+
+SQL> insert into tt1_dts3 values(10),(20);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create or replace procedure out_cursor(o1 OUT sys_refcursor)
+  2 is
+  3 begin
+  4 open o1 for select a1 from tt1_dts3;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> create or replace procedure out_cursor1(o1 OUT sys_refcursor)
+  2 is
+  3 begin
+  4 out_cursor(o1);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> create or replace procedure out_cursor2(o1 OUT sys_refcursor)
+  2 is
+  3 res sys_refcursor;
+  4 begin
+  5 out_cursor1(res);
+  6 o1 := res;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function out_cursor_f return sys_refcursor
+  2 is
+  3 res sys_refcursor;
+  4 begin
+  5 out_cursor2(res);
+  6 return res;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> create or replace function out_cursor_f2 return sys_refcursor
+  2 is
+  3 res sys_refcursor;
+  4 begin
+  5 out_cursor2(res);
+  6 return res;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> create or replace function out_cursor_f3 return sys_refcursor
+  2 is
+  3 res sys_refcursor;
+  4 begin
+  5 out_cursor2(res);
+  6 out_cursor2(res);
+  7 return res;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> select out_cursor_f1;
+
+CT-00601, [1:8]Sql syntax error: invalid column name 'OUT_CURSOR_F1'
+SQL> select out_cursor_f2;
+
+OUT_CURSOR_F2                                                   
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+A1          
+------------
+10          
+20          
+
+2 rows fetched.
+
+
+SQL> select out_cursor_f3;
+
+OUT_CURSOR_F3                                                   
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+A1          
+------------
+10          
+20          
+
+2 rows fetched.
+
+
+SQL> select out_cursor_f1;
+
+CT-00601, [1:8]Sql syntax error: invalid column name 'OUT_CURSOR_F1'
+SQL> select out_cursor_f2;
+
+OUT_CURSOR_F2                                                   
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+A1          
+------------
+10          
+20          
+
+2 rows fetched.
+
+
+SQL> select out_cursor_f3;
+
+OUT_CURSOR_F3                                                   
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+A1          
+------------
+10          
+20          
+
+2 rows fetched.
+
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user DTS2019080508002 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019080608260
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop user if exists DTS2019080608260 cascade;
+
+Succeed.
+
+SQL> create user DTS2019080608260 identified by Root1234;
+
+Succeed.
+
+SQL> grant all privileges to DTS2019080608260;
+
+Succeed.
+
+SQL> 
+SQL> conn DTS2019080608260/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists FVT_FUCTION_DECODE_TABLE_001;
+
+Succeed.
+
+SQL> create table FVT_FUCTION_DECODE_TABLE_001(COL_1 NUMBER(6) not null, COL_2 VARCHAR2(200));
+
+Succeed.
+
+SQL> INSERT INTO FVT_FUCTION_DECODE_TABLE_001 (COL_1, COL_2) values (198, 'wangyin');
+
+1 rows affected.
+
+SQL> INSERT INTO FVT_FUCTION_DECODE_TABLE_001 (COL_1, COL_2) values (199, 'hekaiping');
+
+1 rows affected.
+
+SQL> INSERT INTO FVT_FUCTION_DECODE_TABLE_001 (COL_1, COL_2) values (200, 'lirui');
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists FVT_FUCTION_DECODE_TABLE_002;
+
+Succeed.
+
+SQL> create table FVT_FUCTION_DECODE_TABLE_002(COL_1 NUMBER(6) not null, COL_2 VARCHAR2(200));
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> declare
+  2 v_count_01 int;
+  3 BEGIN
+  4 EXECUTE IMMEDIATE 'INSERT INTO FVT_FUCTION_DECODE_TABLE_002 (COL_1,COL_2) SELECT COL_1,COL_2 FROM FVT_FUCTION_DECODE_TABLE_001 WHERE DECODE(COL_1, :v1, 1, :v2, 2, 3)>1' USING 198,199;
+  5 select 
+  6 count(1) into v_count_01 
+  7 from 
+  8 (
+  9 select COL_1,COL_2 from FVT_FUCTION_DECODE_TABLE_001 where DECODE(COL_1,198, 1, 199, 2, 3)>1;
+ 10 except 
+ 11 select COL_1,COL_2 from FVT_FUCTION_DECODE_TABLE_002
+ 12 );
+ 13 dbe_output.print_line(v_count_01);
+ 14 EXCEPTION
+ 15 WHEN NO_DATA_FOUND THEN dbe_output.print_line('NO_DATA_FOUND');
+ 16 END;
+ 17 /
+
+CT-00944, PL/SQL(DTS2019080608260.ANONYMOUS BLOCK) terminated with compiling errors
+[9:1] PLC-00601 Sql syntax error: unexpected word ';' found
+
+SQL> drop table FVT_FUCTION_DECODE_TABLE_001;
+
+Succeed.
+
+SQL> drop table FVT_FUCTION_DECODE_TABLE_002;
+
+Succeed.
+
+SQL> declare
+  2 v_sql            varchar2(32765);
+  3 v_unit               number;
+  4 v_res  int;
+  5 begin
+  6 v_unit:=1;
+  7 v_sql:='select lag(:unit, 1) over(order by 1) from dual';                  
+  8 execute immediate v_sql into v_res using v_unit;    
+  9 dbe_output.print_line(v_res);
+ 10 end;
+ 11 /
+
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- DTS2019111106550 start
+SQL> drop table if exists auto_trans_test_t;
+
+Succeed.
+
+SQL> create table auto_trans_test_t(id int,name varchar(20));
+
+Succeed.
+
+SQL> insert into auto_trans_test_t values(3,'test');
+
+1 rows affected.
+
+SQL> CREATE OR REPLACE TRIGGER huawei_Test
+  2 BEFORE INSERT OR DELETE OR UPDATE ON auto_trans_test_t
+  3 for each row
+  4 declare
+  5 a_id_1 number;
+  6  PRAGMA AUTONOMOUS_TRANSACTION;
+  7 BEGIN
+  8 select t.id into a_id_1 from auto_trans_test_t t where t.id = :new.id;
+  9 dbe_output.print_line('success! id: ' || a_id_1);
+ 10 END huawei_Test;
+ 11 /
+
+Succeed.
+
+SQL> update auto_trans_test_t t set t.name = 'qqqqqq' where t.id = 3;
+
+success! id: 3
+
+1 rows affected.
+
+SQL> select * from auto_trans_test_t;
+
+ID           NAME                
+------------ --------------------
+3            qqqqqq              
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists auto_trans_test_t;
+
+Succeed.
+
+SQL> create table auto_trans_test_t(id int,name varchar(20));
+
+Succeed.
+
+SQL> insert into auto_trans_test_t values(3,'test');
+
+1 rows affected.
+
+SQL> CREATE OR REPLACE TRIGGER huawei_Test
+  2 BEFORE INSERT OR DELETE OR UPDATE ON auto_trans_test_t
+  3 for each row
+  4 declare
+  5  PRAGMA AUTONOMOUS_TRANSACTION;
+  6 BEGIN
+  7 insert into auto_trans_test_t values(4,'test');
+  8 commit;
+  9 END huawei_Test;
+ 10 /
+
+Succeed.
+
+SQL> update auto_trans_test_t t set t.name = 'qqqqqq' where t.id = 3;
+
+CT-00932, [6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] PL/SQL(DTS2019080608260.HUAWEI_TEST) terminated with execute errors
+[6:1] CT-00104, Session stack overflow
+
+SQL> 
+SQL> drop table if exists auto_trans_test_t;
+
+Succeed.
+
+SQL> create table auto_trans_test_t(id int,name varchar(20));
+
+Succeed.
+
+SQL> insert into auto_trans_test_t values(3,'test');
+
+1 rows affected.
+
+SQL> CREATE OR REPLACE TRIGGER huawei_Test
+  2 BEFORE INSERT OR DELETE OR UPDATE ON auto_trans_test_t
+  3 for each row
+  4 declare
+  5  PRAGMA AUTONOMOUS_TRANSACTION;
+  6 BEGIN
+  7 update auto_trans_test_t t set t.name = 'qqqqqq' where t.id = 3;
+  8 commit;
+  9 exception
+ 10  when others then
+ 11   SYS.dbe_output.print_line(SQL_ERR_CODE || ': Found transaction deadlock in session');
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> update auto_trans_test_t t set t.name = 'qqqqqq' where t.id = 3;
+
+716: Found transaction deadlock in session
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists auto_trans_test_t;
+
+Succeed.
+
+SQL> create table auto_trans_test_t(id int,name varchar(20));
+
+Succeed.
+
+SQL> insert into auto_trans_test_t values(3,'test');
+
+1 rows affected.
+
+SQL> CREATE OR REPLACE TRIGGER huawei_Test
+  2 BEFORE INSERT OR DELETE OR UPDATE ON auto_trans_test_t
+  3 for each row
+  4 declare
+  5  PRAGMA AUTONOMOUS_TRANSACTION;
+  6 BEGIN
+  7 delete auto_trans_test_t t where t.id = 3;
+  8 commit;
+  9 exception
+ 10  when others then
+ 11   SYS.dbe_output.print_line(SQL_ERR_CODE || ': Found transaction deadlock in session');
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> update auto_trans_test_t t set t.name = 'qqqqqq' where t.id = 3;
+
+716: Found transaction deadlock in session
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists auto_trans_test_t;
+
+Succeed.
+
+SQL> create table auto_trans_test_t(id int,name varchar(20));
+
+Succeed.
+
+SQL> insert into auto_trans_test_t values(3,'test');
+
+1 rows affected.
+
+SQL> CREATE OR REPLACE function huawei_Test_func(a int) return int
+  2 is
+  3 a_id_1 number;
+  4  PRAGMA AUTONOMOUS_TRANSACTION;
+  5 BEGIN
+  6 select t.id into a_id_1 from auto_trans_test_t t where t.id = a;
+  7 insert into auto_trans_test_t values(4,'test');
+  8 update auto_trans_test_t t set t.name = 'qqqqqq' where t.id = 4;
+  9 delete auto_trans_test_t t where t.id = 4;
+ 10 commit;
+ 11 return a_id_1;
+ 12 END huawei_Test_func;
+ 13 /
+
+Succeed.
+
+SQL> update auto_trans_test_t t set t.name = 'qqqqqq' where t.id = huawei_Test_func(3);
+
+1 rows affected.
+
+SQL> select * from auto_trans_test_t;
+
+ID           NAME                
+------------ --------------------
+3            qqqqqq              
+
+1 rows fetched.
+
+SQL> -- DTS2019111106550 end
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user DTS2019080608260 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019091105554
+SQL> create or replace procedure indexes_test()
+  2 IS
+  3 rec_indexes dba_indexes%rowtype;
+  4 BEGIN
+  5 null;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019111302705
+SQL> drop table if exists fvt_04;
+
+Succeed.
+
+SQL> create table fvt_04 (a bigint, b clob,c blob, d date, e boolean, f  interval day(7) to second, g VARCHAR2(100) check(g IS JSON),h decimal(10,1));
+
+Succeed.
+
+SQL> insert into fvt_04 values(1,'$#$%#$#$','110',to_date('01-07-2019','dd-mm-yyyy'),'true','1231 12:3:4.1234','{"classes": [{"name":"class 1", "size":"50"}]}',1.23);
+
+1 rows affected.
+
+SQL> insert into fvt_04 values(1,'$#$%#$#$','110',to_date('01-07-2019','dd-mm-yyyy'),'true','1231 12:3:4.1234','{"classes": [{"name":"class 1", "size":"50"}]}',1.23);
+
+1 rows affected.
+
+SQL> insert into fvt_04 values(1,'$#$%#$#$','110',to_date('01-07-2019','dd-mm-yyyy'),'true','1231 12:3:4.1234','{"classes": [{"name":"class 1", "size":"50"}]}',1.23);
+
+1 rows affected.
+
+SQL> insert into fvt_04 values(1,'$#$%#$#$','1010',to_date('01-07-2019','dd-mm-yyyy'),'true','1231 12:3:4.1234','{"classes": [{"name":"class 1", "size":"50"}]}',1.23);
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace type varray04 force is varray(4) of clob;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE varray4 force is varray(4) of clob;
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure fvt_proc_001 (aa4 varray04,bb4 out varray4) is
+  2 type mycurtp is  ref cursor;
+  3 cursorv4  mycurtp;
+  4 sys_cur4  sys_refcursor;
+  5 cursorv04  mycurtp;
+  6 sys_cur04  sys_refcursor;
+  7 var4 varray4 := varray4();
+  8 type  record04 is record(
+  9 a varchar2(100),
+ 10 b number(10,1),
+ 11 c blob
+ 12 );
+ 13 redd04  record04;
+ 14 begin
+ 15 select b bulk collect into var4 from fvt_04 where b = aa4(1);
+ 16 for i in 1..var4.count() loop
+ 17 	dbe_output.print_line(var4(i));
+ 18 end loop;
+ 19 
+ 20 select b,h,c into redd04 from fvt_04 where b = aa4(1) and c = aa4(2);
+ 21 for i in 1..4 loop
+ 22 	dbe_output.print_line(redd04.a||'-'||redd04.b||'-'||redd04.c);
+ 23 end loop;
+ 24 
+ 25 open  sys_cur4 for  select b from fvt_04 where b = aa4(1) ;
+ 26 cursorv4 := sys_cur4;
+ 27 bb4 := var4;
+ 28 loop
+ 29 fetch cursorv4 bulk collect  into var4;
+ 30 exit when cursorv4%notfound;
+ 31 for i in 1..var4.count() loop
+ 32 	dbe_output.print_line(var4(i));
+ 33 end loop;
+ 34 end loop;
+ 35 close cursorv4;
+ 36 open sys_cur04 for select b,h,c from fvt_04 where b = aa4(1);
+ 37 cursorv04 := sys_cur04;
+ 38 loop
+ 39 fetch cursorv04 into redd04;
+ 40 exit when cursorv04%notfound;
+ 41 dbe_output.print_line('1'||cursorv04%rowcount||'2 +'||redd04.a||'+'||redd04.b||'+'||redd04.c);
+ 42 end loop;
+ 43 
+ 44 end;
+ 45 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 dd varray4;
+  3 a varray04;
+  4 begin
+  5 a := varray04('$#$%#$#$', '1010', '$#$%#$#$', '$#$%#$#$');
+  6 fvt_proc_001(a,dd);
+  7 end;
+  8 /
+
+$#$%#$#$
+$#$%#$#$
+$#$%#$#$
+$#$%#$#$
+$#$%#$#$-1.2-1010
+$#$%#$#$-1.2-1010
+$#$%#$#$-1.2-1010
+$#$%#$#$-1.2-1010
+112 +$#$%#$#$+1.2+0110
+122 +$#$%#$#$+1.2+0110
+132 +$#$%#$#$+1.2+0110
+142 +$#$%#$#$+1.2+1010
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists fvt_08;
+
+Succeed.
+
+SQL> create table fvt_08 (a bigint, b varchar(100),c blob, d date, e boolean, f  interval day(7) to second, g VARCHAR2(100) check(g IS JSON),h decimal(10,1));
+
+Succeed.
+
+SQL> insert into fvt_08 values(1,'$#$%#$#$','110',to_date('01-07-2019','dd-mm-yyyy'),'true','1231 12:3:4.1234','{"classes": [{"name":"class 1", "size":"50"}]}',1.23);
+
+1 rows affected.
+
+SQL> insert into fvt_08 values(1,'$#$%#$#$','110',to_date('01-07-2019','dd-mm-yyyy'),'true','1231 12:3:4.1234','{"classes": [{"name":"class 1", "size":"50"}]}',1.23);
+
+1 rows affected.
+
+SQL> insert into fvt_08 values(1,'$#$%#$#$','110',to_date('01-07-2019','dd-mm-yyyy'),'true','1231 12:3:4.1234','{"classes": [{"name":"class 1", "size":"50"}]}',1.23);
+
+1 rows affected.
+
+SQL> insert into fvt_08 values(1,'$#$%#$#$','1010',to_date('01-07-2019','dd-mm-yyyy'),'true','1231 12:3:4.1234','{"classes": [{"name":"class 1", "size":"50"}]}',1.23);
+
+1 rows affected.
+
+SQL> create or replace type table8 force is table of blob;
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function fvt_proc_08 (aaa8 table8) return table8 is
+  2 type record8 is record(r1 fvt_08.a%type,r2 fvt_08.b%type,r3 fvt_08.c%type,r4 fvt_08.d%type,r5 fvt_08.e%type,r6 fvt_08.f%type,r7 fvt_08.g%type,r8 fvt_08.h%type);
+  3 tab8 table8;
+  4 type  table08 is table of  record8;
+  5 cursor cur_08 is select a,b,c,d,e,f,g,h from fvt_08 where c = aaa8(1);
+  6 tab08 table08;
+  7 
+  8 begin
+  9 select c bulk collect into tab8  from fvt_08 where c = aaa8(1) ;
+ 10 	begin
+ 11 	open cur_08;
+ 12 	fetch cur_08 bulk collect into tab08;
+ 13 	for i in tab08.first..tab08.last loop
+ 14 		dbe_output.print_line(tab08(i).r1||'-'||tab08(i).r2||'-'||tab08(i).r8);
+ 15 	end loop;
+ 16 	close cur_08;
+ 17 	return tab8;
+ 18 	end;
+ 19 end;
+ 20 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 dd table8 := table8('110');
+  3 id table8;
+  4 begin
+  5 id := fvt_proc_08(dd);
+  6 dbe_output.print_line(id(1));
+  7 end;
+  8 /
+
+1-$#$%#$#$-1.2
+1-$#$%#$#$-1.2
+1-$#$%#$#$-1.2
+0110
+
+PL/SQL procedure successfully completed.
+
+SQL> drop TYPE if exists table8 force;
+
+Succeed.
+
+SQL> drop TYPE if exists varray04 force;
+
+Succeed.
+
+SQL> drop TYPE if exists varray4 force;
+
+Succeed.
+
+SQL> drop function fvt_proc_08;
+
+Succeed.
+
+SQL> drop procedure fvt_proc_001;
+
+Succeed.
+
+SQL> drop table if exists fvt_08;
+
+Succeed.
+
+SQL> drop table if exists fvt_04;
+
+Succeed.
+
+SQL> 
+SQL> drop type if exists for_type_null force;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE for_type_null IS TABLE OF varchar(100);
+  2 /
+
+Succeed.
+
+SQL> declare 
+  2   nt for_type_null := for_type_null();
+  3 BEGIN
+  4 for i in nt.first..nt.last loop
+  5 dbe_output.print_line(1);
+  6 end loop;
+  7 end;
+  8 /
+
+CT-00932, [4:1] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] CT-00636, Invalid number null
+
+SQL> declare 
+  2   a int:=null;
+  3   b int:=null;
+  4 BEGIN
+  5 for i in a..b loop
+  6 dbe_output.print_line(1);
+  7 end loop;
+  8 end;
+  9 /
+
+CT-00932, [5:1] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[5:1] CT-00636, Invalid number null
+
+SQL> BEGIN
+  2 for i in null..null loop
+  3 dbe_output.print_line(1);
+  4 end loop;
+  5 end;
+  6 /
+
+CT-00932, [2:1] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[2:1] CT-00636, Invalid number null
+
+SQL> drop type for_type_null;
+
+Succeed.
+
+SQL> set serveroutput off;
+
+OFF
+SQL> --DTS2019111907315
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_user_1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_user_2 cascade;
+
+Succeed.
+
+SQL> create user test_user_1 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user test_user_2 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create any type,execute any type,create any procedure, create session to test_user_1;
+
+Succeed.
+
+SQL> grant create any type,execute any type,create any procedure, create session to test_user_2;
+
+Succeed.
+
+SQL> drop table if exists test_user_1.table_2_1;
+
+Succeed.
+
+SQL> create table test_user_1.table_2_1(id1 number,id2 number);
+
+Succeed.
+
+SQL> drop type if exists test_user_2.test_type_t_1;
+
+Succeed.
+
+SQL> create or replace type test_user_2.test_type_t_1 is object(a number,b int);
+  2 /
+
+Succeed.
+
+SQL> create or replace procedure test_user_1.test_pro_type_1 is
+  2 result1 test_user_2.test_type_t_1;
+  3 begin
+  4 dbe_output.print_line('a');
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> conn test_user_1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> call test_user_1.test_pro_type_1();
+
+a
+
+PL/SQL procedure successfully completed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> revoke execute any type from test_user_1;
+
+Succeed.
+
+SQL> conn test_user_1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> call test_user_1.test_pro_type_1();
+
+CT-01001, Permissions were insufficient
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop type test_user_2.test_type_t_1 force;
+
+Succeed.
+
+SQL> drop procedure test_user_1.test_pro_type_1;
+
+Succeed.
+
+SQL> drop table test_user_1.table_2_1;
+
+Succeed.
+
+SQL> drop user test_user_1 cascade;
+
+Succeed.
+
+SQL> drop user test_user_2 cascade;
+
+Succeed.
+
+SQL> --DTS2019111913698
+SQL> drop table if exists EMP;
+
+Succeed.
+
+SQL> CREATE TABLE EMP
+  2        (EMPNO NUMBER(4) NOT NULL,
+  3         ENAME VARCHAR2(10),
+  4         JOB VARCHAR2(9),
+  5         MGR NUMBER(4),
+  6         HIREDATE DATE,
+  7         SAL NUMBER(7, 2),
+  8         COMM NUMBER(7, 2),
+  9         DEPTNO NUMBER(2));
+
+Succeed.
+
+SQL> INSERT INTO EMP VALUES (1, 'SITH',  'CLEK',     7902,TO_DATE('1980-12-1', 'yyyy-mm-dd'),  800, NULL, 20);
+
+1 rows affected.
+
+SQL> INSERT INTO EMP VALUES (2, 'ALEN',  'SALSMAN',  7698,TO_DATE('1981-12-1', 'yyyy-mm-dd'), 1600,  300, 30);
+
+1 rows affected.
+
+SQL> INSERT INTO EMP VALUES (3, 'ARD',   'SAESMAN',  7698,TO_DATE('1982-12-1', 'yyyy-mm-dd'), 1250,  500, 30);
+
+1 rows affected.
+
+SQL> INSERT INTO EMP VALUES (4, 'JOES',  'MANGER',   7839,TO_DATE('1983-12-1', 'yyyy-mm-dd'),  2975, NULL, 20);
+
+1 rows affected.
+
+SQL> INSERT INTO EMP VALUES (5, 'MATIN', 'SALEMAN',  7698,TO_DATE('1984-12-1', 'yyyy-mm-dd'), 1250, 1400, 30);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> set serveroutput on;
+
+ON
+SQL> DECLARE
+  2 CURSOR emp_cur IS
+  3 SELECT empno, ename, hiredate FROM emp;
+  4 TYPE emp_rec_type IS RECORD
+  5 (empno emp.empno%TYPE,
+  6 ename emp.ename%TYPE,
+  7 hiredate emp.hiredate%TYPE);
+  8 TYPE nes_emp_type IS TABLE OF emp_rec_type;
+  9 emp_tab nes_emp_type;
+ 10 v_limit number := 2;
+ 11 v_count number := 0;
+ 12 BEGIN
+ 13 OPEN emp_cur;
+ 14 LOOP
+ 15 FETCH emp_cur
+ 16 BULK COLLECT INTO emp_tab
+ 17 LIMIT v_limit;
+ 18 EXIT WHEN emp_tab.COUNT = 0;
+ 19 v_count := v_count + 1;
+ 20 FOR i IN emp_tab.FIRST .. emp_tab.LAST
+ 21 LOOP
+ 22 dbe_output.print_line(emp_tab(i).empno||CHR(9)||emp_tab(i).ename||CHR(9)||emp_tab(i).hiredate);
+ 23 END LOOP;
+ 24 END LOOP;
+ 25 CLOSE emp_cur;
+ 26 END;
+ 27 /
+
+1	SITH	1980-12-01 00:00:00
+2	ALEN	1981-12-01 00:00:00
+3	ARD	1982-12-01 00:00:00
+4	JOES	1983-12-01 00:00:00
+5	MATIN	1984-12-01 00:00:00
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table if exists EMP;
+
+Succeed.
+
+SQL> --DTS2019112806379
+SQL> alter system set EMPTY_STRING_AS_NULL=false;
+
+Succeed.
+
+SQL> DROP TABLE if exists t1;
+
+Succeed.
+
+SQL> create table t1 (a int,d VARCHAR2(8000));
+
+Succeed.
+
+SQL> insert into t1 values (1,'');
+
+1 rows affected.
+
+SQL> insert into t1 values (2,'');
+
+1 rows affected.
+
+SQL> DROP TABLE if exists t2;
+
+Succeed.
+
+SQL> create table t2 (a int, b int, c int,d VARCHAR2(8000));
+
+Succeed.
+
+SQL> declare
+  2 v1 int :=1;
+  3 v2 VARCHAR2(8000):='';
+  4 BEGIN
+  5     FOR ITEM IN ( SELECT a,d FROM t1) LOOP
+  6     INSERT INTO t2 ( a,d) VALUES( ITEM.a,ITEM.d);
+  7     end loop;
+  8 END;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> alter system set EMPTY_STRING_AS_NULL=true;
+
+Succeed.
+
+SQL> --DTS2019112905707
+SQL> declare
+  2   type array_number is table of number(20);
+  3   numarr_result array_number := array_number();
+  4 begin
+  5   select user_id bulk collect into numarr_result from all_users where rownum < 0;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2   v_count number;
+  3 begin
+  4   select user_id into v_count from all_users where rownum < 0;
+  5 end;
+  6 /
+
+CT-00932, [4:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] CT-00906, In PL/SQL, running SELECT INTO or EXECUTE IMMEDIATE INTO to grant values to variables had no data found.
+
+SQL> 
+SQL> -- DTS2020020701351 start
+SQL> create or replace function return_cursor_func1 return SYS_REFCURSOR 
+  2 is
+  3 type xxx is record(a int);
+  4 v1 xxx;
+  5 v_refcur1 SYS_REFCURSOR;
+  6 begin
+  7 v1.a := 1;
+  8 open v_refcur1 for select v1.a from dual;
+  9 return v_refcur1;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> select return_cursor_func1 from dual;
+
+RETURN_CURSOR_FUNC1                                             
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+:1          
+------------
+1           
+
+1 rows fetched.
+
+
+SQL> 
+SQL> declare
+  2 v_refcur1 SYS_REFCURSOR;
+  3 type xxx is record(a int);
+  4 v1 xxx;
+  5 begin
+  6 v1.a := 0;
+  7 v_refcur1 := return_cursor_func1();
+  8 fetch v_refcur1 into v1.a;
+  9 dbe_output.print_line('v1.a: ' || v1.a);
+ 10 end;
+ 11 /
+
+v1.a: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 v_refcur1 SYS_REFCURSOR;
+  3 type xxx is record(a int);
+  4 v1 xxx;
+  5 begin
+  6 v1.a := 0;
+  7 v_refcur1 := return_cursor_func1();
+  8 fetch v_refcur1 into v1;
+  9 dbe_output.print_line('v1.a: ' || v1.a);
+ 10 end;
+ 11 /
+
+v1.a: 1
+
+PL/SQL procedure successfully completed.
+
+SQL> -- DTS2020020701351 end
+SQL> 
+SQL> --DTS2019112712529
+SQL> create or replace type testspce is / of clob;
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TESTSPCE) terminated with compiling errors
+[1:36] PLC-00601 Sql syntax error: OBJECT or VARRAY or TABLE expected
+
+
+SQL> create or replace type testspces is /^ of clob;
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TESTSPCES) terminated with compiling errors
+[1:37] PLC-00601 Sql syntax error: OBJECT or VARRAY or TABLE expected
+
+
+SQL> 
+SQL> --DTS2019113000956
+SQL> CREATE OR REPLACE TYPE varray_test3 IS VARRAY(15360) OF int;
+  2 /
+
+Succeed.
+
+SQL> DECLARE
+  2  var_C1 varray_test3 := varray_test3(1234, 234, 345);
+  3 BEGIN
+  4  dbe_output.print_line(var_C1(3));
+  5 END;
+  6 /
+
+345
+
+PL/SQL procedure successfully completed.
+
+SQL> drop type varray_test3 force;
+
+Succeed.
+
+SQL> 
+SQL> --DTS array
+SQL> drop procedure if exists PROC_ARRAY_TEST_003;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE PROC_ARRAY_TEST_003(P1 char[] DEFAULT array['abcde',null,'1999-01-01'],P2 double[] := '{12.1234567,1234.78,2345.89,12345.4567,12.1234567,12.55}')
+  2 AS
+  3 V1 int; V2 int;
+  4 BEGIN
+  5         V1:= array_length(P1); V2:= array_length(P2);
+  6         dbe_output.print_line('length of P1 is:'||V1);
+  7         dbe_output.print_line('length of P2 is:'||V2);
+  8 EXCEPTION WHEN NO_DATA_FOUND THEN dbe_output.print_line('NO_DATA_FOUND');
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> CALL PROC_ARRAY_TEST_003();
+
+length of P1 is:3
+length of P2 is:6
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL PROC_ARRAY_TEST_003(P1=>array['dbcd','abcde','1999-01-01','ab'],P2=>array[1233,null,89.0000001,-2147483647]);
+
+length of P1 is:4
+length of P2 is:4
+
+PL/SQL procedure successfully completed.
+
+SQL> drop procedure if exists PROC_ARRAY_TEST_003;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists table_char;
+
+Succeed.
+
+SQL> create table table_char(c1 char(1));
+
+Succeed.
+
+SQL> drop procedure if exists pchar;
+
+Succeed.
+
+SQL> create or replace procedure pchar(f1 in out char)
+  2 as
+  3 begin 
+  4 insert into table_char(c1) values(f1);
+  5 f1 := 9;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> declare
+  2 c int;
+  3 begin
+  4 c:=7;
+  5 pchar(c);
+  6 DBE_OUTPUT.PRINT_LINE(c);
+  7 end;
+  8 /
+
+9
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table_char;
+
+C1
+--
+7 
+
+1 rows fetched.
+
+SQL> drop procedure pchar;
+
+Succeed.
+
+SQL> drop table table_char;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2020052607B6PLP0H00
+SQL> drop table if exists test_clob_0526;
+
+Succeed.
+
+SQL> create table test_clob_0526(c1 clob);
+
+Succeed.
+
+SQL> insert into test_clob_0526 values('adhjkgaljhgjkha');
+
+1 rows affected.
+
+SQL> insert into test_clob_0526 values('agAGAGASGFDDCBGJLKYIOUJKFUHJHKUIKUITUUJYUIJKYUIUYIYUg');
+
+1 rows affected.
+
+SQL> insert into test_clob_0526 values('adhjkgaljhgjkhadddA,MKFGJSDJFHLAHGHAJHJGHALHJHDFJLGHAJLHJLGHJFAHJHGJdddddddddddddh');
+
+1 rows affected.
+
+SQL> select dbe_lob.get_length(c1) length from test_clob_0526 order by length desc;
+
+LENGTH              
+--------------------
+82                  
+53                  
+15                  
+
+3 rows fetched.
+
+SQL> select min(dbe_lob.get_length(c1)) from test_clob_0526;
+
+MIN(DBE_LOB.GET_LENGTH(C1))
+---------------------------
+15                         
+
+1 rows fetched.
+
+SQL> select max(dbe_lob.get_length(c1)) from test_clob_0526;
+
+MAX(DBE_LOB.GET_LENGTH(C1))
+---------------------------
+82                         
+
+1 rows fetched.
+
+SQL> drop table if exists test_clob_0526;
+
+Succeed.
+
+SQL> 
+SQL> -- xid
+SQL> DROP TABLE IF EXISTS T_SMSTASKLIST_2020_0664 CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE T_SMSTASKLIST_2020_0664(staff_ID NUMBER(6) not null,val int)
+  2 PARTITION BY RANGE (staff_ID)(
+  3 partition P_050_BEFORE values less than (50),
+  4 partition P_100 values less than (100) ,
+  5 partition P_100_AFTER values less than (MAXVALUE)
+  6 );
+
+Succeed.
+
+SQL> insert into T_SMSTASKLIST_2020_0664 values(1,1);
+
+1 rows affected.
+
+SQL> insert into T_SMSTASKLIST_2020_0664 values(70,2);
+
+1 rows affected.
+
+SQL> insert into T_SMSTASKLIST_2020_0664 values(120,3);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> create or replace function f_cursor_test_0602 return sys_refcursor is
+  2   i_taskid T_SMSTASKLIST_2020_0664.val%type;
+  3   c_tasks  sys_refcursor;
+  4 begin 
+  5   update T_SMSTASKLIST_2020_0664 t set val = 8;
+  6   --commit;
+  7   open c_tasks for select staff_ID from T_SMSTASKLIST_2020_0664 where val = 8;
+  8   return c_tasks;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> create or replace procedure p_cursor_test2_0602(c_tasks out sys_refcursor) is
+  2 begin
+  3   c_tasks := f_cursor_test_0602();
+  4   commit;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> declare
+  2   taskrecordid number;
+  3   c_tasks      sys_refcursor;
+  4 begin
+  5   p_cursor_test2_0602(c_tasks);
+  6   loop
+  7     FETCH c_tasks into taskrecordid;
+  8     EXIT WHEN c_tasks%notfound;
+  9     dbe_output.print_line('taskrecordid =' || taskrecordid);
+ 10   end loop;
+ 11 end;
+ 12 /
+
+taskrecordid =1
+taskrecordid =70
+taskrecordid =120
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP procedure p_cursor_test2_0602;
+
+Succeed.
+
+SQL> DROP function f_cursor_test_0602;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_SMSTASKLIST_2020_0664 CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> set serveroutput off;
+
+OFF
+SQL> 
+
+

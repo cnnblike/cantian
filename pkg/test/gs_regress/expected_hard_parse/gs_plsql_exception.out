@@ -1,0 +1,3817 @@
+
+
+SQL> --
+SQL> -- gs_plsql_exception
+SQL> -- testing track exception
+SQL> --
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> drop user if exists gs_plsql_exception_0114 cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_exception_0114 identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to gs_plsql_exception_0114;
+
+Succeed.
+
+SQL> conn gs_plsql_exception_0114/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --test process exception
+SQL> --add 2018/7/2
+SQL> drop procedure if exists test_pl_excpt1;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt2;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt3;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt4;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt5;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt6;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure test_pl_excpt1
+  2 as
+  3 v_age integer;
+  4 v_name varchar(30);
+  5 begin 
+  6 v_age:=89;
+  7 v_age:= v_age/0;
+  8 dbe_output.print_line('correct');
+  9 exception
+ 10  when Zero_divide then 
+ 11  SYS.dbe_output.print_line('Zero divide');
+ 12  SYS.dbe_output.print_line(SQL_ERR_CODE || 'error ' || SQL_ERR_MSG);
+ 13  when value_error then 
+ 14  SYS.dbe_output.print_line('value error');
+ 15  SYS.dbe_output.print_line(SQL_ERR_CODE || 'error ' || SQL_ERR_MSG);
+ 16  when others then
+ 17  SYS.dbe_output.print_line('other error');
+ 18  SYS.dbe_output.print_line(SQL_ERR_CODE||'error'||SQL_ERR_MSG);
+ 19  end;
+ 20 /
+
+Succeed.
+
+SQL> 
+SQL> exec test_pl_excpt1();
+
+Zero divide
+637error The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_pl_excpt2
+  2 as
+  3 v_age integer;
+  4 v_name varchar(30);
+  5 begin 
+  6 v_age:=89;
+  7 v_age:= v_age/0;
+  8 dbe_output.print_line('correct');
+  9 exception
+ 10  when value_error then 
+ 11  SYS.dbe_output.print_line('value error');
+ 12  SYS.dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG);
+ 13  when others then
+ 14  SYS.dbe_output.print_line('other error');
+ 15  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 16  end;
+ 17 /
+
+Succeed.
+
+SQL> 
+SQL> exec test_pl_excpt2();
+
+other error
+637 error The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_pl_excpt3
+  2 as
+  3 v_age integer;
+  4 v_name varchar(30);
+  5 SQL_ERR_CODE int :=1;
+  6 SQL_ERR_MSG varchar(40):='test';
+  7 begin 
+  8 v_age:=89;
+  9 v_age:=v_age/0;
+ 10 dbe_output.print_line('correct');
+ 11 exception
+ 12  when Zero_divide then 
+ 13  SYS.dbe_output.print_line('Zero divide');
+ 14  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 15  when others then
+ 16  SYS.dbe_output.print_line('other error');
+ 17  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 18  end;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> exec test_pl_excpt3();
+
+Zero divide
+1 error test
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_pl_excpt4
+  2 as
+  3 v_age integer;
+  4 v_name varchar(30);
+  5 SQL_ERR_CODE int;
+  6 SQL_ERR_MSG varchar(40);
+  7 begin 
+  8 v_age:=89;
+  9 v_age:=v_age/0;
+ 10 dbe_output.print_line('correct');
+ 11 exception
+ 12  when Zero_divide then 
+ 13  SYS.dbe_output.print_line('Zero divide');
+ 14  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 15  when others then
+ 16  SYS.dbe_output.print_line('other error');
+ 17  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 18  end;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> exec test_pl_excpt4();
+
+Zero divide
+ error 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_pl_excpt5
+  2 as
+  3 v_age integer;
+  4 v_name varchar(30);
+  5 begin 
+  6 v_age:=89;
+  7 dbe_output.print_line('correct');
+  8 exception
+  9  when Zero_divide then 
+ 10  SYS.dbe_output.print_line('Zero divide');
+ 11  SYS.dbe_output.print_line(SQL_ERR_CODE || 'error ' || SQL_ERR_MSG);
+ 12  when value_error then 
+ 13  SYS.dbe_output.print_line('value error');
+ 14  SYS.dbe_output.print_line(SQL_ERR_CODE || 'error ' || SQL_ERR_MSG);
+ 15  when others then
+ 16  SYS.dbe_output.print_line('other error');
+ 17  SYS.dbe_output.print_line(SQL_ERR_CODE||'error'||SQL_ERR_MSG);
+ 18  end;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> exec test_pl_excpt5();
+
+correct
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_pl_excpt6
+  2 as
+  3 v_age integer;
+  4 v_name varchar(30);
+  5 SQL_ERR_CODE int := 600;
+  6 SQL_ERR_MSG varchar(40):= 'test';
+  7 begin 
+  8 v_age:=89;
+  9 v_age:=v_age/0;
+ 10 dbe_output.print_line('correct');
+ 11 exception
+ 12  when Zero_divide then 
+ 13  SYS.dbe_output.print_line('Zero divide');
+ 14  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 15  when others then
+ 16  SYS.dbe_output.print_line('other error');
+ 17  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 18  end;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> exec test_pl_excpt6();
+
+Zero divide
+600 error test
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> drop procedure if exists test_pl_excpt1;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt2;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt3;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt4;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt5;
+
+Succeed.
+
+SQL> drop procedure if exists test_pl_excpt6;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2   v_ename varchar2(20);
+  3   n_value int;
+  4 begin
+  5   n_value := 1;
+  6   n_value := n_value/0;
+  7   exception
+  8    when others then  
+  9   v_ename := ' test block';                              
+ 10   dbe_output.print_line(SQL_ERR_CODE|| '-------' || SQL_ERR_MSG || v_ename);
+ 11 end;
+ 12 /
+
+637-------The divisor was zero test block
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2   v_ename varchar2(20);
+  3   n_value int;
+  4 begin
+  5   n_value := 1;
+  6   n_value := n_value/0;
+  7   exception
+  8    when others then  
+  9   v_ename := ' test block';                              
+ 10   dbe_output.print_line(SQL_ERR_CODE()|| '-------' || SQL_ERR_MSG() || v_ename);
+ 11 end;
+ 12 /
+
+637-------The divisor was zero test block
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2   v_ename varchar2(20);
+  3   n_value int;
+  4 begin
+  5   n_value := 1;
+  6   n_value := n_value/0;
+  7   exception
+  8    when Zero_divide then 
+  9  SYS.dbe_output.print_line('Zero divide');
+ 10  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 11    when others then  
+ 12   v_ename := ' test block';                              
+ 13   dbe_output.print_line(SQL_ERR_CODE || '-------' || SQL_ERR_MSG || v_ename);
+ 14 end;
+ 15 /
+
+Zero divide
+637 error The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2   v_ename varchar2(20);
+  3   n_value int;
+  4 begin
+  5   n_value := 1;
+  6   n_value := n_value/0;
+  7   exception
+  8    when Dup_val_on_index then                              
+  9   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 10    when Timeout_on_resource then                             
+ 11   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 12    when Invalid_CURSOR then                              
+ 13   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 14    when Not_logged_on then                              
+ 15   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 16    when Login_denied then                              
+ 17   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 18    when No_data_found then                              
+ 19   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 20    when Too_many_rows then                              
+ 21   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 22    when Zero_divide then                              
+ 23   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 24    when Invalid_NUMBER then                              
+ 25   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 26    when Storage_error then                              
+ 27   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 28    when Program_error then                              
+ 29   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE)); 
+ 30    when Value_error then                              
+ 31   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 32    when Rowtype_mismatch then                             
+ 33   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 34    when CURSOR_already_OPEN then                          
+ 35   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 36    when Access_INTO_null then                             
+ 37   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 38    when Collection_is_null then                            
+ 39   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 40    when Subscript_outside_limit then                     
+ 41   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 42    when Subscript_beyond_count then                       
+ 43   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 44    when CASE_NOT_FOUND then                              
+ 45   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 46    when NO_DATA_NEEDED then                              
+ 47   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 48    when SELF_IS_NULL then                              
+ 49   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 50    when SYS_INVALID_ROWID then                             
+ 51   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 52    when others then                             
+ 53   dbe_output.print_line(SQL_ERR_CODE || '---' || SQL_ERR_MSG ||'---'||SQL_ERR_MSG(SQL_ERR_CODE));
+ 54 end;
+ 55 /
+
+637---The divisor was zero---The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select SQL_ERR_CODE() from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_code must to be used in PL/SQL)
+SQL> select SQL_ERR_MSG(0) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> select SQL_ERR_MSG(50000) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> select SQL_ERR_MSG(901) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> 
+SQL> DECLARE
+  2   stock_price   NUMBER := 9.73;
+  3   net_earnings  NUMBER := 0;
+  4   pe_ratio      NUMBER;
+  5 BEGIN
+  6   pe_ratio := stock_price / net_earnings;  -- raises ZERO_DIVIDE exception
+  7   dbe_output.print_line('Price/earnings ratio = ' || pe_ratio);
+  8 EXCEPTION
+  9   WHEN ZERO_DIVIDE THEN
+ 10     dbe_output.print_line('Company had zero earnings.');
+ 11     pe_ratio := NULL;
+ 12 END;
+ 13 /
+
+Company had zero earnings.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test or at defined exception
+SQL> --expect  ok.
+SQL> declare
+  2   v_ename varchar2(20);
+  3   n_value int;
+  4 begin
+  5   n_value := 1;
+  6   n_value := n_value/0;
+  7   exception
+  8    when Dup_val_on_index or Timeout_on_resource or Invalid_CURSOR or Zero_divide then                              
+  9   dbe_output.print_line(SQL_ERR_CODE || '-------' || SQL_ERR_MSG );
+ 10    when others then                             
+ 11   dbe_output.print_line(SQL_ERR_CODE || '---other---' || SQL_ERR_MSG );
+ 12 end;
+ 13 /
+
+637-------The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2   stock_price   NUMBER := 9.73;
+  3   net_earnings  NUMBER := 0;
+  4   pe_ratio      NUMBER;
+  5 BEGIN
+  6   pe_ratio :=
+  7     CASE net_earnings
+  8       WHEN 0 THEN NULL
+  9       ELSE stock_price / net_earnings
+ 10     END;
+ 11 END;
+ 12 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DROP TABLE if exists test_pl_excpt7;
+
+Succeed.
+
+SQL> CREATE TABLE test_pl_excpt7 (c NUMBER);
+
+Succeed.
+
+SQL> DECLARE
+  2   default_number NUMBER := 0;
+  3 BEGIN
+  4   INSERT INTO test_pl_excpt7 VALUES(TO_NUMBER('100.00', '9G999'));
+  5 EXCEPTION
+  6   WHEN INVALID_NUMBER THEN
+  7     dbe_output.print_line('Substituting default value for invalid number.');
+  8     INSERT INTO test_pl_excpt7 VALUES(default_number);
+  9 END;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[4:38] PLC-00101 Capability: number format not supported
+
+SQL> 
+SQL> select * from test_pl_excpt7;
+
+C                                       
+----------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --test THROW_EXCEPTION
+SQL> --add 2018-07-03
+SQL> drop PROCEDURE if exists account_status;
+
+Succeed.
+
+SQL> CREATE PROCEDURE account_status (
+  2   due_date DATE,
+  3   today    DATE
+  4 ) 
+  5 --AUTHID DEFINER
+  6 IS
+  7 BEGIN
+  8   IF due_date < today THEN                   -- explicitly raise exception
+  9     THROW_EXCEPTION(-20000, 'Account past due.');
+ 10   END IF;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2   a int := 1;
+  3 BEGIN
+  4   account_status ('1-JUL-10', '9-JUL-10');   -- invoke procedure
+  5 EXCEPTION
+  6   WHEN others THEN                         -- handle exception
+  7     dbe_output.print_line(SQL_ERR_CODE || SQL_ERR_MSG);
+  8 END;
+  9 /
+
+105Invalid format of datetime
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2   a int := 1;
+  3 BEGIN
+  4   account_status ('2017-06-28', '2017-06-29');   -- invoke procedure
+  5 EXCEPTION
+  6   WHEN others THEN                         -- handle exception
+  7     dbe_output.print_line(SQL_ERR_CODE || SQL_ERR_MSG);
+  8 END;
+  9 /
+
+-20000Account past due.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --ERRORCODE cannot be null
+SQL> CREATE OR REPLACE PROCEDURE account_status (
+  2   due_date DATE,
+  3   today    DATE
+  4 ) 
+  5 IS
+  6 BEGIN
+  7   IF due_date < today THEN                   -- explicitly raise exception
+  8     THROW_EXCEPTION(null, 'Account past due.');
+  9   END IF;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> BEGIN
+  2   account_status ('2017-06-28', '2017-06-29');  
+  3 EXCEPTION
+  4   WHEN others THEN                         
+  5     dbe_output.print_line(SQL_ERR_CODE || SQL_ERR_MSG);
+  6 END;
+  7 /
+
+614Parameter error: error number argument to throw_exception
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --ERRORMESSAGE cannot be null
+SQL> CREATE OR REPLACE PROCEDURE account_status (
+  2   due_date DATE,
+  3   today    DATE
+  4 ) 
+  5 IS
+  6 BEGIN
+  7   IF due_date < today THEN                   -- explicitly raise exception
+  8     THROW_EXCEPTION(-20000, NULL);
+  9   END IF;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> BEGIN
+  2   account_status ('2017-06-28', '2017-06-29');  
+  3 EXCEPTION
+  4   WHEN others THEN                         
+  5     dbe_output.print_line(SQL_ERR_CODE || SQL_ERR_MSG);
+  6 END;
+  7 /
+
+614Parameter error: the message string can not be null
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> --test process exception
+SQL> --begin
+SQL> declare
+  2   v_ename varchar2(20);
+  3   n_value int;
+  4 begin
+  5   n_value := 1;
+  6   n_value := n_value/0;
+  7   exception
+  8   n_value := 3;
+  9    when Zero_divide then 
+ 10  SYS.dbe_output.print_line('Zero divide');
+ 11  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 12    when others then  
+ 13   v_ename := ' test block';                              
+ 14   dbe_output.print_line(SQL_ERR_CODE || '-------' || SQL_ERR_MSG || v_ename);
+ 15 end;
+ 16 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[8:3] PLC-00954 WHEN expected but n_value found
+[9:4] PLC-00958 Unsupported feature
+[12:4] PLC-00958 Unsupported feature
+
+SQL> 
+SQL> declare
+  2   v_int int;
+  3 begin
+  4     select -21 into v_int from dual;
+  5  dbe_output.print_line('result: '||v_int);
+  6 end;
+  7 /
+
+result: -21
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2   v_bool boolean;
+  3 begin    
+  4     v_bool:=true;
+  5  if(v_bool=true)
+  6  then
+  7      dbe_output.print_line('The condition 1 is true');
+  8  elsif(v_bool=false)
+  9  then
+ 10         dbe_output.print_line('The condition TRUE is true');
+ 11  end if;
+ 12 end;
+ 13 /
+
+The condition 1 is true
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2   v_int int;
+  3   v_bool boolean;
+  4 begin
+  5     v_bool:=true;
+  6     if(v_bool)
+  7  then
+  8      dbe_output.print_line('The condition is true');
+  9  end if;
+ 10 end;
+ 11 /
+
+The condition is true
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2   v_char char(20);
+  3 begin
+  4     select '99999999999999999999999999999999999999999999999999999999999999999999999999999' into v_char from dual;
+  5  dbe_output.print_line('result: '||v_char);
+  6 end;
+  7 /
+
+CT-00932, [4:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[4:5] CT-00635, Value error: character string buffer too small
+
+SQL> declare
+  2   v_char char(20);
+  3 begin
+  4     select 99999999999999999999999999999999999999999999999999999999999999999999999999999 into v_char from dual;
+  5  dbe_output.print_line('result: '||v_char);
+  6 end;
+  7 /
+
+CT-00932, [4:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[4:5] CT-00635, Value error: character string buffer too small
+
+SQL> drop table if exists t_casewhen;
+
+Succeed.
+
+SQL> create table t_casewhen(id int,year int,month int,day int);
+
+Succeed.
+
+SQL> insert into t_casewhen values (1,2018,6,30);
+
+1 rows affected.
+
+SQL> declare
+  2     v_int int;
+  3 begin
+  4     select (select case id when 1 then '1530331200' end from t_casewhen) into v_int from dual;
+  5     dbe_output.print_line('result: '||v_int);
+  6 end;
+  7 /
+
+result: 1530331200
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2   v_real real;
+  3 begin
+  4     select 7.7898765+1 into v_real from dual;
+  5  dbe_output.print_line('result: '||v_real);
+  6 end;
+  7 /
+
+result: 8.7898765
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2   v_sysdate number(12,2);
+  3 begin
+  4     select 123456.7898765 into v_sysdate from dual;
+  5  dbe_output.print_line('result: '||v_sysdate);
+  6 end;
+  7 /
+
+result: 123456.79
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> create or replace procedure test_DATEADD 
+  2 is
+  3   v_sql varchar2(1000);
+  4   v_datepart varchar2(30);
+  5   v_ms varchar2(13);
+  6   a int;
+  7   b number;
+  8 begin
+  9   v_datepart := 'abc';
+ 10   THROW_EXCEPTION(-20001, ''''||v_datepart||''' is not a recognized dateadd option.' );
+ 11 exception 
+ 12    when Zero_divide then 
+ 13  SYS.dbe_output.print_line('Zero divide');
+ 14  SYS.dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 15    when others then                               
+ 16   dbe_output.print_line(SQL_ERR_CODE || '-------' || SQL_ERR_MSG );
+ 17 
+ 18 end test_DATEADD;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> exec test_DATEADD;
+
+-20001-------'abc' is not a recognized dateadd option.
+
+PL/SQL procedure successfully completed.
+
+SQL> drop procedure if exists test_DATEADD;
+
+Succeed.
+
+SQL> 
+SQL> --test dts DTS2018070304658
+SQL> create or replace function DATEADD( datepart  varchar2, num number, indate date ) return date is
+  2   Result date;
+  3   v_sql varchar2(1000);
+  4   v_datepart varchar2(30);
+  5   v_ms varchar2(13);
+  6 begin
+  7   v_datepart := lower(datepart);
+  8   case
+  9     when v_datepart in ('year','yy','y') then
+ 10       v_sql := 'select :1 + interval '''||num||''' year from dual';
+ 11     when v_datepart in ('quarter','qq','q') then
+ 12       v_sql := 'select :1 + (interval ''3'' month) * '||num||' from dual';
+ 13     when v_datepart in ('month','mm','m') then
+ 14       v_sql := 'select :1 + interval '''||num||''' month from dual';
+ 15     when v_datepart in ('week','wk','w') then
+ 16       v_sql := 'select :1 + (interval ''7'' day) * '||num||' from dual';
+ 17     when v_datepart in ('day','dd','d', 'dayofyear', 'dy', 'weekday', 'dw') then
+ 18       v_sql := 'select :1 + interval '''||num||''' day from dual';
+ 19     when v_datepart in ('hour','hh') then
+ 20       v_sql := 'select :1 + interval '''||num||''' hour from dual';
+ 21     when v_datepart in ('minute','mi','n') then
+ 22       v_sql := 'select :1 + interval '''||num||''' minute from dual';
+ 23     when v_datepart in ('second','ss','s') then
+ 24       v_sql := 'select :1 + interval '''||num||''' second from dual';
+ 25     when v_datepart in ('millisecond','ms') then
+ 26       v_ms := to_char(num/1000,'fm999999990.000');
+ 27       v_sql := 'select :1 + interval '''||v_ms||''' second(9,3) from dual';
+ 28     else
+ 29       THROW_EXCEPTION(-20001, ''''||datepart||''' is not a recognized dateadd option.' );
+ 30   end case;
+ 31 
+ 32   execute immediate v_sql into Result using indate;
+ 33 
+ 34   return(Result);
+ 35 
+ 36 end DATEADD;
+ 37 /
+
+Succeed.
+
+SQL> 
+SQL> --test nesting anonymous block
+SQL> --add 2018/07/04
+SQL> declare 
+  2     v_time varchar2(113) ;
+  3     a      int := 1;
+  4 begin
+  5     begin
+  6         select 'TIMETAG=' into v_time from dual where rownum <= 1;
+  7     exception
+  8         when no_data_found then                                                                                                                                                                         
+  9             null;
+ 10     end;
+ 11     dbe_output.print_line(v_time);
+ 12     dbe_output.print_line('****************begin to run: ..\Sybase\CMECommon\DBSettings.sql********************');
+ 13     a := a/0;
+ 14 exception
+ 15     when no_data_found then                                                                                                                                                                         
+ 16         null;   
+ 17         when others then
+ 18     dbe_output.print_line(a||SQL_ERR_CODE||'******'||SQL_ERR_MSG);     
+ 19 end;
+ 20 /
+
+TIMETAG=
+****************begin to run: ..\Sybase\CMECommon\DBSettings.sql********************
+1637******The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> declare 
+  2     v_time varchar2(113) ;
+  3     a      int := 1;
+  4 begin
+  5     begin
+  6         select 'TIMETAG=' into v_time from dual where rownum <= 1;
+  7         a := a/0;
+  8     exception
+  9         when no_data_found then                                                                                                                                                                         
+ 10             null;
+ 11     end;
+ 12     dbe_output.print_line(v_time);
+ 13     dbe_output.print_line('****************begin to run: ..\Sybase\CMECommon\DBSettings.sql********************');
+ 14     a := a/0;
+ 15 exception
+ 16     when no_data_found then                                                                                                                                                                         
+ 17         null;   
+ 18         when others then
+ 19     dbe_output.print_line(SQL_ERR_CODE||'******'||SQL_ERR_MSG);     
+ 20 end;
+ 21 /
+
+637******The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare 
+  2     v_time varchar2(113) ;
+  3     a      int := 1;
+  4     SQL_ERR_CODE int;
+  5     SQL_ERR_MSG varchar2(20);
+  6 begin
+  7 	declare
+  8 	a int := 2;
+  9     begin
+ 10         select 'TIMETAG=' into v_time from dual where rownum <= 1;
+ 11     		a := a/0;
+ 12     exception
+ 13         when no_data_found then                                                                                                                                                                         
+ 14             null;
+ 15         when others then
+ 16     dbe_output.print_line(a||SQL_ERR_CODE||'==='||SQL_ERR_MSG);  
+ 17     end;
+ 18     dbe_output.print_line(v_time);
+ 19     dbe_output.print_line('****************begin to run: ..\Sybase\CMECommon\DBSettings.sql********************');
+ 20     a := a/0;
+ 21 exception
+ 22     when no_data_found then                                                                                                                                                                         
+ 23         null;   
+ 24         when others then
+ 25     dbe_output.print_line(a||SQL_ERR_CODE||'******'||SQL_ERR_MSG);     
+ 26 end;
+ 27 /
+
+2===
+TIMETAG=
+****************begin to run: ..\Sybase\CMECommon\DBSettings.sql********************
+1******
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> declare 
+  2     v_time varchar2(113) ;
+  3     a      int := 1;
+  4 begin
+  5     begin
+  6         select 'TIMETAG=' into v_time from dual where rownum <= 1;
+  7     		a := a/0;
+  8     exception
+  9         when no_data_found then                                                                                                                                                                         
+ 10             null;
+ 11         when others then
+ 12     dbe_output.print_line(a||SQL_ERR_CODE||'==='||SQL_ERR_MSG);  
+ 13     end;
+ 14     dbe_output.print_line(v_time);
+ 15     dbe_output.print_line('****************begin to run: ..\Sybase\CMECommon\DBSettings.sql********************');
+ 16     a := a/0;
+ 17 exception
+ 18     when no_data_found then                                                                                                                                                                         
+ 19         null;   
+ 20         when others then
+ 21     dbe_output.print_line(a||SQL_ERR_CODE||'******'||SQL_ERR_MSG);     
+ 22 end;
+ 23 /
+
+1637===The divisor was zero
+TIMETAG=
+****************begin to run: ..\Sybase\CMECommon\DBSettings.sql********************
+1637******The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> --test exception track in exception
+SQL> drop table if exists T_TRIG_1;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16));
+
+Succeed.
+
+SQL> 
+SQL> drop TRIGGER if exists TEST_TRIG;					 
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TEST_TRIG                                         
+  2 AFTER INSERT ON T_TRIG_1                                                    
+  3 FOR EACH ROW                                                                
+  4 BEGIN                                                                       
+  5     execute immediate 'begin INSERT INTO T_TRIG_1 VALUES(1,2,''A'');end;';    
+  6 END;                                                                        
+  7 /                                                                           
+
+Succeed.
+
+SQL> 
+SQL> --expect error									 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A');    
+
+CT-00932, [4:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.TEST_TRIG) terminated with execute errors
+[1:7] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[1:7] CT-00927, The trigger or user-defined function used by a SQL statement which is adjusting a table GS_PLSQL_EXCEPTION_0114.T_TRIG_1 did not find the table.
+
+SQL> --end
+SQL> 
+SQL> --
+SQL> --test
+SQL> drop table if exists test1;
+
+Succeed.
+
+SQL> create table test1(a int);
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 f1 int:= 1;
+  3 begin
+  4 
+  5 insert into test1(a) values(f1);
+  6 f1 := 2;
+  7 
+  8 begin
+  9 insert into test1(a) values(f1);
+ 10 f1 := f1/0;
+ 11 exception
+ 12 when others then
+ 13 rollback;
+ 14 end;
+ 15 f1 := 3;
+ 16 insert into test1(a) values(f1);
+ 17 exception
+ 18 when others then
+ 19 dbe_output.print_line('others');
+ 20 
+ 21 end;
+ 22 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect 3
+SQL> select * from test1 order by a;
+
+A           
+------------
+3           
+
+1 rows fetched.
+
+SQL> 
+SQL> delete from test1;
+
+1 rows affected.
+
+SQL> declare
+  2 f1 int:= 1;
+  3 begin
+  4 
+  5 insert into test1(a) values(f1);
+  6 f1 := 2;
+  7 
+  8 begin
+  9 insert into test1(a) values(f1);
+ 10 f1 := f1/0;
+ 11 end;
+ 12 f1 := 3;
+ 13 insert into test1(a) values(f1);
+ 14 exception
+ 15 when others then
+ 16 dbe_output.print_line('others');
+ 17 
+ 18 end;
+ 19 /
+
+others
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect 1,2
+SQL> select * from test1 order by a;
+
+A           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> --end
+SQL> 
+SQL> --test Exception Raised
+SQL> --add 2018/07/27
+SQL> --Example 11-18 Exception Raised in Exception Handler is Not Handled
+SQL> CREATE or REPLACE PROCEDURE print_reciprocal (n NUMBER) IS
+  2 BEGIN
+  3 dbe_output.print_line(1/n); -- handled
+  4 EXCEPTION
+  5 WHEN ZERO_DIVIDE THEN
+  6 dbe_output.print_line('Error:');
+  7 dbe_output.print_line(1/n || ' is undefined'); -- not handled
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> BEGIN -- invoking block
+  2 print_reciprocal(0);
+  3 END;
+  4 /
+
+Error:
+CT-00932, [2:1] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[7:1] PL/SQL(GS_PLSQL_EXCEPTION_0114.PRINT_RECIPROCAL) terminated with execute errors
+[7:1] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+[7:24] CT-00637, The divisor was zero
+
+SQL> 
+SQL> --Example 11-19 Exception Raised in Exception Handler is Handled by Invoker
+SQL> CREATE OR REPLACE PROCEDURE print_reciprocal (n NUMBER)  IS
+  2 BEGIN
+  3   dbe_output.print_line(1/n);
+  4 EXCEPTION
+  5   WHEN ZERO_DIVIDE THEN
+  6     dbe_output.print_line('Error:');
+  7     dbe_output.print_line(1/n || ' is undefined');
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> BEGIN  -- invoking block
+  2   print_reciprocal(0);
+  3 EXCEPTION
+  4   WHEN ZERO_DIVIDE THEN  -- handles exception raised in exception handler
+  5     dbe_output.print_line('1/0 is undefined.');
+  6 END;
+  7 /
+
+Error:
+1/0 is undefined.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --Example 11-20 Exception Raised in Exception Handler is Handled by Enclosing Block
+SQL> CREATE OR REPLACE PROCEDURE print_reciprocal (n NUMBER) IS
+  2 BEGIN
+  3  
+  4   BEGIN
+  5     dbe_output.print_line(1/n);
+  6   EXCEPTION
+  7     WHEN ZERO_DIVIDE THEN
+  8       dbe_output.print_line('Error in inner block:');
+  9       dbe_output.print_line(1/n || ' is undefined.');
+ 10   END;
+ 11  
+ 12 EXCEPTION
+ 13   WHEN ZERO_DIVIDE THEN  -- handles exception raised in exception handler
+ 14     dbe_output.print('Error in outer block: ');
+ 15     dbe_output.print_line('1/0 is undefined.');
+ 16 END;
+ 17 /
+
+Succeed.
+
+SQL> 
+SQL> BEGIN
+  2   print_reciprocal(0);
+  3 END;
+  4 /
+
+Error in inner block:
+Error in outer block: 
+1/0 is undefined.
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --test clean the error info when after track exception
+SQL> --begin
+SQL> drop table if exists CME_MML_COMMAND;
+
+Succeed.
+
+SQL> create table CME_MML_COMMAND(
+  2     Version  varchar2(113) not null ,
+  3     MMLIndex  number(10, 0) not null ,
+  4     MMLID  number(10, 0) not null ,
+  5     MMLString  clob not null ,
+  6     MMLOrder  number(10, 0) not null ,
+  7     MMLName  varchar2(113) not null ,
+  8     MainDisplay  varchar2(575) null,
+  9     iMode  number(3, 0) default 2 not null,
+ 10      primary key  ( Version, MMLIndex, iMode )
+ 11 );
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2     v_MMLIndex number(10, 0) ;
+  3 begin
+  4     begin
+  5         select  max(MMLIndex) + 1 into v_MMLIndex from CME_MML_COMMAND where Version = 'B4' and iMode = 1 and MMLIndex < 200000;
+  6     exception
+  7         when no_data_found then
+  8             dbe_output.print_line('1');
+  9     end;
+ 10     insert into CME_MML_COMMAND (Version,MMLIndex,MMLID,MMLString,MMLOrder,MMLName,MainDisplay,iMode) 
+ 11         values ('B4', v_MMLIndex, 18160, 'MOV UCELL: @1, @2, @3, @4, @5, @6;', 2, 'MOV UCELL', '100111', 1);
+ 12 
+ 13 end; 
+ 14 /
+
+CT-00932, [10:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[10:5] CT-00620, Can't set NULL value for column 'MMLINDEX'
+
+SQL> --end
+SQL> 
+SQL> 
+SQL> --test raise exception
+SQL> --begin
+SQL> --2018/07/31
+SQL> CREATE OR REPLACE PROCEDURE p_test_raise AS
+  2     past_due     EXCEPTION;
+  3     due_date     DATE := trunc(SYSDATE) - 1;
+  4     todays_date  DATE := trunc(SYSDATE);
+  5   BEGIN
+  6     IF due_date < todays_date THEN
+  7       RAISE past_due;
+  8     ELSE
+  9       RAISE INVALID_NUMBER;
+ 10     END IF;
+ 11 EXCEPTION
+ 12   WHEN OTHERS THEN    
+ 13     RAISE;
+ 14 END;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> exec p_test_raise;
+
+CT-00932, [1:2] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[13:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.P_TEST_RAISE) terminated with execute errors
+[13:5] CT-00931, There were user-defined PL/SQL exceptions not handled
+
+SQL> 
+SQL> --Example 11-9 Declaring, Raising, and Handling User-Defined Exception
+SQL> CREATE OR REPLACE PROCEDURE account_status (
+  2   due_date DATE,
+  3   today    DATE
+  4 )
+  5 IS
+  6   past_due  EXCEPTION;  -- declare exception
+  7 BEGIN
+  8   IF due_date < today THEN
+  9     RAISE past_due;  -- explicitly raise exception
+ 10   END IF;
+ 11 EXCEPTION
+ 12   WHEN past_due THEN  -- handle exception
+ 13     dbe_output.print_line ('Account past due.');
+ 14 END;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> BEGIN
+  2   account_status (to_date('2010-01-01','yyyy-mm-dd'), to_date('2010-01-09','yyyy-mm-dd'));
+  3 END;
+  4 /
+
+Account past due.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --Example 11-10 Explicitly Raising Predefined Exception
+SQL> DROP TABLE if exists t;
+
+Succeed.
+
+SQL> CREATE TABLE t (c NUMBER);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE p (n NUMBER) IS
+  2   default_number NUMBER := 0;
+  3 BEGIN
+  4   IF n < 0 THEN
+  5     RAISE INVALID_NUMBER;  -- raise explicitly
+  6   ELSE
+  7     INSERT INTO t VALUES(TO_NUMBER('100.00', '9G999'));  -- raise implicitly
+  8   END IF;
+  9 EXCEPTION
+ 10   WHEN INVALID_NUMBER THEN
+ 11     dbe_output.print_line('Substituting default value for invalid number.');
+ 12     INSERT INTO t VALUES(default_number);
+ 13 END;
+ 14 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_EXCEPTION_0114.P) terminated with compiling errors
+[7:27] PLC-00101 Capability: number format not supported
+
+
+SQL> 
+SQL> BEGIN
+  2   p(-1);
+  3 END;
+  4 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[2:3] PLC-00944 PL/SQL(GS_PLSQL_EXCEPTION_0114.P) terminated with compiling errors
+[7:27] PLC-00101 Capability: number format not supported
+
+
+SQL> 
+SQL> --Example 11-11 Reraising Exception
+SQL> DECLARE
+  2   salary_too_high   EXCEPTION;
+  3   current_salary    NUMBER := 20000;
+  4   max_salary        NUMBER := 10000;
+  5   erroneous_salary  NUMBER;
+  6 BEGIN
+  7 
+  8   BEGIN
+  9     IF current_salary > max_salary THEN
+ 10       RAISE salary_too_high;   -- raise exception
+ 11     END IF;
+ 12   EXCEPTION
+ 13     WHEN salary_too_high THEN  -- start handling exception
+ 14       erroneous_salary := current_salary;
+ 15       dbe_output.print_line('Salary ' || erroneous_salary ||' is out of range.');
+ 16       dbe_output.print_line ('Maximum salary is ' || max_salary || '.');
+ 17       RAISE;  -- reraise current exception (exception name is optional)
+ 18   END;
+ 19 
+ 20 EXCEPTION
+ 21   WHEN salary_too_high THEN    -- finish handling exception
+ 22     current_salary := max_salary;
+ 23 
+ 24     dbe_output.print_line (
+ 25       'Revising salary from ' || erroneous_salary ||
+ 26       ' to ' || current_salary || '.'
+ 27     );
+ 28 END;
+ 29 /
+
+Salary 20000 is out of range.
+Maximum salary is 10000.
+Revising salary from 20000 to 10000.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --Example 11-12 Raising User-Defined Exception with THROW_EXCEPTION
+SQL> --expect ORA-20000: Account past due.
+SQL> CREATE OR REPLACE PROCEDURE account_status (
+  2   due_date DATE,
+  3   today    DATE
+  4 ) 
+  5 IS
+  6 BEGIN
+  7   IF due_date < today THEN                   -- explicitly raise exception
+  8     THROW_EXCEPTION(-20000, 'Account past due.');
+  9   END IF;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2   past_due  EXCEPTION;                       -- declare exception
+  3   PRAGMA EXCEPTION_INIT (past_due, -200.00);  -- assign error code to exception
+  4 BEGIN
+  5   account_status (to_date('2010-01-01','yyyy-mm-dd'), to_date('2010-01-09','yyyy-mm-dd'));   -- invoke procedure
+  6 EXCEPTION
+  7   WHEN past_due THEN                         -- handle exception
+  8     dbe_output.print_line(TO_CHAR(SQL_ERR_MSG(-20000)));
+  9 END;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:36] PLC-00601 Sql syntax error: invalid integer
+[3:36] PLC-00908 PL/SQL internal program error(second argument to PRAGMA EXCEPTION_INIT must be an integer).
+
+SQL> 
+SQL> DECLARE
+  2   past_due  EXCEPTION;                       -- declare exception
+  3   PRAGMA EXCEPTION_INIT (past_due, -200000000);  -- assign error code to exception
+  4 BEGIN
+  5   account_status (to_date('2010-01-01','yyyy-mm-dd'), to_date('2010-01-09','yyyy-mm-dd'));   -- invoke procedure
+  6 EXCEPTION
+  7   WHEN past_due THEN                         -- handle exception
+  8     dbe_output.print_line(TO_CHAR(SQL_ERR_MSG(-20000)));
+  9 END;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:26] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> DECLARE
+  2   past_due  EXCEPTION;                       -- declare exception
+  3   PRAGMA EXCEPTION_INIT (past_due, -20000);  -- assign error code to exception
+  4 BEGIN
+  5   account_status (to_date('2010-01-01','yyyy-mm-dd'), to_date('2010-01-09','yyyy-mm-dd'));   -- invoke procedure
+  6 EXCEPTION
+  7   WHEN past_due THEN                         -- handle exception
+  8     dbe_output.print_line(TO_CHAR(SQL_ERR_MSG(-20000)));
+  9 END;
+ 10 /
+
+Account past due.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2   past_due  EXCEPTION;                       -- declare exception
+  3   PRAGMA EXCEPTION_INIT (past_due, -20000);  -- assign error code to exception
+  4 BEGIN
+  5   account_status (to_date('2010-01-01','yyyy-mm-dd'), to_date('2010-01-09','yyyy-mm-dd'));   -- invoke procedure
+  6 EXCEPTION
+  7   WHEN past_due THEN                         -- handle exception
+  8     dbe_output.print_line(TO_CHAR(SQL_ERR_MSG(-20001)));
+  9 END;
+ 10 /
+
+message of error code not found
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --Example 11-13 Exception that Propagates Beyond Scope is Handled
+SQL> CREATE OR REPLACE PROCEDURE p AS
+  2 BEGIN
+  3   DECLARE
+  4     past_due     EXCEPTION;
+  5     due_date     DATE := trunc(SYSDATE) - 1;
+  6     todays_date  DATE := trunc(SYSDATE);
+  7   BEGIN
+  8     IF due_date < todays_date THEN
+  9       RAISE past_due;
+ 10     END IF;
+ 11   END;
+ 12 
+ 13 EXCEPTION
+ 14   WHEN OTHERS THEN
+ 15     ROLLBACK;
+ 16     RAISE;
+ 17 END;
+ 18 /
+
+Succeed.
+
+SQL> 
+SQL> exec p;
+
+CT-00932, [1:2] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[16:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.P) terminated with execute errors
+[16:5] CT-00931, There were user-defined PL/SQL exceptions not handled
+
+SQL> 
+SQL> --Example 11-14 Exception that Propagates Beyond Scope is Not Handled
+SQL> BEGIN
+  2   DECLARE
+  3     past_due     EXCEPTION;
+  4     due_date     DATE := trunc(SYSDATE) - 1;
+  5     todays_date  DATE := trunc(SYSDATE);
+  6   BEGIN
+  7     IF due_date < todays_date THEN
+  8       RAISE past_due;
+  9     END IF;
+ 10   END;
+ 11 
+ 12 END;
+ 13 /
+
+CT-00932, [8:7] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[8:7] CT-00931, There were user-defined PL/SQL exceptions not handled
+
+SQL> 
+SQL> --Example 11-15 Exception Raised in Declaration is Not Handled
+SQL> DECLARE
+  2   credit_limit NUMBER(3) := 5000;  -- Maximum value is 999
+  3 BEGIN
+  4   NULL;
+  5 EXCEPTION
+  6   WHEN VALUE_ERROR THEN
+  7     dbe_output.print_line('Exception raised in declaration.');
+  8   WHEN OTHERS THEN
+  9     dbe_output.print_line('Exception trackle.');
+ 10 END;
+ 11 /
+
+CT-00932, [3:1] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[2:29] CT-00635, Value error: value larger than specified precision
+
+SQL> 
+SQL> --Example 11-16 Exception Raised in Declaration is Handled by Enclosing Block
+SQL> --expect Exception raised in declaration.
+SQL> BEGIN
+  2    DECLARE
+  3     credit_limit NUMBER(3) := 5000;
+  4   BEGIN
+  5     NULL;
+  6   END; 
+  7 EXCEPTION
+  8   WHEN VALUE_ERROR THEN
+  9     dbe_output.print_line('Exception raised in declaration.');
+ 10   WHEN OTHERS THEN
+ 11     dbe_output.print_line('Exception trackle.');
+ 12 END;
+ 13 /
+
+Exception raised in declaration.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --Example 11-17 Exception Raised in Exception Handler is Not Handled
+SQL> CREATE OR REPLACE PROCEDURE print_reciprocal (n NUMBER)  IS
+  2 BEGIN
+  3   dbe_output.print_line(1/n);  -- handled
+  4 EXCEPTION
+  5   WHEN ZERO_DIVIDE THEN
+  6     dbe_output.print_line('Error:');
+  7     dbe_output.print_line(1/n || ' is undefined');  -- not handled
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> BEGIN  -- invoking block
+  2   print_reciprocal(0);
+  3 END;
+  4 /
+
+Error:
+CT-00932, [2:3] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[7:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.PRINT_RECIPROCAL) terminated with execute errors
+[7:5] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+[7:28] CT-00637, The divisor was zero
+
+SQL> 
+SQL> --test raise without exception name should in a exception block
+SQL> --expect error
+SQL> declare
+  2 a number;
+  3 b number;
+  4 begin
+  5 a := dbe_util.get_date_time();
+  6 raise;
+  7 b := dbe_util.get_date_time();
+  8 dbe_output.print_line(b-a);
+  9 end;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[6:1] PLC-00916 PL/SQL:syntax error(a RAISE statement with no exception name must be inside an exception handler)
+
+SQL> 
+SQL> --test
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     past_due1     EXCEPTION;
+  4     due_date     DATE := trunc(SYSDATE) - 1;
+  5     todays_date  DATE := trunc(SYSDATE);
+  6     a int:= 99;
+  7     --PRAGMA EXCEPTION_INIT (past_due, 99);
+  8 BEGIN
+  9   BEGIN
+ 10     IF due_date < todays_date and 1 < 2 THEN
+ 11       RAISE past_due1;
+ 12     ELSE
+ 13       RAISE INVALID_NUMBER;
+ 14     END IF;
+ 15   EXCEPTION
+ 16     WHEN past_due1 THEN    
+ 17     dbe_output.print_line('past_due1-'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 18     RAISE past_due;
+ 19   WHEN past_due THEN    
+ 20     dbe_output.print_line('past_due-'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 21   WHEN OTHERS THEN    
+ 22     dbe_output.print_line(SQL_ERR_CODE||SQL_ERR_MSG);
+ 23   END;
+ 24 EXCEPTION
+ 25   WHEN past_due1 THEN    
+ 26     dbe_output.print_line('past_due1:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 27   WHEN past_due THEN    
+ 28     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);	
+ 29   WHEN INVALID_NUMBER OR PROGRAM_ERROR THEN    
+ 30     dbe_output.print_line('SYS ERROR:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 31   WHEN OTHERS THEN    
+ 32     dbe_output.print_line('other:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 33 END;
+ 34 /
+
+past_due1-999User Defined Exception
+past_due:999User Defined Exception
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect : predefined:636invalid number
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     past_due1     EXCEPTION;
+  4     --PRAGMA EXCEPTION_INIT (past_due, -01722);
+  5 BEGIN
+  6     IF 1 > 2 THEN
+  7       RAISE past_due;
+  8     ELSE
+  9       RAISE INVALID_NUMBER;
+ 10     END IF;
+ 11 EXCEPTION
+ 12   WHEN past_due THEN    
+ 13     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 14   WHEN INVALID_NUMBER OR NO_DATA_FOUND THEN    
+ 15     dbe_output.print_line('predefined:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 16   WHEN OTHERS THEN    
+ 17     dbe_output.print_line(SQL_ERR_CODE||SQL_ERR_MSG);
+ 18 END;
+ 19 /
+
+predefined:636Invalid number %s
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect:past_due:90000001User Defined Exception
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     past_due1     EXCEPTION;
+  4     --PRAGMA EXCEPTION_INIT (past_due, -01722);
+  5 BEGIN
+  6     IF 1 < 2 THEN
+  7       RAISE past_due;
+  8     ELSE
+  9       RAISE INVALID_NUMBER;
+ 10     END IF;
+ 11 EXCEPTION
+ 12   WHEN past_due THEN    
+ 13     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 14   WHEN INVALID_NUMBER OR NO_DATA_FOUND THEN    
+ 15     dbe_output.print_line('predefined:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 16   WHEN OTHERS THEN    
+ 17     dbe_output.print_line(SQL_ERR_CODE||SQL_ERR_MSG);
+ 18 END;
+ 19 /
+
+past_due:999User Defined Exception
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --support PRAGMA EXCEPTION_INIT
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     past_due1     EXCEPTION;
+  4     PRAGMA EXCEPTION_INIT (past_due1, -20000);
+  5 BEGIN
+  6   BEGIN
+  7     IF 1 < 2 THEN
+  8       RAISE past_due1;
+  9     ELSE
+ 10       RAISE INVALID_NUMBER;
+ 11     END IF;
+ 12   EXCEPTION
+ 13     WHEN past_due1 THEN    
+ 14     dbe_output.print_line('past_due1:'||SQL_ERR_CODE);
+ 15     RAISE past_due;
+ 16   WHEN past_due THEN    
+ 17     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 18   WHEN OTHERS THEN    
+ 19     dbe_output.print_line(SQL_ERR_CODE||SQL_ERR_MSG);
+ 20   END;
+ 21 EXCEPTION
+ 22   WHEN past_due1 THEN    
+ 23     dbe_output.print_line('past_due1:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 24   WHEN past_due THEN    
+ 25     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 26   WHEN OTHERS THEN    
+ 27     dbe_output.print_line(SQL_ERR_CODE||SQL_ERR_MSG);
+ 28 END;
+ 29 /
+
+past_due1:-20000
+past_due:999User Defined Exception
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> --expect error
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due1, -20000);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00954 user defined exception variant name expected but past_due1 found
+
+SQL> 
+SQL> --expect error ERR_ERRNO_BASE -1
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -1);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> --expect success ERR_ERRNO_BASE 
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, 0);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -19999);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> --expect success ERR_MAX_USER_DEFINE_ERROR
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -20000);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+past_due:-20000message of error code not found
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect error ERR_MIN_USER_DEFINE_ERROR-1
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -21000);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> --expect success ERR_MIN_USER_DEFINE_ERROR
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -20999);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+past_due:-20999message of error code not found
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect error: ERR_CODE_CEIL
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, 100000);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> --expect success: ERR_CODE_CEIL
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, 99999);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+past_due:99999message of error code not found
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --test exception
+SQL> --begin
+SQL> --VALUE_ERROR 
+SQL> BEGIN
+  2   DECLARE
+  3     credit_limit NUMBER(3) := 5000;
+  4   BEGIN
+  5     NULL;
+  6   END;
+  7 EXCEPTION
+  8   WHEN VALUE_ERROR THEN
+  9     dbe_output.print_line('Exception raised in declaration.');
+ 10  dbe_output.print_line(SQL_ERR_CODE||' SQL_ERR_MSG is:'||SQL_ERR_MSG);
+ 11   WHEN INVALID_NUMBER THEN
+ 12     dbe_output.print_line('Exception raised in declaration111.');
+ 13  dbe_output.print_line(SQL_ERR_CODE||' SQL_ERR_MSG is:'||SQL_ERR_MSG);
+ 14 END;
+ 15 /
+
+Exception raised in declaration.
+635 SQL_ERR_MSG is:Value error: value larger than specified precision
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --VALUE_ERROR 
+SQL> BEGIN 
+  2   DECLARE
+  3     credit_limit VARCHAR(3) := '5000';
+  4   BEGIN
+  5     NULL;
+  6   END;
+  7 EXCEPTION
+  8   WHEN VALUE_ERROR THEN
+  9     dbe_output.print_line('Exception raised in declaration.');
+ 10  dbe_output.print_line(SQL_ERR_CODE||' SQL_ERR_MSG is: '||SQL_ERR_MSG); 
+ 11   WHEN INVALID_NUMBER THEN
+ 12     dbe_output.print_line('Exception raised in declaration111.');
+ 13  dbe_output.print_line(SQL_ERR_CODE||' SQL_ERR_MSG is: '||SQL_ERR_MSG);  
+ 14 END;
+ 15 /
+
+Exception raised in declaration.
+635 SQL_ERR_MSG is: Value error: character string buffer too small
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --test defined exception
+SQL> --test ROWTYPE_MISMATCH
+SQL> --add 2018/11/23
+SQL> drop table if exists PRE_EXCEPTION_009_T_01;
+
+Succeed.
+
+SQL> drop table if exists PRE_EXCEPTION_009_T_02;
+
+Succeed.
+
+SQL> create table PRE_EXCEPTION_009_T_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into PRE_EXCEPTION_009_T_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into PRE_EXCEPTION_009_T_01 values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into PRE_EXCEPTION_009_T_01 values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> create table PRE_EXCEPTION_009_T_02(empno int,ename varchar(10),job varchar(10) );
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE PRE_EXCEPTION_009_Proc_01
+  2 IS
+  3 C1 SYS_REFCURSOR;
+  4 var1 PRE_EXCEPTION_009_T_02%rowtype;
+  5 BEGIN
+  6 OPEN C1 FOR
+  7     SELECT *  FROM PRE_EXCEPTION_009_T_01  where empno=1 ORDER BY empno,ename;
+  8 fetch C1 into var1; 
+  9 EXCEPTION
+ 10   WHEN ROWTYPE_MISMATCH THEN
+ 11   begin
+ 12   dbe_output.print_line( '-------------------------------------' );
+ 13   dbe_output.print_line('TOO_MANY_ROWS exception:'||SQL_ERR_CODE||'SQL_ERR_MSG is:'||SQL_ERR_MSG);
+ 14   end;
+ 15 END;
+ 16 /
+
+Succeed.
+
+SQL> 
+SQL> --expect success
+SQL> exec PRE_EXCEPTION_009_Proc_01();
+
+-------------------------------------
+TOO_MANY_ROWS exception:926SQL_ERR_MSG is:PL/SQL: Return types of Result Set variables or query do not match
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists PRE_EXCEPTION_009_T_01;
+
+Succeed.
+
+SQL> drop table if exists PRE_EXCEPTION_009_T_02;
+
+Succeed.
+
+SQL> 
+SQL> --test ROWTYPE_MISMATCH
+SQL> --add 2018/11/23
+SQL> drop table if exists TB_USER_1;
+
+Succeed.
+
+SQL> CREATE TABLE TB_USER_1
+  2 (
+  3     ID INTEGER NOT NULL,
+  4     USER_NAME VARCHAR2(20) NOT NULL,
+  5     USER_AGE INTEGER NOT NULL
+  6 );
+
+Succeed.
+
+SQL> 
+SQL> insert into TB_USER_1(ID,USER_NAME,USER_AGE)values(20,'zz',80);
+
+1 rows affected.
+
+SQL> insert into TB_USER_1(ID,USER_NAME,USER_AGE)values(30,'zz',90);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --expect success
+SQL> DECLARE
+  2 V_AGE TB_USER_1.USER_AGE%TYPE;
+  3 V_NAME TB_USER_1.USER_NAME%TYPE;
+  4 CURSOR USER_CURSOR IS SELECT USER_NAME, USER_AGE FROM TB_USER_1;
+  5 BEGIN
+  6   OPEN USER_CURSOR;
+  7   FOR USER_RECORD IN USER_CURSOR LOOP
+  8     dbe_output.print_line(USER_RECORD.USER_NAME || ', ' || USER_RECORD.USER_AGE);
+  9   END LOOP;
+ 10   EXCEPTION
+ 11     WHEN CURSOR_ALREADY_OPEN THEN
+ 12       dbe_output.print_line('cursor already open');
+ 13 END;
+ 14 /
+
+cursor already open
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table if exists TB_USER_1;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, 922);
+  4 BEGIN
+  5   
+  6     if 1 < 2 then
+  7     raise past_due;
+  8     end if;
+  9 END;
+ 10 /
+
+CT-00932, [7:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[7:5] CT-00922, PL/SQL: illegal line(%s)
+
+SQL> 
+SQL> --test control statement in exception
+SQL> --test return
+SQL> CREATE or replace procedure test_exception_1(a int)
+  2 is
+  3     past_due     EXCEPTION;
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE no_data_found;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN no_data_found THEN
+ 10     return;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2     a int;
+  3 BEGIN
+  4     test_exception_1(1);
+  5     a := 'sss';
+  6 END;
+  7 /
+
+CT-00932, [5:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[5:5] CT-00636, Invalid number -- unexpected character
+
+SQL> 
+SQL> --test goto and jump line not in same exception
+SQL> CREATE or replace procedure test_exception_1(a int)
+  2 is
+  3     past_due     EXCEPTION;
+  4 BEGIN    
+  5 	BEGIN
+  6 	    IF 1 < 2 THEN
+  7 	      RAISE no_data_found;
+  8 	    END IF;
+  9 	  EXCEPTION
+ 10 	  WHEN no_data_found THEN
+ 11 	    goto update_row;
+ 12 	END;
+ 13 	
+ 14 	<<update_row>>
+ 15       dbe_output.print_line (SQL_ERR_MSG);  
+ 16 END;
+ 17 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2     a int;
+  3 BEGIN
+  4     test_exception_1(1);
+  5     a := 'sss';
+  6 END;
+  7 /
+
+Normal, no error reported
+CT-00932, [5:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[5:5] CT-00636, Invalid number -- unexpected character
+
+SQL> 
+SQL> 
+SQL> --test exit
+SQL> CREATE or replace procedure test_exception_1(a int)
+  2 is
+  3     past_due     EXCEPTION;
+  4 BEGIN    
+  5 	BEGIN
+  6 	    IF 1 < 2 THEN
+  7 	      RAISE no_data_found;
+  8 	    END IF;
+  9 	  EXCEPTION
+ 10 	  WHEN no_data_found THEN
+ 11 	    FOR j IN 1..10 LOOP
+ 12 	    if j > 0 then
+ 13 	    exit;
+ 14 	    end if;
+ 15     END LOOP;
+ 16 	END;  
+ 17  
+ 18 END;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2     a int;
+  3 BEGIN
+  4     test_exception_1(1);
+  5     a := 'sss';
+  6 END;
+  7 /
+
+CT-00932, [5:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[5:5] CT-00636, Invalid number -- unexpected character
+
+SQL> 
+SQL> --test exit-when
+SQL> CREATE or replace procedure test_exception_1(a int)
+  2 is
+  3     past_due     EXCEPTION;
+  4     x number := 0;
+  5 BEGIN    
+  6 	BEGIN
+  7 	    IF 1 < 2 THEN
+  8 	      RAISE no_data_found;
+  9 	    END IF;
+ 10 	  EXCEPTION
+ 11 	  WHEN no_data_found THEN
+ 12 	    LOOP
+ 13 	    x := x+1;
+ 14 	    EXIT WHEN x > 0;
+ 15   		END LOOP;
+ 16 	END;  
+ 17  
+ 18 END;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2     a int;
+  3 BEGIN
+  4     test_exception_1(1);
+  5     a := 'sss';
+  6 END;
+  7 /
+
+CT-00932, [5:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[5:5] CT-00636, Invalid number -- unexpected character
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> --test PRAGMA EXCEPTION_INIT
+SQL> --DTS2018120309074
+SQL> --begin
+SQL> --expect success
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, 1);
+  4 BEGIN  
+  5     if 1 < 2 then
+  6     raise past_due;
+  7     end if;
+  8 END;
+  9 /
+
+CT-00932, [6:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[6:5] CT-00911, PL/SQL: storage error
+[6:5] CT-00001, Failed to allocate %llu bytes for %s
+
+
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -20999);
+  4 BEGIN  
+  5     if 1 < 2 then
+  6     raise past_due;
+  7     end if;
+  8 END;
+  9 /
+
+CT-00932, [6:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[6:5] CT--20999, message of error code not found
+
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -20000);
+  4 BEGIN  
+  5     if 1 < 2 then
+  6     raise past_due;
+  7     end if;
+  8 END;
+  9 /
+
+CT-00932, [6:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[6:5] CT--20000, message of error code not found
+
+SQL> --expect error
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, 0);
+  4 BEGIN  
+  5     if 1 < 2 then
+  6     raise past_due;
+  7     end if;
+  8 END;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -21000);
+  4 BEGIN  
+  5     if 1 < 2 then
+  6     raise past_due;
+  7     end if;
+  8 END;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -19999);
+  4 BEGIN  
+  5     if 1 < 2 then
+  6     raise past_due;
+  7     end if;
+  8 END;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> --test check error position of exception DTS2018121103000
+SQL> --begin
+SQL> --expect error
+SQL> DECLARE
+  2   stock_price   NUMBER := 9.73;
+  3   net_earnings  NUMBER := 0;
+  4   pe_ratio      NUMBER;
+  5 BEGIN
+  6   for i in 1..100 loop
+  7     pe_ratio := stock_price / net_earnings; 
+  8   dbe_output.print_line('Price/earnings ratio = ' || pe_ratio);
+  9 EXCEPTION
+ 10   WHEN ZERO_DIVIDE THEN
+ 11     dbe_output.print_line('Company had zero earnings;SQL_ERR_CODE is:'||SQL_ERR_CODE||'SQL_ERR_MSG is:'||SQL_ERR_MSG||'i='||i);
+ 12     pe_ratio := NULL;
+ 13  end loop;
+ 14 END;
+ 15 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[9:1] PLC-00955 Unexpected symbol exception found
+[15:1] PLC-00954 more text expected but EOF found
+
+SQL> --end
+SQL> 
+SQL> --test exception without begin
+SQL> --DTS2018120309074
+SQL> --begin
+SQL> --expect error
+SQL> DECLARE
+  2   my_except EXCEPTION;
+  3   my_except2 EXCEPTION;
+  4   PRAGMA EXCEPTION_INIT(my_except, -20999);
+  5   pragma exception_init(my_except2,-20000);
+  6 BEGIN
+  7   raise my_except;
+  8 EXCEPTION
+  9   WHEN my_except THEN    
+ 10     dbe_output.print_line ('my_except:'||SQL_ERR_CODE||'='||SQL_ERR_MSG );
+ 11  raise my_except2;
+ 12  exception 
+ 13     when my_except2 then
+ 14        dbe_output.print_line ('my_except2:'||SQL_ERR_CODE||'='||SQL_ERR_MSG );
+ 15  
+ 16   WHEN OTHERS THEN
+ 17         dbe_output.print_line ('low_income:');
+ 18 END;
+ 19 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[12:2] PLC-00955 Unexpected symbol exception found
+[19:1] PLC-00954 more text expected but EOF found
+
+SQL> 
+SQL> DECLARE
+  2   my_except EXCEPTION;
+  3   my_except2 EXCEPTION;
+  4   PRAGMA EXCEPTION_INIT(my_except, 1);
+  5   pragma exception_init(my_except2,99999);
+  6 BEGIN
+  7   raise my_except;
+  8 EXCEPTION
+  9     when my_except2 then
+ 10        dbe_output.print_line ('my_except2:'||SQL_ERR_CODE||'='||SQL_ERR_MSG );
+ 11   WHEN OTHERS THEN
+ 12         dbe_output.print_line ('low_income:');
+ 13 END;
+ 14 /
+
+low_income:
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> --test error message overlying when ERR_ALLOC_MEMORY/ERR_PL_ENTRY_LOCK
+SQL> --begin
+SQL> --ERR_ALLOC_MEMORY
+SQL> --ERR_PL_ENTRY_LOCK
+SQL> declare
+  2     past_due     EXCEPTION;
+  3      PRAGMA EXCEPTION_INIT (past_due, 963);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8 END;
+  9 /  
+
+CT-00932, [6:7] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[6:7] CT-00723, The resource to be locked was occupied, and the wait for the resource timed out or the NOWAIT mode was used.
+[6:7] CT-00963, Could not lock pl object '%s'
+
+
+SQL> --end
+SQL> --test return without value
+SQL> create or replace function PRE_EXCEPTION_025_Fun_RETURN(a int,b out int) return int is
+  2 
+  3 BEGIN
+  4 b := a;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 d int;
+  3 e int;
+  4 BEGIN
+  5 d :=  PRE_EXCEPTION_025_Fun_RETURN(2,e) ;
+  6 exception
+  7  when RETURN_WITHOUT_VALUE then
+  8 
+  9  SYS.dbe_output.print_line('exception return without res');
+ 10 END;
+ 11 /
+
+exception return without res
+
+PL/SQL procedure successfully completed.
+
+SQL> --end return without value
+SQL> 
+SQL> --begin
+SQL> drop table if exists TB_USER_1;
+
+Succeed.
+
+SQL> CREATE TABLE TB_USER_1
+  2 (
+  3     ID INTEGER NOT NULL,
+  4     USER_NAME VARCHAR2(20) NOT NULL,
+  5     USER_AGE INTEGER NOT NULL
+  6 );
+
+Succeed.
+
+SQL> 
+SQL> insert into TB_USER_1(ID,USER_NAME,USER_AGE)values(20,'zz',80);
+
+1 rows affected.
+
+SQL> insert into TB_USER_1(ID,USER_NAME,USER_AGE)values(30,'zz',90);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --expect success
+SQL> DECLARE
+  2 V_AGE TB_USER_1.USER_AGE%TYPE;
+  3 V_NAME TB_USER_1.USER_NAME%TYPE;
+  4 CURSOR USER_CURSOR IS SELECT USER_NAME, USER_AGE FROM TB_USER_1;
+  5 BEGIN
+  6   OPEN USER_CURSOR; 
+  7   FOR USER_RECORD IN USER_CURSOR LOOP
+  8     dbe_output.print_line(USER_RECORD.USER_NAME || ', ' || USER_RECORD.USER_AGE);
+  9   END LOOP;
+ 10   EXCEPTION
+ 11     WHEN CURSOR_ALREADY_OPEN THEN
+ 12      close USER_CURSOR;
+ 13     FOR USER_RECORD IN USER_CURSOR LOOP
+ 14        dbe_output.print_line(USER_RECORD.USER_NAME || ', ' || USER_RECORD.USER_AGE);
+ 15    END LOOP;
+ 16 end;
+ 17 /
+
+zz, 80
+zz, 90
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect success
+SQL> DECLARE
+  2 V_AGE TB_USER_1.USER_AGE%TYPE;
+  3 V_NAME TB_USER_1.USER_NAME%TYPE;
+  4 CURSOR USER_CURSOR IS SELECT USER_NAME, USER_AGE FROM TB_USER_1;
+  5 BEGIN
+  6   FOR USER_RECORD IN USER_CURSOR LOOP
+  7     dbe_output.print_line(USER_RECORD.USER_NAME || ', ' || USER_RECORD.USER_AGE);
+  8   END LOOP;
+  9   EXCEPTION
+ 10     WHEN CURSOR_ALREADY_OPEN THEN
+ 11      close USER_CURSOR;
+ 12     FOR USER_RECORD IN USER_CURSOR LOOP
+ 13        dbe_output.print_line(USER_RECORD.USER_NAME || ', ' || USER_RECORD.USER_AGE);
+ 14    END LOOP;
+ 15 end;
+ 16 /
+
+zz, 80
+zz, 90
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> drop table if exists FVT_FUNCTION_DDL_008_T;
+
+Succeed.
+
+SQL> create table FVT_FUNCTION_DDL_008_T(id int,name varchar2(100));
+
+Succeed.
+
+SQL> insert into FVT_FUNCTION_DDL_008_T values(30,'commit');
+
+1 rows affected.
+
+SQL> insert into FVT_FUNCTION_DDL_008_T values(30,'commit2');
+
+1 rows affected.
+
+SQL> create or replace function  FVT_FUNCTION_DDL_008_Fun return int
+  2 is 
+  3 a int := 0;
+  4 b int:= 20;
+  5 c  varchar2(100) ;
+  6 cursor mycursor(p1 int) is select name from FVT_FUNCTION_DDL_008_T where id > p1 order by id;
+  7 begin
+  8 open mycursor(b);
+  9 fetch mycursor into c;
+ 10 a := a+1;
+ 11 return a;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function  CHK_FUNCTION_GROUP(a varchar, b int) return int
+  2 is 
+  3 begin
+  4    return 1;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists CHK_T1;
+
+Succeed.
+
+SQL> create table CHK_T1(x varchar(10));
+
+Succeed.
+
+SQL> insert into CHK_T1 values('1234');
+
+1 rows affected.
+
+SQL> 
+SQL> declare
+  2   a varchar(10) := '1234';
+  3   b int := 999;
+  4 begin
+  5   select CHK_FUNCTION_GROUP(x,a) into b from CHK_T1 group by CHK_FUNCTION_GROUP(x,a);
+  6   dbe_output.print_line(b);
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+[5:29] PLC-00609 Expression not in group list
+
+SQL> 
+SQL> 
+SQL> --changhong
+SQL> drop table if exists trigger8_bingfa_Tab_001;
+
+Succeed.
+
+SQL> drop table if exists trigger8_bingfa_Tab_002;
+
+Succeed.
+
+SQL> drop table if exists trigger8_bingfa_Tab_003;
+
+Succeed.
+
+SQL> create table trigger8_bingfa_Tab_001(id int primary key,sal number(10,2),name varchar(100),text clob default 'test',c_time date,m_time datetime);
+
+Succeed.
+
+SQL> create table trigger8_bingfa_Tab_002(id int ,sal number(10,2),name varchar(100),text clob default 'test',c_time date,m_time datetime);
+
+Succeed.
+
+SQL> create table trigger8_bingfa_Tab_003(id int ,sal number(10,2),name varchar(100),text clob default 'test',c_time date,m_time date,flag int,status int );
+
+Succeed.
+
+SQL> drop sequence if exists trigger8_bingfa_Seq_01;
+
+Succeed.
+
+SQL> drop sequence if exists trigger8_bingfa_Seq_02;
+
+Succeed.
+
+SQL> create sequence trigger8_bingfa_Seq_01 start  with 1 increment by 1;
+
+Succeed.
+
+SQL> create sequence trigger8_bingfa_Seq_02 start  with 1 increment by 1;
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger  trigger8_bingfa_07 after delete or insert or  update on 
+  2 trigger8_bingfa_Tab_001 for each row
+  3 declare
+  4 v_status int;
+  5 v_flag int;
+  6 begin
+  7 if inserting then
+  8 insert into trigger8_bingfa_Tab_002(id,c_time,text) values (trigger8_bingfa_Seq_01.nextval,sysdate,'after delete or  insert or update on trigger8_bingfa_Tab_001 ');
+  9 select 1,1 into v_flag,v_status from dual;
+ 10 insert into trigger8_bingfa_Tab_003 values(:Old.id,:OLD.sal,:OLD.name,:old.text,:old.c_time,:old.m_time,v_flag,v_status);
+ 11 
+ 12 elsif  updating then
+ 13   begin
+ 14   select flag+1,1 into v_flag,v_status from trigger8_bingfa_Tab_003;
+ 15   update trigger8_bingfa_Tab_003 set m_time = :new.m_time, flag = v_flag,status=v_status where id = :new.id ;
+ 16   exception 
+ 17     when too_many_rows then
+ 18      begin
+ 19      select flag+1,1 into v_flag,v_status from trigger8_bingfa_Tab_003 where id = :new.id limit 1;
+ 20      update trigger8_bingfa_Tab_003 set m_time = :new.m_time, flag = v_flag,status=v_status where id = :new.id ;
+ 21      end;
+ 22   end;
+ 23   
+ 24 elsif deleting then 
+ 25 select 0,-1 into v_flag,v_status from dual;
+ 26 update trigger8_bingfa_Tab_003 set flag = v_flag, status=v_status where id = :old.id ;
+ 27 end if;
+ 28 end;
+ 29 /
+
+Succeed.
+
+SQL> 
+SQL> insert into trigger8_bingfa_Tab_001 values(3,9000,'test','',sysdate,sysdate);
+
+1 rows affected.
+
+SQL> insert into trigger8_bingfa_Tab_001 values(4,9000,'test','',sysdate,sysdate);
+
+1 rows affected.
+
+SQL> update trigger8_bingfa_Tab_001 set text='update'  where id < 10;
+
+CT-00932, [19:6] PL/SQL(GS_PLSQL_EXCEPTION_0114.TRIGGER8_BINGFA_07) terminated with execute errors
+[19:6] CT-00906, In PL/SQL, running SELECT INTO or EXECUTE IMMEDIATE INTO to grant values to variables had no data found.
+
+SQL> drop table if exists trigger8_bingfa_Tab_001;
+
+Succeed.
+
+SQL> drop table if exists trigger8_bingfa_Tab_002;
+
+Succeed.
+
+SQL> drop table if exists trigger8_bingfa_Tab_003;
+
+Succeed.
+
+SQL> drop sequence if exists trigger8_bingfa_Seq_01;
+
+Succeed.
+
+SQL> drop sequence if exists trigger8_bingfa_Seq_02;
+
+Succeed.
+
+SQL> 
+SQL> --test nested exception
+SQL> drop table if exists t1_test_nested_exception;
+
+Succeed.
+
+SQL> create table t1_test_nested_exception(id int, description nvarchar2(20));
+
+Succeed.
+
+SQL> drop procedure if exists  p1_test_nested_exception;
+
+Succeed.
+
+SQL> create or replace procedure p1_test_nested_exception()
+  2 is 
+  3 tmp int;
+  4 begin
+  5 select id into tmp from t1_test_nested_exception;
+  6 dbe_output.print_line(tmp);
+  7 
+  8 exception
+  9    when no_data_found then 
+ 10     dbe_output.print_line('error:no_data_found');
+ 11     dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG); --no data
+ 12     declare
+ 13     begin
+ 14       insert into t1_test_nested_exception values(1,'dqqa');
+ 15       select id into tmp from t1_test_nested_exception;
+ 16       dbe_output.print_line(tmp);
+ 17       tmp := tmp/0;
+ 18     exception
+ 19     when zero_divide then 
+ 20       dbe_output.print_line('zero divide');
+ 21       dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 22     end;
+ 23     dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 24 end p1_test_nested_exception;
+ 25 /
+
+Succeed.
+
+SQL> call p1_test_nested_exception();
+
+error:no_data_found
+906 error In PL/SQL, running SELECT INTO or EXECUTE IMMEDIATE INTO to grant values to variables had no data found.
+1
+zero divide
+637 error The divisor was zero
+906 error In PL/SQL, running SELECT INTO or EXECUTE IMMEDIATE INTO to grant values to variables had no data found.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists t1_test_nested_exception;
+
+Succeed.
+
+SQL> drop procedure p1_test_nested_exception;
+
+Succeed.
+
+SQL> --DTS2019010206723 
+SQL> alter system set LOCAL_TEMPORARY_TABLE_ENABLED=true;
+
+Succeed.
+
+SQL> create  user PROC_FOR_LOOP_JOIN_1_DML_USER_015_1 IDENTIFIED BY DATABASE_123 PASSWORD EXPIRE;
+
+Succeed.
+
+SQL> create  user PROC_FOR_LOOP_JOIN_1_DML_USER_015_2 IDENTIFIED BY DATABASE_123 PASSWORD EXPIRE;
+
+Succeed.
+
+SQL> create  user PROC_FOR_LOOP_JOIN_1_DML_USER_015_3 IDENTIFIED BY DATABASE_123 PASSWORD EXPIRE;
+
+Succeed.
+
+SQL> create  user PROC_FOR_LOOP_JOIN_1_DML_USER_015_4 IDENTIFIED BY DATABASE_123 PASSWORD EXPIRE;
+
+Succeed.
+
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> GRANT SELECT ON sys.SYS_TABLES TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_1;
+
+Succeed.
+
+SQL> conn gs_plsql_exception_0114/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015;
+
+Succeed.
+
+SQL> drop table if exists PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2;
+
+Succeed.
+
+SQL> drop table if exists PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create table PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 
+  2 (
+  3 c_int int,
+  4 c_number number,
+  5 c_varchar varchar(4000),
+  6 c_date date
+  7 );
+
+Succeed.
+
+SQL> insert into PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 values
+  2 (1,1.25,'abcd','2015-5-5');
+
+1 rows affected.
+
+SQL> insert into PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 values
+  2 (2,2.25,'你好','2016-6-6');
+
+1 rows affected.
+
+SQL> insert into PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 values
+  2 (2,2.25,lpad('ab',75,'c'),'2017-7-7');
+
+1 rows affected.
+
+SQL> 
+SQL> create table PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 
+  2 (
+  3 c_int int,
+  4 c_number number,
+  5 c_varchar varchar(4000),
+  6 c_date date
+  7 )
+  8 partition by range (c_number)
+  9 (
+ 10 partition p1 values less than (3),
+ 11 partition p2 values less than (10)
+ 12 );
+
+Succeed.
+
+SQL> insert into  PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 values
+  2 (1,1.12345,'aaa','2015-5-5');
+
+1 rows affected.
+
+SQL> insert into  PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 values
+  2 (2,2.12345,'shengming','2016-6-6');
+
+1 rows affected.
+
+SQL> insert into  PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 values
+  2 (2,2.25,lpad('ab',78,'c'),'2017-7-7');
+
+1 rows affected.
+
+SQL> 
+SQL> GRANT SELECT ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_1;
+
+Succeed.
+
+SQL> drop PROCEDURE if exists PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_1()
+  2 IS
+  3 --declare
+  4 b_bigint bigint:=0;
+  5 c_cur1 date :='2016-6-6';
+  6 v_refcur1 sys_refcursor;
+  7 b_varchar varchar(15):='df';
+  8 b_date date :='2000-1-1';
+  9 b_temp int :=15;
+ 10 b_sql varchar(2000);
+ 11 BEGIN  
+ 12  for i in 
+ 13  (  select a.c_int from PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 as a  join  PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 as b  where a.c_int =b.c_int and a.c_int<=3 )
+ 14   loop
+ 15     b_sql := 'drop table if exists PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3';
+ 16     execute immediate b_sql;
+ 17     b_sql :=' create global temporary table PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3 
+ 18 (
+ 19 c_int int,
+ 20 c_number number,
+ 21 c_varchar varchar(4000),
+ 22 c_date date
+ 23 )' ;
+ 24     execute immediate b_sql;
+ 25     select name  into b_sql from  sys.SYS_TABLES where name ='PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3';
+ 26     dbe_output.print_line(b_sql);
+ 27     open v_refcur1 for select c_date from PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 where c_date=c_cur1;
+ 28     dbe_sql.return_cursor(v_refcur1);
+ 29  end loop;
+ 30 END;
+ 31 /
+
+Succeed.
+
+SQL> 
+SQL> call PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_1();
+
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #2
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #3
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #4
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #5
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+SQL> insert into PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3 values(2,2.25,lpad('ab',3995,'c'),'2017-7-7');
+
+1 rows affected.
+
+SQL> drop PROCEDURE if exists  PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_2;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_1 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE  PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_2()
+  2 IS
+  3 b_temp int :=1;
+  4 BEGIN  
+  5  for i in 1..2
+  6   loop
+  7   -- loop
+  8    PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_1();
+  9    b_temp :=b_temp-1;
+ 10    exit when b_temp =0;
+ 11   --end loop;
+ 12  end loop;
+ 13 END;
+ 14 /
+
+Succeed.
+
+SQL> call PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_2();
+
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #2
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #3
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #4
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #5
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+SQL> 
+SQL> GRANT EXECUTE ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_2 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_3;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE  PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_3()
+  2 IS
+  3 b_temp int :=1;
+  4 BEGIN  
+  5  for i in 1..2
+  6   loop
+  7    PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_2();
+  8  end loop;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> exec PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_3();
+
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #2
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #3
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #4
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #5
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #6
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #7
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #8
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #9
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+ResultSet #10
+
+C_DATE                
+----------------------
+2016-06-06 00:00:00   
+
+1 rows fetched.
+
+
+SQL> 
+SQL> GRANT EXECUTE ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_3 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_4;
+
+Succeed.
+
+SQL> GRANT INSERT ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_4;
+
+Succeed.
+
+SQL> GRANT INSERT ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_4;
+
+Succeed.
+
+SQL> GRANT INSERT ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_4;
+
+Succeed.
+
+SQL> GRANT UPDATE ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_4;
+
+Succeed.
+
+SQL> GRANT UPDATE ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_4;
+
+Succeed.
+
+SQL> GRANT UPDATE ON PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3 TO PROC_FOR_LOOP_JOIN_1_DML_USER_015_4;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE  PROC_FOR_LOOP_JOIN_1_DML_USER_015_4.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_4()
+  2 IS
+  3 b_length int :=2;
+  4 sql1 varchar(4000):='';
+  5 BEGIN  
+  6  for i in 1..2
+  7   loop
+  8    PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_3();  
+  9  end loop;
+ 10  
+ 11  insert into PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 values(220,2.25,lpad('ab',75,'c'),'2017-7-7');
+ 12  insert into PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3 values(210,2.25,lpad('ab',3995,'c'),'2017-7-7');
+ 13  insert into  PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 values(210,2.25,lpad('ab',78,'c'),'2017-7-7');
+ 14  update  PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 set c_varchar =rpad('ab',3999,'c');
+ 15  update  PROC_FOR_LOOP_JOIN_1_DML_USER_015_2.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_2 set c_varchar =rpad('ab',3998,'c');
+ 16  update  PROC_FOR_LOOP_JOIN_1_DML_USER_015_3.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3 set c_varchar =rpad('ab',3998,'c');
+ 17  
+ 18  sql1 :='truncate table  PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015 drop storage';
+ 19  execute immediate sql1;
+ 20  
+ 21 END;
+ 22 /
+
+Succeed.
+
+SQL> 
+SQL> select * from PROC_FOR_LOOP_JOIN_1_DML_USER_015_1.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015;
+
+C_INT        C_NUMBER                                 C_VARCHAR                                                        C_DATE                
+------------ ---------------------------------------- ---------------------------------------------------------------- ----------------------
+1            1.25                                     abcd                                                             2015-05-05 00:00:00   
+2            2.25                                     你好                                                           2016-06-06 00:00:00   
+2            2.25                                     cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccab 2017-07-07 00:00:00   
+
+3 rows fetched.
+
+SQL> exec PROC_FOR_LOOP_JOIN_1_DML_USER_015_4.PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_PROC_011_4();
+
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+PROC_FOR_LOOP_JOIN_1_DML_TRUNCATE_TAB_015_3
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #2
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #3
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #4
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #5
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #6
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #7
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #8
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #9
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #10
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #11
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #12
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #13
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #14
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #15
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #16
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #17
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #18
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #19
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+ResultSet #20
+
+C_DATE                
+----------------------
+
+0 rows fetched.
+
+
+SQL> drop user PROC_FOR_LOOP_JOIN_1_DML_USER_015_1 cascade;
+
+Succeed.
+
+SQL> drop user PROC_FOR_LOOP_JOIN_1_DML_USER_015_2 cascade;
+
+Succeed.
+
+SQL> drop user PROC_FOR_LOOP_JOIN_1_DML_USER_015_3 cascade;
+
+Succeed.
+
+SQL> drop user PROC_FOR_LOOP_JOIN_1_DML_USER_015_4 cascade;
+
+Succeed.
+
+SQL> 
+SQL> create table PRE_EXCEPTION_017_T_0110(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into PRE_EXCEPTION_017_T_0110 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> DECLARE
+  2 var_tmp varchar(10);
+  3 BEGIN
+  4 execute immediate 'select empno,ename from PRE_EXCEPTION_017_T_0110' into var_tmp ;
+  5 exception
+  6    when PROGRAM_ERROR then
+  7    dbe_output.print_line('PROGRAM_ERROR SQL_ERR_CODE:'||SQL_ERR_CODE||SQL_ERR_MSG);
+  8 END;
+  9 /
+
+CT-00932, [5:1] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] CT-00926, PL/SQL: Return types of Result Set variables or query do not match
+
+SQL> 
+SQL> 
+SQL> --New add 1 test nested exception 
+SQL> declare
+  2 tmp int :=1;
+  3 begin --stack[0]
+  4 raise ACCESS_INTO_NULL;
+  5 exception --stack[1]
+  6    when others then
+  7     dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG); --no data 
+  8     begin  ----stack[2]
+  9     tmp := tmp/0;
+ 10     exception --stack[3]
+ 11         when zero_divide then 
+ 12         dbe_output.print_line(SQL_ERR_CODE||' **error0** '||SQL_ERR_MSG);
+ 13         begin  --stack[4]
+ 14             begin  --stack[5] 
+ 15                raise invalid_number;
+ 16             exception 
+ 17                 when others then
+ 18                     dbe_output.print_line(SQL_ERR_CODE||' ** error other **'||SQL_ERR_MSG);
+ 19                     raise;  
+ 20             end;
+ 21         exception --stack[5]
+ 22         when others then
+ 23             dbe_output.print_line(SQL_ERR_CODE||' ** error other 3 **'||SQL_ERR_MSG);
+ 24             raise;
+ 25         end;
+ 26         dbe_output.print_line(SQL_ERR_CODE||' ** error3 **'||SQL_ERR_MSG);
+ 27     end;
+ 28     dbe_output.print_line(SQL_ERR_CODE || '** error4 **' || SQL_ERR_MSG);
+ 29 end;
+ 30 /
+
+901 error The referenced object type was not initialized.
+637 **error0** The divisor was zero
+636 ** error other **Invalid number %s
+636 ** error other 3 **Invalid number %s
+CT-00932, [24:13] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[24:13] CT-00636, Invalid number %s
+
+SQL> 
+SQL> --New add 2 test nested exception 
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     past_due1     EXCEPTION;
+  4     PRAGMA EXCEPTION_INIT (past_due, 99);
+  5     PRAGMA EXCEPTION_INIT (past_due1, 98);
+  6 BEGIN
+  7   BEGIN
+  8   begin
+  9   begin
+ 10     RAISE past_due1;
+ 11     EXCEPTION
+ 12         WHEN past_due1 THEN    
+ 13             dbe_output.print_line('past_due1-'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 14              raise;
+ 15         WHEN past_due THEN    
+ 16             dbe_output.print_line('past_due-'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 17         WHEN OTHERS THEN    
+ 18             dbe_output.print_line(SQL_ERR_CODE||SQL_ERR_MSG);
+ 19   END;
+ 20   end;
+ 21   end;
+ 22 EXCEPTION
+ 23   WHEN past_due1 THEN    
+ 24     dbe_output.print_line('past_due1:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 25   WHEN past_due THEN    
+ 26     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);	
+ 27   WHEN OTHERS THEN    
+ 28     dbe_output.print_line('other:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 29 END;
+ 30 /
+
+past_due1-98message of error code not found
+past_due1:98message of error code not found
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> --New add 3 test nested exception 
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     past_due1     EXCEPTION;
+  4 BEGIN
+  5   BEGIN
+  6   begin
+  7   begin
+  8     RAISE past_due1;
+  9     EXCEPTION
+ 10         WHEN past_due1 THEN    
+ 11             dbe_output.print_line('past_due1-'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 12             RAISE past_due;
+ 13         WHEN past_due THEN    
+ 14             dbe_output.print_line('past_due-'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 15         WHEN OTHERS THEN    
+ 16             dbe_output.print_line(SQL_ERR_CODE||SQL_ERR_MSG);
+ 17   END;
+ 18   end;
+ 19   end;
+ 20 EXCEPTION
+ 21   WHEN past_due1 THEN    
+ 22     dbe_output.print_line('past_due1:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 23   WHEN past_due THEN    
+ 24     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);	
+ 25   WHEN OTHERS THEN    
+ 26     dbe_output.print_line('other:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 27 END;
+ 28 /
+
+past_due1-999User Defined Exception
+past_due:999User Defined Exception
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --New add 4 test label 
+SQL> CREATE or replace procedure test_exception_1(a int)
+  2 is
+  3     past_due     EXCEPTION;
+  4 BEGIN    
+  5     BEGIN
+  6         IF 1 < 2 THEN
+  7         RAISE no_data_found;
+  8         END IF;
+  9     EXCEPTION
+ 10     WHEN no_data_found THEN
+ 11         goto update_row;
+ 12     END;
+ 13     <<update_row>>
+ 14       dbe_output.print_line (SQL_ERR_CODE || ' AND '||SQL_ERR_MSG);  
+ 15 END;
+ 16 /
+
+Succeed.
+
+SQL> declare
+  2     a int;
+  3 BEGIN
+  4     test_exception_1(1);
+  5 END;
+  6 /
+
+0 AND Normal, no error reported
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --New add 5 test nested exception 
+SQL> CREATE OR REPLACE PROCEDURE p_user_handle AS
+  2 BEGIN
+  3   DECLARE
+  4     past_due     EXCEPTION;
+  5     due_date     DATE := trunc(SYSDATE) - 1;
+  6     todays_date  DATE := trunc(SYSDATE);
+  7   BEGIN
+  8     IF due_date < todays_date THEN
+  9       dbe_output.print_line('here excuete');
+ 10       RAISE past_due;
+ 11     END IF;
+ 12   END;
+ 13 
+ 14 EXCEPTION
+ 15   WHEN OTHERS THEN
+ 16     ROLLBACK;
+ 17     RAISE;
+ 18 END;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> exec p_user_handle;
+
+here excuete
+CT-00932, [1:2] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[17:5] PL/SQL(GS_PLSQL_EXCEPTION_0114.P_USER_HANDLE) terminated with execute errors
+[17:5] CT-00931, There were user-defined PL/SQL exceptions not handled
+
+SQL> 
+SQL> --New add 6 test nested exception 
+SQL> create or replace procedure p1_test_nested_exception()
+  2 is 
+  3 tmp int :=0;
+  4 begin
+  5 tmp := tmp+'1oo';
+  6 exception
+  7    when invalid_number then 
+  8     begin
+  9         tmp := tmp/0;
+ 10     exception
+ 11         when zero_divide then 
+ 12             dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 13             raise;
+ 14     end;
+ 15     dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 16 end;
+ 17 /
+
+Succeed.
+
+SQL> call p1_test_nested_exception();
+
+637 error The divisor was zero
+CT-00932, [1:2] PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with execute errors
+[13:13] PL/SQL(GS_PLSQL_EXCEPTION_0114.P1_TEST_NESTED_EXCEPTION) terminated with execute errors
+[9:19] CT-00637, The divisor was zero
+
+SQL> 
+SQL> --New add 7 test THROW_EXCEPTION
+SQL> drop table if exists ww;
+
+Succeed.
+
+SQL> drop table if exists wt;
+
+Succeed.
+
+SQL> create table ww (id int,name varchar(50),age int);
+
+Succeed.
+
+SQL> insert into ww values(1,'xi',20);
+
+1 rows affected.
+
+SQL> insert into ww values(2,'xw',22);
+
+1 rows affected.
+
+SQL> create table wt as select * from ww;
+
+Succeed.
+
+SQL> create or replace trigger f before update on ww  for each row as
+  2 wrong_error exception;
+  3 errno  number;
+  4 errmsg varchar2(30);
+  5 begin
+  6     BEGIN
+  7     if updating('name') then
+  8         errno  := '-20030';
+  9         errmsg := 'cannot update this column';
+ 10         raise wrong_error;
+ 11     end if;
+ 12     exception
+ 13         when wrong_error then
+ 14             THROW_EXCEPTION(errno,errmsg);
+ 15     END;
+ 16  exception 
+ 17  when others then
+ 18     dbe_output.print_line(SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 19  end;
+ 20  /
+
+Succeed.
+
+SQL>  update ww set name='ss' where id =1;
+
+-20030 error cannot update this column
+
+1 rows affected.
+
+SQL> 
+SQL>  --New add 8 test cannotmatch builtin exception
+SQL> declare
+  2   tmp int :=1;
+  3 begin
+  4     begin
+  5         begin
+  6         tmp := tmp/0;
+  7         exception --stack[1]
+  8         when invalid_number then
+  9             dbe_output.print_line(SQL_ERR_CODE||' ** error1 **'||SQL_ERR_MSG);
+ 10         end;
+ 11     end;
+ 12 exception
+ 13     when others then
+ 14     dbe_output.print_line('past_due  '||SQL_ERR_CODE||' ** error2 **'||SQL_ERR_MSG);
+ 15 end;
+ 16 /
+
+past_due  637 ** error2 **The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL>  --New add 9 test cannnot match user define exception
+SQL>  declare
+  2     past_due     EXCEPTION;
+  3     tmp int :=1;
+  4 begin
+  5     begin
+  6         begin
+  7         raise past_due;
+  8         exception --stack[1]
+  9         when invalid_number then
+ 10             dbe_output.print_line(SQL_ERR_CODE||' ** error1 **'||SQL_ERR_MSG);
+ 11         end;
+ 12     end;
+ 13 exception
+ 14     when past_due then
+ 15     dbe_output.print_line('past_due  '||SQL_ERR_CODE||' ** error2 **'||SQL_ERR_MSG);
+ 16 end;
+ 17 /
+
+past_due  999 ** error2 **User Defined Exception
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --New add 10 test SQL_ERR_CODE nested in sql statement
+SQL> declare
+  2     o_var  varchar(100);
+  3     o_int  int;
+  4     tmp int := 0;
+  5 begin
+  6     tmp := tmp/0;
+  7 exception
+  8     when others then 
+  9     select SQL_ERR_CODE() into o_int from dual;
+ 10     select SQL_ERR_MSG() into o_var from dual;
+ 11     dbe_output.print_line('error_code='||o_int||' ,error_message='||o_var);
+ 12 end;
+ 13 /
+
+error_code=637 ,error_message=The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test exception cannnot be used in loop
+SQL> --begin
+SQL> --expect error
+SQL> create or replace procedure proc_exception_in_loop1()
+  2 is
+  3 a int  := 1;
+  4 b int  := 0;
+  5 c int  := 1;
+  6 begin
+  7     LOOP     
+  8 		 c := c +1;
+  9       a := a/b;
+ 10      exit when c > 3;
+ 11          
+ 12      EXCEPTION 
+ 13         WHEN OTHERS THEN 
+ 14             null;
+ 15      END LOOP; 
+ 16 END;
+ 17 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_EXCEPTION_0114.PROC_EXCEPTION_IN_LOOP1) terminated with compiling errors
+[15:10] PLC-00920 Undefined symbol LOOP
+[16:1] PLC-00954 OTHERS expected but END found
+[17:1] PLC-00954 more text expected but EOF found
+
+
+SQL> 
+SQL> --expect error
+SQL> create or replace procedure proc_exception_in_loop2()
+  2 is
+  3 a int  := 1;
+  4 b int  := 0;
+  5 c int  := 1;
+  6 begin  
+  7   begin
+  8     LOOP
+  9 		 c := c +1;
+ 10       a := a/b;
+ 11      exit when c > 3;
+ 12          
+ 13      EXCEPTION 
+ 14         WHEN OTHERS THEN 
+ 15             null;
+ 16      END LOOP; 
+ 17 EXCEPTION 
+ 18 	WHEN OTHERS THEN 
+ 19     null;   
+ 20 END;
+ 21 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_EXCEPTION_0114.PROC_EXCEPTION_IN_LOOP2) terminated with compiling errors
+[16:10] PLC-00920 Undefined symbol LOOP
+[17:1] PLC-00916 PL/SQL:syntax error(exception has existed in this "begin-exception-end")
+[20:1] PLC-00954 OTHERS expected but END found
+[21:1] PLC-00954 more text expected but EOF found
+
+
+SQL> --end
+SQL> 
+SQL> begin
+  2 DBE_TASK.SUSPEND(1006,true%%sysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatedatesyssdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatedatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatessdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatedatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatessdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatedatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesyatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesystesysdaysdatesyatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesystesysdasyatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesystesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesdatesysdatesystesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdateatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesystesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesysdatesystesysdatesysdatesysdate);
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(GS_PLSQL_EXCEPTION_0114.ANONYMOUS BLOCK) terminated with compiling errors
+PLC-00601 Sql syntax error: object is too long or varaint name
+PLC-00601 Sql syntax error: object is too long or varaint name
+[2:28] PLC-00601 Sql syntax error: the word "%" is not correct
+
+SQL>
+SQL> set serveroutput off;
+OFF
+
+
+

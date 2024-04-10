@@ -1,0 +1,832 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_alck cascade;
+
+Succeed.
+
+SQL> create user gs_alck identified by Lh00420062;
+
+Succeed.
+
+SQL> grant all privileges to gs_alck;
+
+Succeed.
+
+SQL> 
+SQL> conn gs_alck/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --this file cannot execute PARALLEL in gs_regress!!!
+SQL> --FAIL in parsing period
+SQL> alter database convert to readonly;
+
+Succeed.
+
+SQL> select get_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select release_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select try_get_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select release_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> 
+SQL> select get_shared_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select release_shared_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select try_get_shared_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select release_shared_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> 
+SQL> select get_xact_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select get_xact_shared_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select try_get_xact_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> select try_get_xact_shared_lock('alck_test');
+
+CT-00101, [1:8]Capability: operation on read only mode not supported
+SQL> 
+SQL> alter database convert to readwrite;
+
+Succeed.
+
+SQL> --success for get soft parse
+SQL> select get_lock('alck_test');
+
+GET_LOCK('ALCK_TEST')
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> select release_lock('alck_test');
+
+RELEASE_LOCK('ALCK_TEST')
+-------------------------
+1                        
+
+1 rows fetched.
+
+SQL> select try_get_lock('alck_test');
+
+TRY_GET_LOCK('ALCK_TEST')
+-------------------------
+1                        
+
+1 rows fetched.
+
+SQL> select release_lock('alck_test');
+
+RELEASE_LOCK('ALCK_TEST')
+-------------------------
+1                        
+
+1 rows fetched.
+
+SQL> 
+SQL> select get_shared_lock('alck_test');
+
+GET_SHARED_LOCK('ALCK_TEST')
+----------------------------
+1                           
+
+1 rows fetched.
+
+SQL> select release_shared_lock('alck_test');
+
+RELEASE_SHARED_LOCK('ALCK_TEST')
+--------------------------------
+1                               
+
+1 rows fetched.
+
+SQL> select try_get_shared_lock('alck_test');
+
+TRY_GET_SHARED_LOCK('ALCK_TEST')
+--------------------------------
+1                               
+
+1 rows fetched.
+
+SQL> select release_shared_lock('alck_test');
+
+RELEASE_SHARED_LOCK('ALCK_TEST')
+--------------------------------
+1                               
+
+1 rows fetched.
+
+SQL> 
+SQL> select get_xact_lock('alck_test');
+
+GET_XACT_LOCK('ALCK_TEST')
+--------------------------
+1                         
+
+1 rows fetched.
+
+SQL> select get_xact_shared_lock('alck_test');
+
+GET_XACT_SHARED_LOCK('ALCK_TEST')
+---------------------------------
+1                                
+
+1 rows fetched.
+
+SQL> select try_get_xact_lock('alck_test');
+
+TRY_GET_XACT_LOCK('ALCK_TEST')
+------------------------------
+1                             
+
+1 rows fetched.
+
+SQL> select try_get_xact_shared_lock('alck_test');
+
+TRY_GET_XACT_SHARED_LOCK('ALCK_TEST')
+-------------------------------------
+1                                    
+
+1 rows fetched.
+
+SQL> 
+SQL> select NAME,type,x_locks,total_locks,ix_setted from dv_all_alocks where name like 'alck%' order by 1,2,3;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  IX_SETTED   
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+alck_test                                                        TX   2            4            0           
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,my_locks,total_locks, ix_setted from dv_user_alocks where name like 'alck%' order by 1,2,3;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS  IX_SETTED   
+---------------------------------------------------------------- ---- ------------ ------------ ------------ ------------
+alck_test                                                        TX   2            4            4            0           
+
+1 rows fetched.
+
+SQL> alter database convert to readonly;
+
+Succeed.
+
+SQL> select NAME,type,x_locks,total_locks,ix_setted from dv_all_alocks where name like 'alck%' order by 1,2,3;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  IX_SETTED   
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> select name,type,x_locks,my_locks,total_locks, ix_setted from dv_user_alocks where name like 'alck%' order by 1,2,3;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS  IX_SETTED   
+---------------------------------------------------------------- ---- ------------ ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> --FAIL in executing period
+SQL> select get_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select release_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select try_get_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select release_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> 
+SQL> select get_shared_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select release_shared_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select try_get_shared_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select release_shared_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> 
+SQL> select get_xact_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select get_xact_shared_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select try_get_xact_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> select try_get_xact_shared_lock('alck_test');
+
+CT-00101, Capability: operation on read only mode not supported
+SQL> 
+SQL> --restore!!!
+SQL> alter database convert to readwrite;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function get_my_locktimes(lock_detail varchar) return int
+  2 is
+  3 idx int;
+  4 pos int :=1;
+  5 pos_right int :=0;
+  6 pos_space int;
+  7 tmp varchar(128); 
+  8 res int := 0;
+  9 p_idx int :=0;
+ 10 begin
+ 11 select sid into idx from dv_me;
+ 12 loop
+ 13 pos_right := instr(lock_detail,':',pos);
+ 14 exit when pos_right = 0;
+ 15 tmp := substr(lock_detail,pos,pos_right-pos);
+ 16 if(instr(tmp,'(')>0) then
+ 17    tmp :=substr(tmp,1,instr(tmp,')')-1);
+ 18    tmp :=substr(tmp,instr(tmp,'(')+1);
+ 19 end if;
+ 20 pos := pos_right+1;
+ 21 pos_right := instr(lock_detail,' ',pos);
+ 22 if(idx = to_int(tmp)) then
+ 23     if(pos_right=0) then
+ 24         res := to_int(substr(lock_detail,pos,length(lock_detail)-pos + 1));
+ 25     else 
+ 26         res := to_int(substr(lock_detail,pos,pos_right-pos));
+ 27     end if;
+ 28     return res;
+ 29 end if;
+ 30 pos := pos_right+1;
+ 31 end loop;
+ 32 return res;
+ 33 end;
+ 34 /
+
+Succeed.
+
+SQL> 
+SQL> --test name length
+SQL> declare
+  2 sql1 varchar(200);
+  3 tmp int;
+  4 begin
+  5 for i in 1..129 loop
+  6 sql1 := sql1||'a';
+  7 end loop;
+  8 select get_xact_shared_lock(sql1) into tmp from sys_dummy;
+  9 dbe_output.print(tmp);
+ 10 end;
+ 11 /
+
+CT-00932, [8:1] PL/SQL(GS_ALCK.ANONYMOUS BLOCK) terminated with execute errors
+[8:8] PL/SQL(PUBLIC.GET_XACT_SHARED_LOCK) terminated with execute errors
+[8:29] CT-00614, Parameter error: user-level lock name cannot exceed 128 bytes
+
+SQL> 
+SQL> declare
+  2 sql1 varchar(200);
+  3 tmp int;
+  4 begin
+  5 for i in 1..129 loop
+  6 sql1 := sql1||'a';
+  7 end loop;
+  8 select get_lock(sql1) into tmp from sys_dummy;
+  9 dbe_output.print(tmp);
+ 10 end;
+ 11 /
+
+CT-00932, [8:1] PL/SQL(GS_ALCK.ANONYMOUS BLOCK) terminated with execute errors
+[8:8] PL/SQL(PUBLIC.GET_LOCK) terminated with execute errors
+[8:17] CT-00614, Parameter error: user-level lock name cannot exceed 128 bytes
+
+SQL> 
+SQL> declare
+  2 sql1 varchar(200);
+  3 tmp int;
+  4 begin
+  5 for i in 1..129 loop
+  6 sql1 := sql1||'a';
+  7 end loop;
+  8 select get_shared_lock(sql1) into tmp from sys_dummy;
+  9 dbe_output.print(tmp);
+ 10 end;
+ 11 /
+
+CT-00932, [8:1] PL/SQL(GS_ALCK.ANONYMOUS BLOCK) terminated with execute errors
+[8:8] PL/SQL(PUBLIC.GET_SHARED_LOCK) terminated with execute errors
+[8:24] CT-00614, Parameter error: user-level lock name cannot exceed 128 bytes
+
+SQL> 
+SQL> --test dynamic views
+SQL> declare
+  2 sql1 varchar(200);
+  3 tmp int;
+  4 begin
+  5 for i in 1..128 loop
+  6 sql1 := sql1||'a';
+  7 end loop;
+  8 select get_xact_shared_lock(sql1) into tmp from sys_dummy;
+  9 dbe_output.print(tmp);
+ 10 end;
+ 11 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'a%' and get_my_locktimes(lock_detail)>0 order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa TX   0            1            1                            
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'a%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa TX   0            1            1           
+
+1 rows fetched.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'a%' and get_my_locktimes(lock_detail)>0 order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+
+0 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'a%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --test session alck interface
+SQL> select get_lock('gs_lock_name') from sys_dummy;
+
+GET_LOCK('GS_LOCK_NAME')
+------------------------
+1                       
+
+1 rows fetched.
+
+SQL> select try_get_lock('gs_lock_name') from sys_dummy;
+
+TRY_GET_LOCK('GS_LOCK_NAME')
+----------------------------
+1                           
+
+1 rows fetched.
+
+SQL> select get_shared_lock('gs_lock_name') from sys_dummy;
+
+GET_SHARED_LOCK('GS_LOCK_NAME')
+-------------------------------
+1                              
+
+1 rows fetched.
+
+SQL> select try_get_shared_lock('gs_lock_name') from sys_dummy;
+
+TRY_GET_SHARED_LOCK('GS_LOCK_NAME')
+-----------------------------------
+1                                  
+
+1 rows fetched.
+
+SQL> 
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1; 
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+gs_lock_name                                                     SE   2            4            4                            
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+gs_lock_name                                                     SE   2            4            4           
+
+1 rows fetched.
+
+SQL> 
+SQL> select release_lock('gs_lock_name') from sys_dummy;
+
+RELEASE_LOCK('GS_LOCK_NAME')
+----------------------------
+1                           
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+gs_lock_name                                                     SE   1            3            3                            
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+gs_lock_name                                                     SE   1            3            3           
+
+1 rows fetched.
+
+SQL> 
+SQL> select release_lock('gs_lock_name') from sys_dummy;
+
+RELEASE_LOCK('GS_LOCK_NAME')
+----------------------------
+1                           
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+gs_lock_name                                                     SE   0            2            2                            
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+gs_lock_name                                                     SE   0            2            2           
+
+1 rows fetched.
+
+SQL> 
+SQL> select release_lock('gs_lock_name') from sys_dummy;
+
+RELEASE_LOCK('GS_LOCK_NAME')
+----------------------------
+                            
+
+1 rows fetched.
+
+SQL> select release_shared_lock('gs_lock_name') from sys_dummy;
+
+RELEASE_SHARED_LOCK('GS_LOCK_NAME')
+-----------------------------------
+1                                  
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+gs_lock_name                                                     SE   0            1            1                            
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+gs_lock_name                                                     SE   0            1            1           
+
+1 rows fetched.
+
+SQL> 
+SQL> select release_shared_lock('gs_lock_name') from sys_dummy;
+
+RELEASE_SHARED_LOCK('GS_LOCK_NAME')
+-----------------------------------
+1                                  
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+
+0 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --test tx alck
+SQL> select get_xact_lock('gs_lock_name') from sys_dummy;
+
+GET_XACT_LOCK('GS_LOCK_NAME')
+-----------------------------
+1                            
+
+1 rows fetched.
+
+SQL> select try_get_xact_lock('gs_lock_name') from sys_dummy;
+
+TRY_GET_XACT_LOCK('GS_LOCK_NAME')
+---------------------------------
+1                                
+
+1 rows fetched.
+
+SQL> select get_xact_shared_lock('gs_lock_name') from sys_dummy;
+
+GET_XACT_SHARED_LOCK('GS_LOCK_NAME')
+------------------------------------
+1                                   
+
+1 rows fetched.
+
+SQL> select try_get_xact_shared_lock('gs_lock_name') from sys_dummy;
+
+TRY_GET_XACT_SHARED_LOCK('GS_LOCK_NAME')
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+gs_lock_name                                                     TX   2            4            4                            
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+gs_lock_name                                                     TX   2            4            4           
+
+1 rows fetched.
+
+SQL> 
+SQL> select get_xact_lock('gs_lock_name') from sys_dummy;
+
+GET_XACT_LOCK('GS_LOCK_NAME')
+-----------------------------
+1                            
+
+1 rows fetched.
+
+SQL> select try_get_xact_lock('gs_lock_name') from sys_dummy;
+
+TRY_GET_XACT_LOCK('GS_LOCK_NAME')
+---------------------------------
+1                                
+
+1 rows fetched.
+
+SQL> select get_xact_shared_lock('gs_lock_name') from sys_dummy;
+
+GET_XACT_SHARED_LOCK('GS_LOCK_NAME')
+------------------------------------
+1                                   
+
+1 rows fetched.
+
+SQL> select try_get_xact_shared_lock('gs_lock_name') from sys_dummy;
+
+TRY_GET_XACT_SHARED_LOCK('GS_LOCK_NAME')
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+gs_lock_name                                                     TX   4            8            8                            
+
+1 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+gs_lock_name                                                     TX   4            8            8           
+
+1 rows fetched.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+
+0 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --test maximum specifiction
+SQL> declare
+  2 tmp int;
+  3 begin
+  4 for i in 1..2000 loop
+  5 select get_xact_lock('gs_lock_name1') into tmp from sys_dummy;
+  6 select get_xact_shared_lock('gs_lock_name1') into tmp from sys_dummy;
+  7 select get_xact_lock('gs_lock_name2') into tmp from sys_dummy;
+  8 select get_xact_shared_lock('gs_lock_name2') into tmp from sys_dummy;
+  9 
+ 10 select get_lock('gs_lock_name3') into tmp from sys_dummy;
+ 11 select get_shared_lock('gs_lock_name3') into tmp from sys_dummy;
+ 12 select get_lock('gs_lock_name4') into tmp from sys_dummy;
+ 13 select get_shared_lock('gs_lock_name4') into tmp from sys_dummy;
+ 14 end loop;
+ 15 end;
+ 16 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+gs_lock_name1                                                    TX   2000         4000         4000                         
+gs_lock_name2                                                    TX   2000         4000         4000                         
+gs_lock_name3                                                    SE   2000         4000         4000                         
+gs_lock_name4                                                    SE   2000         4000         4000                         
+
+4 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+gs_lock_name1                                                    TX   2000         4000         4000        
+gs_lock_name2                                                    TX   2000         4000         4000        
+gs_lock_name3                                                    SE   2000         4000         4000        
+gs_lock_name4                                                    SE   2000         4000         4000        
+
+4 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+gs_lock_name3                                                    SE   2000         4000         4000                         
+gs_lock_name4                                                    SE   2000         4000         4000                         
+
+2 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+gs_lock_name3                                                    SE   2000         4000         4000        
+gs_lock_name4                                                    SE   2000         4000         4000        
+
+2 rows fetched.
+
+SQL> 
+SQL> declare
+  2 tmp int;
+  3 begin
+  4 for i in 1..2000 loop
+  5 select release_lock('gs_lock_name3') into tmp from sys_dummy;
+  6 select release_shared_lock('gs_lock_name3') into tmp from sys_dummy;
+  7 select release_lock('gs_lock_name4') into tmp from sys_dummy;
+  8 select release_shared_lock('gs_lock_name4') into tmp from sys_dummy;
+  9 end loop;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select name,type,x_locks,total_locks,get_my_locktimes(lock_detail) from dv_all_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      TOTAL_LOCKS  GET_MY_LOCKTIMES(LOCK_DETAIL)
+---------------------------------------------------------------- ---- ------------ ------------ -----------------------------
+
+0 rows fetched.
+
+SQL> select name,type,x_locks,my_locks, total_locks from dv_user_alocks where name like 'gs%' order by 1;
+
+NAME                                                             TYPE X_LOCKS      MY_LOCKS     TOTAL_LOCKS 
+---------------------------------------------------------------- ---- ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --test maximum specifiction
+SQL> declare
+  2 tmp int;
+  3 str varchar(500);
+  4 begin
+  5 for i in 1..65536 loop
+  6 str := 'gs_lock'||i;
+  7 select get_lock(str) into tmp from sys_dummy;
+  8 end loop;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select count(*) from dv_user_alocks where name like 'gs%';
+
+COUNT(*)            
+--------------------
+65536               
+
+1 rows fetched.
+
+SQL> 
+SQL> declare
+  2 tmp int;
+  3 str varchar(500);
+  4 begin
+  5 for i in 1..65536 loop
+  6 str := 'gs_lock'||i;
+  7 select release_lock(str) into tmp from sys_dummy;
+  8 end loop;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select count(*) from dv_user_alocks where name like 'gs%';
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_alck cascade;
+
+Succeed.
+
+SQL> 
+SQL> 
+
+

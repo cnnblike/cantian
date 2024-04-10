@@ -1,0 +1,863 @@
+
+
+SQL> drop table if exists t_minus_1;
+
+Succeed.
+
+SQL> drop table if exists t_minus_2;
+
+Succeed.
+
+SQL> drop table if exists t_minus_3;
+
+Succeed.
+
+SQL> drop table if exists t_minus_4;
+
+Succeed.
+
+SQL> drop table if exists t_all_join_03_010;
+
+Succeed.
+
+SQL> create table t_all_join_03_010(c1 clob,c2 varchar(6));
+
+Succeed.
+
+SQL> create table t_minus_1(f_int1 int, f_int2 int);
+
+Succeed.
+
+SQL> create table t_minus_2(f_int1 int, f_int2 int);
+
+Succeed.
+
+SQL> create table t_minus_3(f_int1 int, f_int2 int);
+
+Succeed.
+
+SQL> create table t_minus_4(f_int1 int, f_int2 int);
+
+Succeed.
+
+SQL> insert into t_minus_1 values(1, 11);
+
+1 rows affected.
+
+SQL> insert into t_minus_1 values(3, 332);
+
+1 rows affected.
+
+SQL> insert into t_minus_1 values(1, 11);
+
+1 rows affected.
+
+SQL> insert into t_minus_1 values(3, 33);
+
+1 rows affected.
+
+SQL> insert into t_minus_1 values(2, 22);
+
+1 rows affected.
+
+SQL> insert into t_minus_1 values(3, 33);
+
+1 rows affected.
+
+SQL> insert into t_minus_1 values(1, 11);
+
+1 rows affected.
+
+SQL> insert into t_minus_1 values(5, 55);
+
+1 rows affected.
+
+SQL> insert into t_minus_2 values(2, 22);
+
+1 rows affected.
+
+SQL> insert into t_minus_2 values(4, 44);
+
+1 rows affected.
+
+SQL> insert into t_minus_2 values(2, 22);
+
+1 rows affected.
+
+SQL> insert into t_minus_2 values(4, 44);
+
+1 rows affected.
+
+SQL> insert into t_minus_2 values(5, 54);
+
+1 rows affected.
+
+SQL> insert into t_minus_2 values(5, 55);
+
+1 rows affected.
+
+SQL> insert into t_minus_2 values(6, 66);
+
+1 rows affected.
+
+SQL> insert into t_minus_3 values(3, 33);
+
+1 rows affected.
+
+SQL> insert into t_minus_1 values(2, 22);
+
+1 rows affected.
+
+SQL> insert into t_minus_2 values(2, 22);
+
+1 rows affected.
+
+SQL> insert into t_all_join_03_010 values('aab','aab');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> -- syntax error
+SQL> select f_int1, f_int2 from t_minus_1 minus select f_int1 from t_minus_2;
+
+CT-00601, [1:44]Sql syntax error: query block has incorrect number of result columns
+SQL> select f_int1, f_int2 from t_minus_1 order by f_int1 minus select f_int1, f_int2 from t_minus_2;
+
+CT-00601, [1:54]Sql syntax error: "LIMIT" clause or "ORDER BY" clause of the subset should be placed inside the parentheses that enclose the SELECT
+SQL> (select f_int1, f_int2 from t_minus_1 order by f_int1) minus select f_int1, f_int2 from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+1            11
+3            33
+3            332
+
+3 rows fetched.
+
+SQL> (select f_int1, f_int2 from t_minus_1 minus select f_int1, f_int2 from t_minus_2 order by f_int1 desc) minus select f_int1, f_int2 from t_minus_2;
+
+CT-00601, [1:102]Sql syntax error: wrong syntax to use 'LIMIT'or 'ORDER'.
+SQL> select f_int1, f_int2 from t_minus_1 minus (select f_int1, f_int2 from t_minus_2 order by f_int1 desc) order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+1            11
+3            33
+3            332
+
+3 rows fetched.
+
+SQL> 
+SQL> -- simple minus
+SQL> select f_int1, f_int2 from t_minus_1 minus select f_int1, f_int2 from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            33          
+3            332         
+
+3 rows fetched.
+
+SQL> select f_int1, f_int2 from t_minus_1 minus select f_int1, f_int2 from t_minus_2 order by f_int1 desc, f_int2;
+
+F_INT1       F_INT2      
+------------ ------------
+3            33          
+3            332         
+1            11          
+
+3 rows fetched.
+
+SQL> -- zenith is correct, oracle is incorrect
+SQL> select * from t_minus_1 minus select * from t_minus_2 order by f_int1 desc, f_int2;
+
+F_INT1       F_INT2      
+------------ ------------
+3            33          
+3            332         
+1            11          
+
+3 rows fetched.
+
+SQL> 
+SQL> -- complex minus
+SQL> (select * from t_minus_1 minus select * from t_minus_2) minus select * from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            33          
+3            332         
+
+3 rows fetched.
+
+SQL> ((select * from t_minus_1 minus select * from t_minus_2) minus select * from t_minus_2) minus select * from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            33          
+3            332         
+
+3 rows fetched.
+
+SQL> (select * from t_minus_1 minus select * from t_minus_2) minus (select * from t_minus_1 minus select * from t_minus_2) order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> select * from t_minus_1 minus select * from t_minus_2 union select * from t_minus_3 order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            33          
+3            332         
+
+3 rows fetched.
+
+SQL> (select * from t_minus_1 minus select * from t_minus_2) union select * from t_minus_3 order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            33          
+3            332         
+
+3 rows fetched.
+
+SQL> select * from t_minus_1 minus (select * from t_minus_2 union select * from t_minus_3) order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            332         
+
+2 rows fetched.
+
+SQL> 
+SQL> select * from t_minus_1 minus select * from t_minus_2 union all select * from t_minus_3 order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            33          
+3            33          
+3            332         
+
+4 rows fetched.
+
+SQL> (select * from t_minus_1 minus select * from t_minus_2) union all select * from t_minus_3 order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            33          
+3            33          
+3            332         
+
+4 rows fetched.
+
+SQL> select * from t_minus_1 minus (select * from t_minus_2 union all select * from t_minus_3) order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            332         
+
+2 rows fetched.
+
+SQL> 
+SQL> select distinct f_int1, f_int2 from t_minus_1 minus select f_int1, f_int2 from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2      
+------------ ------------
+1            11          
+3            33          
+3            332         
+
+3 rows fetched.
+
+SQL> 
+SQL> -- simple except
+SQL> select f_int1, f_int2 from t_minus_1 except select f_int1, f_int2 from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+1            11
+3            33
+3            332
+
+3 rows fetched.
+
+SQL> select f_int1, f_int2 from t_minus_1 except all select f_int1, f_int2 from t_minus_2 order by f_int1 desc, f_int2;
+
+F_INT1       F_INT2
+------------ ------------
+3            33
+3            33
+3            332
+1            11
+1            11
+1            11
+
+6 rows fetched.
+
+SQL> select c1 from t_all_join_03_010 except select c2 from t_all_join_03_010;
+
+CT-00601, [1:8]Sql syntax error: unexpected lob column occurs
+SQL> (select f_int1, f_int2 from t_minus_1 order by f_int1) except (select f_int1, f_int2 from t_minus_2 order by f_int1 desc) order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+1            11
+3            33
+3            332
+
+3 rows fetched.
+
+SQL> 
+SQL> -- complex except
+SQL> (select * from t_minus_1 except select * from t_minus_2) except select * from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+1            11
+3            33
+3            332
+
+3 rows fetched.
+
+SQL> ((select * from t_minus_1 except select * from t_minus_2) except select * from t_minus_2) except select * from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+1            11
+3            33
+3            332
+
+3 rows fetched.
+
+SQL> (select * from t_minus_1 except select * from t_minus_2) except (select * from t_minus_1 except select * from t_minus_2) order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> -- complex except all
+SQL> (select * from t_minus_1 except all select * from t_minus_2) except select * from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+1            11
+3            33
+3            332
+
+3 rows fetched.
+
+SQL> select * from t_minus_1 except all (select * from t_minus_1 where f_int1<2) order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+2            22
+2            22
+3            33
+3            33
+3            332
+5            55
+
+6 rows fetched.
+
+SQL> select * from t_minus_1 except all (select * from t_minus_4) order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+1            11
+1            11
+1            11
+2            22
+2            22
+3            33
+3            33
+3            332
+5            55
+
+9 rows fetched.
+
+SQL> select count(*) from (((select * from t_minus_1) union all (select * from t_minus_1)) except all select distinct * from t_minus_1) t;
+
+COUNT(*)
+--------------------
+13
+
+1 rows fetched.
+
+SQL> select count(*) from (((select f_int1, f_int2 from t_minus_1) union all (select f_int1, f_int2 from t_minus_1)) except all (select f_int1, f_int2 from t_minus_1  order by 1,2 limit 2 offset 3)) t;
+
+COUNT(*)
+--------------------
+16
+
+1 rows fetched.
+
+SQL> 
+SQL> -- intersect
+SQL> select f_int1, f_int2 from t_minus_1 intersect select f_int1, f_int2 from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+2            22
+5            55
+
+2 rows fetched.
+
+SQL> select f_int1, f_int2 from t_minus_1 intersect all select f_int1, f_int2 from t_minus_2 order by f_int1 desc, f_int2;
+
+F_INT1       F_INT2
+------------ ------------
+5            55
+2            22
+2            22
+
+3 rows fetched.
+
+SQL> select f_int1, f_int2 from t_minus_1 intersect select f_int1, f_int2 from t_minus_4 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> -- complex intersect
+SQL> (select * from t_minus_1 intersect select * from t_minus_2) intersect select * from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+2            22
+5            55
+
+2 rows fetched.
+
+SQL> ((select * from t_minus_1 intersect all select * from t_minus_2) intersect all select * from t_minus_2) intersect all select * from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+2            22
+2            22
+5            55
+
+3 rows fetched.
+
+SQL> ((select * from t_minus_1 intersect all select * from t_minus_2) intersect all select * from t_minus_2) except select * from t_minus_2 order by 1,2;
+
+F_INT1       F_INT2
+------------ ------------
+
+0 rows fetched.
+
+SQL> select count(*) from (((select * from t_minus_1) union all (select * from t_minus_1)) intersect all select * from t_minus_1 where f_int1<3 except all select * from t_minus_1 where f_int1=3) t;
+
+COUNT(*)
+--------------------
+5
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table t_minus_1;
+
+Succeed.
+
+SQL> drop table t_minus_2;
+
+Succeed.
+
+SQL> drop table t_minus_3;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS MINUS_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS MINUS_T2;
+
+Succeed.
+
+SQL> CREATE TABLE MINUS_T1(a int, b varchar(20));
+
+Succeed.
+
+SQL> CREATE TABLE MINUS_T2(a int, b varchar(20));
+
+Succeed.
+
+SQL> insert into MINUS_T1 values(1, '1');
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(1, '1');
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(2, null);
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(2, null);
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(null, null);
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(null, null);
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(null, '2');
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(null, '2');
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(1, '3');
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(1, '3');
+
+1 rows affected.
+
+SQL> insert into MINUS_T1 values(2, '3');
+
+1 rows affected.
+
+SQL> insert into MINUS_T2 values(1, '1');
+
+1 rows affected.
+
+SQL> insert into MINUS_T2 values(1, null);
+
+1 rows affected.
+
+SQL> insert into MINUS_T2 values(2, null);
+
+1 rows affected.
+
+SQL> insert into MINUS_T2 values(null, '2');
+
+1 rows affected.
+
+SQL> insert into MINUS_T2 values(null, null);
+
+1 rows affected.
+
+SQL> insert into MINUS_T2 values(3, 1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select * from MINUS_T1 MINUS select * from MINUS_T2 order by 1,2;
+
+A            B                   
+------------ --------------------
+1            3                   
+2            3                   
+
+2 rows fetched.
+
+SQL> select a, b from MINUS_T1 MINUS select b, a from MINUS_T2 order by 1,2;
+
+A                    B                   
+-------------------- --------------------
+2                    3                   
+
+1 rows fetched.
+
+SQL> select * from MINUS_T1 EXCEPT ALL select * from MINUS_T2 order by 1,2;
+
+A            B                   
+------------ --------------------
+1            1                   
+1            3                   
+1            3                   
+2            3                   
+2                                
+             2                   
+                                 
+
+7 rows fetched.
+
+SQL> select a, b from MINUS_T1 EXCEPT ALL select b, a from MINUS_T2 order by 1,2;
+
+A                    B                   
+-------------------- --------------------
+1                    1                   
+1                    3                   
+2                    3                   
+2                                        
+                     2                   
+                                         
+
+6 rows fetched.
+
+SQL> select * from MINUS_T1 INTERSECT select * from MINUS_T2 order by 1,2;
+
+A            B                   
+------------ --------------------
+1            1                   
+2                                
+             2                   
+                                 
+
+4 rows fetched.
+
+SQL> select a,b from MINUS_T1 INTERSECT select b,a from MINUS_T2 order by 1,2;
+
+A                    B                   
+-------------------- --------------------
+1                    1                   
+1                    3                   
+2                                        
+                     2                   
+                                         
+
+5 rows fetched.
+
+SQL> select * from MINUS_T1 INTERSECT ALL select * from MINUS_T2 order by 1,2;
+
+A            B                   
+------------ --------------------
+1            1                   
+2                                
+             2                   
+                                 
+
+4 rows fetched.
+
+SQL> select a,b from MINUS_T1 INTERSECT ALL select b,a from MINUS_T2 order by 1,2;
+
+A                    B                   
+-------------------- --------------------
+1                    1                   
+1                    3                   
+2                                        
+                     2                   
+                                         
+
+5 rows fetched.
+
+SQL>
+SQL> DROP TABLE MINUS_T1;
+
+Succeed.
+
+SQL> DROP TABLE MINUS_T2;
+
+Succeed.
+
+SQL> 
+SQL> --bugfix: external table minus
+SQL> drop table if exists external_table_001;
+
+Succeed.
+
+SQL> CREATE OR REPLACE DIRECTORY external_table_directory as '/home/regress/CantianKernel/pkg/test/gs_regress/data';
+
+Succeed.
+
+SQL> CREATE TABLE external_table_001
+  2 (
+  3 C_ID INT,
+  4 C_D_ID bigint NOT NULL,
+  5 C_W_ID tinyint unsigned NOT NULL,
+  6 C_FIRST VARCHAR(64) NOT NULL,
+  7 C_MIDDLE CHAR(2),
+  8 C_LAST VARCHAR(64) NOT NULL,
+  9 C_STREET_1 VARCHAR(20) NOT NULL,
+ 10 C_STREET_2 VARCHAR(20),
+ 11 C_CITY VARCHAR(20) NOT NULL,
+ 12 C_STATE CHAR(2) NOT NULL,
+ 13 C_ZIP CHAR(9) NOT NULL,
+ 14 C_PHONE CHAR(16) NOT NULL,
+ 15 C_SINCE TIMESTAMP,
+ 16 C_CREDIT CHAR(2) NOT NULL,
+ 17 C_CREDIT_LIM NUMERIC(12,2),
+ 18 C_DISCOUNT NUMERIC(4,4),
+ 19 C_BALANCE NUMERIC(12,2),
+ 20 C_YTD_PAYMENT REAL NOT NULL,
+ 21 C_PAYMENT_CNT NUMBER NOT NULL,
+ 22 C_DELIVERY_CNT BOOL NOT NULL,
+ 23 C_END DATE NOT NULL,
+ 24 C_VCHAR VARCHAR(1000),
+ 25 C_VARCHAR1 VARCHAR2(3000),
+ 26 C_VARCHAR2 VARCHAR2(3000),
+ 27 C_VARCHAR3 VARCHAR2(3000),
+ 28 C_VARCHAR4 VARCHAR2(3000),
+ 29 C_VARCHAR5 VARCHAR2(100 BYTE) ,
+ 30 C_FLOAT FLOAT ,
+ 31 C_DOUBLE DOUBLE ,
+ 32 C_DECIMAL DECIMAL ,
+ 33 C_BINARY BINARY(100) ,
+ 34 C_VARBINARY VARBINARY(100) ,
+ 35 C_BOOLEAN BOOLEAN ,
+ 36 C_RAW RAW(100)
+ 37 )
+ 38 ORGANIZATION EXTERNAL
+ 39 (
+ 40 TYPE LOADER
+ 41 DIRECTORY external_table_directory
+ 42 ACCESS PARAMETERS
+ 43     (
+ 44     RECORDS DELIMITED BY newline
+ 45     FIELDS TERMINATED BY ','
+ 46     )
+ 47     LOCATION 'external.sql'
+ 48 );
+
+Succeed.
+
+SQL> select count(1) from external_table_001;
+
+COUNT(1)            
+--------------------
+100                 
+
+1 rows fetched.
+
+SQL> select * from external_table_001 except select * from external_table_001;
+
+C_ID         C_D_ID               C_W_ID       C_FIRST                                                          C_MIDDLE C_LAST                                                           C_STREET_1           C_STREET_2           C_CITY               C_STATE C_ZIP     C_PHONE          C_SINCE                          C_CREDIT C_CREDIT_LIM                             C_DISCOUNT                               C_BALANCE                                C_YTD_PAYMENT        C_PAYMENT_CNT                            C_DELIVERY_CNT C_END                  C_VCHAR                                                          C_VARCHAR1                                                       C_VARCHAR2                                                       C_VARCHAR3                                                       C_VARCHAR4                                                       C_VARCHAR5                                                       C_FLOAT              C_DOUBLE             C_DECIMAL                                C_BINARY                                                         C_VARBINARY                                                      C_BOOLEAN C_RAW                                                           
+------------ -------------------- ------------ ---------------------------------------------------------------- -------- ---------------------------------------------------------------- -------------------- -------------------- -------------------- ------- --------- ---------------- -------------------------------- -------- ---------------------------------------- ---------------------------------------- ---------------------------------------- -------------------- ---------------------------------------- -------------- ---------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- -------------------- ---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select count(1) from (select * from external_table_001 minus select * from external_table_001);
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(1) from (select * from external_table_001 union select * from external_table_001);
+
+COUNT(1)            
+--------------------
+100                 
+
+1 rows fetched.
+
+SQL> select count(1) from (select * from external_table_001 intersect select * from external_table_001);
+
+COUNT(1)            
+--------------------
+100                 
+
+1 rows fetched.
+
+SQL> 
+SQL> create table t_minus_1 as select * from external_table_001;
+
+Succeed.
+
+SQL> create table t_minus_2 as select * from external_table_001;
+
+Succeed.
+
+SQL> select count(1) from (select * from t_minus_1 union select * from external_table_001);
+
+COUNT(1)            
+--------------------
+100                 
+
+1 rows fetched.
+
+SQL> select count(1) from (select * from t_minus_1 except select * from external_table_001);
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(1) from (select * from t_minus_1 except all select * from external_table_001);
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(1) from (select * from t_minus_1 intersect select * from external_table_001);
+
+COUNT(1)            
+--------------------
+100                 
+
+1 rows fetched.
+
+SQL> select count(1) from (select * from t_minus_1 union select * from external_table_001);
+
+COUNT(1)            
+--------------------
+100                 
+
+1 rows fetched.
+
+SQL> select count(1) from (select * from t_minus_1 minus select * from t_minus_2);
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(1) from (select * from t_minus_1 intersect select * from t_minus_2);
+
+COUNT(1)            
+--------------------
+100                 
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table external_table_001;
+
+Succeed.
+
+SQL> drop table t_minus_1;
+
+Succeed.
+
+SQL> drop table t_minus_2;
+
+Succeed.
+
+SQL> drop DIRECTORY external_table_directory;
+
+Succeed.
+
+SQL> 
+
+

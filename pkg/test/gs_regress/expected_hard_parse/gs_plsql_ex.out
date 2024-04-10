@@ -1,0 +1,5947 @@
+
+
+SQL> --
+SQL> -- gs_plsql_ex
+SQL> -- testing procedure
+SQL> --
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> SELECT COUNT(*) FROM SYS.SYS_DEPENDENCIES D  WHERE D.D_OWNER# NOT IN (SELECT ID FROM SYS.SYS_USERS);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> create user gs_plsql_ex identified by root_1234;
+
+Succeed.
+
+SQL> grant dba to gs_plsql_ex;
+
+Succeed.
+
+SQL> grant select on SYS.SYS_DEPENDENCIES to gs_plsql_ex;
+
+Succeed.
+
+SQL> grant select on SYS.SYS_PROCS to gs_plsql_ex;
+
+Succeed.
+
+SQL> grant select on SYS.DV_ME to gs_plsql_ex;
+
+Succeed.
+
+SQL> conn gs_plsql_ex/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --test: dependency will be recorded when create procedure or function
+SQL> --begin
+SQL> DROP TABLE IF EXISTS DEPD_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS DEPD_T2;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS DEPD_T3;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS DEPD_T4;
+
+Succeed.
+
+SQL> CREATE TABLE DEPD_T1(F1 INT, F2 VARCHAR2(20));
+
+Succeed.
+
+SQL> CREATE TABLE DEPD_T2(F1 INT, F2 VARCHAR2(20));
+
+Succeed.
+
+SQL> CREATE TABLE DEPD_T3(F1 INT, F2 VARCHAR2(20));
+
+Succeed.
+
+SQL> CREATE TABLE DEPD_T4(F1 INT, F2 VARCHAR2(20));
+
+Succeed.
+
+SQL> 
+SQL> SELECT COUNT(*) FROM SYS.SYS_DEPENDENCIES D, SYS.DV_ME M WHERE D.D_OWNER# = M.USER_ID;
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> SELECT * FROM USER_DEPENDENCIES ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+
+0 rows fetched.
+
+SQL> 
+SQL> create or replace view depd_v1 as select * from depd_t1;
+
+Succeed.
+
+SQL> 
+SQL> drop sequence if exists depd_s1;
+
+Succeed.
+
+SQL> CREATE SEQUENCE depd_s1 START WITH 1 INCREMENT BY 1 NOMAXVALUE NOCYCLE NOCACHE;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure depd_p1(a int, b varchar2)
+  2 as
+  3 c int := 1;
+  4 d int := 2;
+  5 begin
+  6   insert into depd_t1 values(a,b);
+  7   commit;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='DEPD_P1';
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      DEPD_P1                                                          PROCEDURE    GS_PLSQL_EX                                                      DEPD_T1                                                          TABLE          
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace function depd_f1(a int)
+  2 return int
+  3 as
+  4 c int;
+  5 begin
+  6   return a;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function depd_f2(a int)
+  2 return int
+  3 as
+  4 c int;
+  5 begin
+  6 	select count(*) into c from dual;
+  7   return c+1;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='DEPD_F2';
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      DEPD_F2                                                          FUNCTION     PUBLIC                                                           DUAL                                                             SYNONYM        
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace function depd_f3(a int)
+  2 return int
+  3 as
+  4 c int;
+  5 begin	
+  6   return a;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function depd_f4(a int, b int)
+  2 return int
+  3 as
+  4 c int;
+  5 begin
+  6   return a + b;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function depd_f5(a int)
+  2 return int
+  3 as
+  4 c int;
+  5 begin
+  6 	select count(*) into c from depd_t1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace view depd_v2 as select depd_f2(f1) as a, f2 from depd_t1;
+
+Succeed.
+
+SQL> create or replace view depd_v3 as select * from depd_v2;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE SYNONYM  my_objects_s  FOR SYS.USER_OBJECTS;
+
+Succeed.
+
+SQL> CREATE OR REPLACE SYNONYM  my_depd_f3  FOR depd_f3;
+
+Succeed.
+
+SQL> CREATE OR REPLACE SYNONYM  my_depd_s1  FOR depd_s1;
+
+CT-00828, The object GS_PLSQL_EX.DEPD_S1 does not exist
+SQL> 
+SQL> Create Or Replace Procedure TEST_P1_REF
+  2 As
+  3 C Int := 1;
+  4 D Varchar2(20) := '2';
+  5 Begin
+  6 	Select depd_f1(4) Into C From Dual;
+  7 	Select count(*) Into C From depd_v3;
+  8 	depd_p1(depd_f2(2),D);
+  9 	execute immediate 'select count(*) from depd_t1' into c;
+ 10 	select depd_s1.nextval into c from dual;
+ 11 	select count(*) into c from my_objects_s;
+ 12 	select count(*) into c from my_objects_s where object_id = depd_f3(100);	
+ 13 	select count(*) into c from SYS.V$LOGFILE;
+ 14 End;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TEST_P1_REF' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F1                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F2                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F3                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_P1                                                          PROCEDURE      
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_S1                                                          SEQUENCE       
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_V3                                                          VIEW           
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      MY_OBJECTS_S                                                     SYNONYM        
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    PUBLIC                                                           DUAL                                                             SYNONYM        
+GS_PLSQL_EX                                                      TEST_P1_REF                                                      PROCEDURE    SYS                                                              V$LOGFILE                                                        VIEW           
+
+9 rows fetched.
+
+SQL> 
+SQL> --TEST recursive call 
+SQL> Create Or Replace Procedure TEST_P2_REF
+  2 AS
+  3     a number(10, 0) ;
+  4 	D Varchar2(20) := '2';
+  5 begin
+  6 	Select count(*) Into a From depd_v3;
+  7 	depd_p1(depd_f2(2),D);
+  8 	
+  9     begin
+ 10         select  depd_f1(1) + 1 into a from dual;
+ 11     exception
+ 12         when no_data_found then
+ 13             dbe_output.print_line(depd_f2(2));
+ 14     end;
+ 15     select count(*) into a from depd_t1;
+ 16 end; 
+ 17 /
+
+Succeed.
+
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TEST_P2_REF' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      TEST_P2_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F1                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P2_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F2                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P2_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_P1                                                          PROCEDURE      
+GS_PLSQL_EX                                                      TEST_P2_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_T1                                                          TABLE          
+GS_PLSQL_EX                                                      TEST_P2_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_V3                                                          VIEW           
+GS_PLSQL_EX                                                      TEST_P2_REF                                                      PROCEDURE    PUBLIC                                                           DUAL                                                             SYNONYM        
+
+6 rows fetched.
+
+SQL> 
+SQL> Create Or Replace Procedure TEST_P3_REF
+  2 As
+  3 C Int := 1;
+  4 D Varchar2(20) := '2';
+  5 Begin
+  6 	Select count(*) Into C From depd_v3;
+  7 End;
+  8 /
+
+Succeed.
+
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TEST_P3_REF' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      TEST_P3_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_V3                                                          VIEW           
+
+1 rows fetched.
+
+SQL> 
+SQL> Create Or Replace Procedure TEST_P4_REF
+  2 As
+  3 C Int := 1;
+  4 D Varchar2(20) := '2';
+  5 Begin
+  6 	Select depd_f1(1) Into C From dual;
+  7 End;
+  8 /
+
+Succeed.
+
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TEST_P4_REF' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      TEST_P4_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F1                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P4_REF                                                      PROCEDURE    PUBLIC                                                           DUAL                                                             SYNONYM        
+
+2 rows fetched.
+
+SQL> 
+SQL> Create Or Replace Procedure TEST_P5_REF
+  2 As
+  3 C Int := 1;
+  4 D Varchar2(20) := '2';
+  5 Begin
+  6 	Select depd_f4(depd_f1(1),depd_f2(2)) Into C From dual;
+  7 End;
+  8 /
+
+Succeed.
+
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TEST_P5_REF' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      TEST_P5_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F1                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P5_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F2                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P5_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F4                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P5_REF                                                      PROCEDURE    PUBLIC                                                           DUAL                                                             SYNONYM        
+
+4 rows fetched.
+
+SQL> 
+SQL> --test explicit cursor and implicit cursor
+SQL> Create Or Replace Procedure TEST_P6_REF
+  2 As
+  3 cursor c1 is select f1 from depd_t1;
+  4 cursor c2(xx int default 10) is select f1 from depd_t2 where f1 = xx;
+  5 b int;
+  6 Begin
+  7 	open c1;
+  8 	open c2(20);
+  9 	FETCH c2 into b;
+ 10 	
+ 11 	for rec in (select f1  from depd_t3) loop 
+ 12 	  dbe_output.print_line(rec.f1); 
+ 13 	end loop; 
+ 14 End;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TEST_P6_REF' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      TEST_P6_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_T1                                                          TABLE          
+GS_PLSQL_EX                                                      TEST_P6_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_T2                                                          TABLE          
+GS_PLSQL_EX                                                      TEST_P6_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_T3                                                          TABLE          
+
+3 rows fetched.
+
+SQL> drop Procedure TEST_P6_REF;
+
+Succeed.
+
+SQL> 
+SQL> --test ref cursor
+SQL> Create Or Replace Procedure TEST_P7_REF
+  2 As
+  3   type rc is ref cursor;   
+  4   l_cursor rc; 
+  5   sys_cur sys_refcursor;
+  6 begin 
+  7   if (to_char(sysdate,'dd') = 30) then 
+  8 	  -- ref cursor with dynamic sql 
+  9 	  open l_cursor for 'select * from depd_t1'; 
+ 10   elsif (to_char(sysdate,'dd') = 29) then 
+ 11 	  -- ref cursor with static sql 
+ 12 	  open l_cursor for select * from depd_t2; 
+ 13   else 
+ 14 	   -- with ref cursor with static sql 
+ 15 	   open l_cursor for select * from depd_t3; 
+ 16   end if; 
+ 17   
+ 18   open sys_cur for select * from depd_t4;
+ 19 end; 
+ 20 / 
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TEST_P7_REF' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      TEST_P7_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_T2                                                          TABLE          
+GS_PLSQL_EX                                                      TEST_P7_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_T3                                                          TABLE          
+GS_PLSQL_EX                                                      TEST_P7_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_T4                                                          TABLE          
+
+3 rows fetched.
+
+SQL> drop Procedure TEST_P7_REF;	
+
+Succeed.
+
+SQL> 
+SQL> --test trigger
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_DEPD_T1 BEFORE UPDATE ON DEPD_T1
+  2 BEGIN
+  3   INSERT INTO DEPD_T2 VALUES(depd_f2(1), 'NEW');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_DEPD_T2 BEFORE UPDATE ON DEPD_T1
+  2 BEGIN
+  3   INSERT INTO DEPD_T3 VALUES(1, 'NEW');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_DEPD_T3 BEFORE UPDATE ON DEPD_T3
+  2 BEGIN
+  3   INSERT INTO DEPD_T1 VALUES(1, 'NEW');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TRIG_BEFORE_DEPD_T1' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      TRIG_BEFORE_DEPD_T1                                              TRIGGER      GS_PLSQL_EX                                                      DEPD_F2                                                          FUNCTION       
+GS_PLSQL_EX                                                      TRIG_BEFORE_DEPD_T1                                              TRIGGER      GS_PLSQL_EX                                                      DEPD_T1                                                          TABLE          
+GS_PLSQL_EX                                                      TRIG_BEFORE_DEPD_T1                                              TRIGGER      GS_PLSQL_EX                                                      DEPD_T2                                                          TABLE          
+
+3 rows fetched.
+
+SQL> 
+SQL> drop TRIGGER TRIG_BEFORE_DEPD_T1;
+
+Succeed.
+
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TRIG_BEFORE_DEPD_T1' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --trigger will be drop when table is dropped
+SQL> drop table DEPD_T1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT OBJECT_NAME, STATUS FROM USER_OBJECTS WHERE OBJECT_NAME IN ('DEPD_P1','TEST_P1_REF','TRIG_BEFORE_DEPD_T3', 'DEPD_F5') ORDER BY OBJECT_NAME;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+DEPD_F5                                                          UNKNOWN
+DEPD_P1                                                          UNKNOWN
+TEST_P1_REF                                                      UNKNOWN
+TRIG_BEFORE_DEPD_T3                                              UNKNOWN
+
+4 rows fetched.
+
+SQL> 
+SQL> --test compile objects by user
+SQL> exec dbe_util.compile_schema('abc', false);
+
+CT-00932, [1:2] PL/SQL(GS_PLSQL_EX.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_UTIL.COMPILE_SCHEMA) terminated with execute errors
+CT-00781, The user ABC does not exist.
+
+SQL> exec dbe_util.compile_schema('abc', true);
+
+CT-00932, [1:2] PL/SQL(GS_PLSQL_EX.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_UTIL.COMPILE_SCHEMA) terminated with execute errors
+CT-00781, The user ABC does not exist.
+
+SQL> exec dbe_util.compile_schema('gs_plsql_ex', false);
+
+PL/SQL procedure successfully completed.
+
+SQL> exec dbe_util.compile_schema('gs_plsql_ex', NULL);
+
+PL/SQL procedure successfully completed.
+
+SQL> exec dbe_util.compile_schema('gs_plsql_ex', true);
+
+PL/SQL procedure successfully completed.
+
+SQL> exec dbe_util.compile_schema('gs_plsql_ex', false);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT OBJECT_NAME, STATUS FROM USER_OBJECTS WHERE OBJECT_NAME IN ('DEPD_P1','TEST_P1_REF','TRIG_BEFORE_DEPD_T3','DEPD_F5') ORDER BY OBJECT_NAME;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+DEPD_F5                                                          INVALID
+DEPD_P1                                                          INVALID
+TEST_P1_REF                                                      INVALID
+TRIG_BEFORE_DEPD_T3                                              INVALID
+
+4 rows fetched.
+
+SQL> 
+SQL> 
+SQL> SELECT COUNT(*) FROM SYS.SYS_DEPENDENCIES D, SYS.SYS_PROCS P, SYS.DV_ME M
+  2 WHERE P.USER# = M.USER_ID AND D.D_OWNER# = M.USER_ID AND D.D_OBJ# = P.OBJ# AND P.NAME='TRIG_BEFORE_DEPD_T2';
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select object_name, status from user_objects where object_name in ('DEPD_P1','TEST_P1_REF') order by object_name;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+DEPD_P1                                                          INVALID
+TEST_P1_REF                                                      INVALID
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table DEPD_T2;
+
+Succeed.
+
+SQL> select object_name, status from user_objects where object_name in ('TRIG_BEFORE_DEPD_T1') order by object_name;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+
+0 rows fetched.
+
+SQL> 
+SQL> 
+SQL> drop function DEPD_F2;
+
+Succeed.
+
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='DEPD_F2';
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop Procedure Test_P1_Ref;
+
+Succeed.
+
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='TEST_P1_REF' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+
+0 rows fetched.
+
+SQL> --end
+SQL> 
+SQL> drop table if exists depd_t3;
+
+Succeed.
+
+SQL> create table depd_t3(a int);
+
+Succeed.
+
+SQL> create or replace SYNONYM MY_SYNONYM for depd_t3;
+
+Succeed.
+
+SQL> SELECT * FROM USER_DEPENDENCIES WHERE NAME='MY_SYNONYM' ORDER BY REFERENCED_OWNER, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      MY_SYNONYM                                                       SYNONYM      GS_PLSQL_EX                                                      DEPD_T3                                                          TABLE          
+
+1 rows fetched.
+
+SQL> SELECT OBJECT_NAME, STATUS FROM USER_OBJECTS WHERE OBJECT_NAME='MY_SYNONYM';
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+MY_SYNONYM                                                       VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> drop TABLE depd_t3;
+
+Succeed.
+
+SQL> SELECT OBJECT_NAME, STATUS FROM USER_OBJECTS WHERE OBJECT_NAME='MY_SYNONYM';
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+MY_SYNONYM                                                       UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> --test soft parse
+SQL> DROP SYNONYM my_objects_s;
+
+Succeed.
+
+SQL> drop sequence depd_s1;
+
+Succeed.
+
+SQL> drop view depd_v3;
+
+Succeed.
+
+SQL> 
+SQL> Create Or Replace Procedure TEST_P1_REF
+  2 As
+  3 C Int := 1;
+  4 D Varchar2(20) := '2';
+  5 Begin
+  6 	Select depd_f1(4) Into C From Dual;
+  7 	Select count(*) Into C From depd_v3;
+  8 	select depd_s1.nextval into c from dual;
+  9 	select count(*) into c from my_objects_s;	
+ 10 End;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_EX.TEST_P1_REF) terminated with compiling errors
+[7:23] PLC-00843 The table or view GS_PLSQL_EX.DEPD_V3 does not exist.
+[8:9] PLC-00848 The sequence GS_PLSQL_EX.DEPD_S1 does not exist.
+[9:23] PLC-00843 The table or view GS_PLSQL_EX.MY_OBJECTS_S does not exist.
+
+
+SQL> 
+SQL> --drop all objects
+SQL> SELECT COUNT(*) FROM SYS.SYS_DEPENDENCIES D, SYS.DV_ME M WHERE D.D_OWNER# = M.USER_ID;
+
+COUNT(*)            
+--------------------
+8                   
+
+1 rows fetched.
+
+SQL> SELECT * FROM USER_DEPENDENCIES ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      MY_DEPD_F3                                                       SYNONYM      GS_PLSQL_EX                                                      DEPD_F3                                                          FUNCTION       
+GS_PLSQL_EX                                                      MY_SYNONYM                                                       SYNONYM      GS_PLSQL_EX                                                      DEPD_T3                                                          TABLE          
+GS_PLSQL_EX                                                      TEST_P4_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F1                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P4_REF                                                      PROCEDURE    PUBLIC                                                           DUAL                                                             SYNONYM        
+GS_PLSQL_EX                                                      TEST_P5_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F1                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P5_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F2                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P5_REF                                                      PROCEDURE    GS_PLSQL_EX                                                      DEPD_F4                                                          FUNCTION       
+GS_PLSQL_EX                                                      TEST_P5_REF                                                      PROCEDURE    PUBLIC                                                           DUAL                                                             SYNONYM        
+
+8 rows fetched.
+
+SQL> DROP SYNONYM MY_SYNONYM;
+
+Succeed.
+
+SQL> DROP PROCEDURE TEST_P2_REF;
+
+Succeed.
+
+SQL> DROP PROCEDURE DEPD_P1;
+
+Succeed.
+
+SQL> drop function DEPD_F4;
+
+Succeed.
+
+SQL> DROP PROCEDURE TEST_P4_REF;
+
+Succeed.
+
+SQL> DROP PROCEDURE TEST_P5_REF;
+
+Succeed.
+
+SQL> 
+SQL> SELECT COUNT(*) FROM SYS.SYS_DEPENDENCIES D, SYS.DV_ME M WHERE D.D_OWNER# = M.USER_ID;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> SELECT * FROM USER_DEPENDENCIES ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      MY_DEPD_F3                                                       SYNONYM      GS_PLSQL_EX                                                      DEPD_F3                                                          FUNCTION       
+
+1 rows fetched.
+
+SQL> 
+SQL> --test
+SQL> --sql context which with sequence will be reparse.
+SQL> --begin
+SQL> create sequence ALL_DEPENDENCIES_012_Seq_01  increment by 2 start with 1 maxvalue 50 cache 10 cycle noorder;
+
+Succeed.
+
+SQL> create table  ALL_DEPENDENCIES_012_Tab_01(id  int,name varchar(100),ctime date);
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure ALL_DEPENDENCIES_012_Proc_01 
+  2 is 
+  3 A varchar(30);
+  4 begin
+  5 insert into ALL_DEPENDENCIES_012_Tab_01 values (ALL_DEPENDENCIES_012_Seq_01.nextval,'test','2018-09-17 16:10:28');
+  6 select ALL_DEPENDENCIES_012_Seq_01.nextval  into A from dual ;
+  7 return ;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> drop sequence ALL_DEPENDENCIES_012_Seq_01;
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> create or replace procedure ALL_DEPENDENCIES_012_Proc_03 
+  2 is 
+  3 A varchar(30);
+  4 begin
+  5 insert into ALL_DEPENDENCIES_012_Tab_01 values (ALL_DEPENDENCIES_012_Seq_01.nextval,'test','2018-09-17 16:10:28');
+  6 select ALL_DEPENDENCIES_012_Seq_01.nextval  into A from dual ;
+  7 return ;
+  8 end;
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_EX.ALL_DEPENDENCIES_012_PROC_03) terminated with compiling errors
+[5:49] PLC-00848 The sequence GS_PLSQL_EX.ALL_DEPENDENCIES_012_SEQ_01 does not exist.
+[6:8] PLC-00848 The sequence GS_PLSQL_EX.ALL_DEPENDENCIES_012_SEQ_01 does not exist.
+
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> --test recompile OBJECTS
+SQL> --BEGIN
+SQL> CREATE TABLE DEPD_T1(F1 INT, F2 VARCHAR2(20));
+
+Succeed.
+
+SQL> CREATE OR REPLACE VIEW DEPD_V1 AS SELECT * FROM DEPD_T1;
+
+Succeed.
+
+SQL> 
+SQL> CREATE SEQUENCE DEPD_S1 START WITH 1 INCREMENT BY 1 NOMAXVALUE NOCYCLE NOCACHE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE SYNONYM  DEPD_SYN1  FOR DEPD_T1;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION DEPD_F1(A INT)
+  2 RETURN INT
+  3 AS
+  4 C INT;
+  5 BEGIN
+  6 	SELECT COUNT(*) INTO C FROM DEPD_T1;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DEPD_P1_REF
+  2 AS
+  3 C INT := 1;
+  4 D VARCHAR2(20) := '2';
+  5 BEGIN
+  6 	SELECT COUNT(*) INTO C FROM DEPD_V1;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DEPD_P2_REF
+  2 AS
+  3 C INT := 1;
+  4 D VARCHAR2(20) := '2';
+  5 BEGIN
+  6 	SELECT COUNT(*) INTO C FROM DEPD_SYN1;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DEPD_P3_REF
+  2 AS
+  3 CURSOR C1 IS SELECT F1 FROM DEPD_T1;
+  4 B INT;
+  5 BEGIN
+  6 	OPEN C1;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DEPD_P4_REF
+  2 AS
+  3 CURSOR C2(XX INT DEFAULT 10) IS SELECT F1 FROM DEPD_V1 WHERE F1 = XX;
+  4 B INT;
+  5 BEGIN
+  6 	OPEN C2(20);
+  7 	FETCH C2 INTO B;
+  8 	
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DEPD_P5_REF
+  2 AS
+  3 CURSOR C2(XX INT DEFAULT 10) IS SELECT F1 FROM DEPD_SYN1 WHERE F1 = XX;
+  4 B INT;
+  5 BEGIN
+  6 	OPEN C2(20);
+  7 	FETCH C2 INTO B;
+  8 	
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DEPD_P6_REF
+  2 AS
+  3 B INT;
+  4 BEGIN	
+  5 	FOR REC IN (SELECT F1  FROM DEPD_V1) LOOP 
+  6 	  dbe_output.print_line(REC.F1); 
+  7 	END LOOP; 
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DEPD_P7_REF
+  2 AS
+  3 B INT;
+  4 BEGIN	
+  5 	FOR REC IN (SELECT F1  FROM DEPD_SYN1) LOOP 
+  6 	  dbe_output.print_line(REC.F1); 
+  7 	END LOOP; 
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DEPD_P8_REF
+  2 AS
+  3 B INT;
+  4 BEGIN
+  5 	FOR REC IN (SELECT F1  FROM DEPD_SYN1 WHERE F1 = DEPD_F1(1)) LOOP 
+  6 	  dbe_output.print_line(REC.F1); 
+  7 	END LOOP; 
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE "depd_p9_ref"
+  2 AS
+  3 B INT;
+  4 BEGIN
+  5 	FOR REC IN (SELECT F1  FROM depd_syn1 WHERE F1 = depd_f1(1)) LOOP 
+  6 	  dbe_output.print_line(REC.F1); 
+  7 	END LOOP; 
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE DEPD_T1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT OBJECT_NAME, STATUS FROM USER_OBJECTS WHERE OBJECT_NAME LIKE 'DEPD%' ORDER BY OBJECT_NAME;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+DEPD_F1                                                          UNKNOWN
+DEPD_F3                                                          VALID  
+DEPD_F5                                                          INVALID
+DEPD_P1_REF                                                      UNKNOWN
+DEPD_P2_REF                                                      UNKNOWN
+DEPD_P3_REF                                                      UNKNOWN
+DEPD_P4_REF                                                      UNKNOWN
+DEPD_P5_REF                                                      UNKNOWN
+DEPD_P6_REF                                                      UNKNOWN
+DEPD_P7_REF                                                      UNKNOWN
+DEPD_P8_REF                                                      UNKNOWN
+DEPD_S1                                                          VALID  
+DEPD_SYN1                                                        UNKNOWN
+DEPD_T4                                                          VALID  
+DEPD_V1                                                          UNKNOWN
+DEPD_V2                                                          INVALID
+
+16 rows fetched.
+
+SQL> SELECT OBJECT_NAME, STATUS FROM USER_OBJECTS WHERE OBJECT_NAME LIKE 'depd%' ORDER BY OBJECT_NAME;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+depd_p9_ref                                                      UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> EXEC dbe_util.compile_schema('GS_PLSQL_EX', FALSE);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> SELECT OBJECT_NAME, STATUS FROM USER_OBJECTS WHERE OBJECT_NAME LIKE 'DEPD%' ORDER BY OBJECT_NAME;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+DEPD_F1                                                          INVALID
+DEPD_F3                                                          VALID  
+DEPD_F5                                                          INVALID
+DEPD_P1_REF                                                      INVALID
+DEPD_P2_REF                                                      INVALID
+DEPD_P3_REF                                                      INVALID
+DEPD_P4_REF                                                      INVALID
+DEPD_P5_REF                                                      INVALID
+DEPD_P6_REF                                                      INVALID
+DEPD_P7_REF                                                      INVALID
+DEPD_P8_REF                                                      INVALID
+DEPD_S1                                                          VALID  
+DEPD_SYN1                                                        INVALID
+DEPD_T4                                                          VALID  
+DEPD_V1                                                          INVALID
+DEPD_V2                                                          INVALID
+
+16 rows fetched.
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> 
+SQL> --test memcpy to self
+SQL> Declare
+  2   Sqlstr1 Varchar(60);
+  3   Sqlstr2 Varchar(60);
+  4 Begin 
+  5   Sqlstr1 := 'abcdefghfdskfjddsfds';
+  6   Sqlstr1 := Right(Sqlstr1,  Length(Sqlstr1) - 1);
+  7 
+  8 End;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test plm_entry will lose effectiveness after the references has been dropped.
+SQL> --begin
+SQL> create sequence ALL_DEPENDENCIES_010_Seq_01  increment by 2 start with 1 maxvalue 50 cache 10 cycle noorder;
+
+Succeed.
+
+SQL> create table  ALL_DEPENDENCIES_010_Tab_01(id  int,name varchar(100),ctime date);
+
+Succeed.
+
+SQL> insert into ALL_DEPENDENCIES_010_Tab_01 values (ALL_DEPENDENCIES_010_Seq_01.nextval,'test','2018-09-17 16:10:28');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure ALL_DEPENDENCIES_010_Func_01 
+  2 is 
+  3 A varchar(30);
+  4 begin
+  5 insert into ALL_DEPENDENCIES_010_Tab_01 values (ALL_DEPENDENCIES_010_Seq_01.nextval,'abc','2018-09-18 16:10:28');
+  6 select name into A  from ALL_DEPENDENCIES_010_Tab_01 where id =  3;
+  7 return ;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> create or replace function ALL_DEPENDENCIES_010_Func_02 return varchar
+  2 is 
+  3 A varchar(30);
+  4 begin
+  5 ALL_DEPENDENCIES_010_Func_01();
+  6 A := 1;
+  7 return A;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> select * from user_dependencies where name ='ALL_DEPENDENCIES_010_FUNC_01' order by REFERENCED_NAME; 
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      ALL_DEPENDENCIES_010_FUNC_01                                     PROCEDURE    GS_PLSQL_EX                                                      ALL_DEPENDENCIES_010_SEQ_01                                      SEQUENCE       
+GS_PLSQL_EX                                                      ALL_DEPENDENCIES_010_FUNC_01                                     PROCEDURE    GS_PLSQL_EX                                                      ALL_DEPENDENCIES_010_TAB_01                                      TABLE          
+
+2 rows fetched.
+
+SQL> select OBJECT_TYPE, STATUS from user_objects where OBJECT_NAME='ALL_DEPENDENCIES_010_FUNC_01';
+
+OBJECT_TYPE     STATUS 
+--------------- -------
+PROCEDURE       VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> select * from user_dependencies where name ='ALL_DEPENDENCIES_010_FUNC_02' order by REFERENCED_NAME; 
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      ALL_DEPENDENCIES_010_FUNC_02                                     FUNCTION     GS_PLSQL_EX                                                      ALL_DEPENDENCIES_010_FUNC_01                                     PROCEDURE      
+
+1 rows fetched.
+
+SQL> select OBJECT_TYPE, STATUS from user_objects where OBJECT_NAME='ALL_DEPENDENCIES_010_FUNC_02';
+
+OBJECT_TYPE     STATUS 
+--------------- -------
+FUNCTION        VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL>  drop table  ALL_DEPENDENCIES_010_Tab_01;
+
+Succeed.
+
+SQL> select OBJECT_TYPE, STATUS from user_objects where OBJECT_NAME='ALL_DEPENDENCIES_010_FUNC_02';
+
+OBJECT_TYPE     STATUS 
+--------------- -------
+FUNCTION        UNKNOWN
+
+1 rows fetched.
+
+SQL>  select * from user_dependencies where name ='ALL_DEPENDENCIES_010_FUNC_02' order by REFERENCED_NAME; 
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+GS_PLSQL_EX                                                      ALL_DEPENDENCIES_010_FUNC_02                                     FUNCTION     GS_PLSQL_EX                                                      ALL_DEPENDENCIES_010_FUNC_01                                     PROCEDURE      
+
+1 rows fetched.
+
+SQL> 
+SQL> select OBJECT_TYPE, STATUS from user_objects where OBJECT_NAME='ALL_DEPENDENCIES_010_FUNC_02';
+
+OBJECT_TYPE     STATUS 
+--------------- -------
+FUNCTION        UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> --create ALL_DEPENDENCIES_010_Func_02 again
+SQL> --expect error
+SQL> create or replace function ALL_DEPENDENCIES_010_Func_02 return varchar
+  2 is 
+  3 A varchar(30);
+  4 begin
+  5 ALL_DEPENDENCIES_010_Func_01();
+  6 A := 1;
+  7 return A;
+  8 end;
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_EX.ALL_DEPENDENCIES_010_FUNC_02) terminated with compiling errors
+[5:1] PLC-00944 PL/SQL(GS_PLSQL_EX.ALL_DEPENDENCIES_010_FUNC_01) terminated with compiling errors
+[4:13] PLC-00843 The table or view GS_PLSQL_EX.ALL_DEPENDENCIES_010_TAB_01 does not exist.
+[5:18] PLC-00843 The table or view GS_PLSQL_EX.ALL_DEPENDENCIES_010_TAB_01 does not exist.
+
+
+
+SQL> --end
+SQL> 
+SQL> --DTS2018101808429
+SQL> drop table if exists stud_blob;
+
+Succeed.
+
+SQL> create table stud_blob(c_id int,b_blob blob);
+
+Succeed.
+
+SQL> insert into stud_blob values(1,'35466');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create or replace procedure blob_0011()
+  2 as
+  3 cc_blob varchar(8000);
+  4 begin
+  5 update stud_blob set b_blob =b_blob || '35466' where c_id=1;
+  6 select b_blob into cc_blob from stud_blob where c_id=1;
+  7 dbe_output.print_line('result:'||cc_blob);
+  8 end;
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_EX.BLOB_0011) terminated with compiling errors
+[5:35] PLC-01320 Undefined operator: BLOB || CHAR
+
+
+SQL> call blob_0011();
+
+CT-00944, PL/SQL(GS_PLSQL_EX.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00944 PL/SQL(GS_PLSQL_EX.BLOB_0011) terminated with compiling errors
+[5:35] PLC-01320 Undefined operator: BLOB || CHAR
+
+
+SQL> create or replace procedure blob_0011()
+  2 as
+  3 cc_blob blob;
+  4 begin
+  5 update stud_blob set b_blob =b_blob || '35466' where c_id=1;
+  6 select b_blob into cc_blob from stud_blob where c_id=1;
+  7 dbe_output.print_line('result:'||cc_blob);
+  8 end;
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_EX.BLOB_0011) terminated with compiling errors
+[5:35] PLC-01320 Undefined operator: BLOB || CHAR
+
+
+SQL> call blob_0011();
+
+CT-00944, PL/SQL(GS_PLSQL_EX.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00944 PL/SQL(GS_PLSQL_EX.BLOB_0011) terminated with compiling errors
+[5:35] PLC-01320 Undefined operator: BLOB || CHAR
+
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> drop user gs_plsql_ex cascade;
+
+Succeed.
+
+SQL> SELECT COUNT(*) FROM SYS.SYS_DEPENDENCIES D  WHERE D.D_OWNER# NOT IN (SELECT ID FROM SYS.SYS_USERS);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop user if exists test_ctsql_plsql_ex_0121 cascade;
+
+Succeed.
+
+SQL> create user test_ctsql_plsql_ex_0121 identified by root_1234;
+
+Succeed.
+
+SQL> grant all privileges to test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> grant select on v$sqlarea to test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> grant DELETE on sys.WSR_SNAPSHOT to test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> grant DELETE on sys.WSR_SYS_STAT to test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> grant DELETE on sys.WSR_SYSTEM to test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> grant DELETE on sys.WSR_SYSTEM_EVENT to test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> grant DELETE on sys.WSR_SQLAREA to test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> grant DELETE on sys.WSR_PARAMETER to test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> conn test_ctsql_plsql_ex_0121/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> --test duplicate procedure and function
+SQL> --begin
+SQL> --EXPECT SUCCESS
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION DUP_TEST(A INT)
+  2 RETURN INT
+  3 AS
+  4 C INT;
+  5 BEGIN
+  6 	SELECT COUNT(*) INTO C FROM DUAL;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> --EXPECT ERROR
+SQL> CREATE OR REPLACE PROCEDURE DUP_TEST
+  2 AS
+  3 C INT := 1;
+  4 D VARCHAR2(20) := '2';
+  5 BEGIN
+  6 	SELECT COUNT(*) INTO C FROM DUAL;
+  7 END;
+  8 /
+
+CT-00604, Duplicate object name DUP_TEST
+SQL> 
+SQL> DROP FUNCTION IF EXISTS DUP_TEST;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> --test clob used in pl:DTS2018103108301
+SQL> --begin
+SQL> drop function if exists fun_lob_005;
+
+Succeed.
+
+SQL> drop function if exists fun_lob_006;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function fun_lob_005(num int) return clob
+  2 is
+  3  v_lang clob := 'abc';
+  4 BEGIN
+  5  FOR I IN 1 .. num 
+  6  LOOP
+  7   v_lang := v_lang || 'efg';	
+  8  END LOOP;
+  9  return v_lang;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function fun_lob_006(num int) return clob
+  2 is
+  3  v_lang clob := fun_lob_005(200);
+  4 BEGIN
+  5  FOR I IN 1 .. num 
+  6  LOOP
+  7   v_lang := v_lang || 'efg';	
+  8  END LOOP;
+  9  return v_lang;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> select fun_lob_006(10) from dual;
+
+FUN_LOB_006(10)                                                 
+----------------------------------------------------------------
+abcefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefgefg
+
+1 rows fetched.
+
+SQL> select fun_lob_005(10) from dual;
+
+FUN_LOB_005(10)                                                 
+----------------------------------------------------------------
+abcefgefgefgefgefgefgefgefgefgefg                               
+
+1 rows fetched.
+
+SQL> --end
+SQL> 
+SQL> --test use_native_datatype=false
+SQL> --expect success
+SQL> CREATE OR REPLACE PROCEDURE PL_DROP_SNAPSHOT_RANGE
+  2 (
+  3     LOW_SNAP_ID      IN BINARY_INTEGER,
+  4     HIGH_SNAP_ID     IN BINARY_INTEGER
+  5 )
+  6 AS
+  7 BEGIN
+  8     IF (LOW_SNAP_ID IS NULL OR HIGH_SNAP_ID IS NULL) THEN
+  9         THROW_EXCEPTION(-20000, 'LOW_SNAP_ID & HIGH_SNAP_ID CAN''T BE NULL!');
+ 10     END IF;
+ 11     
+ 12     FOR i IN LOW_SNAP_ID .. HIGH_SNAP_ID LOOP
+ 13     
+ 14         DELETE FROM sys.WSR_SNAPSHOT
+ 15          WHERE SNAP_ID = i;
+ 16 
+ 17         DELETE FROM sys.WSR_SYS_STAT
+ 18          WHERE SNAP_ID = i;        
+ 19 
+ 20         DELETE FROM sys.WSR_SYSTEM
+ 21          WHERE SNAP_ID = i; 
+ 22          
+ 23         DELETE FROM sys.WSR_SYSTEM_EVENT
+ 24          WHERE SNAP_ID = i;                  
+ 25    
+ 26         DELETE FROM sys.WSR_SQLAREA
+ 27          WHERE SNAP_ID = i;    
+ 28         
+ 29         DELETE FROM sys.WSR_PARAMETER
+ 30          WHERE SNAP_ID = i;         
+ 31          
+ 32         COMMIT;
+ 33     
+ 34     END LOOP;  
+ 35       
+ 36 END;
+ 37 /
+
+Succeed.
+
+SQL> 
+SQL> DROP PROCEDURE IF EXISTS PL_DROP_SNAPSHOT_RANGE;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> 
+SQL> --test error message
+SQL> --begin
+SQL> select SQL_ERR_MSG(602)||SQL_ERR_MSG(603)||SQL_ERR_MSG(604)||SQL_ERR_MSG(0)||SQL_ERR_MSG(-1)||SQL_ERR_MSG(2999)||SQL_ERR_MSG(3000) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> select SQL_ERR_MSG(100000) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> select SQL_ERR_MSG(100001) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> select SQL_ERR_MSG(-20000)||SQL_ERR_MSG(-20999) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> select SQL_ERR_MSG(-19999) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> select SQL_ERR_MSG(-21000) from dual;
+
+CT-00916, [1:8]PL/SQL:syntax error(sql_err_msg must to be used in PL/SQL)
+SQL> --end
+SQL> 
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, 50501);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+past_due:50501message of error code not found
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, 602);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+past_due:602Sql text is too long, length = %u
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2     past_due     EXCEPTION;
+  3     PRAGMA EXCEPTION_INIT (past_due, -50501);
+  4 BEGIN
+  5     IF 1 < 2 THEN
+  6       RAISE past_due;
+  7     END IF;
+  8   EXCEPTION
+  9   WHEN past_due THEN    
+ 10     dbe_output.print_line('past_due:'||SQL_ERR_CODE||SQL_ERR_MSG);
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[3:28] PLC-00908 PL/SQL internal program error(illegal error code for PRAGMA EXCEPTION_INIT).
+
+SQL> 
+SQL> --test continue use in pl:DTS2018110100910 
+SQL> --begin
+SQL> create or replace function test_loop return boolean is
+  2   FunctionResult boolean;
+  3   test_num       NUMBER;
+  4 begin
+  5   test_num := 0;
+  6   FOR i IN 1..10 LOOP
+  7     test_num := test_num + 1;
+  8     CONTINUE when i > 7;
+  9     test_num := test_num + 1;
+ 10     CONTINUE;
+ 11     test_num := test_num + 1;
+ 12   END LOOP;
+ 13   LOOP
+ 14     EXIT;
+ 15   END LOOP;
+ 16   dbe_output.print_line(test_num);
+ 17   IF test_num = 17 THEN
+ 18     FunctionResult := TRUE;
+ 19   ELSE
+ 20     FunctionResult := FALSE;
+ 21   END IF;
+ 22   return(FunctionResult);
+ 23 end test_loop;
+ 24 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_main_proc IS
+  2   flag     BOOLEAN;
+  3   num_type VARCHAR2(30);
+  4 BEGIN
+  5 
+  6   flag := test_loop();
+  7   IF flag = FALSE THEN
+  8     num_type := 'false';
+  9   ELSE
+ 10     num_type := 'true';
+ 11   END IF;
+ 12   dbe_output.print_line(num_type);
+ 13 
+ 14 END test_main_proc;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> EXECUTE test_main_proc();
+
+17
+true
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --test continue,exit,goto with label use in pl
+SQL> --begin
+SQL> DECLARE
+  2   aaa NUMBER;
+  3   i   NUMBER;
+  4 BEGIN
+  5   aaa := 2;
+  6   i := 1;
+  7   <<outer_loop>>
+  8   WHILE i < 6 LOOP
+  9   dbe_output.print_line('i:' || i);
+ 10     i := i + 1;
+ 11     FOR j IN 1..5 LOOP
+ 12     dbe_output.print_line('j:' || j);
+ 13       CONTINUE outer_loop WHEN j > 2;
+ 14       FOR k IN 1..5 LOOP
+ 15         dbe_output.print_line('k:' || k);
+ 16         CONTINUE outer_loop WHEN k > 2;
+ 17       END LOOP;
+ 18     END LOOP;
+ 19   END LOOP;
+ 20 END;
+ 21 /
+
+i:1
+j:1
+k:1
+k:2
+k:3
+i:2
+j:1
+k:1
+k:2
+k:3
+i:3
+j:1
+k:1
+k:2
+k:3
+i:4
+j:1
+k:1
+k:2
+k:3
+i:5
+j:1
+k:1
+k:2
+k:3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2   aaa NUMBER;
+  3   j   NUMBER;
+  4 BEGIN
+  5   aaa := 2;
+  6   j := 1;
+  7   FOR i IN 1..5 LOOP
+  8   dbe_output.print_line('i:' || i);
+  9     <<outer_loop>>
+ 10     WHILE j < 6 LOOP
+ 11     dbe_output.print_line('j:' || j);
+ 12     j := j + 1;
+ 13       FOR k IN 1..5 LOOP
+ 14         dbe_output.print_line('k:' || k);
+ 15         CONTINUE outer_loop WHEN k > 2;
+ 16       END LOOP;
+ 17     END LOOP;
+ 18   END LOOP;
+ 19 END;
+ 20 /
+
+i:1
+j:1
+k:1
+k:2
+k:3
+j:2
+k:1
+k:2
+k:3
+j:3
+k:1
+k:2
+k:3
+j:4
+k:1
+k:2
+k:3
+j:5
+k:1
+k:2
+k:3
+i:2
+i:3
+i:4
+i:5
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2   aaa NUMBER;
+  3   j   NUMBER;
+  4 BEGIN
+  5   aaa := 2;
+  6   j := 1;
+  7   FOR i IN 1..5 LOOP
+  8   dbe_output.print_line('i:' || i);
+  9     <<outer_loop>>
+ 10     WHILE j < 6 LOOP
+ 11     dbe_output.print_line('j:' || j);
+ 12     j := j + 1;
+ 13       FOR k IN 1..5 LOOP
+ 14         dbe_output.print_line('k:' || k);
+ 15         FOR l IN 1..5 LOOP
+ 16           dbe_output.print_line('l:' || l);
+ 17           EXIT outer_loop WHEN l > 2;
+ 18         END LOOP;
+ 19       END LOOP;
+ 20     END LOOP;
+ 21   END LOOP;
+ 22 END;
+ 23 /
+
+i:1
+j:1
+k:1
+l:1
+l:2
+l:3
+i:2
+j:2
+k:1
+l:1
+l:2
+l:3
+i:3
+j:3
+k:1
+l:1
+l:2
+l:3
+i:4
+j:4
+k:1
+l:1
+l:2
+l:3
+i:5
+j:5
+k:1
+l:1
+l:2
+l:3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2   aaa NUMBER;
+  3   j   NUMBER;
+  4   bbb NUMBER;
+  5 BEGIN
+  6   aaa := 2;
+  7   j := 1;
+  8   bbb := 0;
+  9   <<my_label>>
+ 10   bbb := bbb + 1;
+ 11   dbe_output.print_line('bbb:' || bbb);
+ 12   FOR i IN 1..5 LOOP
+ 13   dbe_output.print_line('i:' || i);
+ 14     <<outer_loop>>
+ 15     WHILE j < 6 LOOP
+ 16     dbe_output.print_line('j:' || j);
+ 17     j := j + 1;
+ 18       FOR k IN 1..5 LOOP
+ 19         dbe_output.print_line('k:' || k);
+ 20         FOR l IN 1..5 LOOP
+ 21           dbe_output.print_line('l:' || l);
+ 22           EXIT outer_loop WHEN bbb = 2;
+ 23           GOTO my_label;
+ 24         END LOOP;
+ 25       END LOOP;
+ 26     END LOOP;
+ 27   END LOOP;
+ 28 END;
+ 29 /
+
+bbb:1
+i:1
+j:1
+k:1
+l:1
+bbb:2
+i:1
+j:2
+k:1
+l:1
+i:2
+j:3
+k:1
+l:1
+i:3
+j:4
+k:1
+l:1
+i:4
+j:5
+k:1
+l:1
+i:5
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --test goto with label invalid
+SQL> --begin
+SQL> DECLARE
+  2   bbb NUMBER;
+  3 BEGIN
+  4   bbb := 1;
+  5   dbe_output.print_line('bbb:' || bbb);
+  6   GOTO my_label;
+  7   FOR i IN 1..5 LOOP
+  8     <<my_label>>
+  9     bbb := bbb + 1;
+ 10     dbe_output.print_line('bbb:' || bbb);
+ 11   END LOOP;
+ 12 END;
+ 13 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[6:3] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label(ctl_block depth more than goto))
+
+SQL> 
+SQL> DECLARE
+  2   bbb NUMBER;
+  3 BEGIN
+  4   bbb := 1;
+  5   dbe_output.print_line('bbb:' || bbb);
+  6   GOTO my_label;
+  7   WHILE bbb < 5 LOOP
+  8     <<my_label>>
+  9     bbb := bbb + 1;
+ 10     dbe_output.print_line('bbb:' || bbb);
+ 11   END LOOP;
+ 12 END;
+ 13 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[6:3] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label(ctl_block depth more than goto))
+
+SQL> 
+SQL> DECLARE
+  2   bbb NUMBER;
+  3 BEGIN
+  4   bbb := 1;
+  5   dbe_output.print_line('bbb:' || bbb);
+  6   GOTO my_label;
+  7   IF bbb = 1 THEN
+  8     <<my_label>>
+  9     dbe_output.print_line('bbb = 1');
+ 10     bbb := bbb + 1;
+ 11   ELSIF bbb = 2 THEN
+ 12     dbe_output.print_line('bbb = 2');
+ 13   END IF;
+ 14 END;
+ 15 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[6:3] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label(ctl_block depth more than goto))
+
+SQL> 
+SQL> DECLARE
+  2   bbb NUMBER;
+  3 BEGIN
+  4   bbb := 1;
+  5   dbe_output.print_line('bbb:' || bbb);
+  6   IF bbb = 1 THEN
+  7     <<my_label>>
+  8     dbe_output.print_line('bbb = 1');
+  9     bbb := bbb + 1;
+ 10   ELSIF bbb = 2 THEN
+ 11     GOTO my_label;
+ 12     dbe_output.print_line('bbb = 2');
+ 13   END IF;
+ 14 END;
+ 15 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[11:5] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label(not in equal ctl_block))
+
+SQL> 
+SQL> DECLARE
+  2   bbb NUMBER;
+  3 BEGIN
+  4   bbb := 3;
+  5   dbe_output.print_line('bbb:' || bbb);
+  6   CASE bbb
+  7   WHEN 1 THEN
+  8     <<my_label>>
+  9     dbe_output.print_line('bbb = 1');
+ 10     bbb := bbb + 1;
+ 11   WHEN 2 THEN
+ 12     dbe_output.print_line('bbb = 2');
+ 13     bbb := bbb + 1;
+ 14     GOTO my_label;
+ 15   ELSE
+ 16     dbe_output.print_line('bbb = 3');
+ 17   END CASE;
+ 18 END;
+ 19 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[14:5] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label(not in equal ctl_block))
+
+SQL> 
+SQL> DECLARE
+  2   aaa NUMBER;
+  3 BEGIN
+  4   aaa := 2;
+  5   <<my_label>>
+  6   FOR l IN 1..3 LOOP
+  7     GOTO my_label;
+  8     dbe_output.print_line('l:' || l);
+  9   END LOOP;
+ 10   <<my_label>>
+ 11   aaa := 3;
+ 12 END;
+ 13 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[7:5] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label)
+
+SQL> 
+SQL> DECLARE
+  2   aaa NUMBER;
+  3 BEGIN
+  4   aaa := 2;
+  5   BEGIN
+  6   FOR l IN 1..3 LOOP
+  7     GOTO my_label;
+  8     dbe_output.print_line('l:' || l);
+  9   END LOOP;
+ 10   END;
+ 11   aaa := 3;
+ 12 EXCEPTION
+ 13   when no_data_found then
+ 14     <<my_label>>
+ 15     dbe_output.print_line(aaa);
+ 16 END;
+ 17 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[7:5] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label(not in equal ctl_block))
+
+SQL> 
+SQL> DECLARE
+  2   aaa NUMBER := 2;
+  3   bbb NUMBER := 0;
+  4 BEGIN
+  5   BEGIN
+  6     aaa := 1;
+  7   END;
+  8   aaa := aaa / bbb;
+  9 EXCEPTION
+ 10   WHEN no_data_found THEN
+ 11     LOOP
+ 12       <<my_label>>
+ 13       dbe_output.print_line(aaa);
+ 14       EXIT;
+ 15     END LOOP;
+ 16   WHEN ZERO_DIVIDE  THEN
+ 17     GOTO my_label;
+ 18     dbe_output.print_line(aaa);
+ 19 END;
+ 20 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[17:5] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label(ctl_block depth more than goto))
+
+SQL> 
+SQL> DECLARE
+  2   aaa NUMBER := 2;
+  3   bbb NUMBER := 0;
+  4 BEGIN
+  5   BEGIN
+  6     aaa := 1;
+  7   END;
+  8   aaa := aaa / bbb;
+  9 EXCEPTION
+ 10   WHEN no_data_found THEN
+ 11     LOOP
+ 12       <<my_label>>
+ 13       dbe_output.print_line(aaa);
+ 14       EXIT;
+ 15     END LOOP;
+ 16   WHEN ZERO_DIVIDE  THEN
+ 17     GOTO my_label;
+ 18     dbe_output.print_line(aaa);
+ 19 END;
+ 20 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[17:5] PLC-00916 PL/SQL:syntax error(MY_LABEL is an invalid label(ctl_block depth more than goto))
+
+SQL> 
+SQL> DECLARE
+  2   stock_price   NUMBER := 9.73;
+  3   net_earnings  NUMBER := 0;
+  4   pe_ratio      NUMBER;
+  5 BEGIN
+  6     goto exception2;  ---goto
+  7     pe_ratio := stock_price / net_earnings;  -- raises ZERO_DIVIDE exception
+  8     dbe_output.print_line('Price/earnings ratio = ' || pe_ratio);
+  9 EXCEPTION
+ 10   WHEN ZERO_DIVIDE THEN
+ 11     begin
+ 12     dbe_output.print_line('Company had zero earnings;SQL_ERR_CODE is:'||SQL_ERR_CODE||'SQL_ERR_MSG is:'||SQL_ERR_MSG);
+ 13     pe_ratio := NULL;
+ 14  pe_ratio := stock_price / net_earnings;  -- raises ZERO_DIVIDE exception
+ 15      <<exception2>>  
+ 16   exception
+ 17     WHEN ZERO_DIVIDE THEN
+ 18      begin
+ 19      dbe_output.print_line('Company had zero earnings;SQL_ERR_CODE is:'||SQL_ERR_CODE||'SQL_ERR_MSG is:'||SQL_ERR_MSG);
+ 20   pe_ratio := stock_price / net_earnings;  -- raises ZERO_DIVIDE exception
+ 21   for i in 1..5
+ 22   loop 
+ 23   exception
+ 24       WHEN ZERO_DIVIDE THEN
+ 25      exit;
+ 26     dbe_output.print_line('Company had zero earnings;SQL_ERR_CODE is:'||SQL_ERR_CODE||'SQL_ERR_MSG is:'||SQL_ERR_MSG);
+ 27      end loop;
+ 28      end;
+ 29  end;
+ 30 END;
+ 31 /
+
+CT-00944, PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with compiling errors
+[23:3] PLC-00955 Unexpected symbol exception found
+[32:1] PLC-00954 ';' or ':=' expected but  found
+[32:1] PLC-00916 PL/SQL:syntax error(expected END of BEGIN...END)
+[31:1] PLC-00955 Unexpected END EXCEPTION found
+
+SQL> --end
+SQL> 
+SQL> 
+SQL> --expect failed
+SQL> drop table if exists plt_emp;
+
+Succeed.
+
+SQL> create table plt_emp(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> create or  replace procedure procedure3(a int) is
+  2 cursor mycursor is select * from plt_emp where empno != 123 and sal=10000;
+  3 b plt_emp%rowtype;
+  4 mysyscur  sys_refcursor;
+  5 strSQL1 varchar(1000);
+  6 strSQL2 varchar(1000);
+  7 begin
+  8 strSQL1 := 'select * from plt_emp  where  sal <> 10000';
+  9 strSQL2 := '';
+ 10  if a <= 10 then
+ 11    for i in mycursor
+ 12    loop
+ 13     dbe_output.print_line(i.ename||' is not 10000');
+ 14    end loop;
+ 15  elsif a >10 and a <100 then
+ 16   open mysyscur for  strSQL1;
+ 17   fetch mysyscur into  b;
+ 18   dbe_output.print_line(b.ename||' a > 10 and a < 100');
+ 19   close mysyscur;
+ 20  else
+ 21   open mysyscur for strSQL2;
+ 22   dbe_output.print_line('else a > 10 and a < 100');
+ 23  end if;
+ 24 end;
+ 25 /
+
+Succeed.
+
+SQL> call procedure3(10);
+
+PL/SQL procedure successfully completed.
+
+SQL> exec procedure3(100);
+
+CT-00932, [1:2] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with execute errors
+[21:3] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.PROCEDURE3) terminated with execute errors
+[21:21] CT-00922, PL/SQL: illegal line(NO-SELECT statement is executed in an illegal context)
+
+SQL> drop table if exists plt_emp;
+
+Succeed.
+
+SQL> 
+SQL> --expect failed
+SQL> drop table if exists plt_emp;
+
+Succeed.
+
+SQL> create table plt_emp(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> create or  replace procedure procedure3(a int) is
+  2 cursor mycursor is select * from plt_emp where empno != 123 and sal=10000;
+  3 b plt_emp%rowtype;
+  4 mysyscur  sys_refcursor;
+  5 strSQL1 varchar(1000);
+  6 strSQL2 varchar(1000);
+  7 begin
+  8 strSQL1 := 'select * from plt_emp  where  sal <> 10000';
+  9 strSQL2 := '';
+ 10  if a <= 10 then
+ 11    for i in mycursor
+ 12    loop
+ 13     dbe_output.print_line(i.ename||' is not 10000');
+ 14    end loop;
+ 15  elsif a >10 and a <100 then
+ 16   open mysyscur for  strSQL1;
+ 17   fetch mysyscur into  b;
+ 18   dbe_output.print_line(b.ename||' a > 10 and a < 100');
+ 19   close mysyscur;
+ 20  else
+ 21   open mysyscur for strSQL2;
+ 22   dbe_output.print_line('else a > 10 and a < 100');
+ 23  end if;
+ 24 end;
+ 25 /
+
+Succeed.
+
+SQL> call procedure3(10);
+
+PL/SQL procedure successfully completed.
+
+SQL> exec procedure3(100);
+
+CT-00932, [1:2] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with execute errors
+[21:3] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.PROCEDURE3) terminated with execute errors
+[21:21] CT-00922, PL/SQL: illegal line(NO-SELECT statement is executed in an illegal context)
+
+SQL> drop table if exists plt_emp;
+
+Succeed.
+
+SQL> 
+SQL> --test 
+SQL> 
+SQL> 
+SQL> 
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0000(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0000(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0000(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0001(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0000(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0000(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0002(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0001(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0001(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0003(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0002(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0002(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0004(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0003(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0003(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0005(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0004(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0004(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0006(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0005(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0005(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0007(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0006(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0006(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0008(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0007(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0007(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0009(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0008(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0008(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0010(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0009(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0009(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0011(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0010(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0010(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0012(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0011(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0011(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0013(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0012(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0012(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0014(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0013(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0013(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0015(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0014(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0014(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0016(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0015(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0015(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0017(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0016(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0016(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0018(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0017(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0017(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0019(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0018(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0018(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0020(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0019(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0019(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0021(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0019(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0020(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0022(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0020(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0021(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0023(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0021(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0022(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0024(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0022(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0023(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0025(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0023(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0024(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0026(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0024(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0025(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0027(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0025(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0026(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0028(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0026(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0027(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0029(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0027(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0028(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0030(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0028(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0029(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0031(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0029(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0030(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0032(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0030(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0031(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0033(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0031(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0032(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0034(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0032(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0033(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0035(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0033(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0034(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0036(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0034(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0035(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0037(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0035(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0036(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0038(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0036(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0037(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0039(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0037(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0038(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0040(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0038(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0039(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> --
+SQL> --select OBJECT_NAME, OBJECT_TYPE, STATUS from user_objects where OBJECT_NAME like 'P_RECURSIVE_CALL_OTHER%' order by OBJECT_NAME;
+SQL> --
+SQL> ----expect success
+SQL> --CREATE OR REPLACE PROCEDURE P_RECURSIVE_CALL_OTHER_0000(V_NUM IN OUT INT) IS
+SQL> --  V_NUM_1 INT;
+SQL> --  V_NUM_2 INT;
+SQL> --BEGIN
+SQL> --  V_NUM_1 := V_NUM - 1;
+SQL> --  V_NUM_2 := V_NUM - 2;
+SQL> --  IF V_NUM < 3 THEN
+SQL> --     V_NUM := 1;
+SQL> --  ELSE
+SQL> --  P_RECURSIVE_CALL_OTHER_0000(V_NUM_1);
+SQL> --  P_RECURSIVE_CALL_OTHER_0000(V_NUM_2);
+SQL> --  V_NUM := V_NUM_1 + V_NUM_2;
+SQL> --  END IF;
+SQL> --END;
+SQL> --/
+SQL> ----end;
+SQL> --select OBJECT_NAME, OBJECT_TYPE, STATUS from user_objects where OBJECT_NAME like 'P_RECURSIVE_CALL_OTHER%' order by OBJECT_NAME;
+SQL> 
+SQL> create or replace procedure test_casewhen(score in int) as 
+  2 begin 
+  3 case when (score < 0) then dbe_output.print_line('aaa'); 
+  4 else dbe_output.print_line('bbb'); 
+  5 end case; 
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> call test_casewhen(123);
+
+bbb
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_casewhen(score in int) as 
+  2 begin 
+  3 case score when (123) then dbe_output.print_line('aaa'); 
+  4 else dbe_output.print_line('bbb'); 
+  5 end case; 
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> call test_casewhen(123);
+
+aaa
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect failed
+SQL> drop table if exists PRE_EXCEPTION_012_T_01;
+
+Succeed.
+
+SQL> create table PRE_EXCEPTION_012_T_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into PRE_EXCEPTION_012_T_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> 
+SQL> DECLARE
+  2 var_tmp varchar(10);
+  3 BEGIN
+  4 execute immediate 'update PRE_EXCEPTION_012_T_01 set sal=10000 where empno =1' into var_tmp ;
+  5 END;
+  6 /
+
+CT-00932, [4:1] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] CT-00972, The into clause and select need to appear together in 'execute immediate'
+
+SQL> 
+SQL> DECLARE
+  2 var_tmp varchar(10);
+  3 BEGIN
+  4 execute immediate 'select empno,ename from PRE_EXCEPTION_012_T_01' into var_tmp ;
+  5 END;
+  6 /
+
+CT-00932, [4:1] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] CT-00926, PL/SQL: Return types of Result Set variables or query do not match
+
+SQL> 
+SQL> DECLARE
+  2 var_tmp varchar(10);
+  3 BEGIN
+  4 execute immediate 123 into var_tmp ;
+  5 END;
+  6 /
+
+CT-00932, [4:1] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] CT-00971, The content datatype of 'execute immediate' must be string
+
+SQL> --end
+SQL> 
+SQL> drop table if exists storage_transaction_anonymous_tbl_001;
+
+Succeed.
+
+SQL> create table storage_transaction_anonymous_tbl_001 (a int);
+
+Succeed.
+
+SQL> savepoint bb;
+
+Succeed.
+
+SQL> insert into storage_transaction_anonymous_tbl_001 values(0);
+
+1 rows affected.
+
+SQL> rollback to bb;
+
+Succeed.
+
+SQL> 
+SQL> savepoint bb;
+
+Succeed.
+
+SQL> insert into storage_transaction_anonymous_tbl_001 values(0);
+
+1 rows affected.
+
+SQL> begin
+  2 insert into storage_transaction_anonymous_tbl_001 values(1);
+  3 savepoint aa;
+  4 insert into storage_transaction_anonymous_tbl_001 values(2);
+  5 rollback to aa;
+  6 insert into storage_transaction_anonymous_tbl_001 values(3);
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from storage_transaction_anonymous_tbl_001;
+
+A           
+------------
+0           
+1           
+3           
+
+3 rows fetched.
+
+SQL> 
+SQL> begin
+  2 insert into storage_transaction_anonymous_tbl_001 values(1);
+  3 savepoint aa;
+  4 insert into storage_transaction_anonymous_tbl_001 values(2);
+  5 rollback to savepoint aa;
+  6 insert into storage_transaction_anonymous_tbl_001 values(1);
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from storage_transaction_anonymous_tbl_001;
+
+A           
+------------
+0           
+1           
+3           
+1           
+1           
+
+5 rows fetched.
+
+SQL> drop table storage_transaction_anonymous_tbl_001;
+
+Succeed.
+
+SQL> 
+SQL> --test param num check
+SQL> create or replace function dd(a float) return float
+  2 is
+  3 begin
+  4 return a;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> select dd(12,1);
+
+CT-00916, [1:8]PL/SQL:syntax error(unexpected more arguments for current procedure/function)
+SQL> 
+SQL> --test select into binary to char,varchar convert
+SQL> drop table if exists FVT_PROC_BINARY_TABLE_025;
+
+Succeed.
+
+SQL> create table FVT_PROC_BINARY_TABLE_025(
+  2   T1 INT,
+  3   T2 RAW(100)  
+  4   );
+
+Succeed.
+
+SQL> INSERT INTO FVT_PROC_BINARY_TABLE_025 VALUES(1,'01AFFB6710114657895500101');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace procedure FVT_PROC_BINARY_025() is
+  2 V1 CHAR(100);
+  3 V2 VARCHAR(100);
+  4 begin
+  5   select T2 into V1 from FVT_PROC_BINARY_TABLE_025 where T1=1;
+  6   dbe_output.print_line('V1=:'||V1);
+  7   select T2 into V2 from FVT_PROC_BINARY_TABLE_025 where T1=1;
+  8   dbe_output.print_line('V2=:'||V2);
+  9   EXCEPTION
+ 10 WHEN NO_DATA_FOUND THEN dbe_output.print_line('NO_DATA_FOUND');
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> CALL FVT_PROC_BINARY_025();
+
+V1=:001AFFB6710114657895500101                                                                          
+V2=:001AFFB6710114657895500101
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists FVT_PROC_BINARY_TABLE_025;
+
+Succeed.
+
+SQL> drop procedure if exists FVT_PROC_BINARY_025;
+
+Succeed.
+
+SQL> 
+SQL> --test return/goto
+SQL> drop table if exists test_aa;
+
+Succeed.
+
+SQL> drop table if exists test_bb;
+
+Succeed.
+
+SQL> create table test_aa(a int);
+
+Succeed.
+
+SQL> create table test_bb(a int);
+
+Succeed.
+
+SQL> insert into test_aa values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> DECLARE
+  2   pe_ratio      NUMBER;
+  3 BEGIN
+  4   for i in 1..10000 loop
+  5 	begin
+  6 	for item in (select a from test_aa)
+  7 	loop
+  8 	goto new;
+  9 	end loop;   
+ 10   end;
+ 11 	<<new>>
+ 12 	pe_ratio := 1;
+ 13  end loop;
+ 14 END;
+ 15 /
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --test nl with pending
+SQL> --begin
+SQL> drop table if exists pl_ww1;
+
+Succeed.
+
+SQL> CREATE TABLE pl_ww1 (F_INT1 INT, F_INT2 INT, F_INT3 INT, F_INT4 INT,F_CHAR VARCHAR(16));
+
+Succeed.
+
+SQL> INSERT INTO pl_ww1 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO pl_ww1 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists pl_ww2;        
+
+Succeed.
+
+SQL> CREATE TABLE pl_ww2 (F_INT1 INT, F_INT2 INT, F_INT3 INT, F_INT4 INT,F_CHAR VARCHAR(16));    
+
+Succeed.
+
+SQL> INSERT INTO pl_ww2 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO pl_ww2 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> create index ind_pl_ww2 on pl_ww2(f_int1);
+
+Succeed.
+
+SQL> 
+SQL> create or replace function pl_len(msg in varchar2)
+  2 return number
+  3 as
+  4 begin
+  5     return length(msg);
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure SP_R_AARU_A0JM(
+  2 v_PlanID in number,
+  3 v_NeGroupId in number)
+  4 as
+  5         v_Temp_1 varchar2(50);
+  6         v_Temp_2 NUMBER(10, 0);
+  7         v_Temp_3 NUMBER(10, 0);
+  8 begin
+  9     insert into pl_ww1 
+ 10          select neGroup.F_INT2, ruleSelf.f_int2, ruleSelf.F_INT3, '0', pl_len(ruleSelf.f_char) 
+ 11           from pl_ww1 ruleSelf
+ 12           join pl_ww2 neGroup on ruleSelf.F_INT1 = neGroup.F_INT1
+ 13           where pl_len(neGroup.f_char) > 99;
+ 14 end;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> explain select neGroup.F_INT2, ruleSelf.f_int2, ruleSelf.F_INT3, '0', pl_len(ruleSelf.f_char) 
+  2           from pl_ww1 ruleSelf
+  3           join pl_ww2 neGroup on ruleSelf.F_INT1 = neGroup.F_INT1
+  4           where pl_len(neGroup.f_char) > 99;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner                   | Name            | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |                         |                 |      |      |       |        |
+| 1   |   NESTED LOOPS                   |                         |                 |      |      |       |        |
+| 2   |     TABLE ACCESS FULL            | TEST_CTSQL_PLSQL_EX_0121 | PL_WW1 RULESELF |      |      |       |        |
+| 3   |     TABLE ACCESS BY INDEX ROWID  | TEST_CTSQL_PLSQL_EX_0121 | PL_WW2 NEGROUP  |      |      |       |        |
+| 4   |       INDEX RANGE SCAN           | TEST_CTSQL_PLSQL_EX_0121 | IND_PL_WW2      |      |      |       |        |
+---------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: PL_LEN(NEGROUP.F_CHAR) > 99                      
+   4 - access: RULESELF.F_INT1 = NEGROUP.F_INT1                 
+
+13 rows fetched.
+
+SQL> 
+SQL> BEGIN SP_R_AARU_A0JM(1,2); END;
+  2 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --end
+SQL> 
+SQL> --
+SQL> drop table if exists T_TP_CELLDCCC_B4;
+
+Succeed.
+
+SQL> create table T_TP_CELLDCCC_B4(OPERTYPE NUMBER(3),PLANID NUMBER(10),CMENEID NUMBER(10),CELLID NUMBER(17),BEPWRMARGIN NUMBER(3),ULFULLCVRRATE NUMBER(3),DLFULLCVRRATE NUMBER(3),COMBPWRMARGIN NUMBER(3),DRASWITCH NUMBER(17),BEABNOMH2FSWITCH NUMBER(3),ULDCCCRATETHD NUMBER(3),ULMIDRATECALC NUMBER(3),ULMIDRATETHD NUMBER(3),ULEVENT4ATHLD NUMBER(3),ULEVENT4BTHLD NUMBER(3),DLEVENT4ATHLD NUMBER(3),DLEVENT4BTHLD NUMBER(3),ULMIDRATE2THD NUMBER(3),LOGUPTID  VARCHAR(383),NBI_RECID NUMBER(10),ISGENMML  NUMBER(3),CMEREMARK VARCHAR(383),DATASOURCETYPE NUMBER(3),CMERESERVED1   VARCHAR(383));
+
+Succeed.
+
+SQL> drop table if exists T_P_DCCC_B4;
+
+Succeed.
+
+SQL> create table T_P_DCCC_B4(PLANID NUMBER(10)  ,CMENEID NUMBER(10) ,ULMIDRATETHD NUMBER(3) ,DLMIDRATETHD NUMBER(3) ,ULDCCCRATETHD NUMBER(3) ,DLDCCCRATETHD NUMBER(3) ,LITTLERATETHD NUMBER(3) ,DCCCSTG NUMBER(3) ,HSUPADCCCSTG NUMBER(3) ,BEPWRMARGIN NUMBER(3) ,ULRATEUPADJLEVEL NUMBER(3) ,ULRATEDNADJLEVEL NUMBER(3) ,ULMIDRATECALC NUMBER(3) ,DLRATEUPADJLEVEL NUMBER(3) ,DLRATEDNADJLEVEL NUMBER(3) ,DLMIDRATECALC NUMBER(3) ,FAILTIMETH NUMBER(3) ,MONITIMELEN NUMBER(10) ,DCCCUPPENALTYLEN NUMBER(10) ,ULFULLCVRRATE NUMBER(3) ,DLFULLCVRRATE NUMBER(3) ,HSUPABESHORATETHD NUMBER(3) ,DCHTHROUMEASPERIOD NUMBER(10) ,COMBPWRMARGIN NUMBER(3) ,E2DTHROU4BTHD NUMBER(10) ,CHANNELRETRYPENALTYNUM NUMBER(3) ,BASECOVERD2E6ATHD NUMBER(3) ,BASECOVERD2E6BTHD NUMBER(3) ,LITTLERATECHLFLBKFORCSPS NUMBER(3) ,CSPS0KDLRATEUPTHLD NUMBER(10) ,CSPS0KULRATEUPTHLD NUMBER(10) ,TIMETOTRIGGER4AFORCSPSCMB NUMBER(3) ,TRIGTIMEFORPSDCH0KRATEUP NUMBER(10) ,DCHCONGSTATETHD NUMBER(3) ,CSPSBEDCCCPROHTIMER NUMBER(10) ,DLMIDRATE2THD NUMBER(3) ,ULMIDRATE2THD NUMBER(3) ,DCHTHROUENHMEASPERIOD NUMBER(10) ,DCHTHROUENHTIMETOTRIG4A NUMBER(10) ,DCHTHROUENHTIMETOTRIG4B NUMBER(10) ,DCHTHROUENHUPTHDRATIO NUMBER(3) ,DCHTHROUENHDNTHDRATIO NUMBER(3));
+
+Succeed.
+
+SQL> drop table if exists T_P_CORRMALGOSWITCH_B4;
+
+Succeed.
+
+SQL> create table T_P_CORRMALGOSWITCH_B4(PLANID NUMBER(10) ,CMENEID NUMBER(10) ,MAPSWITCH NUMBER(17) ,HOSWITCH NUMBER(17) ,PCSWITCH NUMBER(17) ,CFGSWITCH NUMBER(17) ,DRASWITCH NUMBER(17) ,SRNSRSWITCH NUMBER(17) ,CMCFSWITCH NUMBER(17) ,PSSWITCH NUMBER(17) ,CSSWITCH NUMBER(17) ,DRSWITCH NUMBER(17) ,CMPSWITCH NUMBER(17) ,RESERVEDSWITCH0 NUMBER(17) ,RESERVEDSWITCH1 NUMBER(17) ,RESERVEDU32PARA0 NUMBER(17) ,RESERVEDU32PARA1 NUMBER(17) ,RESERVEDU8PARA0 NUMBER(3) ,RESERVEDU8PARA1 NUMBER(3) ,CMPSWITCH2 NUMBER(17) ,HOSWITCH1 NUMBER(17) ,DRASWITCH2 NUMBER(17) ,PCSWITCH1 NUMBER(17) ,CMPSWITCH3 NUMBER(17) ,IRATHOCFGSWITCH NUMBER(17) ,HOSWITCH2 NUMBER(17) ,CFGSWITCH1 NUMBER(17) ,DRASWITCH3 NUMBER(17));
+
+Succeed.
+
+SQL> drop table if exists T_P_CELLDCCC_B4;
+
+Succeed.
+
+SQL> create table T_P_CELLDCCC_B4(PLANID NUMBER(10) ,CMENEID  NUMBER(10) ,CELLID  NUMBER(17) ,BEPWRMARGIN NUMBER(3) ,ULFULLCVRRATE NUMBER(3) ,DLFULLCVRRATE NUMBER(3) ,COMBPWRMARGIN NUMBER(3) ,DRASWITCH NUMBER(17) ,BEABNOMH2FSWITCH NUMBER(3) ,ULDCCCRATETHD NUMBER(3) ,ULMIDRATECALC NUMBER(3) ,ULMIDRATETHD NUMBER(3) ,ULEVENT4ATHLD NUMBER(3) ,ULEVENT4BTHLD NUMBER(3) ,DLEVENT4ATHLD NUMBER(3) ,DLEVENT4BTHLD NUMBER(3) ,ULMIDRATE2THD NUMBER(3)); 
+
+Succeed.
+
+SQL> 
+SQL> begin  
+  2   merge into T_TP_CELLDCCC_B4 a
+  3   using T_P_DCCC_B4 b
+  4   on (a.PlanID = b.PlanID and a.CMENEID = b.CMENEID)
+  5   when matched then
+  6     update
+  7        set a.BEPWRMARGIN   = nvl(a.BEPWRMARGIN, b.BEPWRMARGIN),
+  8            a.COMBPWRMARGIN = nvl(a.COMBPWRMARGIN, b.COMBPWRMARGIN),
+  9            a.DLFULLCVRRATE = nvl(a.DLFULLCVRRATE, b.DLFULLCVRRATE),
+ 10            a.ULDCCCRATETHD = nvl(a.ULDCCCRATETHD, b.ULDCCCRATETHD),
+ 11            a.ULFULLCVRRATE = nvl(a.ULFULLCVRRATE, b.ULFULLCVRRATE),
+ 12            a.ULMIDRATE2THD = nvl(a.ULMIDRATE2THD, b.ULMIDRATE2THD),
+ 13            a.ULMIDRATECALC = nvl(a.ULMIDRATECALC, b.ULMIDRATECALC),
+ 14            a.ULMIDRATETHD  = nvl(a.ULMIDRATETHD, b.ULMIDRATETHD)
+ 15      where a.PlanID = 131
+ 16        and a.OperType = 2;
+ 17        
+ 18   merge into T_TP_CELLDCCC_B4 a
+ 19   using T_P_CORRMALGOSWITCH_B4 b
+ 20   on (a.PlanID = b.PlanID and a.CMENEID = b.CMENEID)
+ 21   when matched then
+ 22     update set a.DRASWITCH = case
+ 23   when a.DRASWITCH = b.DRASWITCH then a.DRASWITCH else bitand(bitxor(to_number(a.DRASWITCH), to_number(b.DRASWITCH)), 127) end where a.PlanID = 131 and a.OperType = 2;
+ 24   
+ 25   merge into T_TP_CELLDCCC_B4 a
+ 26   using T_P_CELLDCCC_B4 b
+ 27   on (a.PlanID = b.PlanID and a.CMENEID = b.CMENEID and a.CELLID = b.CELLID)
+ 28   when matched then
+ 29     update
+ 30        set a.DRASWITCH = case
+ 31   when a.DRASWITCH = 0 then b.DRASWITCH else(bitxor(to_number(a.DRASWITCH), to_number(nvl(b.DRASWITCH, 0)))) end where a.PlanID = 131 and a.OperType = 1;
+ 32 end;
+ 33 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test pl compile with hint
+SQL> --begin
+SQL> drop table if exists pl_tab;
+
+Succeed.
+
+SQL> drop table if exists pl_tbb;
+
+Succeed.
+
+SQL> create table pl_tab (a int not null);
+
+Succeed.
+
+SQL> create table pl_tbb (a int not null);
+
+Succeed.
+
+SQL> insert into pl_tab(a) values(3);
+
+1 rows affected.
+
+SQL> insert into pl_tab(a) values(1);
+
+1 rows affected.
+
+SQL> insert into pl_tab(a) values(2);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create index idx_pl_tab on pl_tab(a);
+
+Succeed.
+
+SQL> 
+SQL> Create Or Replace Procedure TEST_PL_HINT
+  2 AS
+  3 	var number := 3;
+  4 	c1 SYS_REFCURSOR;
+  5 begin
+  6 	OPEN c1 FOR Select /*+index(pl_tab idx_pl_tab)*/ * From pl_tab;
+  7 	dbe_sql.return_cursor (c1);
+  8 	update /*+index(pl_tab idx_pl_tab)*/ pl_tab set a = 3 where a=var;
+  9 	insert /*+ parallel(pl_tbb 2) */ into pl_tbb (select /*+index(pl_tab idx_pl_tab)*/ a from pl_tab);
+ 10 	delete /*+index(pl_tab idx_pl_tab)*/ from pl_tab where a=1;
+ 11 	commit;
+ 12 end; 
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> exec TEST_PL_HINT();
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+A           
+------------
+1           
+2           
+3           
+
+3 rows fetched.
+
+
+SQL> select * from pl_tab order by a;
+
+A           
+------------
+2           
+3           
+
+2 rows fetched.
+
+SQL> select * from pl_tbb order by a;
+
+A           
+------------
+1           
+2           
+3           
+
+3 rows fetched.
+
+SQL> 
+SQL> select count(*) from v$sqlarea where sql_text='select /*+index(pl_tab idx_pl_tab)*/ * from pl_tab';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> select count(*) from v$sqlarea where sql_text='update /*+index(pl_tab idx_pl_tab)*/ pl_tab set a=3 where a=:1';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> select count(*) from v$sqlarea where sql_text='insert /*+parallel(pl_tbb 2) */ into pl_tbb (select /*+index(pl_tab idx_pl_tab)*/ a from pl_tab)';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> select count(*) from v$sqlarea where sql_text='delete /*+index(pl_tab idx_pl_tab)*/ from pl_tab where a=1';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> --end
+SQL> 
+SQL> --test pl USER_ARGUMENTS veiw
+SQL> CREATE or replace procedure proc_003(n0 int,n1 varchar,nu2 char,n3 out number  ,n4  out boolean  ,n5 out date,n6  number ,n7 REAL) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   sqlst := 'proc_002 test';
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> select * from USER_ARGUMENTS where OBJECT_NAME = 'PROC_003'; 
+
+OBJECT_NAME                                                      PACKAGE_NAME                                                     OVERLOAD    SUBPROGRAM_ID ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE                                                        DEFAULTED DEFAULT_VALUE                                                    IN_OUT DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------ ------------ -------------- ------------
+PROC_003                                                                                                                                      1             N0                                                               0            1            0            BINARY_INTEGER                                                   N                                                                          IN     4            0                          
+PROC_003                                                                                                                                      1             N1                                                               1            2            0            VARCHAR                                                          N                                                                          IN     32767                                   
+PROC_003                                                                                                                                      1             NU2                                                              2            3            0            CHAR                                                             N                                                                          IN     8000                                    
+PROC_003                                                                                                                                      1             N3                                                               3            4            0            NUMBER                                                           N                                                                          OUT    24                                      
+PROC_003                                                                                                                                      1             N4                                                               4            5            0            BOOLEAN                                                          N                                                                          OUT    4                                       
+PROC_003                                                                                                                                      1             N5                                                               5            6            0            DATE                                                             N                                                                          OUT    8                                       
+PROC_003                                                                                                                                      1             N6                                                               6            7            0            NUMBER                                                           N                                                                          IN     24                                      
+PROC_003                                                                                                                                      1             N7                                                               7            8            0            BINARY_DOUBLE                                                    N                                                                          IN     8                                       
+
+8 rows fetched.
+
+SQL> 
+SQL> --begin
+SQL> 
+SQL> drop table if exists ToClob_T2;
+
+Succeed.
+
+SQL> create table ToClob_T2(f2 clob);
+
+Succeed.
+
+SQL> 
+SQL> select * from ToClob_T2 where f2>to_clob('11111111191111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+  2 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+  3 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+  4 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+  5 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+  6 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+  7 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+  8 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+  9 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 10 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 11 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 12 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 13 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 14 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 15 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 16 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 17 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 18 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 19 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 20 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 21 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 22 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 23 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 24 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 25 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 26 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 27 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 28 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 29 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 30 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 31 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 32 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 33 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 34 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 35 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 36 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 37 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 38 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 39 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+ 40 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111') order by to_char(f2);
+
+F2                                                              
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> --end
+SQL> 
+SQL> --test sys_stack
+SQL> --alter system set _LOG_LEVEL = 255;
+SQL> drop table if exists sys_stack_t;
+
+Succeed.
+
+SQL> create table sys_stack_t(c1 int, c2 varchar(10));
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_01;
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_02;
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_03;
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_04;
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_05;
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_06;
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_07;
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_08;
+
+Succeed.
+
+SQL> drop function if exists test_sys_stack_09;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function test_sys_stack_02(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   select test_sys_stack_03(c1) into v1 from sys_stack_t where c2 = 'abc';
+  5   return (v1 + p1);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_02) terminated with compiling errors
+[4:10] PLC-00828 function TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_03 does not exist
+
+
+SQL> 
+SQL> create or replace function test_sys_stack_03(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   select test_sys_stack_04(c1) into v1 from sys_stack_t where c2 = 'ijk';
+  5   return (v1 + p1);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_03) terminated with compiling errors
+[4:10] PLC-00828 function TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_04 does not exist
+
+
+SQL> 
+SQL> create or replace function test_sys_stack_04(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   select test_sys_stack_05(c1) into v1 from sys_stack_t where c2 = 'lmn';
+  5   return (v1 + p1);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_04) terminated with compiling errors
+[4:10] PLC-00828 function TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_05 does not exist
+
+
+SQL> 
+SQL> create or replace function test_sys_stack_05(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   select test_sys_stack_06(c1) into v1 from sys_stack_t where c2 = 'opq';
+  5   return (v1 + p1);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_05) terminated with compiling errors
+[4:10] PLC-00828 function TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_06 does not exist
+
+
+SQL> 
+SQL> create or replace function test_sys_stack_06(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   select test_sys_stack_07(c1) into v1 from sys_stack_t where c2 = 'opq';
+  5   return (v1 + p1);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_06) terminated with compiling errors
+[4:10] PLC-00828 function TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_07 does not exist
+
+
+SQL> 
+SQL> create or replace function test_sys_stack_07(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   select test_sys_stack_08(c1) into v1 from sys_stack_t where c2 = 'opq';
+  5   return (v1 + p1);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_07) terminated with compiling errors
+[4:10] PLC-00828 function TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_08 does not exist
+
+
+SQL> 
+SQL> create or replace function test_sys_stack_08(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   select test_sys_stack_09(c1) into v1 from sys_stack_t where c2 = 'opq';
+  5   return (v1 + p1);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_08) terminated with compiling errors
+[4:10] PLC-00828 function TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_09 does not exist
+
+
+SQL> 
+SQL> create or replace function test_sys_stack_09(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   select c3 into v1 from sys_stack_t where c2 = 'opq';
+  5   return (v1 + p1);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_09) terminated with compiling errors
+[4:10] PLC-00601 Sql syntax error: invalid column name 'C3'
+
+
+SQL> 
+SQL> create or replace function test_sys_stack_01(p1 int) return int is
+  2 begin
+  3   insert into sys_stack_t(c1,c2) values(test_sys_stack_02(1), 'efg');
+  4   return p1;
+  5 end;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_01) terminated with compiling errors
+[3:45] PLC-00944 PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_02) terminated with compiling errors
+[4:10] PLC-00944 PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_03) terminated with compiling errors
+[4:10] PLC-00944 PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_04) terminated with compiling errors
+[4:10] PLC-00944 PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_05) terminated with compiling errors
+[4:10] PLC-00944 PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_06) terminated with compiling errors
+[4:10] PLC-00944 PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_07) terminated with compiling errors
+[4:10] PLC-00944 PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_08) terminated with compiling errors
+[4:10] PLC-00944 PL/SQL(TEST_CTSQL_PLSQL_EX_0121.TEST_SYS_STACK_09) terminated with compiling errors
+[4:10] PLC-00601 Sql syntax error: invalid column name 'C3'
+
+
+
+
+
+
+
+
+
+
+SQL> 
+SQL> drop table if exists sys_stack_t;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> -- test for range
+SQL> declare
+  2 begin
+  3   for i in 2147483646..2147483647
+  4   loop
+  5     dbe_output.print_line(i);
+  6   end loop;
+  7 end;
+  8 /
+
+2147483646
+2147483647
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 begin
+  3   for i in 2147483647..2147483648
+  4   loop
+  5     dbe_output.print_line(i);
+  6   end loop;
+  7 end;
+  8 /
+
+CT-00932, [3:3] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with execute errors
+[3:3] CT-00659, INTEGER out of range
+
+SQL> 
+SQL> declare
+  2 begin
+  3   for i in reverse -2147483648..-2147483647
+  4   loop
+  5     dbe_output.print_line(i);
+  6   end loop;
+  7 end;
+  8 /
+
+-2147483647
+-2147483648
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 begin
+  3   for i in reverse -2147483649..-2147483648
+  4   loop
+  5     dbe_output.print_line(i);
+  6   end loop;
+  7 end;
+  8 /
+
+CT-00932, [3:3] PL/SQL(TEST_CTSQL_PLSQL_EX_0121.ANONYMOUS BLOCK) terminated with execute errors
+[3:3] CT-00659, INTEGER out of range
+
+SQL> --end 
+SQL> 
+SQL> 
+SQL> --test.1 ctsql with nested put_line behind fetch process
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists test_ctsql_plsql_ex_0121;
+
+Succeed.
+
+SQL> drop user if exists test_ctsql_nested_putline cascade;
+
+Succeed.
+
+SQL> create user test_ctsql_nested_putline identified by root_1234;
+
+Succeed.
+
+SQL> grant all privileges to test_ctsql_nested_putline;
+
+Succeed.
+
+SQL> conn test_ctsql_nested_putline/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists test_t;
+
+Succeed.
+
+SQL> create table test_t(a int,b varchar(20));
+
+Succeed.
+
+SQL> insert into test_t values(1,'liu');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function r_len(str1 varchar) return int
+  2 is 
+  3 begin
+  4 dbe_output.print_line('nested input: '||str1);
+  5 dbe_output.print_line('nested input1:'||str1);
+  6 return length(str1);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function r_cur(str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 dbe_output.print_line('outer layer input: '||str1);
+  6 dbe_output.print_line('outer layer input1:'||str1);
+  7 open cursor1 for select r_len(test_t.b) from test_t;
+  8 return cursor1;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> select r_cur('aaaa');
+
+R_CUR('AAAA')                                                   
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+outer layer input: aaaa
+outer layer input1:aaaa
+
+ResultSet #1
+
+R_LEN(TEST_T.B)
+---------------
+3              
+
+1 rows fetched.
+
+nested input: liu
+nested input1:liu
+
+
+SQL> 
+SQL> --test.2 ctsql with nested put_line behind fetch process
+SQL> create table DEPENDENCY_COMPILE_004_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into DEPENDENCY_COMPILE_004_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_004_TAB_01 values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_004_TAB_01 values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_004_TAB_01 values(11,'zhansi','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_004_TAB_01 values(22,'lisiabc','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_004_TAB_01 values(33,'zhangwu123','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_004_TAB_01 values(10,'abc','worker',9000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_004_TAB_01 values(76,'ZHANGSAN','leader',20000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace view DEPENDENCY_COMPILE_004_VIEW_01 as select * from DEPENDENCY_COMPILE_004_TAB_01;
+
+Succeed.
+
+SQL> create or replace function DEPENDENCY_COMPILE_004_FUN_01 (str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor;
+  4 a int;
+  5 begin
+  6  select empno into a from DEPENDENCY_COMPILE_004_VIEW_01;
+  7    dbe_output.print_line(a);
+  8    exception
+  9    when  TOO_MANY_ROWS  then
+ 10    begin
+ 11       select empno into a from DEPENDENCY_COMPILE_004_VIEW_01 limit 1;
+ 12      dbe_output.print_line('here nested '||a);
+ 13      return length(str1);
+ 14    end;
+ 15 end;
+ 16 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function DEPENDENCY_COMPILE_004_FUN_02 (str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select DEPENDENCY_COMPILE_004_FUN_01(ename) from DEPENDENCY_COMPILE_004_TAB_01;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> select DEPENDENCY_COMPILE_004_FUN_02('a');
+
+DEPENDENCY_COMPILE_004_FUN_02('A')                              
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+DEPENDENCY_COMPILE_004_FUN_01(ENAME)
+------------------------------------
+8                                   
+9                                   
+9                                   
+6                                   
+7                                   
+10                                  
+3                                   
+8                                   
+
+8 rows fetched.
+
+here nested 1
+here nested 1
+here nested 1
+here nested 1
+here nested 1
+here nested 1
+here nested 1
+here nested 1
+
+
+SQL> 
+SQL> --test.3 ctsql with nested put_line behind fetch process
+SQL> drop table if exists DEPENDENCY_COMPILE_001_TAB_01;
+
+Succeed.
+
+SQL> create table DEPENDENCY_COMPILE_001_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(11,'zhansi','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(22,'lisiabc','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(33,'zhangwu123','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(10,'abc','worker',9000);
+
+1 rows affected.
+
+SQL> insert into DEPENDENCY_COMPILE_001_TAB_01 values(76,'ZHANGSAN','leader',20000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> --create view
+SQL> create or replace view DEPENDENCY_COMPILE_001_VIEW_01 as select * from DEPENDENCY_COMPILE_001_TAB_01;
+
+Succeed.
+
+SQL> --functionA
+SQL> create or replace function DEPENDENCY_COMPILE_001_FUN_01 (str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor ;
+  4 a DEPENDENCY_COMPILE_001_VIEW_01%rowtype;
+  5 begin
+  6  open mycursor1 for select * from DEPENDENCY_COMPILE_001_VIEW_01;
+  7   fetch mycursor1 into a;
+  8   loop
+  9   if mycursor1%found
+ 10     then 
+ 11    dbe_output.print_line(a.empno||a.ename);
+ 12    fetch mycursor1 into a;
+ 13    else 
+ 14       exit;
+ 15   end if;    
+ 16   end loop;
+ 17   close mycursor1;
+ 18 return length(str1);
+ 19 end;
+ 20 /
+
+Succeed.
+
+SQL> 
+SQL> --functionB
+SQL> create or replace function DEPENDENCY_COMPILE_001_FUN_02 (str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select DEPENDENCY_COMPILE_001_FUN_01(ename) from DEPENDENCY_COMPILE_001_TAB_01;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> select DEPENDENCY_COMPILE_001_FUN_02('a') from dual;
+
+DEPENDENCY_COMPILE_001_FUN_02('A')                              
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+DEPENDENCY_COMPILE_001_FUN_01(ENAME)
+------------------------------------
+8                                   
+9                                   
+9                                   
+6                                   
+7                                   
+10                                  
+3                                   
+8                                   
+
+8 rows fetched.
+
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+1zhangsan
+2zhangsan2
+123zhangsan3
+11zhansi
+22lisiabc
+33zhangwu123
+10abc
+76ZHANGSAN
+
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_ctsql_nested_putline cascade;
+
+Succeed.
+
+SQL> 
+SQL> -- test convert sql in pl
+SQL> create or replace function fun_stack_depth_000(num int) return int
+  2 is
+  3  v_lang int := 0;
+  4 BEGIN
+  5   select (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1+1)+1)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) into v_lang from dual;
+  6   return v_lang;
+  7 END;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.FUN_STACK_DEPTH_000) terminated with compiling errors
+[5:810] PLC-00601 Sql syntax error: text is too complex
+
+
+SQL> 
+SQL> begin 
+  2 delete t_tmp_CMENEID where PlanID = 7;
+  3 insert into t_tmp_CMENEID (PlanID,CMENEID,LOGICRNCID) select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLFRC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PRACHACTOASCMAP_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLOPERHOCOV_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UNODEBGPS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLADAPTRACH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCONGACALGO_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLINTRAFREQHO_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLHHONCELLPAOPT_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLHSDPCCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_SCPICH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLIDLEMODETIMER_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_BCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLHCSHO_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLREDRRCREL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCHLQUALITY_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLALGOSWITCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLSELRESEL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMEAS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLPLMNREDRRCREL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLINTERFREQPRIO00_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLACCESSSTRICT_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLSMARTALGPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLOLC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLHSUPA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLANR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLAUTONCELLDETECT_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PCHDYNTFS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PICH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_FACH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCOALGOENHPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CHRSCOPECTRL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLHCS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLAMRC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLHOCOMM_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CHPWROFFSET_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLEPCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLQUALITYMEAS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLCAC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMBMSFACH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UUNIDLELAYERPGCELL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLCMCF_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLDISTANCEREDIRE00_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PRACHSLOTFORMAT_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLGUDLINTERFCTRL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PCCPCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_RACHDYNTFS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_SCCPCHTFC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLMULTIRABHOCOV_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLALGOOPTSWITCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMBMS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLFSTDRMTIMER_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLCBS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLPCOPTPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLLDM_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMCLDR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMBMSSA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLPPAC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLLDR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLFLEXUEGROUPPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLMOCNDPAPOWERD00_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLUESTATETRANS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLPUC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLERACHHSDPCCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLHOFORHSMUE_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_MRSCOPECTRL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLALTIMER_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLINTERFREQHOCOV_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PRACHASC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCLB_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLREDIRECTION_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLRLREESTSWITCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLAMRBLACKBOXCTRL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLDCCC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLLDB_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLEDRX_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCONNALGOPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCOVAREAMAP_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_NCELLDETECTSWITCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PRACHBASIC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLDRD_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMBDRINTERRAT_C6 a  where a.PlanID = 7 union select distincta.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CTCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLFACHCONGCTRL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLOPERALGOSWITCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLDYNSHUTDOWN_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLLDMPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PSCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLU2LTEHOCOV_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLSIBSWITCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLRESGRP_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLEFACH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLGPSFRMTIMING_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_AICH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLALGORSVPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLRLACTTIME_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCMUSERNUM_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLUECAPREDIRECT00_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLGUCOORDNCTRL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCONNREDIR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLSTATETIMER_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMIMO_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLQOSHO_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLINTERANR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLINTERRATDR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLMR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLIPDL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLSEREXPCAC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLINTERRATHOCOV_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_FACHDYNTFS_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLGUULINTERFCTRL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PRACHTFC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLCBSSAC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMBSCCRRM_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLINTERFREQHONCOV_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLULB_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLDSACMANUALPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLPARTNERDEMAR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLRLPWR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLWLAN_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMBDRINTERFREQ_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_PCPICH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLCONNMODETIMER_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLQUEUEPREEMPT_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLINTERRATHONCOV_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMBMSPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLMOCNSFDEMAR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLINTRAFREQHOENH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_ERACHBASIC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLDRDMIMO_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLU2LTEHONCOV_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMCCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLAMRCWB_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLERACH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLCBSDRX_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_SSCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLNFREQPRIOINFO_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLFCALGOPARA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLGSMFREQPRIOINFO_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLMOCNPWRDEMAR_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_SCCPCHBASIC_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLHSDPA_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLPCSWITCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_RACH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_SMLCCELL_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLDESENSE_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLLICENSE_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMBMSSCCPCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLPLMNREDGSM_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_CELLMCDRD_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_FACHLOCH_C6 a  where a.PlanID = 7 union select distinct a.PlanID, a.CMENEID ,nvl(a.LOGICRNCID, -1) from t_TP_UCELLINTRANCELLPAOPT_C6 a  where a.PlanID = 7;
+  4 end;
+  5 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:8] PLC-00843 The table or view SYS.T_TMP_CMENEID does not exist.
+[3:13] PLC-00843 The table or view SYS.T_TMP_CMENEID does not exist.
+
+SQL> --end
+SQL> 
+SQL> --test function can not used directly in plsql DTS2019012112199
+SQL> --begin
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION PL_FUNC_1(a int) return INT
+  2 IS
+  3  Begin 
+  4  return a + 1;
+  5  End;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --expect error
+SQL> begin
+  2 DBE_STATS.AUTO_SAMPLE_SIZE;
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:1] PLC-00916 PL/SQL:syntax error(an undefined procedure was called)
+
+SQL> 
+SQL> --expect error
+SQL> begin
+  2 PL_FUNC_1(1);
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:1] PLC-00828 procedure SYS.PL_FUNC_1 does not exist
+
+SQL> --end
+SQL> 
+SQL> 
+SQL> --begin
+SQL> drop table if exists pl_conv_intv;
+
+Succeed.
+
+SQL> create table pl_conv_intv
+  2 (
+  3 SNAP_ID                             INTEGER,
+  4 FLUSH_ELAPSED                       INTERVAL DAY(5) TO SECOND(1)
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> insert into pl_conv_intv values(1, NUMTODSINTERVAL(10, 'DAY'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> BEGIN
+  2 	  FOR ITEM IN (SELECT * FROM pl_conv_intv) LOOP
+  3 	    dbe_output.print_line(item.SNAP_ID||'_'||item.FLUSH_ELAPSED);
+  4 	END LOOP;
+  5 
+  6 END;
+  7 /
+
+1_+10 00:00:00.000000
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --test case: test subsql in plsql
+SQL> CREATE OR REPLACE FUNCTION TEST_SOFT_PARSE_SUBSQL_F1 RETURN NUMERIC IS A NUMERIC ;
+  2 BEGIN
+  3 return 3;
+  4 END TEST_SOFT_PARSE_SUBSQL_F1;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 3 
+SQL> DECLARE A NUMERIC;
+  2 BEGIN
+  3 SELECT TEST_SOFT_PARSE_SUBSQL_F1() INTO A FROM DUAL;
+  4 dbe_output.print_line(A);
+  5 END;
+  6 /
+
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION TEST_SOFT_PARSE_SUBSQL_F1 RETURN NUMERIC IS A NUMERIC ;
+  2 BEGIN
+  3 return 1;
+  4 END TEST_SOFT_PARSE_SUBSQL_F1;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 1
+SQL> DECLARE A NUMERIC;
+  2 BEGIN
+  3 SELECT TEST_SOFT_PARSE_SUBSQL_F1() INTO A FROM DUAL;
+  4 dbe_output.print_line(A);
+  5 END;
+  6 / 
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DROP FUNCTION IF EXISTS TEST_SOFT_PARSE_SUBSQL_F1;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> --test case: test hint used in plsql
+SQL> --begin
+SQL> drop table if exists pl_hint_t1;
+
+Succeed.
+
+SQL> drop table if exists pl_hint_t2;
+
+Succeed.
+
+SQL> drop table if exists pl_hint_t3;
+
+Succeed.
+
+SQL> create table pl_hint_t1(f1 int, f2 varchar2(32));
+
+Succeed.
+
+SQL> create table pl_hint_t2(f1 int, f2 varchar2(32));
+
+Succeed.
+
+SQL> create table pl_hint_t3(f1 int, f2 varchar2(32));
+
+Succeed.
+
+SQL> 
+SQL> create index idx_pl_hint2_1 on pl_hint_t2(f1);
+
+Succeed.
+
+SQL> create index idx_pl_hint2_2 on pl_hint_t2(f1,f2);
+
+Succeed.
+
+SQL> 
+SQL> BEGIN
+  2 	insert INTO pl_hint_t1(f1) SELECT /*+leading(b)*/ b.f1 FROM pl_hint_t2 b join pl_hint_t3 c on b.f1 = c.f1;
+  3 	insert INTO pl_hint_t1 SELECT /*+leading(b)*/ b.* FROM pl_hint_t2 b join pl_hint_t3 c on b.f1 = c.f1;
+  4 	MERGE INTO pl_hint_t1 a	USING (SELECT /*+INDEX(t,idx_pl_hint2_2)*/ t.* FROM pl_hint_t2 t) b
+  5 	ON (a.f1=b.f1)
+  6 	WHEN MATCHED THEN 
+  7 	UPDATE SET a.f2='test';
+  8 END; 
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect 2
+SQL> select count(*) from v$sqlarea where sql_text like 'insert%t1%leading(b)%';
+
+COUNT(*)            
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> --expect 1
+SQL> select count(*) from v$sqlarea where sql_text like 'merge%t1%INDEX(t,idx_pl_hint2_2)%';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> 
+SQL> --end
+SQL> --test procedure autonomous transaction
+SQL> --A is autonomous transaction, B is not autonomous transaction, and there is not commit or rollback, expect throw error
+SQL> DROP TABLE IF EXISTS t_auton;
+
+Succeed.
+
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE A_block IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   INSERT INTO t_auton (test_value) VALUES ('A block insert');
+  5 END A_block;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE B_block IS
+  2 BEGIN
+  3   INSERT INTO t_auton (test_value) VALUES ('B block insert');
+  4   A_block;
+  5   ROLLBACK;
+  6 END B_block;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> exec B_block;
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(SYS.B_BLOCK) terminated with execute errors
+[3:1] PL/SQL(SYS.A_BLOCK) terminated with execute errors
+[3:1] CT-00733, Error occurred when the transaction is in progress, detect active transaction at the end of autonomous session
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+
+0 rows fetched.
+
+SQL> drop procedure A_block;
+
+Succeed.
+
+SQL> drop procedure B_block;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --A is autonomous transaction, B is not autonomous transaction, and there is not commit or rollback, and error not handle, expect error
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE A_block IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   INSERT INTO t_auton (test_value) VALUES ('A block insert');
+  5 EXCEPTION
+  6     WHEN NO_DATA_FOUND THEN
+  7 	    dbe_output.print_line('error ocurred');
+  8 END A_block;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE B_block IS
+  2 BEGIN
+  3   INSERT INTO t_auton (test_value) VALUES ('B block insert');
+  4   A_block;
+  5   ROLLBACK;
+  6 END B_block;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> exec B_block;
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(SYS.B_BLOCK) terminated with execute errors
+[3:1] PL/SQL(SYS.A_BLOCK) terminated with execute errors
+[3:1] CT-00733, Error occurred when the transaction is in progress, detect active transaction at the end of autonomous session
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+
+0 rows fetched.
+
+SQL> drop procedure A_block;
+
+Succeed.
+
+SQL> drop procedure B_block;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --autonomous transaction must has commit or rollback in the end
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE A_block IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   INSERT INTO t_auton (test_value) VALUES ('A block insert');
+  5   COMMIT;
+  6   DELETE FROM t_auton where test_value = 'B block insert';
+  7 END A_block;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE B_block IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   INSERT INTO t_auton (test_value) VALUES ('B block insert');
+  5   A_block;
+  6   ROLLBACK;
+  7 END B_block;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> exec B_block;
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[5:3] PL/SQL(SYS.B_BLOCK) terminated with execute errors
+[3:1] PL/SQL(SYS.A_BLOCK) terminated with execute errors
+[3:1] CT-00733, Error occurred when the transaction is in progress, detect active transaction at the end of autonomous session
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+A block insert           
+
+1 rows fetched.
+
+SQL> drop procedure A_block;
+
+Succeed.
+
+SQL> drop procedure B_block;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --has dml clause after commit
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE A_block IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   INSERT INTO t_auton (test_value) VALUES ('A block insert');
+  5   COMMIT;
+  6  execute immediate 'insert into t_auton values (''dynamic sql insert'')';
+  7 END A_block;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> exec A_block;
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:1] PL/SQL(SYS.A_BLOCK) terminated with execute errors
+[3:1] CT-00733, Error occurred when the transaction is in progress, detect active transaction at the end of autonomous session
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+A block insert           
+
+1 rows fetched.
+
+SQL> drop procedure A_block;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --anoymous block called another and both are autonomous transaction, it is forrbidden
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(30));
+
+Succeed.
+
+SQL> DECLARE
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   INSERT INTO t_auton (test_value) VALUES ('A block insert');
+  5   COMMIT;
+  6   DECLARE
+  7   PRAGMA AUTONOMOUS_TRANSACTION;
+  8   Begin
+  9       INSERT INTO t_auton (test_value) VALUES ('xxxxxxxxxx');
+ 10 	  COMMIT;
+ 11   end;
+ 12 END;
+ 13 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[7:3] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+SQL> 
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE                    
+------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --only top stack anoymous block can be autonomous transaction
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(30));
+
+Succeed.
+
+SQL> DECLARE
+  2 BEGIN
+  3   INSERT INTO t_auton (test_value) VALUES ('top anonmous block insert');
+  4   COMMIT;
+  5   DECLARE
+  6   PRAGMA AUTONOMOUS_TRANSACTION;
+  7   Begin
+  8       INSERT INTO t_auton (test_value) VALUES ('inner anonmous block insert');
+  9 	  COMMIT;
+ 10   end;
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[6:3] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE                    
+------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --only top stack anoymous block can be autonomous transaction
+SQL>  CREATE TABLE t_auton (test_value VARCHAR2(30));
+
+CT-01301, SYS.T_AUTON already exists
+SQL> DECLARE
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   INSERT INTO t_auton (test_value) VALUES ('A block insert');
+  5   COMMIT;
+  6  execute immediate 'insert into t_auton values (''dynamic sql insert'')';
+  7 END;
+  8 /
+
+CT-00733, Error occurred when the transaction is in progress, detect active transaction at the end of autonomous session
+SQL> 
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE                    
+------------------------------
+A block insert                
+
+1 rows fetched.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --only top stack anoymous block can be autonomous transaction
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(30));
+
+Succeed.
+
+SQL> DECLARE
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   INSERT INTO t_auton (test_value) VALUES ('top anonmous block insert');
+  5   COMMIT;
+  6   DECLARE
+  7   PRAGMA AUTONOMOUS_TRANSACTION;
+  8   Begin
+  9       INSERT INTO t_auton (test_value) VALUES ('inner anonmous block insert');
+ 10 	  COMMIT;
+ 11   end;
+ 12 END;
+ 13 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[7:3] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+SQL> 
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE                    
+------------------------------
+
+0 rows fetched.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --test the autonomous transaction exceed the max defualt vale expect throw error
+SQL> CREATE OR REPLACE PROCEDURE auton_block0 IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4   dbe_output.print_line('5555555');
+  5   COMMIT;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE 
+  2     COUNT INT := 9;
+  3 	i int;
+  4 	strsql varchar2(1000);
+  5 BEGIN 
+  6 	FOR i in 1..COUNT loop
+  7 	  strsql := 'create or replace procedure auton_block'|| i || ' is a int := 1; PRAGMA AUTONOMOUS_TRANSACTION; begin auton_block' || (i-1) || '; commit;end';
+  8 	  execute immediate strsql;
+  9 	  execute immediate 'commit';
+ 10 	end loop;
+ 11 end;
+ 12 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> exec auton_block9;
+
+5555555
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE 
+  2     COUNT INT := 9;
+  3 	i int;
+  4 	strsql varchar2(1000);
+  5 BEGIN 
+  6 	FOR i in 0..COUNT loop
+  7 	  strsql := 'drop procedure auton_block'|| i;
+  8 	  execute immediate strsql;
+  9 	end loop;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test funcA called funcB by select clause
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION C_func RETURN INTEGER IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 RET INTEGER;
+  4 BEGIN
+  5    RET := 1;
+  6   INSERT INTO t_auton (test_value) VALUES ('C func insert');
+  7   COMMIT;
+  8   RETURN RET;
+  9 END C_func;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION B_func RETURN INTEGER IS
+  2 RET INTEGER;
+  3 c int;
+  4 BEGIN
+  5    RET := 1;
+  6    c := C_func();
+  7   INSERT INTO t_auton (test_value) VALUES ('B func insert');
+  8   ROLLBACK;
+  9   RETURN RET;
+ 10 END B_func;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION A_func RETURN INTEGER IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 RET INTEGER;
+  4 b int;
+  5 BEGIN
+  6    RET := 1;
+  7    select B_func() into b from dual;
+  8   INSERT INTO t_auton (test_value) VALUES ('A func insert');
+  9   COMMIT;
+ 10   RETURN RET;
+ 11 END A_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT A_func() from dual;
+
+CT-00932, [7:4] PL/SQL(SYS.A_FUNC) terminated with execute errors
+[8:3] PL/SQL(SYS.B_FUNC) terminated with execute errors
+[8:3] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+C func insert            
+
+1 rows fetched.
+
+SQL> drop function A_func;
+
+Succeed.
+
+SQL> drop function B_func;
+
+Succeed.
+
+SQL> drop function C_func;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --test funcA called funcB by select clause, funcB called funcC by select clause
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION C_func RETURN INTEGER IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 RET INTEGER;
+  4 BEGIN
+  5    RET := 1;
+  6   INSERT INTO t_auton (test_value) VALUES ('C func insert');
+  7   COMMIT;
+  8   RETURN RET;
+  9 END C_func;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION B_func RETURN INTEGER IS
+  2 
+  3 RET INTEGER;
+  4 c int;
+  5 BEGIN
+  6    RET := 1;
+  7    select C_func() into c from dual;
+  8   INSERT INTO t_auton (test_value) VALUES ('B func insert');
+  9   ROLLBACK;
+ 10   RETURN RET;
+ 11 END B_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION A_func RETURN INTEGER IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 RET INTEGER;
+  4 b int;
+  5 BEGIN
+  6    RET := 1;
+  7    select B_func() into b from dual;
+  8   INSERT INTO t_auton (test_value) VALUES ('A func insert');
+  9   COMMIT;
+ 10   RETURN RET;
+ 11 END A_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT A_func() from dual;
+
+CT-00932, [7:4] PL/SQL(SYS.A_FUNC) terminated with execute errors
+[9:3] PL/SQL(SYS.B_FUNC) terminated with execute errors
+[9:3] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+C func insert            
+
+1 rows fetched.
+
+SQL> drop function A_func;
+
+Succeed.
+
+SQL> drop function B_func;
+
+Succeed.
+
+SQL> drop function C_func;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --call func directly
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL>   CREATE OR REPLACE FUNCTION C_func RETURN INTEGER IS
+  2 RET INTEGER;
+  3 BEGIN
+  4    RET := 1;
+  5   INSERT INTO t_auton (test_value) VALUES ('C func insert');
+  6   ROLLBACK;
+  7   RETURN RET;
+  8 END C_func;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL>  CREATE OR REPLACE FUNCTION B_func RETURN INTEGER IS
+  2  PRAGMA AUTONOMOUS_TRANSACTION;
+  3 RET INTEGER;
+  4 c int;
+  5 BEGIN
+  6    RET := 1;
+  7    c := C_func();
+  8   INSERT INTO t_auton (test_value) VALUES ('B func insert');
+  9   ROLLBACK;
+ 10   RETURN RET;
+ 11 END B_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL>  CREATE OR REPLACE FUNCTION A_func RETURN INTEGER IS
+  2 RET INTEGER;
+  3 b int;
+  4 BEGIN
+  5    RET := 1;
+  6    b := B_func();
+  7   INSERT INTO t_auton (test_value) VALUES ('A func insert');
+  8   COMMIT;
+  9   RETURN RET;
+ 10 END A_func;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT A_func() from dual;
+
+CT-00932, [8:3] PL/SQL(SYS.A_FUNC) terminated with execute errors
+[8:3] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+
+0 rows fetched.
+
+SQL> drop function A_func;
+
+Succeed.
+
+SQL> drop function B_func;
+
+Succeed.
+
+SQL> drop function C_func;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --test funcA called funcB by select clause
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION C_func RETURN INTEGER IS
+  2 
+  3 RET INTEGER;
+  4 BEGIN
+  5    RET := 1;
+  6   INSERT INTO t_auton (test_value) VALUES ('C func insert');
+  7   COMMIT;
+  8   RETURN RET;
+  9 END C_func;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION B_func RETURN INTEGER IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 RET INTEGER;
+  4 c int;
+  5 BEGIN
+  6    RET := 1;
+  7    c := C_func();
+  8   INSERT INTO t_auton (test_value) VALUES ('B func insert');
+  9   ROLLBACK;
+ 10   RETURN RET;
+ 11 END B_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION A_func RETURN INTEGER IS
+  2 RET INTEGER;
+  3 b int;
+  4 BEGIN
+  5    RET := 1;
+  6    select B_func() into b from dual;
+  7   INSERT INTO t_auton (test_value) VALUES ('A func insert');
+  8   COMMIT;
+  9   RETURN RET;
+ 10 END A_func;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT A_func() from dual;
+
+CT-00932, [8:3] PL/SQL(SYS.A_FUNC) terminated with execute errors
+[8:3] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+C func insert            
+
+1 rows fetched.
+
+SQL> drop function A_func;
+
+Succeed.
+
+SQL> drop function B_func;
+
+Succeed.
+
+SQL> drop function C_func;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION C_func RETURN INTEGER IS
+  2 
+  3 RET INTEGER;
+  4 BEGIN
+  5    RET := 1;
+  6   INSERT INTO t_auton (test_value) VALUES ('C func insert');
+  7   COMMIT;
+  8   RETURN RET;
+  9 END C_func;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION B_func RETURN INTEGER IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 RET INTEGER;
+  4 c int;
+  5 BEGIN
+  6    RET := 1;
+  7    select C_func() into c from dual;
+  8   INSERT INTO t_auton (test_value) VALUES ('B func insert');
+  9   ROLLBACK;
+ 10   RETURN RET;
+ 11 END B_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION A_func RETURN INTEGER IS
+  2 
+  3 RET INTEGER;
+  4 b int;
+  5 BEGIN
+  6    RET := 1;
+  7    b := B_func();
+  8   INSERT INTO t_auton (test_value) VALUES ('A func insert');
+  9   COMMIT;
+ 10   RETURN RET;
+ 11 END A_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT A_func() from dual;
+
+CT-00932, [7:4] PL/SQL(SYS.A_FUNC) terminated with execute errors
+[7:4] PL/SQL(SYS.B_FUNC) terminated with execute errors
+[7:3] PL/SQL(SYS.C_FUNC) terminated with execute errors
+[7:3] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+
+0 rows fetched.
+
+SQL> drop function A_func;
+
+Succeed.
+
+SQL> drop function B_func;
+
+Succeed.
+
+SQL> drop function C_func;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION C_func RETURN INTEGER IS
+  2 
+  3 RET INTEGER;
+  4 BEGIN
+  5    RET := 1;
+  6   INSERT INTO t_auton (test_value) VALUES ('C func insert');
+  7   COMMIT;
+  8   RETURN RET;
+  9 END C_func;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION B_func RETURN INTEGER IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 RET INTEGER;
+  4 c int;
+  5 BEGIN
+  6    RET := 1;
+  7    select C_func() into c from dual;
+  8   INSERT INTO t_auton (test_value) VALUES ('B func insert');
+  9   ROLLBACK;
+ 10   RETURN RET;
+ 11 END B_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION A_func RETURN INTEGER IS
+  2 
+  3 RET INTEGER;
+  4 b int;
+  5 BEGIN
+  6    RET := 1;
+  7    select B_func() into b from dual;
+  8   INSERT INTO t_auton (test_value) VALUES ('A func insert');
+  9   COMMIT;
+ 10   RETURN RET;
+ 11 END A_func;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT A_func() from dual;
+
+CT-00932, [7:4] PL/SQL(SYS.A_FUNC) terminated with execute errors
+[7:4] PL/SQL(SYS.B_FUNC) terminated with execute errors
+[7:3] PL/SQL(SYS.C_FUNC) terminated with execute errors
+[7:3] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE               
+-------------------------
+
+0 rows fetched.
+
+SQL> drop function A_func;
+
+Succeed.
+
+SQL> drop function B_func;
+
+Succeed.
+
+SQL> drop function C_func;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --test RETURN RESULUT  not support now
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> insert into t_auton values ('a');
+
+1 rows affected.
+
+SQL> insert into t_auton values ('b');
+
+1 rows affected.
+
+SQL> insert into t_auton values ('c');
+
+1 rows affected.
+
+SQL> insert into t_auton values ('d');
+
+1 rows affected.
+
+SQL> insert into t_auton values ('e');
+
+1 rows affected.
+
+SQL> insert into t_auton values ('f');
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE ablock IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 t varchar(25);
+  4 cur sys_refcursor;
+  5 BEGIN
+  6   open cur for select * from t_auton;
+  7   dbe_sql.return_cursor(cur);
+  8   COMMIT;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> exec ablock;
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[7:3] PL/SQL(SYS.ABLOCK) terminated with execute errors
+[7:3] PL/SQL(DBE_SQL.RETURN_CURSOR) terminated with execute errors
+CT-00601, Sql syntax error: in autonomous transaction pl,return result is not supported
+
+SQL> drop procedure ablock;
+
+Succeed.
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> 
+SQL> --test sequence in autonomous transaction
+SQL> drop table if exists  auton_sequ_t;
+
+Succeed.
+
+SQL> create table auton_sequ_t (a number);
+
+Succeed.
+
+SQL> insert into auton_sequ_t values (1); 
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE auton_proc_sequ authid current_user IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4    execute immediate 'create sequence auton_seq_002 start with 0 maxvalue 4 minvalue 0 INCREMENT BY 2 CYCLE nocache';
+  5    execute immediate 'insert into auton_sequ_t values (auton_seq_002.NEXTVAL)';      
+  6   COMMIT;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> call auton_proc_sequ();
+
+PL/SQL procedure successfully completed.
+
+SQL> select count(*) from auton_sequ_t;
+
+COUNT(*)            
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> drop table auton_sequ_t;
+
+Succeed.
+
+SQL> drop sequence auton_seq_002;
+
+Succeed.
+
+SQL> 
+SQL> --test start coverage in autonomous transaction
+SQL> DROP TABLE IF EXISTS auton_cover_t;
+
+Succeed.
+
+SQL> create table auton_cover_t (id int);
+
+Succeed.
+
+SQL> insert into auton_cover_t values(35);
+
+1 rows affected.
+
+SQL> insert into auton_cover_t values(5);
+
+1 rows affected.
+
+SQL> insert into auton_cover_t values(3);
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE auton_proc_cover authid current_user IS
+  2 PRAGMA AUTONOMOUS_TRANSACTION;
+  3 BEGIN
+  4    execute immediate 'alter system set COVERAGE_ENABLE = TRUE';
+  5    insert into auton_cover_t values(40);  
+  6    execute immediate 'alter system set COVERAGE_ENABLE = FALSE';
+  7   COMMIT;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> call auton_proc_cover();
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from auton_cover_t order by id desc;
+
+ID          
+------------
+40          
+35          
+5           
+3           
+
+4 rows fetched.
+
+SQL> drop table auton_cover_t;
+
+Succeed.
+
+SQL> drop table if exists COVERAGE$;
+
+Succeed.
+
+SQL> 
+SQL> --test anonmous block call another anonmous block 1
+SQL> drop table fvt_pragma_table_011;
+
+CT-00843, The table or view SYS.FVT_PRAGMA_TABLE_011 does not exist.
+SQL> create table fvt_pragma_table_011 (c_int int,c_number number,c_varchar varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_pragma_table_011 values(1,1.25,'abcd');
+
+1 rows affected.
+
+SQL> insert into fvt_pragma_table_011 values(2,2.25,'nh');
+
+1 rows affected.
+
+SQL> create or replace procedure FVT_PRAGMA_PROC_011 is
+  2 pragma autonomous_transaction;
+  3 begin
+  4 	declare
+  5 	pragma autonomous_transaction;
+  6 	begin
+  7     update fvt_pragma_table_011 set c_int = 100 where c_int < 10;
+  8 	execute immediate 'commit';
+  9 	end;
+ 10 end;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.FVT_PRAGMA_PROC_011) terminated with compiling errors
+[5:2] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+
+SQL> call FVT_PRAGMA_PROC_011();
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00944 PL/SQL(SYS.FVT_PRAGMA_PROC_011) terminated with compiling errors
+[5:2] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+
+SQL> drop table fvt_pragma_table_011;
+
+Succeed.
+
+SQL> drop procedure FVT_PRAGMA_PROC_011;
+
+Succeed.
+
+SQL> 
+SQL> --test anonmous block call another anonmous block 2
+SQL> create table t_auton (test_value varchar(50));
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2    BEGIN
+  3      INSERT INTO t_auton (test_value) VALUES ('top anonmous block insert');
+  4      COMMIT;
+  5      DECLARE
+  6      PRAGMA AUTONOMOUS_TRANSACTION;
+  7      Begin
+  8         INSERT INTO t_auton (test_value) VALUES ('inner anonmous block insert');
+  9    	    COMMIT;
+ 10      end;
+ 11   END;
+ 12 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[6:6] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+SQL> 
+SQL> SELECT * FROM t_auton order by test_value;
+
+TEST_VALUE                                        
+--------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --test anonmous block call another anonmous block 3
+SQL> drop table fvt_pragma_table_011;
+
+CT-00843, The table or view SYS.FVT_PRAGMA_TABLE_011 does not exist.
+SQL> create table fvt_pragma_table_011 (c_int int,c_number number,c_varchar varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_pragma_table_011 values(1,1.25,'abcd');
+
+1 rows affected.
+
+SQL> insert into fvt_pragma_table_011 values(2,2.25,'nh');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace procedure FVT_PRAGMA_PROC_012 is
+  2    pragma autonomous_transaction;
+  3 begin
+  4    update fvt_pragma_table_011 set c_int = 100 where c_int < 10;
+  5    execute immediate 'commit';
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure FVT_PRAGMA_PROC_011 is
+  2 pragma autonomous_transaction;
+  3 begin
+  4 	FVT_PRAGMA_PROC_012;
+  5 	commit;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> call FVT_PRAGMA_PROC_011();
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table fvt_pragma_table_011;
+
+Succeed.
+
+SQL> drop procedure FVT_PRAGMA_PROC_011;
+
+Succeed.
+
+SQL> drop procedure FVT_PRAGMA_PROC_012;
+
+Succeed.
+
+SQL> 
+SQL> --test anonmous block call another anonmous block 4
+SQL> drop table fvt_pragma_table_011;
+
+CT-00843, The table or view SYS.FVT_PRAGMA_TABLE_011 does not exist.
+SQL> create table fvt_pragma_table_011 (c_int int,c_number number,c_varchar varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_pragma_table_011 values(1,1.25,'abcd');
+
+1 rows affected.
+
+SQL> insert into fvt_pragma_table_011 values(2,2.25,'nh');
+
+1 rows affected.
+
+SQL> create or replace procedure FVT_PRAGMA_PROC_011 is
+  2 pragma autonomous_transaction;
+  3 begin
+  4 	declare
+  5 	pragma autonomous_transaction;
+  6 	begin
+  7     update fvt_pragma_table_011 set c_int = 100 where c_int < 10;
+  8 	execute immediate 'commit';
+  9 	end;
+ 10 end;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.FVT_PRAGMA_PROC_011) terminated with compiling errors
+[5:2] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+
+SQL> 
+SQL> declare 
+  2 pragma autonomous_transaction;
+  3 begin
+  4 	fvt_pragma_proc_011;
+  5 commit;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:2] PLC-00944 PL/SQL(SYS.FVT_PRAGMA_PROC_011) terminated with compiling errors
+[5:2] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+
+SQL> drop table fvt_pragma_table_011;
+
+Succeed.
+
+SQL> drop procedure FVT_PRAGMA_PROC_011;
+
+Succeed.
+
+SQL> drop procedure FVT_PRAGMA_PROC_012;
+
+CT-00828, object SYS.FVT_PRAGMA_PROC_012 does not exist
+SQL> 
+SQL> --test pragma autonomous is declared in inner anoymous block of trigger
+SQL> DROP TABLE IF EXISTS t_auton;
+
+Succeed.
+
+SQL> drop table if exists t1_auton;
+
+Succeed.
+
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> CREATE TABLE t1_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER A_trig AFTER INSERT ON t_auton FOR EACH ROW 
+  2 DECLARE
+  3 BEGIN
+  4     DECLARE
+  5 	PRAGMA AUTONOMOUS_TRANSACTION;
+  6 	BEGIN
+  7 	   INSERT INTO t1_auton values ('A trigger insert');
+  8 	END;
+  9 	INSERT INTO t1_auton values ('A trigger insert');
+ 10 	EXECUTE IMMEDIATE 'COMMIT';
+ 11 END;
+ 12 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.A_TRIG) terminated with compiling errors
+[5:2] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> drop table t1_auton;
+
+Succeed.
+
+SQL> drop trigger A_trig;
+
+CT-00828, trigger SYS.A_TRIG does not exist
+SQL> 
+SQL> --test pragma autonomous is declared in inner anoymous block of procedure
+SQL> DROP TABLE IF EXISTS t_auton;
+
+Succeed.
+
+SQL> drop table if exists t1_auton;
+
+Succeed.
+
+SQL> CREATE TABLE t_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> CREATE TABLE t1_auton (test_value VARCHAR2(25));
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE A_porce1 is
+  2 BEGIN
+  3     DECLARE
+  4 	PRAGMA AUTONOMOUS_TRANSACTION;
+  5 	BEGIN
+  6 	   INSERT INTO t1_auton values ('A trigger insert');
+  7 	END;
+  8 	INSERT INTO t1_auton values ('A trigger insert');
+  9 	EXECUTE IMMEDIATE 'COMMIT';
+ 10 END;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.A_PORCE1) terminated with compiling errors
+[4:2] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+
+SQL> drop table t_auton;
+
+Succeed.
+
+SQL> drop table t1_auton;
+
+Succeed.
+
+SQL> drop procedure A_porce1;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019062504833
+SQL> set serveroutput on;
+
+ON
+SQL> drop table if exists fvt_pragma_table_017;
+
+Succeed.
+
+SQL> create table fvt_pragma_table_017 (c_int int,c_number number,c_varchar varchar(80),c_date date);
+
+Succeed.
+
+SQL> insert into fvt_pragma_table_017 values(1,1.25,'abcd','2015-5-5');
+
+1 rows affected.
+
+SQL> insert into fvt_pragma_table_017 values(2,2.25,'nh','2016-6-6');
+
+1 rows affected.
+
+SQL> DROP TABLE IF EXISTS fvt_pragma_table_17;
+
+Succeed.
+
+SQL> create  table fvt_pragma_table_17 
+  2 (
+  3 c_int int,
+  4 c_number number,
+  5 c_varchar varchar(80),
+  6 c_date date
+  7 );
+
+Succeed.
+
+SQL> insert into fvt_pragma_table_17 values
+  2 (1,1.25,'xiao','0001-1-1');
+
+1 rows affected.
+
+SQL> insert into fvt_pragma_table_17 values
+  2 (2,2.25,'xiaohu','2019-1-1');
+
+1 rows affected.
+
+SQL> insert into fvt_pragma_table_17 values
+  2 (3,3.25,'xiaolan','2178-12-31');
+
+1 rows affected.
+
+SQL> 
+SQL> declare
+  2 begin
+  3 	merge into fvt_pragma_table_017 a using fvt_pragma_table_17 b1 on (a.c_int = b1.c_int) when matched then update set a.c_varchar = b1.c_varchar 
+  4 	when not matched then insert (c_int,c_number,c_varchar,c_date) values(b1.c_int,b1.c_number,b1.c_varchar,b1.c_date);
+  5 	execute immediate 'alter table fvt_pragma_table_017 rename column c_int to c_id';
+  6 	insert into fvt_pragma_table_017 values(100,3.25,'$#@','2019-6-19');
+  7 		declare	
+  8 		pragma autonomous_transaction;
+  9 		b_number number := 0;
+ 10 		low_income EXCEPTION;	
+ 11 		begin
+ 12 			for i in 1..10
+ 13 			loop
+ 14 				insert into fvt_pragma_table_017 values(i,3.25,'jtfz','2018-8-8');
+ 15 			end loop;
+ 16 			begin
+ 17 			if b_number < 10 then 
+ 18 			raise low_income;
+ 19 			end if;
+ 20 			select c_number into b_number from fvt_pragma_table_017 where c_number = 2.25;
+ 21 			dbe_output.print_line (b_number);
+ 22 			EXCEPTION
+ 23 			when low_income then
+ 24 			dbe_output.print_line ('low number occurred');
+ 25 			end;
+ 26 		end;
+ 27 	commit;
+ 28 end;
+ 29 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[8:3] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+SQL> 
+SQL> declare
+  2 begin
+  3 	merge into fvt_pragma_table_017 a using fvt_pragma_table_17 b1 on (a.c_int = b1.c_int) when matched then update set a.c_varchar = b1.c_varchar 
+  4 	when not matched then insert (c_int,c_number,c_varchar,c_date) values(b1.c_int,b1.c_number,b1.c_varchar,b1.c_date);
+  5 	execute immediate 'alter table fvt_pragma_table_017 rename column c_int to c_id';
+  6 	insert into fvt_pragma_table_017 values(100,3.25,'$#@','2019-6-19');
+  7 		declare	
+  8 		pragma autonomous_transaction;
+  9 		b_number number := 0;
+ 10 		low_income EXCEPTION;	
+ 11 		begin
+ 12 			for i in 1..10
+ 13 			loop
+ 14 				insert into fvt_pragma_table_017 values(i,3.25,'jtfz','2018-8-8');
+ 15 			end loop;
+ 16 			begin
+ 17 			if b_number < 10 then 
+ 18 			raise low_income;
+ 19 			end if;
+ 20 			select c_number into b_number from fvt_pragma_table_017 where c_number = 2.25;
+ 21 			dbe_output.print_line (b_number);
+ 22 			EXCEPTION
+ 23 			when low_income then
+ 24 			dbe_output.print_line ('low number occurred');
+ 25 			end;
+ 26 		end;
+ 27 	commit;
+ 28 end;
+ 29 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[8:3] PLC-00601 Sql syntax error: autonomous transaction must be in top stack
+
+SQL> drop table if exists fvt_pragma_table_017;
+
+Succeed.
+
+SQL> drop table if exists fvt_pragma_table_17;
+
+Succeed.
+
+SQL> set serveroutput off;
+
+OFF
+SQL> 
+SQL> --DTS2019070306367
+SQL> declare
+  2 begin
+  3 for i in 1..2
+  4 loop
+  5 	 declare
+  6 			b varchar2(100);
+  7 			a||i sys_refcursor;
+  8 	begin
+  9 		b :='open a''||i||'' for  select * from sys_dummy';
+ 10 		dbe_output.print_line(b);
+ 11 	 end;
+ 12 end loop;
+ 13 end;
+ 14 /
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[7:5] PLC-00601 Sql syntax error: datatype expected, but got '|'
+
+
+
+

@@ -1,0 +1,1718 @@
+
+
+SQL> --
+SQL> -- gs_job
+SQL> -- testing job
+SQL> --
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> show parameter JOB_QUEUE_PROCESSES;
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+JOB_QUEUE_PROCESSES                                              CT_TYPE_INTEGER      100                                                              100                                                              immediately         
+
+
+SQL> alter system set JOB_QUEUE_PROCESSES=201 scope = both;
+
+CT-00202, The parameter value "JOB_THREADS" was invalid
+SQL> alter system set JOB_QUEUE_PROCESSES=0   scope = both;
+
+Succeed.
+
+SQL> alter system set JOB_QUEUE_PROCESSES=200 scope = both;
+
+Succeed.
+
+SQL> show parameter JOB_QUEUE_PROCESSES;
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+JOB_QUEUE_PROCESSES                                              CT_TYPE_INTEGER      200                                                              200                                                              immediately         
+
+
+SQL> alter system set JOB_QUEUE_PROCESSES=1 scope = both;
+
+Succeed.
+
+SQL> show parameter JOB_QUEUE_PROCESSES;
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+JOB_QUEUE_PROCESSES                                              CT_TYPE_INTEGER      1                                                                1                                                                immediately         
+
+
+SQL> alter system set JOB_QUEUE_PROCESSES=100 scope = both;
+
+Succeed.
+
+SQL> show parameter JOB_QUEUE_PROCESSES;
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+JOB_QUEUE_PROCESSES                                              CT_TYPE_INTEGER      100                                                              100                                                              immediately         
+
+
+SQL> alter system set JOB_QUEUE_PROCESSES=' ' scope = both;
+
+CT-00233, [1:38]Empty string is not allowed here
+SQL> 
+SQL> 
+SQL> drop user if exists gs_job cascade;
+
+Succeed.
+
+SQL> drop user if exists gs_job1 cascade;
+
+Succeed.
+
+SQL> create user gs_job identified by gs_job123;
+
+Succeed.
+
+SQL> grant execute on dbe_task to gs_job;
+
+Succeed.
+
+SQL> grant dba to gs_job;
+
+Succeed.
+
+SQL> create user gs_job1 identified by gs_job123;
+
+Succeed.
+
+SQL> grant execute on dbe_task to gs_job1;
+
+Succeed.
+
+SQL> grant dba to gs_job1;
+
+Succeed.
+
+SQL> conn gs_job/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> select JOB,LOG_USER,INTERVAL_TIME,WHAT,BROKEN from user_jobs order by job;
+
+JOB                  LOG_USER                                                         INTERVAL_TIME                                                    WHAT                                                             BROKEN
+-------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table if exists test_job;
+
+Succeed.
+
+SQL> 
+SQL> create table test_job(
+  2  id varchar2(30),
+  3  dt varchar2(30)
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure job_proce_t is
+  2 begin
+  3  insert into test_job(id, dt) values('1', to_char(sysdate, 'yyyy-mm-dd hh24:mi:ss'));
+  4  commit;
+  5 end job_proce_t;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'begin job_proce_t();end;', sysdate, 'sysdate+0.2/24/60');
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select LOG_USER,INTERVAL_TIME,WHAT,BROKEN from user_jobs order by job;
+
+LOG_USER                                                         INTERVAL_TIME                                                    WHAT                                                             BROKEN
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------
+GS_JOB                                                           sysdate+0.2/24/60                                                begin job_proce_t();end;                                         N     
+
+1 rows fetched.
+
+SQL> 
+SQL> select sleep(8);
+
+SLEEP(8)
+--------
+        
+
+1 rows fetched.
+
+SQL> select count(*) from test_job;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select sleep(10);
+
+SLEEP(10)
+---------
+         
+
+1 rows fetched.
+
+SQL> select count(*) from test_job;
+
+COUNT(*)            
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> grant select on sys.SYS_JOBS to gs_job;
+
+Succeed.
+
+SQL> conn gs_job/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='begin job_proce_t();end;';
+  5 --expect success 
+  6  DBE_TASK.CANCEL(jobno);
+  7  commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'proce_t();', sysdate);
+  5  commit;
+  6 end;
+  7 /
+
+CT-00932, [4:2] PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with execute errors
+[4:2] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+CT-00944, PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with compiling errors
+[4:24] PLC-00828 procedure GS_JOB.PROCE_T does not exist
+
+
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'', sysdate);
+  5  commit;
+  6 end;
+  7 /
+
+CT-00932, [4:2] PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with execute errors
+[4:2] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+[4:24] CT-00614, Parameter error: content
+
+SQL> 
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'job_proce_t();', sysdate, , false);
+  5  commit;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with compiling errors
+[4:51] PLC-00601 Sql syntax error: invalid expression
+
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'job_proce_t()', sysdate, 'sysdate+1/24/60');
+  5  commit;
+  6 end;
+  7 /
+
+CT-00932, [4:2] PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with execute errors
+[4:2] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+CT-00944, PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with compiling errors
+[4:38] PLC-00954 ';' or ':=' expected but END found
+[4:42] PLC-00954 more text expected but EOF found
+
+
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'job_proce_t();', sysdate, 'sysdate+1/24/60');
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> grant select on sys.SYS_JOBS to gs_job1;
+
+Succeed.
+
+SQL> conn gs_job1/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5  DBE_TASK.SUSPEND(jobno, true, sysdate);
+  6  commit;
+  7 end;
+  8 /
+
+CT-00932, [5:2] PL/SQL(GS_JOB1.ANONYMOUS BLOCK) terminated with execute errors
+[5:2] PL/SQL(DBE_TASK.SUSPEND) terminated with execute errors
+CT-01001, Permissions were insufficient
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5  DBE_TASK.SUSPEND(jobno, true, sysdate);
+  6  commit;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> conn gs_job/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5  DBE_TASK.SUSPEND(jobno, true, sysdate);
+  6  commit;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect error
+SQL> begin
+  2  DBE_TASK.SUSPEND(2000, true, sysdate);
+  3  commit;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with execute errors
+[2:2] PL/SQL(DBE_TASK.SUSPEND) terminated with execute errors
+CT-00708, The object job 2000 does not exist
+
+SQL> 
+SQL> 
+SQL> select LOG_USER,INTERVAL_TIME,WHAT,BROKEN from user_jobs order by job;
+
+LOG_USER                                                         INTERVAL_TIME                                                    WHAT                                                             BROKEN
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------
+GS_JOB                                                           sysdate+1/24/60                                                  job_proce_t();                                                   Y     
+
+1 rows fetched.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5  DBE_TASK.SUSPEND(jobno, false, sysdate);
+  6  commit;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select LOG_USER,INTERVAL_TIME,WHAT,BROKEN from user_jobs order by job;
+
+LOG_USER                                                         INTERVAL_TIME                                                    WHAT                                                             BROKEN
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------
+GS_JOB                                                           sysdate+1/24/60                                                  job_proce_t();                                                   N     
+
+1 rows fetched.
+
+SQL> 
+SQL> conn gs_job1/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5  DBE_TASK.run(jobno);
+  6  commit;
+  7 end;
+  8 /
+
+CT-00932, [5:2] PL/SQL(GS_JOB1.ANONYMOUS BLOCK) terminated with execute errors
+[5:2] PL/SQL(DBE_TASK.RUN) terminated with execute errors
+CT-01001, Permissions were insufficient
+
+SQL> 
+SQL> conn gs_job/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5  DBE_TASK.run(jobno);
+  6  commit;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> begin
+  2  DBE_TASK.run(2000);
+  3  commit;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with execute errors
+[2:2] PL/SQL(DBE_TASK.RUN) terminated with execute errors
+CT-00708, The object job 2000 does not exist
+
+SQL> select LOG_USER,INTERVAL_TIME,WHAT,BROKEN from user_jobs order by job;
+
+LOG_USER                                                         INTERVAL_TIME                                                    WHAT                                                             BROKEN
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------
+GS_JOB                                                           sysdate+1/24/60                                                  job_proce_t();                                                   N     
+
+1 rows fetched.
+
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'job_proce_t();', to_date('2016-12-11','YYYY-MM-DD'), 'to_date(''2016-12-11'',''YYYY-MM-DD'')');
+  5  commit;
+  6 end;
+  7 /
+
+CT-00932, [4:2] PL/SQL(GS_JOB.ANONYMOUS BLOCK) terminated with execute errors
+[4:2] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+CT-01400, The interval of jobs was not a future time.
+
+SQL> 
+SQL> 
+SQL> conn gs_job/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5 --expect success 
+  6  DBE_TASK.CANCEL(jobno);
+  7  commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'job_proce_t();', sysdate, 'sysdate+0.5/24/60');
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> conn gs_job1/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5  DBE_TASK.CANCEL(jobno);
+  6  commit;
+  7 end;
+  8 /
+
+CT-00932, [5:2] PL/SQL(GS_JOB1.ANONYMOUS BLOCK) terminated with execute errors
+[5:2] PL/SQL(DBE_TASK.CANCEL) terminated with execute errors
+CT-01001, Permissions were insufficient
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='job_proce_t();';
+  5  DBE_TASK.CANCEL(jobno);
+  6  commit;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> begin
+  2  DBE_TASK.CANCEL(2000);
+  3  commit;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[2:2] PL/SQL(DBE_TASK.CANCEL) terminated with execute errors
+CT-00708, The object job 2000 does not exist
+
+SQL> 
+SQL> select LOG_USER,INTERVAL_TIME,WHAT,BROKEN from dba_jobs order by 1,2,3;
+
+LOG_USER                                                         INTERVAL_TIME                                                    WHAT                                                             BROKEN
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------
+SYS                                                              SYSDATE + 1800/86400                                             WSR$CREATE_SNAPSHOT();                                           N     
+SYS                                                              SYSDATE + 30/86400                                               WSR$CREATE_SESSION_SNAPSHOT();                                   N     
+SYS                                                              SYSDATE+15/24/60                                                 GATHER_CHANGE_STATS(estimate_percent=>10, change_percent=>10, force=>FALSE); Y     
+SYS                                                              TRUNC(SYSDATE) + 1                                               AUD$CLEAN_AUD_LOG();                                             N     
+SYS                                                              TRUNC(SYSDATE) + 1                                               WSR$DROP_SNAPSHOT_TIME();                                        N     
+SYS                                                              TRUNC(sysdate+1) +1/24                                           GATHER_DB_STATS(estimate_percent=>10, force=>FALSE);             Y     
+SYS                                                              TRUNC(sysdate+1) +1/24                                           GATHER_DB_STATS_EX(estimate_percent=>10, change_percent=>10, force=>FALSE); Y     
+SYS                                                              TRUNC(sysdate+50) +1/24                                          UPDATE_KMC_MASTERKEY();                                          Y     
+
+8 rows fetched.
+
+SQL> 
+SQL> --test drop user and job
+SQL> --begin
+SQL> drop table if exists test_job;
+
+Succeed.
+
+SQL> create table test_job(
+  2  id varchar2(30),
+  3  dt varchar2(30)
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure job_proce_t is
+  2 begin
+  3  insert into test_job(id, dt) values('1', to_char(sysdate, 'yyyy-mm-dd hh24:mi:ss'));
+  4  commit;
+  5 end job_proce_t;
+  6 /
+
+Succeed.
+
+SQL> grant EXECUTE on job_proce_t to gs_job;
+
+Succeed.
+
+SQL> conn gs_job/gs_job123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'begin sys.job_proce_t();end;', sysdate+1/24, 'sysdate+0.5/24/60');
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect 1
+SQL> select LOG_USER,INTERVAL_TIME,WHAT,BROKEN from dba_jobs WHERE LOG_USER='GS_JOB';
+
+LOG_USER                                                         INTERVAL_TIME                                                    WHAT                                                             BROKEN
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------
+GS_JOB                                                           sysdate+0.5/24/60                                                begin sys.job_proce_t();end;                                     N     
+
+1 rows fetched.
+
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> select sleep(3);
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> drop user if exists gs_job cascade;
+
+Succeed.
+
+SQL> --expect 0
+SQL> select LOG_USER,INTERVAL_TIME,WHAT,BROKEN from dba_jobs WHERE LOG_USER='GS_JOB';
+
+LOG_USER                                                         INTERVAL_TIME                                                    WHAT                                                             BROKEN
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------
+
+0 rows fetched.
+
+SQL> --end
+SQL> 
+SQL> 
+SQL> --test use other user to access objects
+SQL> --begin
+SQL> DROP USER IF EXISTS JOB_USER_1 CASCADE;
+
+Succeed.
+
+SQL> DROP USER IF EXISTS JOB_USER_2 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> create  user JOB_USER_1 IDENTIFIED BY DATABASE_123 PASSWORD EXPIRE;
+
+Succeed.
+
+SQL> create  user JOB_USER_2 IDENTIFIED BY DATABASE_123 PASSWORD EXPIRE;
+
+Succeed.
+
+SQL> grant dba to JOB_USER_1;
+
+Succeed.
+
+SQL> grant dba to JOB_USER_2;
+
+Succeed.
+
+SQL> drop table if exists JOB_USER_1.JOB_TAB_1;
+
+Succeed.
+
+SQL> drop table if exists JOB_USER_2.JOB_TAB_2;
+
+Succeed.
+
+SQL> 
+SQL> create table JOB_USER_1.JOB_TAB_1 
+  2 (
+  3 c_int int,
+  4 c_number number,
+  5 c_varchar varchar(4000),
+  6 c_date date
+  7 );
+
+Succeed.
+
+SQL> insert into JOB_USER_1.JOB_TAB_1 values (1,1.25,'abcd','2015-5-5');
+
+1 rows affected.
+
+SQL> insert into JOB_USER_1.JOB_TAB_1 values (2,2.25,'hello','2016-6-6');
+
+1 rows affected.
+
+SQL> insert into JOB_USER_1.JOB_TAB_1 values (2,2.25,lpad('ab',75,'c'),'2017-7-7');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create table JOB_USER_2.JOB_TAB_2 
+  2 (
+  3 c_int int,
+  4 c_number number,
+  5 c_varchar varchar(4000),
+  6 c_date date
+  7 );
+
+Succeed.
+
+SQL> insert into  JOB_USER_2.JOB_TAB_2 values (1,1.12345,'aaa','2015-5-5');
+
+1 rows affected.
+
+SQL> insert into  JOB_USER_2.JOB_TAB_2 values (2,2.12345,'shengming','2016-6-6');
+
+1 rows affected.
+
+SQL> insert into  JOB_USER_2.JOB_TAB_2 values (2,2.25,lpad('ab',8,'c'),'2017-7-7');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE  JOB_USER_1.JOB_PROC_1(b_int in int,b_date  in date )
+  2 IS
+  3 b_bigint bigint:=0;
+  4 c_cur1 date :='2016-6-6';
+  5 v_refcur1 sys_refcursor;
+  6 type tcur IS REF CURSOR;
+  7 v_refcur2 tcur;
+  8 b_temp int :=15;
+  9 b_sql varchar(2000);
+ 10 cursor c_data(d_id int) is  select a.c_int from JOB_USER_1.JOB_TAB_1 as a  join  JOB_USER_2.JOB_TAB_2 as b  where a.c_int =b.c_int and a.c_int<=d_id;
+ 11 c_row c_data%rowtype;
+ 12 BEGIN  
+ 13 OPEN c_data(3);      
+ 14    FETCH c_data INTO c_row;  
+ 15    if c_data%found then
+ 16 			execute immediate 'insert into  JOB_USER_2.JOB_TAB_2 values(:1,1.12345,''aaa'',:3) ' using  b_int,b_date;	
+ 17     end if; 
+ 18 	close c_data;
+ 19 	commit;
+ 20 END;
+ 21 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE  JOB_USER_2.JOB_PROC_2()
+  2 IS
+  3 b_temp int :=1;
+  4 m int :=-3;
+  5 k int :=-3;
+  6 b_varchar varchar(45);
+  7 BEGIN  
+  8 	JOB_USER_1.JOB_PROC_1(14,'2000-2-2');
+  9    insert into  JOB_USER_2.JOB_TAB_2 values(11,1.12345,'loop','2015-5-5');
+ 10    update JOB_USER_1.JOB_TAB_1  set c_varchar='for loop';
+ 11    commit;
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2 JOBNO number;
+  3 begin
+  4  DBE_TASK.SUBMIT(JOBNO,'JOB_USER_2.JOB_PROC_2();', SYSDATE);
+  5  COMMIT;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select sleep(10);
+
+SLEEP(10)
+---------
+         
+
+1 rows fetched.
+
+SQL> select * from JOB_USER_1.JOB_TAB_1 order by 1,2,3,4 ;
+
+C_INT        C_NUMBER                                 C_VARCHAR                                                        C_DATE                
+------------ ---------------------------------------- ---------------------------------------------------------------- ----------------------
+1            1.25                                     for loop                                                         2015-05-05 00:00:00   
+2            2.25                                     for loop                                                         2016-06-06 00:00:00   
+2            2.25                                     for loop                                                         2017-07-07 00:00:00   
+
+3 rows fetched.
+
+SQL> select * from JOB_USER_2.JOB_TAB_2  order by 1,2,3,4 ;
+
+C_INT        C_NUMBER                                 C_VARCHAR                                                        C_DATE                
+------------ ---------------------------------------- ---------------------------------------------------------------- ----------------------
+1            1.12345                                  aaa                                                              2015-05-05 00:00:00   
+2            2.12345                                  shengming                                                        2016-06-06 00:00:00   
+2            2.25                                     ccccccab                                                         2017-07-07 00:00:00   
+11           1.12345                                  loop                                                             2015-05-05 00:00:00   
+14           1.12345                                  aaa                                                              2000-02-02 00:00:00   
+
+5 rows fetched.
+
+SQL> --end
+SQL> 
+SQL> --begin
+SQL> CREATE OR  REPLACE PROCEDURE test_sleep_job(a int) 
+  2 IS
+  3 BEGIN
+  4 	for i in 1..10000 loop
+  5 		sleep(1);
+  6 	end loop;
+  7 EXCEPTION
+  8 	WHEN OTHERS THEN
+  9 	  NULL;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'begin test_sleep_job(1);end;', sysdate);
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select sleep(3);
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> 
+SQL> --expect JOB
+SQL> select type from v$session a, dba_jobs_running b, sys.SYS_JOBS c where b.sid=a.sid and b.serial#=a.serial# and c.job = b.job 
+  2 and c.what = 'begin test_sleep_job(1);end;';
+
+TYPE      
+----------
+JOB       
+
+1 rows fetched.
+
+SQL> 
+SQL> declare
+  2 jobno int;
+  3 sid1   int;
+  4 serial_id int;
+  5 sql    varchar(256);
+  6 begin
+  7  select job into jobno from sys.SYS_JOBS where what='begin test_sleep_job(1);end;';
+  8  DBE_TASK.CANCEL(jobno);
+  9  commit;
+ 10  
+ 11  select sid, serial# into sid1, serial_id from dba_jobs_running where job=jobno;
+ 12  sql := 'alter system kill session '''||sid1||','||serial_id||'''';
+ 13  --dbe_output.print_line(sql);
+ 14  execute immediate sql;
+ 15 end;
+ 16 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select sleep(5);
+
+SLEEP(5)
+--------
+        
+
+1 rows fetched.
+
+SQL> select count(*) from dba_jobs_running where failures is null;
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> --end
+SQL> 
+SQL> 
+SQL> --test job datatype DTS2019011602741
+SQL> --begin
+SQL> declare 
+  2 jobno int;
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare 
+  2 jobno double;
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare 
+  2 jobno number;
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare 
+  2 jobno real;
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare 
+  2 jobno float;
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare 
+  2 jobno char;
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:17] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> 
+SQL> declare 
+  2 jobno varchar(10);
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:17] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> 
+SQL> declare 
+  2 jobno clob;
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:17] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> 
+SQL> declare 
+  2 jobno number(2);
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+CT-00932, [4:1] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+CT-00635, Value error: value larger than specified precision
+
+SQL> 
+SQL> declare 
+  2 jobno nchar(10) 
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[3:1] PLC-00601 Sql syntax error: ; expected
+
+SQL> 
+SQL> declare 
+  2 jobno IMAGE;
+  3 begin 
+  4 DBE_TASK.SUBMIT(jobno,' begin sleep(1);end;',sysdate);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:17] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> --end
+SQL> 
+SQL> --begin DTS2019012207187
+SQL> create or replace procedure abc
+  2 as
+  3 b_number number;
+  4 begin
+  5 select 1 into b_number from dual;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 jobno1 number;
+  3 begin
+  4 DBE_TASK.SUBMIT(jobno1,'abc();',sysdate,'sysdate+1/24');
+  5 commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from sys.SYS_JOBS where what='abc();';
+  5  DBE_TASK.CANCEL(jobno);
+  6  commit; 
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --begin
+SQL> --expect success
+SQL> declare 
+  2   I_L_JOBNO integer;
+  3   i_x integer := 30;
+  4 begin
+  5   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(1);end;', SYSDATE+10/24, 'SYSDATE + ' || i_x || '/1440');
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> --end
+SQL> 
+SQL> --begin
+SQL> --expect error
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, ' ', SYSDATE+10/24, 'SYSDATE + 1/1440');
+  5   commit;
+  6 end;
+  7 /
+
+CT-00932, [4:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:19] PLC-00954 lines expected but END found
+
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin test_sleep(2);end;', SYSDATE+10/24, ' ');
+  5   commit;
+  6 end;
+  7 /
+
+CT-00932, [4:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+CT-00601, Sql syntax error: invalid expression
+
+SQL> --end
+SQL> 
+SQL> --test case: fuzz test
+SQL> --step1:DBE_TASK.SUBMIT
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', SYSDATE+10/24, null, null);
+  5   rollback;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', SYSDATE+10/24, null, '');
+  5   rollback;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', SYSDATE+10/24, null, null);
+  5   rollback;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', SYSDATE+10/24, '');
+  5   rollback;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', SYSDATE+10/24, null);
+  5   rollback;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', SYSDATE+10/24);
+  5   rollback;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', SYSDATE+10/24,);
+  5   rollback;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:67] PLC-00601 Sql syntax error: invalid expression
+
+SQL> 
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', null, ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', '', ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, '', sysdate, ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+CT-00932, [4:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+[4:30] CT-00614, Parameter error: content
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, null, sysdate, ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+CT-00932, [4:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(DBE_TASK.SUBMIT) terminated with execute errors
+[4:30] CT-00614, Parameter error: content
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT(null, 'begin sleep(2);end;', sysdate, ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:19] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO number;
+  3 begin
+  4   DBE_TASK.SUBMIT('', 'begin sleep(2);end;', sysdate, ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:19] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO char;
+  3 begin
+  4   DBE_TASK.SUBMIT(I_L_JOBNO, 'begin sleep(2);end;', sysdate, ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:19] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO char;
+  3 begin
+  4   DBE_TASK.SUBMIT(upper(I_L_JOBNO), 'begin sleep(2);end;', sysdate, ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:19] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> 
+SQL> declare
+  2 I_L_JOBNO char;
+  3 begin
+  4   DBE_TASK.SUBMIT(to_number(I_L_JOBNO), 'begin sleep(2);end;', sysdate, ' SYSDATE + 1/1440');
+  5   rollback;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:19] PLC-00614 Parameter error: argument id of DBE_TASK.SUBMIT should be numeric type
+
+SQL> 
+SQL> --step2:DBE_TASK.SUSPEND
+SQL> begin
+  2  DBE_TASK.SUSPEND(1001, null);
+  3  rollback;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[2:2] PL/SQL(DBE_TASK.SUSPEND) terminated with execute errors
+[2:25] CT-00614, Parameter error: broken
+
+SQL> 
+SQL> begin
+  2  DBE_TASK.SUSPEND(1001, '');
+  3  rollback;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[2:2] PL/SQL(DBE_TASK.SUSPEND) terminated with execute errors
+[2:25] CT-00614, Parameter error: broken
+
+SQL> 
+SQL> begin
+  2  DBE_TASK.SUSPEND(null, true);
+  3  rollback;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[2:2] PL/SQL(DBE_TASK.SUSPEND) terminated with execute errors
+[2:19] CT-00614, Parameter error: id
+
+SQL> 
+SQL> begin
+  2  DBE_TASK.SUSPEND('', true);
+  3  rollback;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[2:2] PL/SQL(DBE_TASK.SUSPEND) terminated with execute errors
+[2:19] CT-00614, Parameter error: id
+
+SQL> 
+SQL> begin
+  2  DBE_TASK.SUSPEND("", true);
+  3  rollback;
+  4 end;
+  5 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:19] PLC-00601 Sql syntax error: invalid identifier, length 0
+
+SQL> begin
+  2  DBE_TASK.SUSPEND(1001, true,null);
+  3  rollback;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> begin
+  2  DBE_TASK.SUSPEND(1001, true,'');
+  3  rollback;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> --step3:DBE_TASK.run
+SQL> begin
+  2  DBE_TASK.run(1001, '');
+  3  rollback;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> begin
+  2  DBE_TASK.run(1001, null);
+  3  rollback;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> begin
+  2  DBE_TASK.run(null, '');
+  3  rollback;
+  4 end;
+  5 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[2:2] PL/SQL(DBE_TASK.RUN) terminated with execute errors
+[2:15] CT-00614, Parameter error: id
+
+SQL> declare
+  2 jobno number := null;
+  3 begin
+  4  DBE_TASK.run(jobno, '');
+  5  rollback;
+  6 end;
+  7 /
+
+CT-00932, [4:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:2] PL/SQL(DBE_TASK.RUN) terminated with execute errors
+[4:15] CT-00614, Parameter error: id
+
+SQL> declare
+  2 jobno number;
+  3 begin
+  4  DBE_TASK.run(jobno, '');
+  5  rollback;
+  6 end;
+  7 /
+
+CT-00932, [4:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:2] PL/SQL(DBE_TASK.RUN) terminated with execute errors
+[4:15] CT-00614, Parameter error: id
+
+SQL> --step4: remove
+SQL> declare
+  2 jobno number;
+  3 begin
+  4  DBE_TASK.CANCEL(jobno);
+  5  rollback;
+  6 end;
+  7 /
+
+CT-00932, [4:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:2] PL/SQL(DBE_TASK.CANCEL) terminated with execute errors
+[4:18] CT-00614, Parameter error: id
+
+SQL> 
+SQL> declare
+  2 jobno number:=null;
+  3 begin
+  4  DBE_TASK.CANCEL(jobno);
+  5  rollback;
+  6 end;
+  7 /
+
+CT-00932, [4:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[4:2] PL/SQL(DBE_TASK.CANCEL) terminated with execute errors
+[4:18] CT-00614, Parameter error: id
+
+SQL> 
+SQL> drop table if exists job_t111;
+
+Succeed.
+
+SQL> create table job_t111(a int);
+
+Succeed.
+
+SQL> insert into job_t111 values(100);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure job_p11 is
+  2 h1 int;
+  3 h2 int := 100;
+  4 begin
+  5  select * into h1 from job_t111 where a = h2;
+  6  execute immediate 'drop table job_t111';
+  7  execute immediate 'create table job_t111(a int)';
+  8  insert into job_t111 values(200);
+  9  h2 := 200;
+ 10  select * into h1 from job_t111 where a = h2;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 JOBNO int;
+  3 begin
+  4 DBE_TASK.SUBMIT(JOBNO,'job_p11();', SYSDATE, 'sysdate + 1/24');
+  5 commit;
+  6 sleep(1);
+  7 DBE_TASK.SUSPEND(jobno, true, sysdate);
+  8 DBE_TASK.CANCEL(JOBNO);
+  9 commit;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure job_test_core is
+  2 h1 int;
+  3 h2 int := 100;
+  4 BEGIN
+  5     EXECUTE IMMEDIATE 'DROP TABLE IF EXISTS job_tt1';
+  6     EXECUTE IMMEDIATE 'CREATE job_tt1(a int)';
+  7     EXECUTE IMMEDIATE 'insert into job_tt1 values(10),(20)';
+  8     EXECUTE IMMEDIATE 'DROP TABLE IF EXISTS job_tt2';
+  9     EXECUTE IMMEDIATE 'CREATE TABLE job_tt2 AS SELECT * FROM job_tt1';
+ 10     EXECUTE IMMEDIATE 'ALTER SESSION SET TIME_ZONE = ''8:00''';
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 JOBNO int;
+  3 begin
+  4 DBE_TASK.SUBMIT(JOBNO,'job_test_core();', SYSDATE, 'sysdate + 1/24');
+  5 commit;
+  6 sleep(1);
+  7 DBE_TASK.SUSPEND(jobno, true, sysdate);
+  8 DBE_TASK.CANCEL(JOBNO);
+  9 commit;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --job upper zh
+SQL> set charset gbk;
+
+GBK
+SQL> drop table if exists t_job_upper;
+
+Succeed.
+
+SQL> create table t_job_upper(id int,name varchar(20));
+
+Succeed.
+
+SQL> insert into t_job_upper values(1,'你好');
+
+1 rows affected.
+
+SQL> insert into t_job_upper values(1,'hello');
+
+1 rows affected.
+
+SQL> insert into t_job_upper values(1,'你好');
+
+1 rows affected.
+
+SQL> insert into t_job_upper values(1,'你好');
+
+1 rows affected.
+
+SQL> insert into t_job_upper values(1,'中国');
+
+1 rows affected.
+
+SQL> insert into t_job_upper values(1,'你好');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop index if exists t_job_upper_idx on t_job_upper;
+
+Succeed.
+
+SQL> create index t_job_upper_idx on t_job_upper (upper(name));
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure pl_t_job_upper()
+  2 as
+  3 begin
+  4 	dbe_stats.collect_table_stats('sys',('t_job_upper'),sample_ratio=>100);
+  5 	
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 jobno number;
+  3 begin
+  4 	DBE_TASK.SUBMIT(jobno, 'pl_t_job_upper();', sysdate, null);
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop procedure pl_t_job_upper;
+
+Succeed.
+
+SQL> drop index t_job_upper_idx on t_job_upper;
+
+Succeed.
+
+SQL> drop table t_job_upper;
+
+Succeed.
+
+SQL> set charset utf8;
+
+UTF8
+SQL> 
+SQL> --DTS2020022814368
+SQL> DROP TABLE if exists t16941;
+
+Succeed.
+
+SQL> create table t16941 (f1 int, f2 VARCHAR2(10), f3 VARCHAR2(10));
+
+Succeed.
+
+SQL> insert into t16941 values (1,'aa','aa');
+
+1 rows affected.
+
+SQL> create or replace procedure test_job16941
+  2 is
+  3 c1 sys_refcursor;
+  4 type rec is record(a int);
+  5 v1 rec;
+  6 v2 VARCHAR2(10);
+  7 begin
+  8 v1.a:=1;
+  9 open c1 for 'select f2 from t16941 where f1 = :1' using  v1.a;
+ 10 fetch c1 into v2;
+ 11 close c1;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> declare
+  2  jobno number;
+  3 begin
+  4  DBE_TASK.SUBMIT(jobno,'test_job16941();', sysdate, 'sysdate+1/24/60');
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select sleep(10);
+
+SLEEP(10)
+---------
+
+
+1 rows fetched.
+
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  select job into jobno from user_jobs where what='test_job16941();';
+  5  DBE_TASK.CANCEL(jobno);
+  6  commit;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> drop procedure test_job16941;
+
+Succeed.
+
+SQL> drop table t16941;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop sequence if exists job_myseq;
+
+Succeed.
+
+SQL> create sequence job_myseq start with 1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists job_tt1;
+
+Succeed.
+
+SQL> create table job_tt1(id int primary key, t date);
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure test_dml(name varchar)
+  2 is
+  3 tmp int;
+  4 begin
+  5 insert into job_tt1 values(job_myseq.nextval,sysdate);
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 jobno int;
+  3 begin
+  4  DBE_TASK.submit(jobno,'test_dml(1);',sysdate+1/24/60/60/10,'sysdate+1/24/60/60/10');
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop procedure test_dml;
+
+Succeed.
+
+SQL> drop table job_tt1;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --execute in the end.
+SQL> declare
+  2 jobid int;
+  3 begin
+  4 for i in (select job from user_jobs) loop
+  5     dbe_task.cancel(i.job);
+  6 end loop;
+  7 commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+

@@ -1,0 +1,3515 @@
+
+
+SQL> drop table if exists bmsql_config;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_new_order;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_order_line;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_oorder;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_history;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_customer;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_stock;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_item;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_district;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists bmsql_warehouse;
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_config (
+  2   cfg_name    varchar(30) primary key,
+  3   cfg_value   varchar(50)
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_warehouse (
+  2   w_id        integer   not null,
+  3   w_ytd       decimal(12,2),
+  4   w_tax       decimal(4,4),
+  5   w_name      varchar(10),
+  6   w_street_1  varchar(20),
+  7   w_street_2  varchar(20),
+  8   w_city      varchar(20),
+  9   w_state     char(2),
+ 10   w_zip       char(9)
+ 11 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_district (
+  2   d_w_id       integer       not null,
+  3   d_id         integer       not null,
+  4   d_ytd        decimal(12,2),
+  5   d_tax        decimal(4,4),
+  6   d_next_o_id  integer,
+  7   d_name       varchar(10),
+  8   d_street_1   varchar(20),
+  9   d_street_2   varchar(20),
+ 10   d_city       varchar(20),
+ 11   d_state      char(2),
+ 12   d_zip        char(9)
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_customer (
+  2   c_w_id         integer        not null,
+  3   c_d_id         integer        not null,
+  4   c_id           integer        not null,
+  5   c_discount     decimal(4,4),
+  6   c_credit       char(2),
+  7   c_last         varchar(16),
+  8   c_first        varchar(16),
+  9   c_credit_lim   decimal(12,2),
+ 10   c_balance      decimal(12,2),
+ 11   c_ytd_payment  decimal(12,2),
+ 12   c_payment_cnt  integer,
+ 13   c_delivery_cnt integer,
+ 14   c_street_1     varchar(20),
+ 15   c_street_2     varchar(20),
+ 16   c_city         varchar(20),
+ 17   c_state        char(2),
+ 18   c_zip          char(9),
+ 19   c_phone        char(16),
+ 20   c_since        timestamp,
+ 21   c_middle       char(2),
+ 22   c_data         varchar(500)
+ 23 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_history (
+  2   hist_id  integer,
+  3   h_c_id   integer,
+  4   h_c_d_id integer,
+  5   h_c_w_id integer,
+  6   h_d_id   integer,
+  7   h_w_id   integer,
+  8   h_date   timestamp,
+  9   h_amount decimal(6,2),
+ 10   h_data   varchar(24)
+ 11 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_new_order (
+  2   no_w_id  integer   not null,
+  3   no_d_id  integer   not null,
+  4   no_o_id  integer   not null
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_oorder (
+  2   o_w_id       integer      not null,
+  3   o_d_id       integer      not null,
+  4   o_id         integer      not null,
+  5   o_c_id       integer,
+  6   o_carrier_id integer,
+  7   o_ol_cnt     integer,
+  8   o_all_local  integer,
+  9   o_entry_d    timestamp
+ 10 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_order_line (
+  2   ol_w_id         integer   not null,
+  3   ol_d_id         integer   not null,
+  4   ol_o_id         integer   not null,
+  5   ol_number       integer   not null,
+  6   ol_i_id         integer   not null,
+  7   ol_delivery_d   timestamp,
+  8   ol_amount       decimal(6,2),
+  9   ol_supply_w_id  integer,
+ 10   ol_quantity     integer,
+ 11   ol_dist_info    char(24)
+ 12 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_item (
+  2   i_id     integer      not null,
+  3   i_name   varchar(24),
+  4   i_price  decimal(5,2),
+  5   i_data   varchar(50),
+  6   i_im_id  integer
+  7 );
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_stock (
+  2   s_w_id       integer       not null,
+  3   s_i_id       integer       not null,
+  4   s_quantity   integer,
+  5   s_ytd        integer,
+  6   s_order_cnt  integer,
+  7   s_remote_cnt integer,
+  8   s_data       varchar(50),
+  9   s_dist_01    char(24),
+ 10   s_dist_02    char(24),
+ 11   s_dist_03    char(24),
+ 12   s_dist_04    char(24),
+ 13   s_dist_05    char(24),
+ 14   s_dist_06    char(24),
+ 15   s_dist_07    char(24),
+ 16   s_dist_08    char(24),
+ 17   s_dist_09    char(24),
+ 18   s_dist_10    char(24)
+ 19 );
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_warehouse add constraint bmsql_warehouse_pkey  primary key (w_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_district add constraint bmsql_district_pkey  primary key (d_w_id, d_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_customer add constraint bmsql_customer_pkey  primary key (c_w_id, c_d_id, c_id);
+
+Succeed.
+
+SQL> 
+SQL> -- create index bmsql_customer_idx1  on  bmsql_customer (c_w_id, c_d_id, c_last, c_first);
+SQL> 
+SQL> alter table bmsql_oorder add constraint bmsql_oorder_pkey  primary key (o_w_id, o_d_id, o_id);
+
+Succeed.
+
+SQL> 
+SQL> -- create unique index bmsql_oorder_idx1  on  bmsql_oorder (o_w_id, o_d_id, o_carrier_id, o_id);
+SQL> 
+SQL> alter table bmsql_new_order add constraint bmsql_new_order_pkey  primary key (no_w_id, no_d_id, no_o_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_order_line add constraint bmsql_order_line_pkey  primary key (ol_w_id, ol_d_id, ol_o_id, ol_number);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_stock add constraint bmsql_stock_pkey  primary key (s_w_id, s_i_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_item add constraint bmsql_item_pkey  primary key (i_id);
+
+Succeed.
+
+SQL>
+SQL> ---DTS2020022721644
+SQL> alter table bmsql_district add constraint d_warehouse_fkey
+  2     foreign key (d_w_id1)
+  3     references bmsql_warehouse (w_id);
+
+CT-00844, The column BMSQL_DISTRICT.D_W_ID1 does not exist.
+SQL> alter table bmsql_district add constraint d_warehouse_fkey
+  2     foreign key (d_w_id)
+  3     references bmsql_warehouse (w_id1);
+
+CT-00844, The column BMSQL_WAREHOUSE.W_ID1 does not exist.
+SQL> 
+SQL> alter table bmsql_district add constraint d_warehouse_fkey
+  2     foreign key (d_w_id)
+  3     references bmsql_warehouse (w_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_customer add constraint c_district_fkey
+  2     foreign key (c_w_id, c_d_id)
+  3     references bmsql_district (d_w_id, d_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_history add constraint h_customer_fkey
+  2     foreign key (h_c_w_id, h_c_d_id, h_c_id)
+  3     references bmsql_customer (c_w_id, c_d_id, c_id);
+
+Succeed.
+
+SQL> alter table bmsql_history add constraint h_district_fkey
+  2     foreign key (h_w_id, h_d_id)
+  3     references bmsql_district (d_w_id, d_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_new_order add constraint no_order_fkey
+  2     foreign key (no_w_id, no_d_id, no_o_id)
+  3     references bmsql_oorder (o_w_id, o_d_id, o_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_oorder add constraint o_customer_fkey
+  2     foreign key (o_w_id, o_d_id, o_c_id)
+  3     references bmsql_customer (c_w_id, c_d_id, c_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_order_line add constraint ol_order_fkey
+  2     foreign key (ol_w_id, ol_d_id, ol_o_id)
+  3     references bmsql_oorder (o_w_id, o_d_id, o_id);
+
+Succeed.
+
+SQL> alter table bmsql_order_line add constraint ol_stock_fkey
+  2     foreign key (ol_supply_w_id, ol_i_id)
+  3     references bmsql_stock (s_w_id, s_i_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_stock add constraint s_warehouse_fkey
+  2     foreign key (s_w_id)
+  3     references bmsql_warehouse (w_id);
+
+Succeed.
+
+SQL> alter table bmsql_stock add constraint s_item_fkey
+  2     foreign key (s_i_id)
+  3     references bmsql_item (i_id);
+
+Succeed.
+
+SQL>
+SQL> select t.name, c.cols, c.col_list from SYS_CONSTRAINT_DEFS c, SYS_TABLES t where c.cons_type = 2 and c.user# = t.user# and c.table# = t.id and t.name like 'BMSQL%' order by t.name, c.cols, c.col_list;
+
+NAME                                                             COLS         COL_LIST                                                        
+---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+BMSQL_CUSTOMER                                                   2            0,1                                                             
+BMSQL_DISTRICT                                                   1            0                                                               
+BMSQL_HISTORY                                                    2            5,4                                                             
+BMSQL_HISTORY                                                    3            3,2,1                                                           
+BMSQL_NEW_ORDER                                                  3            0,1,2                                                           
+BMSQL_OORDER                                                     3            0,1,3                                                           
+BMSQL_ORDER_LINE                                                 2            7,4                                                             
+BMSQL_ORDER_LINE                                                 3            0,1,2                                                           
+BMSQL_STOCK                                                      1            0                                                               
+BMSQL_STOCK                                                      1            1                                                               
+
+10 rows fetched.
+
+SQL> 
+SQL> drop table bmsql_oorder;
+
+CT-00642, The unique index or primary key was referenced by a foreign key
+SQL> 
+SQL> drop table bmsql_config;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_new_order;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_order_line;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_oorder;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_history;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_customer;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_stock;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_item;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_district;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_warehouse;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists child1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists parent2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists parent1;
+
+Succeed.
+
+SQL> 
+SQL> create table parent1(c3 int, c1 int, c2 int);
+
+Succeed.
+
+SQL> 
+SQL> create table parent2(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> 
+SQL> create table child1(c1 int, c2 int, c3 int);
+
+Succeed.
+
+SQL> 
+SQL> alter table child1 add foreign key(c1, c2, c3) references parent1(c1, c2);
+
+CT-00601, Sql syntax error: number of referencing columns must match referenced columns.
+SQL> 
+SQL> alter table child1 add foreign key(c1,c2) references parent1(c1,c2);
+
+CT-00650, The column referenced by a foreign key was not the unique or primary key of the referenced table
+SQL> 
+SQL> alter table parent1 add primary key(c1,c2);
+
+Succeed.
+
+SQL> 
+SQL> alter table child1 add foreign key(c1,c2) references parent1(c1,c2);
+
+Succeed.
+
+SQL> 
+SQL> alter table parent2 add unique(c3);
+
+Succeed.
+
+SQL> 
+SQL> alter table child1 add foreign key(c3) references parent2(c3);
+
+Succeed.
+
+SQL> 
+SQL> alter table parent2 add primary key(c2);
+
+Succeed.
+
+SQL> 
+SQL> alter table parent2 add foreign key (c1) references parent2(c2);
+
+Succeed.
+
+SQL> 
+SQL> insert into child1 values(1, 2, 3);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> 
+SQL> insert into child1 values(1, null, 3);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> 
+SQL> insert into parent1 values(3, 1, 2);
+
+1 rows affected.
+
+SQL> 
+SQL> insert into child1 values(1, 2, 3);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> 
+SQL> insert into child1 values(1, 2, null);
+
+1 rows affected.
+
+SQL> 
+SQL> insert into parent2 values(1, 2, 3);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> 
+SQL> insert into parent2 values(1, 1, 3);
+
+1 rows affected.
+
+SQL> 
+SQL> insert into child1 values(1, 2, 3);
+
+1 rows affected.
+
+SQL> 
+SQL> delete from parent1 where c1 = 1;
+
+CT-01123, The row is referenced by child record
+SQL> 
+SQL> delete from parent2 where c3 = 3;
+
+CT-01123, The row is referenced by child record
+SQL> 
+SQL> delete from child1;
+
+2 rows affected.
+
+SQL> 
+SQL> delete from parent1;
+
+1 rows affected.
+
+SQL> 
+SQL> delete from parent2;
+
+CT-01123, The row is referenced by child record
+SQL> 
+SQL> drop table parent1;
+
+CT-00642, The unique index or primary key was referenced by a foreign key
+SQL> 
+SQL> drop table parent2;
+
+CT-00642, The unique index or primary key was referenced by a foreign key
+SQL> 
+SQL> drop table child1;
+
+Succeed.
+
+SQL> 
+SQL> drop table parent2;
+
+Succeed.
+
+SQL> 
+SQL> drop table parent1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists part_child;
+
+Succeed.
+
+SQL> drop table if exists part_parent;
+
+Succeed.
+
+SQL> create table part_parent(c1 int, c2 int, primary key (c1));
+
+Succeed.
+
+SQL> create table part_child(c1 int, c2 int, c3 int) partition by range(c1) (partition p1 values less than(10), partition p2 values less than (maxvalue));
+
+Succeed.
+
+SQL> alter table part_child add constraint fk_part_child foreign key(c1) references part_parent(c1);
+
+Succeed.
+
+SQL> insert into part_parent values(1,1);
+
+1 rows affected.
+
+SQL> insert into part_parent values(2,2);
+
+1 rows affected.
+
+SQL> insert into part_parent values(200, 200);
+
+1 rows affected.
+
+SQL> insert into part_child values(2, 1, 3);
+
+1 rows affected.
+
+SQL> insert into part_child values(1, 1, 3);
+
+1 rows affected.
+
+SQL> insert into part_child values(200, 200, 200);
+
+1 rows affected.
+
+SQL> update part_child set c1=2;
+
+3 rows affected.
+
+SQL> update part_child set c1=3;
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> update part_parent set c1=3 where c2=2;
+
+CT-01123, The row is referenced by child record
+SQL> update part_parent set c1=201 where c1=200;
+
+1 rows affected.
+
+SQL> delete from part_child;
+
+3 rows affected.
+
+SQL> delete from part_parent;
+
+3 rows affected.
+
+SQL> drop table part_child;
+
+Succeed.
+
+SQL> drop table part_parent;
+
+Succeed.
+
+SQL> 
+SQL> --syntax 
+SQL> drop table if exists test_fk1;
+
+Succeed.
+
+SQL> drop table if exists test_fk2;
+
+Succeed.
+
+SQL> drop table if exists test_pk;
+
+Succeed.
+
+SQL> create table test_pk(c1 int primary key, c2 int);
+
+Succeed.
+
+SQL> create table test_fk1(c1 int, c2 int, foreign key(c1) references test_pk(c1) match full);
+
+CT-00601, [1:78]Sql syntax error: , expected but match found
+SQL> create table test_fk1(c1 int, c2 int, foreign key(c1) references test_pk(c1) on delete set null);
+
+Succeed.
+
+SQL> create table test_fk2(c1 int, c2 int, foreign key(c1) references test_pk(c1) on delete cascade);
+
+Succeed.
+
+SQL> drop table test_fk1;
+
+Succeed.
+
+SQL> drop table test_fk2;
+
+Succeed.
+
+SQL> drop table test_pk;
+
+Succeed.
+
+SQL> 
+SQL> --CloudSOP's needs
+SQL> DROP TABLE IF EXISTS META_CLASS;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS META_RELATION1;
+
+Succeed.
+
+SQL> CREATE TABLE META_CLASS (ID BIGINT NOT NULL, NAME VARCHAR(32) NOT NULL, GENDER BOOLEAN, PRIMARY KEY(ID));
+
+Succeed.
+
+SQL> CREATE TABLE META_RELATION1
+  2 (
+  3   ID BIGINT NOT NULL ,
+  4   NAME VARCHAR(128) UNIQUE NOT NULL,
+  5   DESCRIPTION VARCHAR(250),
+  6   SOURCE_CLASS_ID BIGINT NOT NULL,
+  7   TARGET_CLASS_ID BIGINT NOT NULL,
+  8   SOURCE_REMARK VARCHAR(500),
+  9   TARGET_REMARK VARCHAR(500),
+ 10   SOURCE_ATTRIBUTE_ID BIGINT,
+ 11   TARGET_ATTRIBUTE_ID BIGINT,
+ 12   SOURCE_ALIAS VARCHAR(60),
+ 13   TARGET_ALIAS VARCHAR(60),
+ 14   CARDINALITY INTEGER NOT NULL,
+ 15   CUSTOM BOOLEAN DEFAULT TRUE,
+ 16   SENDEVENT BOOLEAN DEFAULT FALSE,
+ 17   RELCATEGORY VARCHAR(128),
+ 18   PRIMARY KEY (ID),
+ 19   CONSTRAINT FK_SOURCE_CLASS_ID FOREIGN KEY (SOURCE_CLASS_ID) REFERENCES META_CLASS(ID),
+ 20   CONSTRAINT FK_TARGET_CLASS_ID FOREIGN KEY (TARGET_CLASS_ID) REFERENCES META_CLASS(ID)
+ 21 );
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO META_CLASS VALUES(1, 'Bill Clinton', TRUE);
+
+1 rows affected.
+
+SQL> INSERT INTO META_CLASS VALUES(2, 'Hilary Clinton', FALSE);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO META_RELATION1(ID, NAME, SOURCE_CLASS_ID, TARGET_CLASS_ID, CARDINALITY) VALUES (100, 'NAME100', 1, 2, 65535); --success
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO META_RELATION1(ID, NAME, SOURCE_CLASS_ID, TARGET_CLASS_ID, CARDINALITY) VALUES (200, 'NAME200', 2, 3, 65535); --fail
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO META_RELATION1(ID, NAME, SOURCE_CLASS_ID, TARGET_CLASS_ID, CARDINALITY) VALUES (300, 'NAME300', 1, 4, 65535); --fail
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO META_RELATION1(ID, NAME, SOURCE_CLASS_ID, TARGET_CLASS_ID, CARDINALITY) VALUES (400, 'NAME400', 3, 4, 65535); --fail 
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> 
+SQL> DROP TABLE META_RELATION1;
+
+Succeed.
+
+SQL> DROP TABLE META_CLASS;
+
+Succeed.
+
+SQL> 
+SQL> --test parent table referenced by many tables
+SQL> DROP  TABLE IF EXISTS parent_table;
+
+Succeed.
+
+SQL> CREATE TABLE parent_table(id int primary key, val varchar(10));
+
+Succeed.
+
+SQL> CREATE TABLE child_001(id int, val varchar(10), CONSTRAINT fk_001 FOREIGN KEY(id) REFERENCES parent_table(id));
+
+Succeed.
+
+SQL> CREATE TABLE child_002(id int, val varchar(10), CONSTRAINT fk_002 FOREIGN KEY(id) REFERENCES parent_table(id));
+
+Succeed.
+
+SQL> CREATE TABLE child_003(id int, val varchar(10), CONSTRAINT fk_003 FOREIGN KEY(id) REFERENCES parent_table(id));
+
+Succeed.
+
+SQL> CREATE TABLE child_004(id int, val varchar(10), CONSTRAINT fk_004 FOREIGN KEY(id) REFERENCES parent_table(id));
+
+Succeed.
+
+SQL> INSERT INTO child_001 VALUES(1, 'a');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO child_002 VALUES(1, 'a');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO child_003 VALUES(1, 'a');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO child_004 VALUES(1, 'a');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO parent_table VALUES(1, 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO child_001 VALUES(1, 'a');
+
+1 rows affected.
+
+SQL> INSERT INTO child_002 VALUES(1, 'a');
+
+1 rows affected.
+
+SQL> INSERT INTO child_003 VALUES(1, 'a');
+
+1 rows affected.
+
+SQL> INSERT INTO child_004 VALUES(1, 'a');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> DELETE FROM parent_table;
+
+CT-01123, The row is referenced by child record
+SQL> DELETE FROM child_001;
+
+1 rows affected.
+
+SQL> DELETE FROM child_002;
+
+1 rows affected.
+
+SQL> DELETE FROM child_003;
+
+1 rows affected.
+
+SQL> DELETE FROM parent_table;
+
+CT-01123, The row is referenced by child record
+SQL> DELETE FROM child_004;
+
+1 rows affected.
+
+SQL> DELETE FROM parent_table;
+
+1 rows affected.
+
+SQL> DROP TABLE parent_table;
+
+CT-00642, The unique index or primary key was referenced by a foreign key
+SQL> DROP TABLE parent_table CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> INSERT INTO child_001 VALUES(2, 'a');
+
+1 rows affected.
+
+SQL> INSERT INTO child_002 VALUES(2, 'a');
+
+1 rows affected.
+
+SQL> INSERT INTO child_003 VALUES(2, 'a');
+
+1 rows affected.
+
+SQL> INSERT INTO child_004 VALUES(2, 'a');
+
+1 rows affected.
+
+SQL> DROP TABLE child_001;
+
+Succeed.
+
+SQL> DROP TABLE child_002;
+
+Succeed.
+
+SQL> DROP TABLE child_003;
+
+Succeed.
+
+SQL> DROP TABLE child_004;
+
+Succeed.
+
+SQL> DROP TABLE parent_table;
+
+CT-00843, The table or view SYS.PARENT_TABLE does not exist.
+SQL> 
+SQL> -- test foreign key update
+SQL> DROP TABLE IF EXISTS CRON_TRIGGERS;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS CRON_JOB_DETAILS;
+
+Succeed.
+
+SQL> CREATE TABLE CRON_JOB_DETAILS
+  2 (
+  3 SCHED_NAME VARCHAR(120) NOT NULL,
+  4 JOB_NAME VARCHAR(200) NOT NULL,
+  5 JOB_GROUP VARCHAR(200) NOT NULL,
+  6 DESCRIPTION VARCHAR(250) NULL,
+  7 JOB_CLASS_NAME VARCHAR(250) NOT NULL,
+  8 IS_DURABLE SMALLINT NOT NULL,
+  9 IS_NONCONCURRENT SMALLINT NOT NULL,
+ 10 IS_UPDATE_DATA SMALLINT NOT NULL,
+ 11 REQUESTS_RECOVERY SMALLINT NOT NULL,
+ 12 PRIMARY KEY (SCHED_NAME,JOB_NAME,JOB_GROUP)
+ 13 );
+
+Succeed.
+
+SQL> CREATE TABLE CRON_TRIGGERS
+  2 (
+  3 SCHED_NAME VARCHAR(120) NOT NULL,
+  4 TRIGGER_NAME VARCHAR(200) NOT NULL,
+  5 TRIGGER_GROUP VARCHAR(200) NOT NULL,
+  6 JOB_NAME VARCHAR(200) NOT NULL, 
+  7 JOB_GROUP VARCHAR(200) NOT NULL,
+  8 DESCRIPTION VARCHAR(250) NULL,
+  9 NEXT_FIRE_TIME BIGINT NULL,
+ 10 PREV_FIRE_TIME BIGINT NULL,
+ 11 PRIORITY INTEGER NULL,
+ 12 TRIGGER_STATE VARCHAR(16) NOT NULL,
+ 13 TRIGGER_TYPE VARCHAR(8) NOT NULL,
+ 14 START_TIME BIGINT NOT NULL,
+ 15 END_TIME BIGINT NULL,
+ 16 CALENDAR_NAME VARCHAR(200) NULL,
+ 17 MISFIRE_INSTR SMALLINT NULL,
+ 18 PRIMARY KEY (SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP),
+ 19 FOREIGN KEY (SCHED_NAME,JOB_NAME,JOB_GROUP) 
+ 20 REFERENCES CRON_JOB_DETAILS(SCHED_NAME,JOB_NAME,JOB_GROUP) 
+ 21 );
+
+Succeed.
+
+SQL> insert into CRON_JOB_DETAILS values ('CronScheduler','deleteservice_job','BasicService','','com.huawei.bsp.cron.quartz.job.QuartzJob','0','0','0','0');
+
+1 rows affected.
+
+SQL> insert into CRON_TRIGGERS values ('CronScheduler','deleteservice_job','BasicService','deleteservice_job','BasicService','','1531065600000','-1','5','WAITING','DAILY_I','1531065600000','0','','0');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> UPDATE CRON_TRIGGERS SET JOB_NAME = 'deleteservice_job', JOB_GROUP = 'BasicService',SCHED_NAME = 'CronScheduler', DESCRIPTION = '', NEXT_FIRE_TIME = 1530709017237, PREV_FIRE_TIME = -1, TRIGGER_STATE = 'WAITING', TRIGGER_TYPE = 'DAILY_I', START_TIME = 1530633600000, END_TIME = 0, CALENDAR_NAME = '', MISFIRE_INSTR = 0, PRIORITY = 5 WHERE SCHED_NAME = 'CronScheduler' AND TRIGGER_NAME = 'deleteservice_job' AND TRIGGER_GROUP = 'BasicService';
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> DROP TABLE CRON_TRIGGERS;
+
+Succeed.
+
+SQL> DROP TABLE CRON_JOB_DETAILS;
+
+Succeed.
+
+SQL> 
+SQL> --test delete cascade
+SQL> DROP TABLE IF EXISTS STUDENT1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS CLASS1;
+
+Succeed.
+
+SQL> DROP TABLE  IF EXISTS CLASS2;
+
+Succeed.
+
+SQL> CREATE TABLE CLASS1 (c_id int primary key, class char(1), num int);
+
+Succeed.
+
+SQL> CREATE TABLE CLASS2 (c_id int, class char(1), num int);
+
+Succeed.
+
+SQL> alter table CLASS2 add constraint pk_class2 primary key (c_id, num);
+
+Succeed.
+
+SQL> CREATE TABLE STUDENT1 (s_id int primary key, c_id1 int not null, c_id2 int, c_id3 int, FOREIGN KEY (c_id1) REFERENCES CLASS1(c_id) ON DELETE SET NULL, FOREIGN KEY (c_id1) REFERENCES CLASS1(c_id) ON DELETE CASCADE);
+
+CT-00789, The foreign key constraint already exists.
+SQL> CREATE TABLE STUDENT1 (s_id int primary key, c_id1 int not null, c_id2 int, c_id3 int, CONSTRAINT REF_S1_C1 FOREIGN KEY (c_id1) REFERENCES CLASS1(c_id) ON DELETE SET NULL, CONSTRAINT REF_S1_C2 FOREIGN KEY (c_id2, c_id3) REFERENCES CLASS2(c_id, num) ON DELETE CASCADE);
+
+Succeed.
+
+SQL> SELECT CONS_NAME,  CONS_TYPE, REF_CONS,REFACT FROM SYS_CONSTRAINT_DEFS WHERE CONS_NAME = 'REF_S1_C2' OR CONS_NAME = 'REF_S1_C1' ORDER BY CONS_NAME;
+
+CONS_NAME                                                        CONS_TYPE    REF_CONS     REFACT      
+---------------------------------------------------------------- ------------ ------------ ------------
+REF_S1_C1                                                        2            0            2           
+REF_S1_C2                                                        2            0            1           
+
+2 rows fetched.
+
+SQL> INSERT INTO CLASS1 VALUES(1, 'A', 10);
+
+1 rows affected.
+
+SQL> INSERT INTO CLASS1 VALUES(2, 'B', 20);
+
+1 rows affected.
+
+SQL> INSERT INTO CLASS1 VALUES(3, 'C', 30);
+
+1 rows affected.
+
+SQL> INSERT INTO CLASS2 VALUES(1, 'A', 10);
+
+1 rows affected.
+
+SQL> INSERT INTO CLASS2 VALUES(2, 'B', 20);
+
+1 rows affected.
+
+SQL> INSERT INTO STUDENT1 VALUES(1, 2, 1, 10);
+
+1 rows affected.
+
+SQL> INSERT INTO STUDENT1 VALUES(2, 3, 1, 10);
+
+1 rows affected.
+
+SQL> INSERT INTO STUDENT1 VALUES(3, 1, 1, 10);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DELETE FROM CLASS1 WHERE c_id < 3;
+
+CT-00620, Can't set NULL value for column 'C_ID1'
+SQL> SELECT * FROM CLASS1 ORDER BY c_id;
+
+C_ID         CLASS NUM         
+------------ ----- ------------
+1            A     10          
+2            B     20          
+3            C     30          
+
+3 rows fetched.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO STUDENT1 VALUES(4, 3, 1, 10);
+
+1 rows affected.
+
+SQL> INSERT INTO STUDENT1 VALUES(5, 3, 2, 20);
+
+1 rows affected.
+
+SQL> DELETE FROM CLASS2 WHERE c_id = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM CLASS2 ORDER BY c_id;
+
+C_ID         CLASS NUM         
+------------ ----- ------------
+2            B     20          
+
+1 rows fetched.
+
+SQL> SELECT * FROM STUDENT1 ORDER BY s_id;
+
+S_ID         C_ID1        C_ID2        C_ID3       
+------------ ------------ ------------ ------------
+5            3            2            20          
+
+1 rows fetched.
+
+SQL> 
+SQL> --dep_scan_index --DTS2018090409831
+SQL> drop table if exists B;
+
+Succeed.
+
+SQL> drop table if exists A;
+
+Succeed.
+
+SQL> create table a (id1 int, id2 int, id3 int,id4 int);
+
+Succeed.
+
+SQL> create table B (id1 int, id2 int, id3 int,id4 int);
+
+Succeed.
+
+SQL> create index idx_b on b (id2, id3);
+
+Succeed.
+
+SQL> alter table A add primary key (id3, id2);
+
+Succeed.
+
+SQL> alter table B add foreign key (id2, id3) references A(id3, id2);
+
+Succeed.
+
+SQL> insert into A values (1,1,1,1);
+
+1 rows affected.
+
+SQL> insert into B values (1,1,1,1);
+
+1 rows affected.
+
+SQL> insert into A values (2,2,2,2);
+
+1 rows affected.
+
+SQL> insert into B values (3,2,2,4);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> delete from A where id1 =1; commit;
+
+CT-01123, The row is referenced by child record
+SQL> 
+SQL> drop table if exists B;
+
+Succeed.
+
+SQL> drop table if exists A;
+
+Succeed.
+
+SQL> create table a (id1 int, id2 int, id3 int,id4 int) crmode row;
+
+Succeed.
+
+SQL> create table B (id1 int, id2 int, id3 int,id4 int) crmode row;
+
+Succeed.
+
+SQL> create index idx_b on b (id2, id3) crmode row;
+
+Succeed.
+
+SQL> alter table A add primary key (id3, id2);
+
+Succeed.
+
+SQL> alter table B add foreign key (id2, id3) references A(id3, id2);
+
+Succeed.
+
+SQL> insert into A values (1,1,1,1);
+
+1 rows affected.
+
+SQL> insert into B values (1,1,1,1);
+
+1 rows affected.
+
+SQL> insert into A values (2,2,2,2);
+
+1 rows affected.
+
+SQL> insert into B values (3,2,2,4);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> delete from A where id1 =1; commit;
+
+CT-01123, The row is referenced by child record
+SQL> 
+SQL> drop table if exists B;
+
+Succeed.
+
+SQL> drop table if exists A;
+
+Succeed.
+
+SQL> create table a (id1 int unique, id2 int, id3 int,id4 int);
+
+Succeed.
+
+SQL> create table B (id1 int, id2 int, id3 int,id4 int);
+
+Succeed.
+
+SQL> create unique index idx_b1 on b (id2, id3);
+
+Succeed.
+
+SQL> alter table A add primary key (id2, id3);
+
+Succeed.
+
+SQL> alter table B add foreign key (id2)references A(id1)on delete cascade;
+
+Succeed.
+
+SQL> insert into A values (1,1,1,1);
+
+1 rows affected.
+
+SQL> insert into B values (1,1,1,1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> update A set id1 = 6;commit;
+
+CT-01123, The row is referenced by child record
+SQL> -- dep_scan_mix
+SQL> drop table if exists B;
+
+Succeed.
+
+SQL> drop table if exists A;
+
+Succeed.
+
+SQL> create table a (id1 int, id2 int, id3 int,id4 int);
+
+Succeed.
+
+SQL> create table B (id1 int, id2 int, id3 int,id4 int);
+
+Succeed.
+
+SQL> create index idx_b on b (id2, id3);
+
+Succeed.
+
+SQL> alter table A add primary key (id3, id2, id1);
+
+Succeed.
+
+SQL> alter table B add foreign key (id2, id3, id1) references A(id3, id2, id1) on delete cascade;
+
+Succeed.
+
+SQL> insert into A values (1,2,3,4);
+
+1 rows affected.
+
+SQL> insert into B values (1,3,2,1);
+
+1 rows affected.
+
+SQL> insert into B values (1,3,2,2);
+
+1 rows affected.
+
+SQL> insert into B values (1,3,2,3);
+
+1 rows affected.
+
+SQL> insert into A values (5,6,7,8);
+
+1 rows affected.
+
+SQL> insert into B values (5,7,6,8);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> delete from A where id1 =1; commit;
+
+1 rows affected.
+
+
+Succeed.
+
+SQL> drop index idx_b on b;
+
+Succeed.
+
+SQL> delete from A; rollback;
+
+1 rows affected.
+
+
+Succeed.
+
+SQL> --part_table
+SQL> DROP TABLE IF EXISTS CLASS4;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS cons_part;
+
+Succeed.
+
+SQL> CREATE TABLE CLASS4 (c_id int, class char(1), num int)PARTITION BY RANGE(num) (PARTITION p1 VALUES LESS THAN (100), PARTITION p2 VALUES LESS THAN (200), PARTITION p3 VALUES LESS THAN (300), PARTITION p4 VALUES LESS THAN (maxvalue));
+
+Succeed.
+
+SQL> CREATE TABLE cons_part(c1 int primary key, c2 varchar(32), c3 int) PARTITION BY RANGE(c3) (PARTITION p1 VALUES LESS THAN (100), PARTITION p2 VALUES LESS THAN (200), PARTITION p3 VALUES LESS THAN (300), PARTITION p4 VALUES LESS THAN (maxvalue));
+
+Succeed.
+
+SQL> CREATE INDEX idx_p1 ON CLASS4(c_id, num) local;
+
+Succeed.
+
+SQL> INSERT INTO CLASS4 VALUES(50, 'A', 20);
+
+1 rows affected.
+
+SQL> INSERT INTO CLASS4 VALUES(150, 'B', 150);
+
+1 rows affected.
+
+SQL> INSERT INTO CLASS4 VALUES(250, 'C', 250);
+
+1 rows affected.
+
+SQL> INSERT INTO cons_part VALUES(50, 'P1', 20);
+
+1 rows affected.
+
+SQL> INSERT INTO cons_part VALUES(150, 'P2', 150);
+
+1 rows affected.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 250);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> ALTER TABLE CLASS4 ADD FOREIGN KEY (c_id) REFERENCES cons_part(c1) ON DELETE SET NULL;
+
+Succeed.
+
+SQL> ALTER TABLE CLASS4 ADD FOREIGN KEY (c_id) REFERENCES cons_part(c1) ON DELETE SET NULL;
+
+CT-00789, The foreign key constraint already exists.
+SQL> DELETE FROM cons_part WHERE c1 < 250;
+
+2 rows affected.
+
+SQL> SELECT * FROM CLASS4 ORDER BY class;
+
+C_ID         CLASS NUM         
+------------ ----- ------------
+             A     20          
+             B     150         
+250          C     250         
+
+3 rows fetched.
+
+SQL> SELECT * FROM cons_part ORDER BY c1;
+
+C1           C2                               C3          
+------------ -------------------------------- ------------
+250          P3                               250         
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS E;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS D;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS C;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS B;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS A;
+
+Succeed.
+
+SQL> CREATE TABLE A (id int, a_num int, a_id char, num int);
+
+Succeed.
+
+SQL> CREATE TABLE B (id int primary key, b_num int, b_id char, num int);
+
+Succeed.
+
+SQL> ALTER TABLE A ADD CONSTRAINT pf_a PRIMARY KEY (a_num, a_id);
+
+Succeed.
+
+SQL> CREATE TABLE C (id int primary key, c_num int, FOREIGN KEY (c_num) REFERENCES B (id) ON DELETE CASCADE);
+
+Succeed.
+
+SQL> CREATE TABLE D (id int primary key, d_num int,FOREIGN KEY (d_num) REFERENCES C (id) ON DELETE CASCADE);
+
+Succeed.
+
+SQL> CREATE TABLE E (id int primary key, e_num int,FOREIGN KEY (e_num) REFERENCES B (id) ON DELETE SET NULL);
+
+Succeed.
+
+SQL> INSERT INTO A VALUES (1,2,'a',4);
+
+1 rows affected.
+
+SQL> INSERT INTO B VALUES (1,2,'a',1);
+
+1 rows affected.
+
+SQL> INSERT INTO B VALUES (2,2,'a',1);
+
+1 rows affected.
+
+SQL> INSERT INTO B VALUES (3,2,'c',1);
+
+1 rows affected.
+
+SQL> INSERT INTO C VALUES (1,1);
+
+1 rows affected.
+
+SQL> INSERT INTO D VALUES (1,1);
+
+1 rows affected.
+
+SQL> INSERT INTO E VALUES (1,1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> CREATE INDEX id_a ON A(id);
+
+Succeed.
+
+SQL> ALTER TABLE B ADD CONSTRAINT ref_ab FOREIGN KEY (b_num, b_id) REFERENCES A (a_num, a_id) ON DELETE SET NULL;
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO A VALUES (1,2,'c',4);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> ALTER TABLE B ADD CONSTRAINT ref_ab1 FOREIGN KEY (b_num, b_id) REFERENCES A (a_num, a_id) ON DELETE SET NULL;
+
+Succeed.
+
+SQL> DELETE FROM A;
+
+2 rows affected.
+
+SQL> SELECT * FROM B ORDER BY id;
+
+ID           B_NUM        B_ID NUM         
+------------ ------------ ---- ------------
+1                              1           
+2                              1           
+3                              1           
+
+3 rows fetched.
+
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> ALTER TABLE B ADD CONSTRAINT ref_ab2 FOREIGN KEY (b_num, b_id) REFERENCES A (a_num, a_id) ON DELETE CASCADE;
+
+CT-00789, The foreign key constraint already exists.
+SQL> 
+SQL> DROP TABLE E;
+
+Succeed.
+
+SQL> DROP TABLE D;
+
+Succeed.
+
+SQL> DROP TABLE C;
+
+Succeed.
+
+SQL> DROP TABLE B;
+
+Succeed.
+
+SQL> DROP TABLE A;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TB1;
+
+Succeed.
+
+SQL> CREATE TABLE A (id int primary key, a_num int);
+
+Succeed.
+
+SQL> CREATE TABLE TB1 (
+  2 t1 int, t2 int, t3 int, t4 int, t5 int, t6 int, t7 int, t8 int, t9 int, t10 int,
+  3 t11 int, t12 int, t13 int, t14 int, t15 int, t16 int, t17 int, t18 int, t19 int, t20 int,
+  4 t21 int, t22 int, t23 int, t24 int, t25 int, t26 int, t27 int, t28 int, t29 int, t30 int, 
+  5 t31 int, t32 int, t33 int, t34 int);
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t1) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t2) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t3) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t4) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t5) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t6) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t7) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t8) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t9) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t10) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t11) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t12) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t13) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t14) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t15) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t16) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t17) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t18) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t19) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t20) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t21) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t22) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t23) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t24) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t25) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t26) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t27) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t28) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t29) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t30) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t31) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t32) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD CONSTRAINT pk_tb1 PRIMARY KEY (t34);
+
+Succeed.
+
+SQL> ALTER TABLE TB1 ADD FOREIGN KEY (t33) REFERENCES A (id) ON DELETE CASCADE;
+
+CT-00706, The number 32 reached the upper limit of foreign key constraint.
+SQL> ALTER TABLE TB1  ADD CONSTRAINT chk_tb1 check(t1 - t2 <= 0 );
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE TB1;
+
+Succeed.
+
+SQL> DROP TABLE A;
+
+Succeed.
+
+SQL> DROP TABLE STUDENT1;
+
+Succeed.
+
+SQL> DROP TABLE CLASS1;
+
+Succeed.
+
+SQL> DROP TABLE  CLASS2;
+
+Succeed.
+
+SQL> DROP TABLE  CLASS4;
+
+Succeed.
+
+SQL> DROP TABLE cons_part;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS F_TAB;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS C_TAB;
+
+Succeed.
+
+SQL> CREATE TABLE F_TAB(FD_INT INT, FD_VARCHAR VARCHAR(100));
+
+Succeed.
+
+SQL> CREATE TABLE C_TAB(FD_INT INT, FD_VARCHAR VARCHAR(100), FD_INT_2 INT REFERENCES F_TAB);
+
+CT-00685, The referenced table had no primary key
+SQL> CREATE TABLE C_TAB(FD_INT INT, FD_VARCHAR VARCHAR(100), FD_INT_2 INT REFERENCES F_TAB () ON DELETE CASCADE, FD_CLOB CLOB);
+
+CT-00601, [1:88]Sql syntax error: more text expected but terminated
+SQL> CREATE TABLE C_TAB(FD_INT INT, FD_VARCHAR VARCHAR(100), FD_INT_2 INT REFERENCES F_TAB ON DELETE SET NULL, FD_CLOB CLOB);
+
+CT-00685, The referenced table had no primary key
+SQL> DROP TABLE F_TAB;
+
+Succeed.
+
+SQL> CREATE TABLE F_TAB(FD_INT INT PRIMARY KEY, FD_VARCHAR VARCHAR(100));
+
+Succeed.
+
+SQL> CREATE TABLE C_TAB(FD_INT INT PRIMARY KEY, FD_VARCHAR VARCHAR(100), FD_INT_2 INT REFERENCES F_TAB ON DELETE CASCADE, FD_CLOB CLOB);
+
+Succeed.
+
+SQL> INSERT INTO F_TAB VALUES(1,'F_ABC');
+
+1 rows affected.
+
+SQL> INSERT INTO F_TAB VALUES(2,'F_ABC');
+
+1 rows affected.
+
+SQL> INSERT INTO C_TAB VALUES(1,'C_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(3,'C_ABC', 3, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'C_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO C_TAB VALUES(1,'C_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'C_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');
+
+2 rows affected.
+
+SQL> UPDATE C_TAB SET FD_INT_2 = 3 WHERE FD_INT = 1;
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> SELECT * FROM C_TAB ORDER BY FD_INT;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1            C_ABC                                                            1            1234354587643123455213445656723123424554566776763221132454566768767433242323
+2            C_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+2 rows fetched.
+
+SQL> DELETE FROM F_TAB WHERE  FD_INT = 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM C_TAB WHERE FD_INT_2 = 1;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> UPDATE F_TAB SET FD_INT = 3 WHERE FD_VARCHAR = 'F_ABC';
+
+CT-01123, The row is referenced by child record
+SQL> SELECT * FROM F_TAB WHERE FD_INT = 2;
+
+FD_INT       FD_VARCHAR                                                      
+------------ ----------------------------------------------------------------
+2            F_ABC                                                           
+
+1 rows fetched.
+
+SQL> SELECT * FROM C_TAB WHERE FD_INT_2 = 2;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+2            C_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+1 rows fetched.
+
+SQL> SELECT * FROM C_TAB WHERE FD_INT_2 = 3;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> DROP TABLE C_TAB;
+
+Succeed.
+
+SQL> DROP TABLE F_TAB;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE F_TAB(FD_INT INT, FD_VARCHAR VARCHAR(100), CONSTRAINT PK_F_TAB PRIMARY KEY (FD_INT, FD_VARCHAR));
+
+Succeed.
+
+SQL> CREATE TABLE C_TAB(FD_INT INT, FD_VARCHAR VARCHAR(10), FD_INT_2 INT, FD_CLOB CLOB, CONSTRAINT RF_C_TAB FOREIGN KEY (FD_VARCHAR, FD_INT_2) REFERENCES F_TAB ON DELETE SET NULL);
+
+CT-00817, In the FOREIGN KEY constraint, the column type does not match the type of the referenced column.
+SQL> CREATE TABLE C_TAB(FD_INT INT PRIMARY KEY, FD_VARCHAR VARCHAR(100), FD_INT_2 INT, FD_CLOB CLOB, CONSTRAINT RF_C_TAB FOREIGN KEY (FD_INT_2, FD_VARCHAR) REFERENCES F_TAB ON DELETE SET NULL);
+
+Succeed.
+
+SQL> INSERT INTO F_TAB VALUES(1,'F_ABC');
+
+1 rows affected.
+
+SQL> INSERT INTO F_TAB VALUES(2,'F_ABC');
+
+1 rows affected.
+
+SQL> INSERT INTO C_TAB VALUES(1,'F_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(3,'F_ABC', 3, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'F_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO C_TAB VALUES(1,'C_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'C_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO C_TAB VALUES(1,'F_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'F_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');
+
+2 rows affected.
+
+SQL> UPDATE C_TAB SET FD_INT_2 = 3 WHERE FD_INT = 1;
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> SELECT * FROM C_TAB ORDER BY FD_INT;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1            F_ABC                                                            1            1234354587643123455213445656723123424554566776763221132454566768767433242323
+2            F_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+2 rows fetched.
+
+SQL> DELETE FROM F_TAB WHERE  FD_INT = 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM C_TAB WHERE FD_INT = 1;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1                                                                                          1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+1 rows fetched.
+
+SQL> UPDATE F_TAB SET FD_VARCHAR = 'F_F_ABC' WHERE FD_INT = 2;
+
+CT-01123, The row is referenced by child record
+SQL> SELECT * FROM C_TAB ORDER BY FD_INT;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1                                                                                          1234354587643123455213445656723123424554566776763221132454566768767433242323
+2            F_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+2 rows fetched.
+
+SQL> DROP TABLE C_TAB;
+
+Succeed.
+
+SQL> DROP TABLE F_TAB;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> CREATE TABLE F_TAB(FD_INT INT, FD_VARCHAR VARCHAR(100), CONSTRAINT PK_F_TAB PRIMARY KEY (FD_INT, FD_VARCHAR));
+
+Succeed.
+
+SQL> CREATE TABLE C_TAB(FD_INT INT PRIMARY KEY, FD_VARCHAR VARCHAR(100), FD_INT_2 INT, FD_CLOB CLOB);
+
+Succeed.
+
+SQL> ALTER TABLE  C_TAB ADD CONSTRAINT RF_C_TAB FOREIGN KEY (FD_INT_2, FD_VARCHAR) REFERENCES F_TAB ON DELETE SET NULL;
+
+Succeed.
+
+SQL> INSERT INTO F_TAB VALUES(1,'F_ABC');
+
+1 rows affected.
+
+SQL> INSERT INTO F_TAB VALUES(2,'F_ABC');
+
+1 rows affected.
+
+SQL> INSERT INTO C_TAB VALUES(1,'F_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(3,'F_ABC', 3, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'F_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO C_TAB VALUES(1,'C_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'C_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> INSERT INTO C_TAB VALUES(1,'F_ABC', 1, '1234354587643123455213445656723123424554566776763221132454566768767433242323'),(2,'F_ABC', 2, '1234354587643123455213445656723123424554566776763221132454566768767433242323');
+
+2 rows affected.
+
+SQL> UPDATE C_TAB SET FD_INT_2 = 3 WHERE FD_INT = 1;
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> SELECT * FROM C_TAB ORDER BY FD_INT;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1            F_ABC                                                            1            1234354587643123455213445656723123424554566776763221132454566768767433242323
+2            F_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+2 rows fetched.
+
+SQL> DELETE FROM F_TAB WHERE  FD_INT = 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM C_TAB WHERE FD_INT = 1;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1                                                                                          1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+1 rows fetched.
+
+SQL> UPDATE F_TAB SET FD_VARCHAR = 'F_F_ABC' WHERE FD_INT = 2;
+
+CT-01123, The row is referenced by child record
+SQL> SELECT * FROM C_TAB ORDER BY FD_INT;
+
+FD_INT       FD_VARCHAR                                                       FD_INT_2     FD_CLOB                                                         
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1                                                                                          1234354587643123455213445656723123424554566776763221132454566768767433242323
+2            F_ABC                                                            2            1234354587643123455213445656723123424554566776763221132454566768767433242323
+
+2 rows fetched.
+
+SQL> DROP TABLE C_TAB;
+
+Succeed.
+
+SQL> DROP TABLE F_TAB;
+
+Succeed.
+
+SQL> --locate
+SQL> drop table if exists ft1;
+
+Succeed.
+
+SQL> drop table if exists pt1;
+
+Succeed.
+
+SQL> CREATE TABLE PT1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id2, id4)(PARTITION P1 VALUES LESS THAN (10,10),PARTITION p2 VALUES LESS THAN (20,20), PARTITION p3 VALUES LESS THAN (30,30));
+
+Succeed.
+
+SQL> CREATE TABLE FT1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id2, id4)(PARTITION F1 VALUES LESS THAN (10,10), PARTITION F2 VALUES LESS THAN (20,20),  PARTITION F3 VALUES LESS THAN (30,30));
+
+Succeed.
+
+SQL> CREATE INDEX idx_pt1 ON PT1 (id1, id2, id4) LOCAL;
+
+Succeed.
+
+SQL> CREATE INDEX idx_ft1 ON FT1 (id1, id2, id4) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE PT1 ADD CONSTRAINT pk_pt1 PRIMARY KEY (id1, id2, id4);
+
+Succeed.
+
+SQL> ALTER TABLE FT1 ADD FOREIGN KEY (id4, id2, id1) REFERENCES PT1(id1, id2, id4) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> INSERT INTO PT1 VALUES (1,2,3,4,5);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (4,2,7,1,6);
+
+1 rows affected.
+
+SQL> INSERT INTO PT1 VALUES (10,20,30,40,50);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (40,20,70,10,60);
+
+1 rows affected.
+
+SQL> INSERT INTO PT1 VALUES (2,4,6,8,10);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (8,4,14,2,12);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DELETE FROM pt1 where id5 < 60;
+
+3 rows affected.
+
+SQL> select * from ft1;
+
+ID1          ID2          ID3          ID4          ID5         
+------------ ------------ ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> --border
+SQL> drop table ft1;
+
+Succeed.
+
+SQL> drop table pt1;
+
+Succeed.
+
+SQL> CREATE TABLE PT1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id3, id4) (PARTITION P1 VALUES LESS THAN (10,10),PARTITION p2 VALUES LESS THAN (20,20), PARTITION p3 VALUES LESS THAN (30,30));
+
+Succeed.
+
+SQL> CREATE TABLE FT1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id4, id3) (PARTITION F1 VALUES LESS THAN (10,10),PARTITION F2 VALUES LESS THAN (20,20), PARTITION F3 VALUES LESS THAN (50,50));
+
+Succeed.
+
+SQL> CREATE INDEX idx_ft1 ON FT1 (id1, id2, id4) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE PT1 ADD CONSTRAINT pk_pt2 PRIMARY KEY (id1, id2, id4);
+
+Succeed.
+
+SQL> ALTER TABLE FT1 ADD FOREIGN KEY (id4, id2, id1) REFERENCES PT1(id1, id2, id4) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> INSERT INTO PT1 VALUES (1,2,3,4,5);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (4,2,7,1,6);
+
+1 rows affected.
+
+SQL> INSERT INTO PT1 VALUES (10,20,29,29,50);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (29,20,20,10,60);
+
+1 rows affected.
+
+SQL> INSERT INTO PT1 VALUES (2,4,6,8,10);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (8,4,14,2,12);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DELETE FROM pt1 where id5 = 50;
+
+1 rows affected.
+
+SQL> select * from ft1 order by id1;
+
+ID1          ID2          ID3          ID4          ID5         
+------------ ------------ ------------ ------------ ------------
+4            2            7            1            6           
+8            4            14           2            12          
+
+2 rows fetched.
+
+SQL> --DTS2018122512126  
+SQL> drop table if exists test_hash_fk;
+
+Succeed.
+
+SQL> create table test_hash_fk (
+  2 c1 char(20) not null,
+  3 c2 number(8) not null
+  4 )
+  5 partition by hash(c1)
+  6 (
+  7 partition part_01,
+  8 partition part_02,
+  9 partition part_03
+ 10 );
+
+Succeed.
+
+SQL>  create index idx_hash_t1 on test_hash_fk(c1);
+
+Succeed.
+
+SQL> insert into test_hash_fk values('aaaa',111);
+
+1 rows affected.
+
+SQL> insert into test_hash_fk values('bbbb',111);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_hash_fk1;
+
+Succeed.
+
+SQL> create table test_hash_fk1 (
+  2 c1 char(20) not null,
+  3 c2 number(8) not null
+  4 )
+  5 partition by hash(c1)
+  6 (
+  7 partition part_01,
+  8 partition part_02,
+  9 partition part_03
+ 10 );
+
+Succeed.
+
+SQL>  create index idx_hash_t2 on test_hash_fk1(c1);
+
+Succeed.
+
+SQL> insert into test_hash_fk1 values('aaaa',111);commit;
+
+1 rows affected.
+
+
+Succeed.
+
+SQL> 
+SQL> alter table test_hash_fk add constraint t_hash_pk primary key(c1) using index idx_hash_t1;
+
+Succeed.
+
+SQL> alter table test_hash_fk1 add CONSTRAINT t_hash_fk foreign key(c1) references test_hash_fk(c1);
+
+Succeed.
+
+SQL> alter table test_hash_fk truncate partition part_01;
+
+CT-00642, The unique index or primary key was referenced by a foreign key
+SQL> alter table test_hash_fk1 disable constraint t_hash_fk;
+
+Succeed.
+
+SQL> alter table test_hash_fk truncate partition part_01;
+
+Succeed.
+
+SQL> alter table test_hash_fk1 enable constraint t_hash_fk;
+
+CT-00823, Index IDX_HASH_T1 is unusable, need to rebuild index first.
+SQL> drop table if exists test_hash_fk1;
+
+Succeed.
+
+SQL> drop table if exists test_hash_fk;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_EMP;
+
+Succeed.
+
+SQL> CREATE TABLE t_EMP
+  2 (EMPNO NUMBER(4) ,
+  3 ENAME VARCHAR2(10),
+  4 MGR NUMBER(4)
+  5 );
+
+Succeed.
+
+SQL> alter table t_emp add constraint t_emp_pk unique (empno);
+
+Succeed.
+
+SQL> alter table t_emp add CONSTRAINT t_emp_fk_emp foreign key(mgr) references t_emp(empno);
+
+Succeed.
+
+SQL> alter table t_emp drop constraint t_emp_pk;
+
+CT-00847, This unique/primary key is referenced by some foreign keys
+SQL> DROP TABLE IF EXISTS T_EMP;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018083008766
+SQL> drop table ft1;
+
+Succeed.
+
+SQL> drop table pt1;
+
+Succeed.
+
+SQL> CREATE TABLE PT1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id3, id4) (PARTITION P1 VALUES LESS THAN (10,10),PARTITION p2 VALUES LESS THAN (20,20), PARTITION p3 VALUES LESS THAN (30,30));
+
+Succeed.
+
+SQL> CREATE TABLE FT1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id4, id3) (PARTITION F1 VALUES LESS THAN (10,10),PARTITION F2 VALUES LESS THAN (20,20), PARTITION F3 VALUES LESS THAN (50,50));
+
+Succeed.
+
+SQL> ALTER TABLE PT1 ADD CONSTRAINT pk_pt2 PRIMARY KEY (id1, id2, id4);
+
+Succeed.
+
+SQL> ALTER TABLE FT1 ADD FOREIGN KEY (id4, id2, id1) REFERENCES PT1(id1, id2, id4) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> INSERT INTO PT1 VALUES (1,2,3,4,5);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (4,2,7,1,6);
+
+1 rows affected.
+
+SQL> INSERT INTO PT1 VALUES (10,20,29,29,50);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (29,20,20,10,60);
+
+1 rows affected.
+
+SQL> INSERT INTO PT1 VALUES (2,4,6,8,10);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (8,4,14,2,12);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DELETE FROM pt1;
+
+3 rows affected.
+
+SQL> select * from ft1 order by id1;
+
+ID1          ID2          ID3          ID4          ID5         
+------------ ------------ ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> alter table pt1 split partition p3 at (25, 25) into (partition p4 ,partition p6 ) invalidate global indexes;
+
+CT-00642, The unique index or primary key was referenced by a foreign key
+SQL> alter table pt1 split partition p3 at (25, 25) into (partition p4 ,partition p6 ) update global indexes;
+
+Succeed.
+
+SQL> alter index pk_pt2 on pt1 unusable;
+
+Succeed.
+
+SQL> INSERT INTO FT1 VALUES (4,2,7,1,6);
+
+CT-00823, Index PK_PT2 is unusable, need to rebuild index first.
+SQL>  --full
+SQL> drop table ft1;
+
+Succeed.
+
+SQL> drop table pt1;
+
+Succeed.
+
+SQL> CREATE TABLE PT1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id2, id4) (PARTITION P1 VALUES LESS THAN (10,10), PARTITION p2 VALUES LESS THAN (20,20),  PARTITION p3 VALUES LESS THAN (30,30));
+
+Succeed.
+
+SQL> CREATE TABLE FT1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id5, id3) (PARTITION F1 VALUES LESS THAN (10,10), PARTITION F2 VALUES LESS THAN (20,20),  PARTITION F3 VALUES LESS THAN (50,50));
+
+Succeed.
+
+SQL> CREATE INDEX idx_pt1 ON PT1 (id1, id2, id4);
+
+Succeed.
+
+SQL> CREATE INDEX idx_ft1 ON FT1 (id1, id2, id4) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE PT1 ADD CONSTRAINT pk_pt2 PRIMARY KEY (id1, id2, id4);
+
+Succeed.
+
+SQL> ALTER TABLE FT1 ADD FOREIGN KEY (id4, id2, id1) REFERENCES PT1(id1, id2, id4) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> INSERT INTO PT1 VALUES (1,2,3,4,5);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (4,2,7,1,6);
+
+1 rows affected.
+
+SQL> INSERT INTO PT1 VALUES (10,20,29,29,20);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (29,20,20,10,20);
+
+1 rows affected.
+
+SQL> INSERT INTO PT1 VALUES (2,4,6,8,29);
+
+1 rows affected.
+
+SQL> INSERT INTO FT1 VALUES (8,4,14,2,29);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DELETE FROM pt1 where id5 = 20;
+
+1 rows affected.
+
+SQL> select * from ft1 order by id1;
+
+ID1          ID2          ID3          ID4          ID5         
+------------ ------------ ------------ ------------ ------------
+4            2            7            1            6           
+8            4            14           2            29          
+
+2 rows fetched.
+
+SQL> drop table ft1;
+
+Succeed.
+
+SQL> drop table pt1;
+
+Succeed.
+
+SQL> --DTS2018083009606
+SQL> DROP TABLE IF EXISTS CONS_SELF;
+
+Succeed.
+
+SQL> CREATE TABLE CONS_SELF(ID INT PRIMARY KEY, NUM INT, FOREIGN KEY (ID) REFERENCES CONS_SELF(ID));
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS CONS_SELF;
+
+Succeed.
+
+SQL> CREATE TABLE CONS_SELF(ID INT PRIMARY KEY, NUM INT);
+
+Succeed.
+
+SQL> ALTER TABLE CONS_SELF ADD FOREIGN KEY (ID) REFERENCES CONS_SELF(ID);
+
+Succeed.
+
+SQL> INSERT INTO CONS_SELF VALUES(1,1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DELETE FROM CONS_SELF;
+
+CT-01123, The row is referenced by child record
+SQL> DROP TABLE IF EXISTS CONS_SELF;
+
+Succeed.
+
+SQL> --DTS2018083009778
+SQL> DROP TABLE IF EXISTS TMP_CONS;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS REF_TMP;
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE TMP_CONS (ID INT PRIMARY KEY);
+
+Succeed.
+
+SQL> CREATE TABLE REF_TMP(ID INT, NUM INT UNIQUE);
+
+Succeed.
+
+SQL> ALTER TABLE REF_TMP ADD FOREIGN KEY (ID) REFERENCES TMP_CONS(ID);
+
+CT-00130, Operation attempt to reference in a referential integrity is not supported on temporary table
+SQL> ALTER TABLE TMP_CONS ADD FOREIGN KEY (ID) REFERENCES REF_TMP(ID);
+
+CT-00130, Operation attempt to reference in a referential integrity is not supported on temporary table
+SQL> DROP TABLE IF EXISTS TMP_CONS;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS REF_TMP;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_001;
+
+Succeed.
+
+SQL> drop table if exists test_00;
+
+Succeed.
+
+SQL> create table test_00(i int,j int,primary key(i));
+
+Succeed.
+
+SQL> create table test_001(i int,j int,primary key(i));
+
+Succeed.
+
+SQL> insert into test_00 values(1,1);
+
+1 rows affected.
+
+SQL> insert into test_001 values(1,1);
+
+1 rows affected.
+
+SQL> alter table test_001 add constraint foreign_key_001 foreign key(i) references test_00(i);
+
+Succeed.
+
+SQL> insert into test_001 values(2,2);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> alter table test_00 modify i auto_increment;
+
+Succeed.
+
+SQL> insert into test_00 values(2,2);
+
+1 rows affected.
+
+SQL> insert into test_001 values(2,2);
+
+1 rows affected.
+
+SQL> drop table if exists test_001;
+
+Succeed.
+
+SQL> drop table if exists test_00;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018102208126DTS2018102206692
+SQL> DROP TABLE IF EXISTS PT;
+
+Succeed.
+
+SQL> create table pt (i int primary key, id int references pt(i));
+
+Succeed.
+
+SQL> insert into pt values (1,2);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> insert into pt values (1,1);
+
+1 rows affected.
+
+SQL> insert into pt values (2,1); 
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> delete from pt where id = 1;rollback;
+
+CT-01123, The row is referenced by child record
+SQL> delete from pt where i = 2;rollback;
+
+CT-01123, The row is referenced by child record
+SQL> delete from pt where i = 1;rollback;
+
+CT-01123, The row is referenced by child record
+SQL> delete from pt where i = 2;
+
+CT-01123, The row is referenced by child record
+SQL> delete from pt where i = 1;
+
+CT-01123, The row is referenced by child record
+SQL> rollback;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS PT;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_EMP;
+
+Succeed.
+
+SQL> CREATE TABLE t_EMP
+  2 (EMPNO NUMBER(4) ,
+  3 ENAME VARCHAR2(10),
+  4 MGR NUMBER(4)
+  5 );
+
+Succeed.
+
+SQL> alter table t_emp add constraint t_emp_pk primary key(empno);
+
+Succeed.
+
+SQL> alter table t_emp add CONSTRAINT t_emp_fk_emp foreign key(mgr) references t_emp(empno);
+
+Succeed.
+
+SQL> INSERT INTO t_EMP VALUES(-3,'',-100);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> alter table T_EMP DISABLE constraint t_emp_fk_emp;
+
+Succeed.
+
+SQL> INSERT INTO t_EMP VALUES(-3,'',-100);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table T_EMP ENABLE constraint t_emp_fk_emp;
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> UPDATE t_EMP SET empno=-100 WHERE empno=-3;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> alter table T_EMP ENABLE constraint t_emp_fk_emp;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_EMP;
+
+Succeed.
+
+SQL> --DTS2018120502981
+SQL> drop table if exists test_zlj_001;
+
+Succeed.
+
+SQL> drop table if exists test_zlj;
+
+Succeed.
+
+SQL> create table test_zlj(i int,j int,primary key(i));
+
+Succeed.
+
+SQL> create table test_zlj_001(i int,j int,primary key(i));
+
+Succeed.
+
+SQL> alter table test_zlj_001 add constraint foreign_key_001 foreign key(i) references test_zlj(i);
+
+Succeed.
+
+SQL> alter table test_zlj_001 add k char(20) default 'bbbbb';
+
+Succeed.
+
+SQL> insert into test_zlj_001(i,j) values(1,1);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> alter table test_zlj add k char(20) default 'bbbbb';
+
+Succeed.
+
+SQL> insert into test_zlj (i,j) values(1,1);
+
+1 rows affected.
+
+SQL> insert into test_zlj_001(i,j) values(1,1);
+
+1 rows affected.
+
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> drop table test_zlj_001;
+
+Succeed.
+
+SQL> drop table test_zlj;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS E;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS D;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS C;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS B;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS A;
+
+Succeed.
+
+SQL> CREATE TABLE A (id int, a_num int, a_id char, num int);
+
+Succeed.
+
+SQL> CREATE TABLE B (id int primary key, b_num int, b_id char, num int);
+
+Succeed.
+
+SQL> ALTER TABLE A ADD CONSTRAINT pk_a1 PRIMARY KEY (id);
+
+Succeed.
+
+SQL> ALTER TABLE B ADD CONSTRAINT fk_ab1 FOREIGN KEY (b_num) REFERENCES A (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> CREATE TABLE C (id int primary key, c_num int);
+
+Succeed.
+
+SQL> ALTER TABLE C ADD CONSTRAINT fk_bc1 FOREIGN KEY (c_num) REFERENCES B (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> CREATE TABLE D (id int primary key, d_num int,FOREIGN KEY (d_num) REFERENCES C (id) ON DELETE CASCADE);
+
+Succeed.
+
+SQL> CREATE TABLE E (id int primary key, e_num int);
+
+Succeed.
+
+SQL> ALTER TABLE E ADD CONSTRAINT fk_be1 FOREIGN KEY (e_num) REFERENCES B (id) ON DELETE SET NULL;
+
+Succeed.
+
+SQL> INSERT INTO A VALUES (1,2,'a',4);
+
+1 rows affected.
+
+SQL> INSERT INTO B VALUES (1,1,'a',1);
+
+1 rows affected.
+
+SQL> INSERT INTO B VALUES (2,1,'a',1);
+
+1 rows affected.
+
+SQL> INSERT INTO B VALUES (3,1,'c',1);
+
+1 rows affected.
+
+SQL> INSERT INTO C VALUES (1,1);
+
+1 rows affected.
+
+SQL> INSERT INTO D VALUES (1,1);
+
+1 rows affected.
+
+SQL> INSERT INTO E VALUES (1,1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DELETE FROM A;
+
+1 rows affected.
+
+SQL> SELECT * FROM B;
+
+ID           B_NUM        B_ID NUM         
+------------ ------------ ---- ------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM C;
+
+ID           C_NUM       
+------------ ------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM D;
+
+ID           D_NUM       
+------------ ------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM E;
+
+ID           E_NUM       
+------------ ------------
+1                        
+
+1 rows fetched.
+
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> ALTER TABLE C DROP CONSTRAINT fk_bc1;
+
+Succeed.
+
+SQL> ALTER TABLE C ADD CONSTRAINT fk_bc1 FOREIGN KEY (c_num) REFERENCES B (id) ON DELETE SET NULL;
+
+Succeed.
+
+SQL> DELETE FROM A;
+
+1 rows affected.
+
+SQL> SELECT * FROM B;
+
+ID           B_NUM        B_ID NUM         
+------------ ------------ ---- ------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM C;
+
+ID           C_NUM       
+------------ ------------
+1                        
+
+1 rows fetched.
+
+SQL> SELECT * FROM D;
+
+ID           D_NUM       
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> SELECT * FROM E;
+
+ID           E_NUM       
+------------ ------------
+1                        
+
+1 rows fetched.
+
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> ALTER TABLE C DROP CONSTRAINT fk_bc1;
+
+Succeed.
+
+SQL> ALTER TABLE C ADD CONSTRAINT fk_bc1 FOREIGN KEY (c_num) REFERENCES B (id) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> ALTER TABLE E DROP CONSTRAINT fk_be1;
+
+Succeed.
+
+SQL> ALTER TABLE E ADD CONSTRAINT fk_be1 FOREIGN KEY (e_num) REFERENCES D (id);
+
+Succeed.
+
+SQL> DELETE FROM A;
+
+CT-01123, The row is referenced by child record
+SQL> DROP TABLE IF EXISTS E;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS D;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS C;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS B;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS A;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists tbl_ports;
+
+Succeed.
+
+SQL> drop table if exists tbl_vnics;
+
+Succeed.
+
+SQL> drop table if exists tbl_vms;
+
+Succeed.
+
+SQL> drop table if exists tbl_vdus;
+
+Succeed.
+
+SQL> drop table if exists tbl_vnfs;
+
+Succeed.
+
+SQL> drop table if exists tbl_solution;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE tbl_solution (
+  2     dn                 NVARCHAR2(255) NOT NULL PRIMARY KEY,
+  3     solution_name      NVARCHAR2(255) NULL,
+  4     solution_id        NVARCHAR2(255) NULL
+  5 )
+  6 /
+
+Succeed.
+
+SQL> 
+SQL>  CREATE TABLE tbl_vnfs (
+  2    dn                 NVARCHAR2(255) NOT NULL PRIMARY KEY,
+  3     solution_dn        NVARCHAR2(255) NOT NULL,
+  4     solution_id        NVARCHAR2(255) NULL,
+  5     FOREIGN KEY (solution_dn) REFERENCES tbl_solution (dn) ON DELETE CASCADE
+  6 )
+  7 /
+
+Succeed.
+
+SQL>  CREATE INDEX idx_vnfs_2 ON tbl_vnfs (solution_dn)
+  2 /
+
+Succeed.
+
+SQL> CREATE TABLE tbl_vdus (
+  2     dn          NVARCHAR2(255) NOT NULL PRIMARY KEY,
+  3     vnf_dn      NVARCHAR2(255) NOT NULL,
+  4    vdu_name    NVARCHAR2(255) NULL,
+  5     FOREIGN KEY (vnf_dn) REFERENCES tbl_vnfs (dn) ON DELETE CASCADE
+  6 )
+  7 /
+
+Succeed.
+
+SQL>  CREATE INDEX idx_vdus_2 ON tbl_vdus (vnf_dn)
+  2 /
+
+Succeed.
+
+SQL> 
+SQL>  CREATE TABLE tbl_vms (
+  2     dn                  NVARCHAR2(255) NOT NULL PRIMARY KEY,
+  3     vdu_dn              NVARCHAR2(255) NOT NULL,
+  4     vm_name             NVARCHAR2(255) NOT NULL,
+  5     FOREIGN KEY (vdu_dn) REFERENCES tbl_vdus (dn) ON DELETE CASCADE
+  6 )
+  7 /
+
+Succeed.
+
+SQL> CREATE INDEX idx_vms_2  ON tbl_vms (vdu_dn)
+  2 /
+
+Succeed.
+
+SQL>  CREATE TABLE tbl_vnics
+  2 (
+  3     dn                  NVARCHAR2(255) NOT NULL PRIMARY KEY,
+  4     vm_dn               NVARCHAR2(255) NOT NULL,
+  5     interface_name      NVARCHAR2(255) NULL,
+  6     FOREIGN KEY (vm_dn) REFERENCES tbl_vms (dn) ON DELETE CASCADE
+  7 )
+  8 /
+
+Succeed.
+
+SQL> CREATE INDEX idx_vnics_2 ON tbl_vnics (vm_dn)
+  2 /
+
+Succeed.
+
+SQL> 
+SQL>  CREATE TABLE tbl_ports (
+  2     dn                 NVARCHAR2(255) NOT NULL PRIMARY KEY,
+  3     port_index         INT            NULL,
+  4     nic_dn             NVARCHAR2(255) NOT NULL,
+  5     FOREIGN KEY (nic_dn) REFERENCES tbl_vnics (dn) ON DELETE CASCADE
+  6 )
+  7 /
+
+Succeed.
+
+SQL> 
+SQL>  CREATE INDEX idx_ports_2  ON tbl_ports (nic_dn)
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> insert into tbl_solution values ('a','b','c');
+
+1 rows affected.
+
+SQL> insert into tbl_vnfs values ('d','a','f');
+
+1 rows affected.
+
+SQL> insert into tbl_vdus values ('h','d','i');
+
+1 rows affected.
+
+SQL> insert into tbl_vms values ('t','h','b');
+
+1 rows affected.
+
+SQL> insert into tbl_vnics values ('a','t','f');
+
+1 rows affected.
+
+SQL> insert into tbl_ports values ('h',1,'a');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> delete from tbl_vnfs;
+
+1 rows affected.
+
+SQL> select * from tbl_vms;
+
+DN                                                               VDU_DN                                                           VM_NAME                                                         
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from tbl_ports;
+
+DN                                                               PORT_INDEX   NIC_DN                                                          
+---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> drop table if exists tbl_ports;
+
+Succeed.
+
+SQL> drop table if exists tbl_vnics;
+
+Succeed.
+
+SQL> drop table if exists tbl_vms;
+
+Succeed.
+
+SQL> drop table if exists tbl_vdus;
+
+Succeed.
+
+SQL> drop table if exists tbl_vnfs;
+
+Succeed.
+
+SQL> drop table if exists tbl_solution;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists vv cascade;
+
+Succeed.
+
+SQL> create user vv identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to vv;
+
+Succeed.
+
+SQL> connect vv/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create table test (i int, id int) partition by range(i) (partition p1 values less than(10), partition p2 values less than (maxvalue));
+
+Succeed.
+
+SQL> create table fk_test (i int, id int) partition by range(i) (partition p1 values less than(10), partition p2 values less than (maxvalue));
+
+Succeed.
+
+SQL> alter table test add constraint pk_vv_test primary key (i);
+
+Succeed.
+
+SQL> alter table fk_test add constraint foreign_key_001 foreign key(i) references test(i);
+
+Succeed.
+
+SQL> insert into test values(1,1);
+
+1 rows affected.
+
+SQL> insert into fk_test values(1,1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table fk_test drop constraint foreign_key_001;
+
+Succeed.
+
+SQL> alter table test truncate partition p1;
+
+Succeed.
+
+SQL> alter index pk_vv_test on test rebuild;
+
+Succeed.
+
+SQL> insert into test values (1,1);
+
+1 rows affected.
+
+SQL> alter table fk_test add constraint foreign_key_001 foreign key(i) references test(i);
+
+Succeed.
+
+SQL> flashback table test partition p1 to before truncate force;
+
+CT-00642, The unique index or primary key was referenced by a foreign key
+SQL> insert into fk_test values (1,1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user vv cascade;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists part_ft1;
+
+Succeed.
+
+SQL> drop table if exists part_pt1;
+
+Succeed.
+
+SQL> CREATE TABLE part_pt1 (id1 int, id2 int, id3 int, id4 int, id5 int) PARTITION BY RANGE(id1) (PARTITION P1 VALUES LESS THAN (10), PARTITION p2 VALUES LESS THAN (20),  PARTITION p3 VALUES LESS THAN (30));
+
+Succeed.
+
+SQL> CREATE TABLE part_ft1 (id1 int, id2 int, id3 int, id4 int, id5 int);
+
+Succeed.
+
+SQL> CREATE INDEX idx_part_pt1 ON part_pt1 (id1, id2, id3) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO part_ft1 VALUES (4,1,2,3,6);
+
+1 rows affected.
+
+SQL> ALTER TABLE part_pt1 ADD CONSTRAINT pk_part_pt2 PRIMARY KEY (id1, id2, id3);
+
+Succeed.
+
+SQL> ALTER TABLE part_ft1 ADD FOREIGN KEY (id2, id3, id4) REFERENCES part_pt1(id1, id2, id3);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> DELETE FROM part_ft1;
+
+1 rows affected.
+
+SQL> INSERT INTO part_pt1 VALUES (1,2,3,4,5);
+
+1 rows affected.
+
+SQL> INSERT INTO part_ft1 VALUES (4,1,2,3,6);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> ALTER TABLE part_ft1 ADD FOREIGN KEY (id2, id3, id4) REFERENCES part_pt1(id1, id2, id3);
+
+Succeed.
+
+SQL> INSERT INTO part_ft1 VALUES (40,60,20,30,60);
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> drop table if exists part_ft1;
+
+Succeed.
+
+SQL> drop table if exists part_pt1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists interval_ft1;
+
+Succeed.
+
+SQL> drop table if exists interval_pt1;
+
+Succeed.
+
+SQL> create table interval_pt1(f1 int, f2 int, f3 char(30))
+  2 PARTITION BY RANGE(f2)
+  3 INTERVAL(10)
+  4 (
+  5  PARTITION pt1p1 values less than(10),
+  6  PARTITION pt1p2 values less than(20),
+  7  PARTITION pt1p3 values less than(30)
+  8 );
+
+Succeed.
+
+SQL> CREATE TABLE interval_ft1 (f1 int, f2 int, f3 char(30));
+
+Succeed.
+
+SQL> CREATE INDEX idx_interval_pt1 ON interval_pt1 (f1, f2) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE interval_pt1 ADD CONSTRAINT pk_interval_pt2 PRIMARY KEY (f1, f2);
+
+Succeed.
+
+SQL> ALTER TABLE interval_ft1 ADD FOREIGN KEY (f2, f1) REFERENCES interval_pt1(f1, f2);
+
+Succeed.
+
+SQL> INSERT INTO interval_pt1 values(1,1,'a');
+
+1 rows affected.
+
+SQL> INSERT INTO interval_ft1 values(1,1,'a');
+
+1 rows affected.
+
+SQL> INSERT INTO interval_ft1 values(999999999,1,'a');
+
+CT-01128, Integrity constraint violated - parent key not found
+SQL> drop table if exists interval_ft1;
+
+Succeed.
+
+SQL> drop table if exists interval_pt1;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRAINING0;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS EDUCATION0;
+
+Succeed.
+
+SQL> CREATE TABLE EDUCATION0(STAFF_ID INT PRIMARY KEY, FIRST_NAME VARCHAR(20));
+
+Succeed.
+
+SQL> CREATE TABLE TRAINING0(STAFF_ID INT CHECK(STAFF_ID IS NOT NULL), FIRST_NAME VARCHAR(20));
+
+Succeed.
+
+SQL> ALTER TABLE TRAINING0 ADD CONSTRAINT TRAINING0CON FOREIGN KEY(STAFF_ID) REFERENCES EDUCATION0(STAFF_ID) ON DELETE SET NULL;
+
+Succeed.
+
+SQL> INSERT INTO EDUCATION0 VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> INSERT INTO EDUCATION0 VALUES(2, 'BROWN');
+
+1 rows affected.
+
+SQL> INSERT INTO TRAINING0 VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> INSERT INTO TRAINING0 VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> DELETE EDUCATION0,TRAINING0 FROM EDUCATION0 JOIN TRAINING0 ON EDUCATION0.STAFF_ID = TRAINING0.STAFF_ID;
+
+CT-01127, Check constraint violated
+SQL> ALTER TABLE TRAINING0 DROP CONSTRAINT TRAINING0CON;
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRAINING0;
+
+Succeed.
+
+SQL> TRUNCATE TABLE EDUCATION0;
+
+Succeed.
+
+SQL> ALTER TABLE TRAINING0 ADD CONSTRAINT TRAINING0CON FOREIGN KEY(STAFF_ID) REFERENCES EDUCATION0(STAFF_ID) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> INSERT INTO EDUCATION0 VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> INSERT INTO EDUCATION0 VALUES(2, 'BROWN');
+
+1 rows affected.
+
+SQL> INSERT INTO TRAINING0 VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> INSERT INTO TRAINING0 VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> DELETE EDUCATION0,TRAINING0 FROM EDUCATION0 JOIN TRAINING0 ON EDUCATION0.STAFF_ID = TRAINING0.STAFF_ID;
+
+1 rows affected.
+
+SQL> SELECT * FROM EDUCATION0;
+
+STAFF_ID     FIRST_NAME          
+------------ --------------------
+2            BROWN               
+
+1 rows fetched.
+
+SQL> SELECT * FROM TRAINING0;
+
+STAFF_ID     FIRST_NAME          
+------------ --------------------
+
+0 rows fetched.
+
+SQL> DROP TABLE IF EXISTS TRAINING0;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS EDUCATION0;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> DROP TABLE IF EXISTS SELF_REF;
+
+Succeed.
+
+SQL> CREATE TABLE SELF_REF(ID INT PRIMARY KEY, C1 INT);
+
+Succeed.
+
+SQL> INSERT INTO SELF_REF VALUES(1, NULL);
+
+1 rows affected.
+
+SQL> INSERT INTO SELF_REF VALUES(2, 1);
+
+1 rows affected.
+
+SQL> INSERT INTO SELF_REF VALUES(3, 2);
+
+1 rows affected.
+
+SQL> UPDATE SELF_REF SET C1=3 WHERE ID=1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> ALTER TABLE SELF_REF ADD CONSTRAINT FK_SELF_REF FOREIGN KEY (C1) REFERENCES SELF_REF(ID) ON DELETE CASCADE;
+
+Succeed.
+
+SQL> DELETE FROM SELF_REF;
+
+1 rows affected.
+
+SQL> SELECT * FROM SELF_REF;
+
+ID           C1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> DELETE FROM SELF_REF WHERE ID=2;
+
+1 rows affected.
+
+SQL> SELECT * FROM SELF_REF;
+
+ID           C1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> CREATE INDEX IX_SELF_REF_C1 ON SELF_REF(C1);
+
+Succeed.
+
+SQL> DELETE FROM SELF_REF;
+
+1 rows affected.
+
+SQL> SELECT * FROM SELF_REF;
+
+ID           C1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> DELETE FROM SELF_REF WHERE ID=2;
+
+1 rows affected.
+
+SQL> SELECT * FROM SELF_REF;
+
+ID           C1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE SELF_REF PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS storage_interval_tbl;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS storage_interval_tbl_1;
+
+Succeed.
+
+SQL> CREATE TABLE storage_interval_tbl(C_ID INT,C_D_ID bigint NOT NULL,C_W_ID tinyint unsigned NOT NULL)PARTITION BY RANGE(C_ID)INTERVAL(50000)(PARTITION PART_1 VALUES LESS THAN (201),PARTITION PART_2 VALUES LESS THAN (401));
+
+Succeed.
+
+SQL> CREATE TABLE storage_interval_tbl_1(C_ID INT,C_D_ID bigint NOT NULL,C_W_ID tinyint unsigned NOT NULL)PARTITION BY RANGE(C_ID)INTERVAL(50000)(PARTITION PART_1 VALUES LESS THAN (201),PARTITION PART_2 VALUES LESS THAN (401));
+
+Succeed.
+
+SQL> create index storage_interval_tbl_idx on storage_interval_tbl(c_id) local;
+
+Succeed.
+
+SQL> alter table storage_interval_tbl add constraint storage_interval_tbl_002_cons primary key(c_id);
+
+Succeed.
+
+SQL> alter table storage_interval_tbl_1 add constraint storage_interval_tbl_002_cons_1 primary key(c_id);
+
+Succeed.
+
+SQL> alter table storage_interval_tbl add constraint for_cons foreign key(c_id) references storage_interval_tbl_1(c_id) on delete cascade;
+
+Succeed.
+
+SQL> insert into storage_interval_tbl_1 values(2001,1,1);
+
+1 rows affected.
+
+SQL> delete from storage_interval_tbl_1;commit;
+
+1 rows affected.
+
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS storage_interval_tbl;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS storage_interval_tbl_1;
+
+Succeed.
+
+
+
+

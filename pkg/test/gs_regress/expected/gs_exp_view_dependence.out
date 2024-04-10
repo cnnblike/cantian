@@ -1,0 +1,610 @@
+
+
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_view_depend;
+
+Succeed.
+
+SQL> create user test_view_depend identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_view_depend;
+
+Succeed.
+
+SQL> conn test_view_depend/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TEST_T1;
+
+Succeed.
+
+SQL> create or replace force view test_view1 as select * from TEST_T1;
+
+CT-00601, Sql syntax error: create or replace force view need assign columns
+SQL> create or replace force view test_view1(f1,f2) as select * from TEST_T1;
+
+CT-00601, Sql syntax error: create or replace force view don't support select *
+SQL> create or replace force view test_view1(f1,f2) as select f1,f2 from TEST_T1;
+
+Succeed.
+
+SQL> select FLAGS from sys.sys_views  where name='TEST_VIEW1';
+
+FLAGS       
+------------
+0           
+
+1 rows fetched.
+
+SQL> select OWNER,VIEW_NAME,COLUMN_COUNT,TEXT from db_views where view_name='TEST_VIEW1';
+
+OWNER                                                            VIEW_NAME                                                        COLUMN_COUNT TEXT                                                            
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+TEST_VIEW_DEPEND                                                 TEST_VIEW1                                                       2            select f1,f2 from TEST_T1                                       
+
+1 rows fetched.
+
+SQL> SELECT * FROM test_view1;
+
+CT-00600, View TEST_VIEW1 has errors
+SQL> CREATE TABLE TEST_T1 (F1 INT, F2 INT, F3 VARCHAR(10));
+
+Succeed.
+
+SQL> SELECT * FROM test_view1;
+
+F1           F2          
+------------ ------------
+
+0 rows fetched.
+
+SQL> exec dbe_util.compile_schema(user,false);
+
+PL/SQL procedure successfully completed.
+
+SQL> select FLAGS from sys.sys_views  where name='TEST_VIEW1';
+
+FLAGS       
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table IF EXISTS TEST_T2;
+
+Succeed.
+
+SQL> create table TEST_T2(c int);
+
+Succeed.
+
+SQL> insert into TEST_T2 values(10086);
+
+1 rows affected.
+
+SQL> DROP synonym IF EXISTS st2;
+
+Succeed.
+
+SQL> create synonym st2 for TEST_T2;
+
+Succeed.
+
+SQL> create table tt1 as select * from st2;
+
+Succeed.
+
+SQL> 
+SQL> create or replace view vv as select * from st2;
+
+Succeed.
+
+SQL> DROP synonym IF EXISTS vv_sy;
+
+Succeed.
+
+SQL> create synonym vv_sy for vv;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> exp users=test_view_depend filetype=bin file='./data/test_type_bin.dmp';
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_VIEW_DEPEND
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_type_bin.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_VIEW_DEPEND ...
+Exporting sequence of schema TEST_VIEW_DEPEND ...
+Exporting profile of schema TEST_VIEW_DEPEND ...
+Exporting type of schema TEST_VIEW_DEPEND ...
+Exporting tables of schema TEST_VIEW_DEPEND ...
+Reading table objects of TEST_VIEW_DEPEND
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TEST_T1                                                          1         
+TEST_T2                                                          2         
+TT1                                                              3         
+
+Exporting tables (scripts or data) of TEST_VIEW_DEPEND
+exporting table TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting DDL of TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting data of TEST_VIEW_DEPEND.TEST_T1 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting constraints on TEST_VIEW_DEPEND.TEST_T1 ...
+
+exporting table TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting DDL of TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting data of TEST_VIEW_DEPEND.TEST_T2 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting constraints on TEST_VIEW_DEPEND.TEST_T2 ...
+
+exporting table TEST_VIEW_DEPEND.TT1 ...
+  exporting DDL of TEST_VIEW_DEPEND.TT1 ...
+  exporting data of TEST_VIEW_DEPEND.TT1 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TT1 ...
+  exporting constraints on TEST_VIEW_DEPEND.TT1 ...
+
+Exporting procedures/functions/triggers of schema TEST_VIEW_DEPEND ...
+Exporting views of schema TEST_VIEW_DEPEND ...
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW1
+  exporting view TEST_VIEW_DEPEND.VV
+Exporting synonyms of schema TEST_VIEW_DEPEND ...
+Exporting package of schema TEST_VIEW_DEPEND ...
+End of export schema TEST_VIEW_DEPEND ...
+
+Logical export succeeded.
+
+SQL> drop SYNONYM ST2;
+
+Succeed.
+
+SQL> imp users=test_view_depend filetype=bin file='./data/test_type_bin.dmp';
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST_VIEW_DEPEND
+-- DUMP FILE = ./data/test_type_bin.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_VIEW_DEPEND ... 
+  Importing sequence of schema TEST_VIEW_DEPEND ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_VIEW_DEPEND ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_VIEW_DEPEND ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_VIEW_DEPEND ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TEST_T2                                                          1         
+    TT1                                                              1         
+
+  Importing foreign key of schema TEST_VIEW_DEPEND ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_VIEW_DEPEND ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_VIEW_DEPEND ...
+    View importing success, 2 rows are loaded.
+
+  Importing synonym of schema TEST_VIEW_DEPEND ...
+    Synonym importing success, 2 rows are loaded.
+
+  Importing package of schema TEST_VIEW_DEPEND ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> create or replace view test_view2 as select 1 from sys_dummy;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function test_func(a varchar)
+  2 RETURN varchar
+  3 AS
+  4 b varchar(100);
+  5 BEGIN
+  6    select 1 into b from test_view2 ;
+  7    if (a = 'ab') then
+  8         return a;
+  9    else
+ 10         return b;
+ 11    end if;
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace view test_view3 as select test_func('ab');
+
+Succeed.
+
+SQL> create or replace view test_view4 as select * from test_view3;
+
+Succeed.
+
+SQL> 
+SQL> exp users = test_view_depend file="./data/test_view_depend.dmp";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_VIEW_DEPEND
+-- FILE TYPE = TXT
+-- DUMP FILE = ./data/test_view_depend.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_VIEW_DEPEND ...
+Exporting sequence of schema TEST_VIEW_DEPEND ...
+Exporting profile of schema TEST_VIEW_DEPEND ...
+Exporting type of schema TEST_VIEW_DEPEND ...
+Exporting tables of schema TEST_VIEW_DEPEND ...
+Reading table objects of TEST_VIEW_DEPEND
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TEST_T1                                                          1         
+TEST_T2                                                          2         
+TT1                                                              3         
+
+Exporting tables (scripts or data) of TEST_VIEW_DEPEND
+exporting table TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting DDL of TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting data of TEST_VIEW_DEPEND.TEST_T1 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting constraints on TEST_VIEW_DEPEND.TEST_T1 ...
+
+exporting table TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting DDL of TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting data of TEST_VIEW_DEPEND.TEST_T2 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting constraints on TEST_VIEW_DEPEND.TEST_T2 ...
+
+exporting table TEST_VIEW_DEPEND.TT1 ...
+  exporting DDL of TEST_VIEW_DEPEND.TT1 ...
+  exporting data of TEST_VIEW_DEPEND.TT1 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TT1 ...
+  exporting constraints on TEST_VIEW_DEPEND.TT1 ...
+
+Exporting procedures/functions/triggers of schema TEST_VIEW_DEPEND ...
+  exporting FUNCTION TEST_VIEW_DEPEND.TEST_FUNC
+Exporting views of schema TEST_VIEW_DEPEND ...
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW3
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW1
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW2
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW4
+  exporting view TEST_VIEW_DEPEND.VV
+Exporting synonyms of schema TEST_VIEW_DEPEND ...
+Exporting package of schema TEST_VIEW_DEPEND ...
+End of export schema TEST_VIEW_DEPEND ...
+
+Logical export succeeded.
+
+SQL> drop view test_view2;
+
+Succeed.
+
+SQL> drop view test_view3;
+
+Succeed.
+
+SQL> drop view test_view4;
+
+Succeed.
+
+SQL> drop function test_func;
+
+Succeed.
+
+SQL> imp users = test_view_depend file="./data/test_view_depend.dmp";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST_VIEW_DEPEND
+-- DUMP FILE = ./data/test_view_depend.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test_view2;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from test_view3;
+
+TEST_FUNC('AB')                                                 
+----------------------------------------------------------------
+ab                                                              
+
+1 rows fetched.
+
+SQL> select * from test_view4;
+
+TEST_FUNC('AB')                                                 
+----------------------------------------------------------------
+ab                                                              
+
+1 rows fetched.
+
+SQL> 
+SQL> exp users = test_view_depend file="./data/test_view_depend.dmp" consistent = y;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_VIEW_DEPEND
+-- FILE TYPE = TXT
+-- DUMP FILE = ./data/test_view_depend.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_VIEW_DEPEND ...
+Exporting sequence of schema TEST_VIEW_DEPEND ...
+Exporting profile of schema TEST_VIEW_DEPEND ...
+Exporting type of schema TEST_VIEW_DEPEND ...
+Exporting tables of schema TEST_VIEW_DEPEND ...
+Reading table objects of TEST_VIEW_DEPEND
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TEST_T1                                                          1         
+TEST_T2                                                          2         
+TT1                                                              3         
+
+Exporting tables (scripts or data) of TEST_VIEW_DEPEND
+exporting table TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting DDL of TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting data of TEST_VIEW_DEPEND.TEST_T1 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TEST_T1 ...
+  exporting constraints on TEST_VIEW_DEPEND.TEST_T1 ...
+
+exporting table TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting DDL of TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting data of TEST_VIEW_DEPEND.TEST_T2 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TEST_T2 ...
+  exporting constraints on TEST_VIEW_DEPEND.TEST_T2 ...
+
+exporting table TEST_VIEW_DEPEND.TT1 ...
+  exporting DDL of TEST_VIEW_DEPEND.TT1 ...
+  exporting data of TEST_VIEW_DEPEND.TT1 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on TEST_VIEW_DEPEND.TT1 ...
+  exporting constraints on TEST_VIEW_DEPEND.TT1 ...
+
+Exporting procedures/functions/triggers of schema TEST_VIEW_DEPEND ...
+  exporting FUNCTION TEST_VIEW_DEPEND.TEST_FUNC
+Exporting views of schema TEST_VIEW_DEPEND ...
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW3
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW1
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW2
+  exporting view TEST_VIEW_DEPEND.TEST_VIEW4
+  exporting view TEST_VIEW_DEPEND.VV
+Exporting synonyms of schema TEST_VIEW_DEPEND ...
+Exporting package of schema TEST_VIEW_DEPEND ...
+End of export schema TEST_VIEW_DEPEND ...
+
+Logical export succeeded.
+
+SQL> drop view test_view2;
+
+Succeed.
+
+SQL> drop view test_view3;
+
+Succeed.
+
+SQL> drop view test_view4;
+
+Succeed.
+
+SQL> drop function test_func;
+
+Succeed.
+
+SQL> imp users = test_view_depend file="./data/test_view_depend.dmp";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST_VIEW_DEPEND
+-- DUMP FILE = ./data/test_view_depend.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test_view2;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from test_view3;
+
+TEST_FUNC('AB')                                                 
+----------------------------------------------------------------
+ab                                                              
+
+1 rows fetched.
+
+SQL> select * from test_view4;
+
+TEST_FUNC('AB')                                                 
+----------------------------------------------------------------
+ab                                                              
+
+1 rows fetched.
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_view_depend cascade;
+Succeed.
+
+
+
+

@@ -1,0 +1,476 @@
+
+
+SQL> alter database set standby database to maximize availability;
+
+Succeed.
+
+SQL> alter database set standby database to maximize performance;
+
+Succeed.
+
+SQL> alter database archivelog;
+
+CT-00768, Operation set archivelog can only be executed in mount status
+SQL> alter database datafile 'user' online;
+
+CT-00101, [1:32]Capability: end clause in the "ALTER DATABASE DATAFILE" statement  not supported
+SQL> alter database datafile 'user' offline;
+
+CT-00101, [1:32]Capability: end clause in the "ALTER DATABASE DATAFILE" statement  not supported
+SQL> alter database datafile 'user' resize 64M;
+
+Succeed.
+
+SQL> alter database datafile 'system' resize 64M;
+
+CT-00881, File size specified is smaller than minimum required
+SQL> alter database datafile 'system' resize 256M;
+
+Succeed.
+
+SQL> alter database datafile 'user' autoextend off;
+
+Succeed.
+
+SQL> alter database datafile 'user' autoextend on;
+
+Succeed.
+
+SQL> alter database datafile 'user' autoextend on next 10M maxsize 128M;
+
+Succeed.
+
+SQL> alter database datafile 'user' resize 256M;
+
+CT-00884, File size 268435456 bytes exceeds maximum of 134217728 bytes
+SQL> alter database datafile 'zhangsan', 'user' resize 100M;
+
+CT-00771, data file /home/regress/gs_regress/data/data/zhangsan does not exist
+SQL> alter database datafile 'user', 'zhangsan' resize 100M;
+
+CT-00771, data file /home/regress/gs_regress/data/data/zhangsan does not exist
+SQL> alter database datafile 'zhangsan', 3 resize 100M;
+
+CT-00771, data file /home/regress/gs_regress/data/data/zhangsan does not exist
+SQL> alter database datafile 3, 'zhangsan' resize 100M;
+
+CT-00771, data file /home/regress/gs_regress/data/data/zhangsan does not exist
+SQL> alter database datafile 100, 3 resize 100M;
+
+CT-00796, Datafile number 100 not exists
+SQL> alter database datafile 3, 100 resize 100M;
+
+CT-00796, Datafile number 100 not exists
+SQL> alter database set standby database to maximize default;
+
+CT-00601, Sql syntax error: key word "default" found at 49 is unexpected for protection mode
+SQL> alter database set not_standby;
+
+CT-00601, Sql syntax error: key word "not_standby" found at 20 is unexpected for protection mode
+SQL> alter database set standby not_database;
+
+CT-00601, Sql syntax error: key word "not_database" found at 28 is unexpected for protection mode
+SQL> alter database set standby database not_to;
+
+CT-00601, Sql syntax error: key word "not_to" found at 37 is unexpected for protection mode
+SQL> alter database set standby database to not_maximize;
+
+CT-00601, Sql syntax error: key word "not_maximize" found at 40 is unexpected for protection mode
+SQL> alter database register;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but register found
+SQL> alter database register NOT_PHYSICAL;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but register found
+SQL> alter database register PHYSICAL NOT_LOGFILE;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but register found
+SQL> alter database register PHYSICAL LOGFILE invalidfilename;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but register found
+SQL> alter database register PHYSICAL LOGFILE 'filename' not_end;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but register found
+SQL> alter database register PHYSICAL LOGFILE 'filename';
+
+CT-00601, [1:16]Sql syntax error: key word expected, but register found
+SQL> alter database convert;
+
+CT-00601, [1:23]Sql syntax error: more text expected but terminated
+SQL> alter database convert not_to;
+
+CT-00601, [1:24]Sql syntax error: key word "not_to" is unexpected for convert
+SQL> alter database convert to not_physical;
+
+CT-00601, Sql syntax error: key word "not_physical" found at 27 is unexpected for convert
+SQL> alter database convert to physical not_standby;
+
+CT-00601, Sql syntax error: key word "not_standby" found at 36 is unexpected for convert
+SQL> alter database convert to physical standby not_end;
+
+CT-00601, [1:51]Sql syntax error: expected end but not_end found
+SQL> alter session;
+
+CT-00601, [1:14]Sql syntax error: more text expected but terminated
+SQL> alter session not_set;
+
+CT-00601, [1:15]Sql syntax error: key word expected but not_set found
+SQL> alter session set;
+
+CT-00601, [1:18]Sql syntax error: more text expected but terminated
+SQL> alter session set COMMIT_WAIT_LOGGING !a; 
+
+CT-00601, [1:39]Sql syntax error: = expected
+SQL> alter session set COMMIT_WAIT_LOGGING = a;
+
+CT-00601, [1:41]Sql syntax error: invalid parameter value
+SQL> alter session set COMMIT_MODE !a; 
+
+CT-00601, [1:31]Sql syntax error: = expected
+SQL> alter session set COMMIT_MODE = a;
+
+CT-00601, [1:33]Sql syntax error: invalid parameter value
+SQL> alter session set COMMIT_MODE = 'abc';
+
+CT-00601, [1:33]Sql syntax error: invalid parameter value
+SQL> alter database recover;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but recover found
+SQL> alter database recover automatic;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but recover found
+SQL> alter database recover to; 
+
+CT-00601, [1:16]Sql syntax error: key word expected, but recover found
+SQL> alter database recover unexpected;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but recover found
+SQL> alter database clear logfile 1000;
+
+CT-00834, The log file does not exist.
+SQL> alter database open restrict force ignore logs;
+
+CT-00601, [1:30]Sql syntax error: expected end but restrict found
+SQL> alter database open force ignore logs;
+
+CT-00739, The database cannot be opened repeatedly.
+SQL> recover database until cancel;
+
+CT-00768, Operation  recover database until cancle  can only be executed in mount status
+SQL> comment in abc;
+
+CT-00601, [1:9]Sql syntax error: ON expected
+SQL> create table TEST_TABLE_001 (id int) system 129;
+
+CT-00601, [1:38]Sql syntax error: system must between 1 and 64 or 1024 and 1536 
+SQL> create table TEST_TABLE_001 (id int) system 64;
+
+CT-00601, [1:38]Sql syntax error: system must between 1 and 64 or 1024 and 1536 
+SQL> create table TEST_TABLE_001 (id int) system 1023;
+
+CT-00601, [1:38]Sql syntax error: system must between 1 and 64 or 1024 and 1536 
+SQL> create table TEST_TABLE_001 (id int) system 1536;
+
+CT-00601, [1:38]Sql syntax error: system must between 1 and 64 or 1024 and 1536 
+SQL> create table TEST_TABLE_001 (id int) system 1024 system 1025;
+
+CT-00601, [1:50]Sql syntax error: duplicate system specification
+SQL> create table TEST_TABLE_001 (id int);
+
+Succeed.
+
+SQL> create index IX_TAB_001 on TEST_TABLE_001 (id) initrans 233 initrans 233;
+
+CT-00601, [1:61]Sql syntax error: duplicate initrans specification
+SQL> create index IX_TAB_001 on TEST_TABLE_001 (id) tablespace aaa tablespace bbb;
+
+CT-00601, [1:63]Sql syntax error: duplicate tablespace specification
+SQL> drop table if exists TEST_TABLE_001;
+
+Succeed.
+
+SQL> 
+SQL> create table TEST_TABLE_002 (id int) pctfree 12 pctfree 12;
+
+CT-00601, [1:49]Sql syntax error:  duplicate pct_free specification
+SQL> create table TEST_TABLE_002 (id int) pctfree 7;
+
+Succeed.
+
+SQL> create table TEST_TABLE_002 (id int) pctfree 81;
+
+CT-00601, [1:38]Sql syntax error: pctfree must between 0 and 80 
+SQL> create table TEST_TABLE_003 (id int, id char);
+
+CT-00604, Duplicate column name ID
+SQL> create table TEST_TABLE_003 (id serial default 10);
+
+CT-00652, Multiple default values specified for column "ID"
+SQL> create table TEST_TABLE_003 (id serial default 10 on update 12);
+
+CT-00652, Multiple default values specified for column "ID"
+SQL> create table TEST_TABLE_003 (id int default 10 on update 122222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222);
+
+CT-00659, INTEGER out of range
+SQL> create table TEST_TABLE_004 (id int) partition by range (id) (partition "abc" values less than (100) tablespace users initrans 200 pctfree 79);
+
+Succeed.
+
+SQL> create table TEST_TABLE_005 (id int) partition by range (id) (partition "abc" values less than (100) undo);
+
+CT-00601, [1:102]Sql syntax error: , expected but undo found
+SQL> drop table if exists TEST_TABLE_002;
+
+Succeed.
+
+SQL> drop table if exists TEST_TABLE_003;
+
+Succeed.
+
+SQL> drop table if exists TEST_TABLE_004;
+
+Succeed.
+
+SQL> drop table if exists TEST_TABLE_005;
+
+Succeed.
+
+SQL> -- lock table
+SQL> create table TEST_TABLE_001 (id int);
+
+Succeed.
+
+SQL> lock table TEST_TABLE_001 in shard mode nowait;
+
+CT-00601, [1:30]Sql syntax error: share or exclusive expected
+SQL> commit;
+
+Succeed.
+
+SQL> lock table TEST_TABLE_001 in shard mode wait -1;
+
+CT-00601, [1:30]Sql syntax error: share or exclusive expected
+SQL> lock table TEST_TABLE_001 in shard mode wait 1;
+
+CT-00601, [1:30]Sql syntax error: share or exclusive expected
+SQL> select sleep(3);
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> lock table TEST_TABLE_001 in shard mode wait 0;
+
+CT-00601, [1:30]Sql syntax error: share or exclusive expected
+SQL> commit;
+
+Succeed.
+
+SQL> drop table TEST_TABLE_001
+  2 
+  3 --DTS2018051601318
+  4 ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' OFFLINE ;
+
+CT-00601, [2:7]Sql syntax error: expected end but ALTER found
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' OFFLINE FOR DROP;
+
+CT-00101, [1:58]Capability: end clause in the "ALTER DATABASE DATAFILE" statement  not supported
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' ONLINE;
+
+CT-00101, [1:58]Capability: end clause in the "ALTER DATABASE DATAFILE" statement  not supported
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' RESIZE 1000000;
+
+CT-00601, [1:65]Sql syntax error: size value is smaller than minimum(1048576) required
+SQL> 
+SQL> --"ALTER DATABASE DATAFILE" syntax check
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' "CANTIANDB";
+
+CT-00601, [1:26]Sql syntax error: unexpected "CANTIANDB" in "ALTER DATABASE" statement
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' DATABASE;
+
+CT-00601, [1:58]Sql syntax error: invalid clause in "ALTER DATABASE DATAFILE" statement
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user', AUTOEXTEND ON NEXT 10M;
+
+CT-00601, [1:59]Sql syntax error: file name or file number expected.
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user', "ABCD" AUTOEXTEND ON NEXT 10M;
+
+CT-00601, [1:59]Sql syntax error: file name or file number expected.
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' AUTOEXTEND ON NEXT 10241024102410241024102410241024;
+
+CT-00601, [1:77]Sql syntax error: size must be a positive long integer
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' AUTOEXTEND ON NEXT -1;
+
+CT-00601, [1:77]Sql syntax error: size must be a positive long integer
+SQL> ALTER DATABASE DATAFILE  '/home/test/CTDB/dn3/data/user' AUTOEXTEND OFF NEXT 10M;
+
+CT-00601, [1:73]Sql syntax error: expected end but "NEXT" found
+SQL> ALTER DATABASE DATAFILE  0,1, /* comment */2,3,4,5,6,7,8 AUTOEXTEND /* comment */ON NEXT 1M MAXSIZE UNLIMITED;
+
+Succeed.
+
+SQL> ALTER DATABASE DATAFILE  1,2 AUTOEXTEND OFF;
+
+Succeed.
+
+SQL> ALTER DATABASE DATAFILE  1,2,1 AUTOEXTEND OFF;  --syntax error
+
+CT-00601, Sql syntax error: it is not allowed to specify duplicate datafile
+SQL> ALTER DATABASE DATAFILE 0 AUTOEXTEND ON NEXT 1M MAXSIZE 10G;
+
+Succeed.
+
+SQL> ALTER DATABASE DATAFILE 0 AUTOEXTEND ON MAXSIZE 10G;
+
+Succeed.
+
+SQL> ALTER DATABASE DATAFILE 'undo' AUTOEXTEND ON MAXSIZE 32G;
+
+Succeed.
+
+SQL> ALTER DATABASE DATAFILE 'TEMP' AUTOEXTEND ON NEXT 64M MAXSIZE 9T;  --syntax error (maxsize too large for temp)
+
+CT-00601, Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be greater than 8796093022208. "MAXSIZE": 9895604649984
+SQL> ALTER DATABASE DATAFILE 'TEMP' AUTOEXTEND ON NEXT 64M MAXSIZE 8T;
+
+Succeed.
+
+SQL> ALTER DATABASE DATAFILE 'TEMP','undo' AUTOEXTEND ON NEXT 64M MAXSIZE 16G;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018051601277
+SQL> ALTER DATABASE REGISTER PHYSICAL LOGFILE '/home/yq/CTDB/dn3/data/log1';
+
+CT-00601, [1:16]Sql syntax error: key word expected, but REGISTER found
+SQL> --DTS2018051601075
+SQL> ALTER DATABASE RECOVER;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but RECOVER found
+SQL> ALTER DATABASE RECOVER AUTOMATIC;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but RECOVER found
+SQL> --DTS2018051600861
+SQL> ALTER DATABASE  BEGIN;
+
+CT-00601, [1:17]Sql syntax error: key word expected, but BEGIN found
+SQL> ALTER DATABASE  END;
+
+CT-00601, [1:17]Sql syntax error: key word expected, but END found
+SQL> ALTER DATABASE  START; 
+
+CT-00601, [1:17]Sql syntax error: key word expected, but START found
+SQL> ALTER DATABASE  STOP; 
+
+CT-00601, [1:17]Sql syntax error: key word expected, but STOP found
+SQL> ALTER DATABASE  ABORT; 
+
+CT-00601, [1:17]Sql syntax error: key word expected, but ABORT found
+SQL> ALTER DATABASE  MOVE;
+
+CT-00601, [1:17]Sql syntax error: key word expected, but MOVE found
+SQL> 
+SQL> alter database delete archivelog all force;
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> create user cao1 identified by cao102_cao; 
+
+Succeed.
+
+SQL> create user cao2 identified by cao102_cao;
+
+Succeed.
+
+SQL> grant connect ,create any table ,create any view  to cao1;
+
+Succeed.
+
+SQL> grant connect ,create any table ,create any view  to cao2;
+
+Succeed.
+
+SQL> create table t1(id int);
+
+Succeed.
+
+SQL> create table cao1.t1(id int,name varchar(10));
+
+Succeed.
+
+SQL> create table cao2.t1(id int,name varchar(10),sco int);
+
+Succeed.
+
+SQL> insert into t1 values(100);
+
+1 rows affected.
+
+SQL> insert into cao1.t1 values(10,'cao1');
+
+1 rows affected.
+
+SQL> insert into cao2.t1 values(20,'cao2',90);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from t1;
+
+ID          
+------------
+100         
+
+1 rows fetched.
+
+SQL> alter session set current_schema=cao1;
+
+Succeed.
+
+SQL> select * from t1;
+
+ID           NAME      
+------------ ----------
+10           cao1      
+
+1 rows fetched.
+
+SQL> alter session set current_schema=cao2;
+
+Succeed.
+
+SQL> select * from t1;
+
+ID           NAME       SCO         
+------------ ---------- ------------
+20           cao2       90          
+
+1 rows fetched.
+
+SQL> drop user cao1 cascade;
+
+Succeed.
+
+SQL> drop user cao2 cascade;
+
+Succeed.
+
+SQL> alter database switch logfile;
+
+CT-00601, [1:16]Sql syntax error: key word expected, but switch found
+SQL> alter database clear logfile 5 d;
+
+CT-00601, [1:33]Sql syntax error: expected end but d found

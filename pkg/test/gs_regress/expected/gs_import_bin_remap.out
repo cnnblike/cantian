@@ -1,0 +1,4433 @@
+
+
+SQL> -- table filter
+SQL> -- 1. create user & create table
+SQL> drop user if exists test_remap cascade;
+
+Succeed.
+
+SQL> create user test_remap identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap;
+
+Succeed.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts1 (c int);
+
+Succeed.
+
+SQL> insert into ts1 values(1),(2);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table ts2 (c int);
+
+Succeed.
+
+SQL> insert into ts2 values(3),(4);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from ts1;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from ts2;
+
+C           
+------------
+3           
+4           
+
+2 rows fetched.
+
+SQL> -- 2. exp table & drop table
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=test_remap file="./data/test_remap.dmp" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_REMAP
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_remap.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_REMAP ...
+Exporting sequence of schema TEST_REMAP ...
+Exporting profile of schema TEST_REMAP ...
+Exporting type of schema TEST_REMAP ...
+Exporting tables of schema TEST_REMAP ...
+Reading table objects of TEST_REMAP
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TS1                                                              1         
+TS2                                                              2         
+
+Exporting tables (scripts or data) of TEST_REMAP
+exporting table TEST_REMAP.TS1 ...
+  exporting DDL of TEST_REMAP.TS1 ...
+  exporting data of TEST_REMAP.TS1 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.TS1 ...
+  exporting constraints on TEST_REMAP.TS1 ...
+
+exporting table TEST_REMAP.TS2 ...
+  exporting DDL of TEST_REMAP.TS2 ...
+  exporting data of TEST_REMAP.TS2 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.TS2 ...
+  exporting constraints on TEST_REMAP.TS2 ...
+
+Exporting procedures/functions/triggers of schema TEST_REMAP ...
+Exporting views of schema TEST_REMAP ...
+Exporting synonyms of schema TEST_REMAP ...
+Exporting package of schema TEST_REMAP ...
+End of export schema TEST_REMAP ...
+
+Logical export succeeded.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> drop table ts1;
+
+Succeed.
+
+SQL> drop table ts2;
+
+Succeed.
+
+SQL> -- 3. imp table ts1
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> imp tables=ts1 file="./data/test_remap.dmp" filetype=bin log="./data/imp.log";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TS1
+-- DUMP FILE = ./data/test_remap.dmp
+-- LOG FILE = ./data/imp.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_REMAP ... 
+  Importing sequence of schema TEST_REMAP ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TS1                                                                  2         
+
+  Importing foreign key of schema TEST_REMAP ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from ts1;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from ts2;
+
+CT-00843, [1:15]The table or view TEST_REMAP.TS2 does not exist.
+SQL> 
+SQL> --all table filter
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_remap cascade;
+
+Succeed.
+
+SQL> create user test_remap identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap;
+
+Succeed.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts1 (c int);
+
+Succeed.
+
+SQL> insert into ts1 values(1),(2);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table ts2 (c int);
+
+Succeed.
+
+SQL> insert into ts2 values(3),(4);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from ts1;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from ts2;
+
+C           
+------------
+3           
+4           
+
+2 rows fetched.
+
+SQL> -- 2. exp table & drop table
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=test_remap file="./data/test_remap_all_table.dmp" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_REMAP
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_remap_all_table.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_REMAP ...
+Exporting sequence of schema TEST_REMAP ...
+Exporting profile of schema TEST_REMAP ...
+Exporting type of schema TEST_REMAP ...
+Exporting tables of schema TEST_REMAP ...
+Reading table objects of TEST_REMAP
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TS1                                                              1         
+TS2                                                              2         
+
+Exporting tables (scripts or data) of TEST_REMAP
+exporting table TEST_REMAP.TS1 ...
+  exporting DDL of TEST_REMAP.TS1 ...
+  exporting data of TEST_REMAP.TS1 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.TS1 ...
+  exporting constraints on TEST_REMAP.TS1 ...
+
+exporting table TEST_REMAP.TS2 ...
+  exporting DDL of TEST_REMAP.TS2 ...
+  exporting data of TEST_REMAP.TS2 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.TS2 ...
+  exporting constraints on TEST_REMAP.TS2 ...
+
+Exporting procedures/functions/triggers of schema TEST_REMAP ...
+Exporting views of schema TEST_REMAP ...
+Exporting synonyms of schema TEST_REMAP ...
+Exporting package of schema TEST_REMAP ...
+End of export schema TEST_REMAP ...
+
+Logical export succeeded.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> drop table ts1;
+
+Succeed.
+
+SQL> drop table ts2;
+
+Succeed.
+
+SQL> -- 3. imp table ts1
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> imp tables=% file="./data/test_remap_all_table.dmp" filetype=bin log="./data/imp2.log";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = ./data/test_remap_all_table.dmp
+-- LOG FILE = ./data/imp2.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_REMAP ... 
+  Importing sequence of schema TEST_REMAP ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TS1                                                                  2         
+    TS2                                                                  2         
+
+  Importing foreign key of schema TEST_REMAP ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 4 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from ts1;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from ts2;
+
+C           
+------------
+3           
+4           
+
+2 rows fetched.
+
+SQL> 
+SQL> --schema filter
+SQL> -- 1. create user & create table
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_remap1 cascade;
+
+Succeed.
+
+SQL> create user test_remap1 identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap1;
+
+Succeed.
+
+SQL> conn test_remap1/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts1 (c int);
+
+Succeed.
+
+SQL> insert into ts1 values(1),(2);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_remap2 cascade;
+
+Succeed.
+
+SQL> create user test_remap2 identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap2;
+
+Succeed.
+
+SQL> conn test_remap2/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts2 (c int);
+
+Succeed.
+
+SQL> insert into ts2 values(3),(4);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> -- 2. exp users & drop users
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=test_remap1,test_remap2 file="./data/test_schema_filter.dmp" filetype=bin create_user=Y;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_REMAP1, TEST_REMAP2
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_schema_filter.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = Y
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_REMAP1 ...
+Exporting user definition of schema TEST_REMAP1 ...
+Exporting sequence of schema TEST_REMAP1 ...
+Exporting profile of schema TEST_REMAP1 ...
+Exporting type of schema TEST_REMAP1 ...
+Exporting tables of schema TEST_REMAP1 ...
+Reading table objects of TEST_REMAP1
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TS1                                                              1         
+
+Exporting tables (scripts or data) of TEST_REMAP1
+exporting table TEST_REMAP1.TS1 ...
+  exporting DDL of TEST_REMAP1.TS1 ...
+  exporting data of TEST_REMAP1.TS1 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP1.TS1 ...
+  exporting constraints on TEST_REMAP1.TS1 ...
+
+Exporting procedures/functions/triggers of schema TEST_REMAP1 ...
+Exporting views of schema TEST_REMAP1 ...
+Exporting synonyms of schema TEST_REMAP1 ...
+Exporting package of schema TEST_REMAP1 ...
+End of export schema TEST_REMAP1 ...
+
+Exporting schema TEST_REMAP2 ...
+Exporting user definition of schema TEST_REMAP2 ...
+Exporting sequence of schema TEST_REMAP2 ...
+Exporting profile of schema TEST_REMAP2 ...
+Exporting type of schema TEST_REMAP2 ...
+Exporting tables of schema TEST_REMAP2 ...
+Reading table objects of TEST_REMAP2
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TS2                                                              1         
+
+Exporting tables (scripts or data) of TEST_REMAP2
+exporting table TEST_REMAP2.TS2 ...
+  exporting DDL of TEST_REMAP2.TS2 ...
+  exporting data of TEST_REMAP2.TS2 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP2.TS2 ...
+  exporting constraints on TEST_REMAP2.TS2 ...
+
+Exporting procedures/functions/triggers of schema TEST_REMAP2 ...
+Exporting views of schema TEST_REMAP2 ...
+Exporting synonyms of schema TEST_REMAP2 ...
+Exporting package of schema TEST_REMAP2 ...
+End of export schema TEST_REMAP2 ...
+
+Logical export succeeded.
+
+SQL> drop user test_remap1 cascade;
+
+Succeed.
+
+SQL> drop user test_remap2 cascade;
+
+Succeed.
+
+SQL> -- 3. imp user test_remap1
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> imp users=test_remap1 file="./data/test_schema_filter.dmp" filetype=bin log="./data/imp3.log" create_user=Y;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST_REMAP1
+-- DUMP FILE = ./data/test_schema_filter.dmp
+-- LOG FILE = ./data/imp3.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = Y
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_REMAP1 ... 
+  Importing sequence of schema TEST_REMAP1 ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP1 ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP1 ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP1 ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TS1                                                                  2         
+
+  Importing foreign key of schema TEST_REMAP1 ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP1 ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP1 ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP1 ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP1 ...
+    Package importing success, 0 rows are loaded.
+
+
+Importing schema TEST_REMAP2 ... 
+  Importing sequence of schema TEST_REMAP2 ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP2 ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP2 ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP2 ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_REMAP2 ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP2 ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP2 ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP2 ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP2 ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test_remap1.ts1;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from test_remap2.ts2;
+
+CT-00843, [1:15]The table or view TEST_REMAP2.TS2 does not exist.
+SQL> 
+SQL> --schema remap
+SQL> -- 1. create user & create table
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_remap1 cascade;
+
+Succeed.
+
+SQL> create user test_remap1 identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap1;
+
+Succeed.
+
+SQL> conn test_remap1/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts1 (c int);
+
+Succeed.
+
+SQL> insert into ts1 values(1),(2);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_remap2 cascade;
+
+Succeed.
+
+SQL> create user test_remap2 identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap2;
+
+Succeed.
+
+SQL> conn test_remap2/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts2 (c int);
+
+Succeed.
+
+SQL> insert into ts2 values(3),(4);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> -- 2. exp users & drop users
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=test_remap1,test_remap2 file="./data/test_schema_remap.dmp" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_REMAP1, TEST_REMAP2
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_schema_remap.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_REMAP1 ...
+Exporting sequence of schema TEST_REMAP1 ...
+Exporting profile of schema TEST_REMAP1 ...
+Exporting type of schema TEST_REMAP1 ...
+Exporting tables of schema TEST_REMAP1 ...
+Reading table objects of TEST_REMAP1
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TS1                                                              1         
+
+Exporting tables (scripts or data) of TEST_REMAP1
+exporting table TEST_REMAP1.TS1 ...
+  exporting DDL of TEST_REMAP1.TS1 ...
+  exporting data of TEST_REMAP1.TS1 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP1.TS1 ...
+  exporting constraints on TEST_REMAP1.TS1 ...
+
+Exporting procedures/functions/triggers of schema TEST_REMAP1 ...
+Exporting views of schema TEST_REMAP1 ...
+Exporting synonyms of schema TEST_REMAP1 ...
+Exporting package of schema TEST_REMAP1 ...
+End of export schema TEST_REMAP1 ...
+
+Exporting schema TEST_REMAP2 ...
+Exporting sequence of schema TEST_REMAP2 ...
+Exporting profile of schema TEST_REMAP2 ...
+Exporting type of schema TEST_REMAP2 ...
+Exporting tables of schema TEST_REMAP2 ...
+Reading table objects of TEST_REMAP2
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TS2                                                              1         
+
+Exporting tables (scripts or data) of TEST_REMAP2
+exporting table TEST_REMAP2.TS2 ...
+  exporting DDL of TEST_REMAP2.TS2 ...
+  exporting data of TEST_REMAP2.TS2 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP2.TS2 ...
+  exporting constraints on TEST_REMAP2.TS2 ...
+
+Exporting procedures/functions/triggers of schema TEST_REMAP2 ...
+Exporting views of schema TEST_REMAP2 ...
+Exporting synonyms of schema TEST_REMAP2 ...
+Exporting package of schema TEST_REMAP2 ...
+End of export schema TEST_REMAP2 ...
+
+Logical export succeeded.
+
+SQL> drop user test_remap1 cascade;
+
+Succeed.
+
+SQL> drop user test_remap2 cascade;
+
+Succeed.
+
+SQL> -- 3. remap user test_remap1 to test_remap3
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_remap3 cascade;
+
+Succeed.
+
+SQL> create user test_remap3 identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap3;
+
+Succeed.
+
+SQL> imp file="./data/test_schema_remap.dmp" filetype=bin log="./data/test_schema_remap.log" remap_schema=test_remap1:test_remap3;
+Parsing import options ... 
+Verify options ...
+  verify remap schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = REMAP_SCHEMA
+-- REMAP SCHEMA = TEST_REMAP1:test_remap3
+-- DUMP FILE = ./data/test_schema_remap.dmp
+-- LOG FILE = ./data/test_schema_remap.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_REMAP1 ... 
+  Importing sequence of schema TEST_REMAP1 ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP1 ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP1 ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP1 ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TS1                                                                  2         
+
+  Importing foreign key of schema TEST_REMAP1 ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP1 ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP1 ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP1 ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP1 ...
+    Package importing success, 0 rows are loaded.
+
+
+Importing schema TEST_REMAP2 ... 
+  Importing sequence of schema TEST_REMAP2 ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP2 ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP2 ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP2 ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_REMAP2 ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP2 ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP2 ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP2 ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP2 ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test_remap1.ts1;
+
+CT-00843, [1:15]The table or view TEST_REMAP1.TS1 does not exist.
+SQL> select * from test_remap3.ts1;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from test_remap2.ts2;
+
+CT-00843, [1:15]The table or view TEST_REMAP2.TS2 does not exist.
+SQL> 
+SQL> --tablespace remap
+SQL> -- 1. create user & create table
+SQL> create tablespace test_remap_hck datafile 'test_remap_hck' size 16m autoextend on next 16m;
+
+Succeed.
+
+SQL> create tablespace test_remap1_hck datafile 'test_remap1_hck' size 16m autoextend on next 16m; 
+
+Succeed.
+
+SQL> drop user if exists test_remap cascade;
+
+Succeed.
+
+SQL> create user test_remap identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap;
+
+Succeed.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts1 (c int) tablespace test_remap_hck;
+
+Succeed.
+
+SQL> insert into ts1 values(1),(2);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table ts2 (c int) tablespace test_remap_hck;
+
+Succeed.
+
+SQL> insert into ts2 values(3),(4);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table ts3 (c int) tablespace test_remap1_hck;
+
+Succeed.
+
+SQL> insert into ts3 values(5),(6);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from ts1;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from ts2;
+
+C           
+------------
+3           
+4           
+
+2 rows fetched.
+
+SQL> select * from ts3;
+
+C           
+------------
+5           
+6           
+
+2 rows fetched.
+
+SQL> -- 2. exp table & drop table
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=test_remap file="./data/test_remap_tablespace.dmp" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_REMAP
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_remap_tablespace.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_REMAP ...
+Exporting sequence of schema TEST_REMAP ...
+Exporting profile of schema TEST_REMAP ...
+Exporting type of schema TEST_REMAP ...
+Exporting tables of schema TEST_REMAP ...
+Reading table objects of TEST_REMAP
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TS1                                                              1         
+TS2                                                              2         
+TS3                                                              3         
+
+Exporting tables (scripts or data) of TEST_REMAP
+exporting table TEST_REMAP.TS1 ...
+  exporting DDL of TEST_REMAP.TS1 ...
+  exporting data of TEST_REMAP.TS1 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.TS1 ...
+  exporting constraints on TEST_REMAP.TS1 ...
+
+exporting table TEST_REMAP.TS2 ...
+  exporting DDL of TEST_REMAP.TS2 ...
+  exporting data of TEST_REMAP.TS2 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.TS2 ...
+  exporting constraints on TEST_REMAP.TS2 ...
+
+exporting table TEST_REMAP.TS3 ...
+  exporting DDL of TEST_REMAP.TS3 ...
+  exporting data of TEST_REMAP.TS3 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.TS3 ...
+  exporting constraints on TEST_REMAP.TS3 ...
+
+Exporting procedures/functions/triggers of schema TEST_REMAP ...
+Exporting views of schema TEST_REMAP ...
+Exporting synonyms of schema TEST_REMAP ...
+Exporting package of schema TEST_REMAP ...
+End of export schema TEST_REMAP ...
+
+Logical export succeeded.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> drop table ts1;
+
+Succeed.
+
+SQL> drop table ts2;
+
+Succeed.
+
+SQL> drop table ts3;
+
+Succeed.
+
+SQL> drop tablespace test_remap_hck including contents and datafiles;
+
+Succeed.
+
+SQL> 
+SQL> -- 3. imp table ts1
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> imp tables=ts1,ts3 file="./data/test_remap_tablespace.dmp" filetype=bin log="./data/test_remap_tablespace.log" REMAP_TABLESPACE=TEST_REMAP_HCK:TEST_REMAP1_HCK;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TS1, TS3
+-- DUMP FILE = ./data/test_remap_tablespace.dmp
+-- LOG FILE = ./data/test_remap_tablespace.log
+-- REMAP TABLESPACE = TEST_REMAP_HCK:TEST_REMAP1_HCK
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_REMAP ... 
+  Importing sequence of schema TEST_REMAP ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TS1                                                                  2         
+    TS3                                                                  2         
+
+  Importing foreign key of schema TEST_REMAP ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 4 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from ts1;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from ts2;
+
+CT-00843, [1:15]The table or view TEST_REMAP.TS2 does not exist.
+SQL> select * from ts3;
+
+C           
+------------
+5           
+6           
+
+2 rows fetched.
+
+SQL> -- 4. drop user & tablespace 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select TABLE_NAME,TABLESPACE_NAME from all_tables where OWNER = UPPER('test_remap');
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                 
+---------------------------------------------------------------- ----------------------------------------------------------------
+TS1                                                              TEST_REMAP1_HCK                                                 
+TS3                                                              TEST_REMAP1_HCK                                                 
+
+2 rows fetched.
+
+SQL> drop user test_remap cascade;
+
+Succeed.
+
+SQL> drop tablespace test_remap1_hck including contents and datafiles;
+
+Succeed.
+
+SQL> 
+SQL> -- table name case sensitive
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_remap cascade;
+
+Succeed.
+
+SQL> create user test_remap identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap;
+
+Succeed.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table "ts1" (c int);
+
+Succeed.
+
+SQL> insert into "ts1" values(1),(2);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table "ts2" (c int);
+
+Succeed.
+
+SQL> insert into "ts2" values(3),(4);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from "ts1";
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from "ts2";
+
+C           
+------------
+3           
+4           
+
+2 rows fetched.
+
+SQL> -- 2. exp table & drop table
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=test_remap file="./data/test_remap_table_case_sensitive.dmp" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_REMAP
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_remap_table_case_sensitive.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_REMAP ...
+Exporting sequence of schema TEST_REMAP ...
+Exporting profile of schema TEST_REMAP ...
+Exporting type of schema TEST_REMAP ...
+Exporting tables of schema TEST_REMAP ...
+Reading table objects of TEST_REMAP
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+ts1                                                              1         
+ts2                                                              2         
+
+Exporting tables (scripts or data) of TEST_REMAP
+exporting table TEST_REMAP.ts1 ...
+  exporting DDL of TEST_REMAP.ts1 ...
+  exporting data of TEST_REMAP.ts1 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.ts1 ...
+  exporting constraints on TEST_REMAP.ts1 ...
+
+exporting table TEST_REMAP.ts2 ...
+  exporting DDL of TEST_REMAP.ts2 ...
+  exporting data of TEST_REMAP.ts2 ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_REMAP.ts2 ...
+  exporting constraints on TEST_REMAP.ts2 ...
+
+Exporting procedures/functions/triggers of schema TEST_REMAP ...
+Exporting views of schema TEST_REMAP ...
+Exporting synonyms of schema TEST_REMAP ...
+Exporting package of schema TEST_REMAP ...
+End of export schema TEST_REMAP ...
+
+Logical export succeeded.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> drop table "ts1";
+
+Succeed.
+
+SQL> drop table "ts2";
+
+Succeed.
+
+SQL> -- 3. imp table ts1
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> imp tables="ts1" file="./data/test_remap_table_case_sensitive.dmp" filetype=bin log="./data/imp.log";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ts1
+-- DUMP FILE = ./data/test_remap_table_case_sensitive.dmp
+-- LOG FILE = ./data/imp.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_REMAP ... 
+  Importing sequence of schema TEST_REMAP ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP ,total number : 2 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    ts1                                                                  2         
+
+  Importing foreign key of schema TEST_REMAP ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from "ts1";
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> select * from "ts2";
+
+CT-00843, [1:15]The table or view TEST_REMAP.ts2 does not exist.
+SQL> 
+SQL> -- table with too much column do remap tablespace
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_remap cascade;
+
+Succeed.
+
+SQL> create user test_remap identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_remap;
+
+Succeed.
+
+SQL> conn test_remap/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS "EHLVINPUT" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE "EHLVINPUT"
+  2 (
+  3   "SERIAL_NO" BINARY_INTEGER NOT NULL,
+  4   "VCP_RSRV01" BOOLEAN NOT NULL DEFAULT 'true',
+  5   "VCP_RSRV02" VARCHAR(50 CHAR),
+  6   "VCP_RSRV03" VARCHAR(50 CHAR),
+  7   "VCP_RSRV04" VARCHAR(50 CHAR),
+  8   "VCP_RSRV05" VARCHAR(50 CHAR),
+  9   "VCF_RSRV01" VARCHAR(50 CHAR),
+ 10   "VCF_RSRV02" VARCHAR(50 CHAR),
+ 11   "VCF_RSRV03" VARCHAR(50 CHAR),
+ 12   "VCF_RSRV04" VARCHAR(50 CHAR),
+ 13   "VCF_RSRV05" VARCHAR(50 CHAR),
+ 14   "VCF_RSRV06" VARCHAR(50 CHAR),
+ 15   "VCF_RSRV07" VARCHAR(50 CHAR),
+ 16   "VCF_RSRV08" VARCHAR(50 CHAR),
+ 17   "VCF_RSRV09" VARCHAR(50 CHAR),
+ 18   "VCF_RSRV10" VARCHAR(50 CHAR),
+ 19   "VCF_RSRV11" VARCHAR(50 CHAR),
+ 20   "VCF_RSRV12" VARCHAR(50 CHAR),
+ 21   "VCF_RSRV13" VARCHAR(50 CHAR),
+ 22   "VCF_RSRV14" VARCHAR(50 CHAR),
+ 23   "VCF_RSRV15" VARCHAR(50 CHAR),
+ 24   "VCF_RSRV16" VARCHAR(50 CHAR),
+ 25   "VCF_RSRV17" VARCHAR(50 CHAR),
+ 26   "VCF_RSRV18" VARCHAR(50 CHAR),
+ 27   "VCF_RSRV19" VARCHAR(50 CHAR),
+ 28   "VCF_RSRV20" VARCHAR(50 CHAR),
+ 29   "CASE_NO" BINARY_BIGINT,
+ 30   "CL_CASE_NO" BINARY_DOUBLE,
+ 31   "APP_DATE" TIMESTAMP(6),
+ 32   "APP_TIME" VARCHAR(50 CHAR),
+ 33   "CHANNEL_CODE" VARCHAR(50 CHAR),
+ 34   "APP_CHANNEL_CODE" VARCHAR(50 CHAR),
+ 35   "APP_CH_DETAIL" VARCHAR(50 CHAR),
+ 36   "APP_MOBI_TEL" VARCHAR(50 CHAR),
+ 37   "APP_NAME" VARCHAR(50 CHAR),
+ 38   "APP_REALID_NO" VARCHAR(50 CHAR),
+ 39   "APP_RSDT_RGN" VARCHAR(50 CHAR),
+ 40   "APP_RSDT_ADDR" VARCHAR(50 CHAR),
+ 41   "APP_REAL_NAME_MOBI" VARCHAR(50 CHAR),
+ 42   "APP_CARD_NO" VARCHAR(50 CHAR),
+ 43   "APP_CORP_RGN" VARCHAR(50 CHAR),
+ 44   "APP_CORP_ADDR" VARCHAR(50 CHAR),
+ 45   "APP_CORP_NAM" VARCHAR(50 CHAR),
+ 46   "APP_CORP_TEL" VARCHAR(50 CHAR),
+ 47   "APP_INDUSTRY" VARCHAR(50 CHAR),
+ 48   "APP_OCCUPATION" VARCHAR(50 CHAR),
+ 49   "APP_EDU" VARCHAR(50 CHAR),
+ 50   "APP_LNL_REL_NAME" VARCHAR(50 CHAR),
+ 51   "APP_LNL_REL_RLAT" VARCHAR(50 CHAR),
+ 52   "APP_LNL_REL_MOBI" VARCHAR(50 CHAR),
+ 53   "APP_DLVR_RGN" VARCHAR(50 CHAR),
+ 54   "APP_DLVR_ADDR" VARCHAR(50 CHAR),
+ 55   "APP_TYPE" VARCHAR(50 CHAR),
+ 56   "APP_AMT" VARCHAR(50 CHAR),
+ 57   "APP_INSTL_MONTHS" VARCHAR(50 CHAR),
+ 58   "APP_MERCH_TYPE" VARCHAR(50 CHAR),
+ 59   "APP_COMD_TYPE" VARCHAR(50 CHAR),
+ 60   "IFOPEN_ADDR_LIST" VARCHAR(50 CHAR),
+ 61   "APP_R_COUNTRY" VARCHAR(50 CHAR),
+ 62   "APP_R_PROVINCE" VARCHAR(50 CHAR),
+ 63   "APP_R_CITY" VARCHAR(50 CHAR),
+ 64   "APP_DEVICEID" VARCHAR(50 CHAR),
+ 65   "APP_MOBIL_BRAND" VARCHAR(50 CHAR),
+ 66   "APP_MOBIL_TYPE" VARCHAR(50 CHAR),
+ 67   "APP_LONGITUDE" VARCHAR(50 CHAR),
+ 68   "APP_LATITUDE" VARCHAR(50 CHAR),
+ 69   "APP_IP" VARCHAR(50 CHAR),
+ 70   "ISVIRTUAL" VARCHAR(50 CHAR),
+ 71   "OCR_TIME" VARCHAR(50 CHAR),
+ 72   "NAME_TIME" VARCHAR(50 CHAR),
+ 73   "REAL_NAME_TIME" VARCHAR(50 CHAR),
+ 74   "ORD_TIME" VARCHAR(50 CHAR),
+ 75   "PERS_INF_TIME" VARCHAR(50 CHAR),
+ 76   "FACE_REG_TIME" VARCHAR(50 CHAR),
+ 77   "APP_TOT_TIMES" VARCHAR(50 CHAR),
+ 78   "MOBILE_PHONE_ATTRI" VARCHAR(50 CHAR),
+ 79   "APP_RSDT_DVSN" VARCHAR(50 CHAR),
+ 80   "APP_CORP_DVSN" VARCHAR(50 CHAR),
+ 81   "APP_DLVR_DVSN" VARCHAR(50 CHAR),
+ 82   "IF_LNL_REL_CUST" VARCHAR(50 CHAR),
+ 83   "APP_CARD_BANK" VARCHAR(50 CHAR),
+ 84   "APP_CARD_TYP" VARCHAR(50 CHAR),
+ 85   "APP_NBR" VARCHAR(50 CHAR),
+ 86   "XRETURNCODE1" VARCHAR(50 CHAR),
+ 87   "XSCORE" VARCHAR(50 CHAR),
+ 88   "XRETURNCODE2" VARCHAR(50 CHAR),
+ 89   "XRISKLEVEL" VARCHAR(50 CHAR),
+ 90   "XRISKDESC" VARCHAR(50 CHAR),
+ 91   "DEVICEID_APP_NUM" VARCHAR(50 CHAR),
+ 92   "DEVICEID_APP_NUM_7" VARCHAR(50 CHAR),
+ 93   "DEVICEID_APP_NUM_15" VARCHAR(50 CHAR),
+ 94   "DEVICEID_APP_NUM_30" VARCHAR(50 CHAR),
+ 95   "IP_APP_NUM" VARCHAR(50 CHAR),
+ 96   "IP_APP_NUM_7" VARCHAR(50 CHAR),
+ 97   "IP_APP_NUM_15" VARCHAR(50 CHAR),
+ 98   "IP_APP_NUM_30" VARCHAR(50 CHAR),
+ 99   "BSSID_APP_NUM" VARCHAR(50 CHAR),
+100   "BSSID_APP_NUM_7" VARCHAR(50 CHAR),
+101   "BSSID_APP_NUM_15" VARCHAR(50 CHAR),
+102   "BSSID_APP_NUM_30" VARCHAR(50 CHAR),
+103   "PRE_1" VARCHAR(50 CHAR),
+104   "PRE_2" VARCHAR(50 CHAR),
+105   "PRE_3" VARCHAR(50 CHAR),
+106   "APP_CC" VARCHAR(50 CHAR),
+107   "APP_OC" VARCHAR(50 CHAR),
+108   "A_SCO" VARCHAR(50 CHAR),
+109   "A_TW" VARCHAR(50 CHAR),
+110   "FR_RESULT" VARCHAR(50 CHAR),
+111   "FR_SML_SCORE" VARCHAR(50 CHAR),
+112   "LB_RESULT" VARCHAR(50 CHAR),
+113   "LB_REP_TIMES" VARCHAR(50 CHAR),
+114   "OCR_NAM_CHG_FLG" VARCHAR(50 CHAR),
+115   "OCR_RESULT" VARCHAR(50 CHAR),
+116   "OCR_SML_SCORE" VARCHAR(50 CHAR),
+117   "OCR_FASE_REC_COD" VARCHAR(50 CHAR),
+118   "F_M_CASE_NO" VARCHAR(50 CHAR),
+119   "F_M_APP_DATE" VARCHAR(50 CHAR),
+120   "F_M_APP_TIME" VARCHAR(50 CHAR),
+121   "F_M_CHANNEL_CODE" VARCHAR(50 CHAR),
+122   "F_M_RESULT_CODE" VARCHAR(50 CHAR),
+123   "F_M_GROUP_CODE" VARCHAR(50 CHAR),
+124   "F_M_RISK_GROUP" VARCHAR(50 CHAR),
+125   "F_M_REF_LMT" VARCHAR(50 CHAR),
+126   "F_M_ELSE_1" VARCHAR(50 CHAR),
+127   "F_C_CASE_NO_1" VARCHAR(50 CHAR),
+128   "F_C_APP_DATE_1" VARCHAR(50 CHAR),
+129   "F_C_APP_TIME_1" VARCHAR(50 CHAR),
+130   "F_C_CHANNEL_CODE_1" VARCHAR(50 CHAR),
+131   "F_C_RESULT_CODE_1" VARCHAR(50 CHAR),
+132   "F_C_GROUP_CODE_1" VARCHAR(50 CHAR),
+133   "F_C_RISK_GROUP_1" VARCHAR(50 CHAR),
+134   "F_C_REF_LMT_1" VARCHAR(50 CHAR),
+135   "F_C_ELSE_1_1" VARCHAR(50 CHAR),
+136   "F_L_CASE_NO_1" VARCHAR(50 CHAR),
+137   "F_L_APP_DATE_1" VARCHAR(50 CHAR),
+138   "F_L_APP_TIME_1" VARCHAR(50 CHAR),
+139   "F_L_CHANNEL_CODE_1" VARCHAR(50 CHAR),
+140   "F_L_RESULT_CODE_1" VARCHAR(50 CHAR),
+141   "F_L_GROUP_CODE_1" VARCHAR(50 CHAR),
+142   "F_L_RISK_GROUP_1" VARCHAR(50 CHAR),
+143   "F_L_REF_LMT_1" VARCHAR(50 CHAR),
+144   "F_L_CASH_LIMIT_1" VARCHAR(50 CHAR),
+145   "F_L_MCH_LIMIT_1" VARCHAR(50 CHAR),
+146   "F_L_ELSE_1_1" VARCHAR(50 CHAR),
+147   "F_J_RESULT_CODE_L_1" VARCHAR(50 CHAR),
+148   "F_J_RESULT_CODE_V_1" VARCHAR(50 CHAR),
+149   "F_C_CASE_NO_2" VARCHAR(50 CHAR),
+150   "F_C_APP_DATE_2" VARCHAR(50 CHAR),
+151   "F_C_APP_TIME_2" VARCHAR(50 CHAR),
+152   "F_C_CHANNEL_CODE_2" VARCHAR(50 CHAR),
+153   "F_C_RESULT_CODE_2" VARCHAR(50 CHAR),
+154   "F_C_GROUP_CODE_2" VARCHAR(50 CHAR),
+155   "F_C_RISK_GROUP_2" VARCHAR(50 CHAR),
+156   "F_C_REF_LMT_2" VARCHAR(50 CHAR),
+157   "F_C_ELSE_1_2" VARCHAR(50 CHAR),
+158   "F_L_CASE_NO_2" VARCHAR(50 CHAR),
+159   "F_L_APP_DATE_2" VARCHAR(50 CHAR),
+160   "F_L_APP_TIME_2" VARCHAR(50 CHAR),
+161   "F_L_CHANNEL_CODE_2" VARCHAR(50 CHAR),
+162   "F_L_RESULT_CODE_2" VARCHAR(50 CHAR),
+163   "F_L_GROUP_CODE_2" VARCHAR(50 CHAR),
+164   "F_L_RISK_GROUP_2" VARCHAR(50 CHAR),
+165   "F_L_REF_LMT_2" VARCHAR(50 CHAR),
+166   "F_L_CASH_LIMIT_2" VARCHAR(50 CHAR),
+167   "F_L_MCH_LIMIT_2" VARCHAR(50 CHAR),
+168   "F_L_ELSE_1_2" VARCHAR(50 CHAR),
+169   "F_J_RESULT_CODE_L_2" VARCHAR(50 CHAR),
+170   "F_J_RESULT_CODE_V_2" VARCHAR(50 CHAR),
+171   "F_C_CASE_NO_3" VARCHAR(50 CHAR),
+172   "F_C_APP_DATE_3" VARCHAR(50 CHAR),
+173   "F_C_APP_TIME_3" VARCHAR(50 CHAR),
+174   "F_C_CHANNEL_CODE_3" VARCHAR(50 CHAR),
+175   "F_C_RESULT_CODE_3" VARCHAR(50 CHAR),
+176   "F_C_GROUP_CODE_3" VARCHAR(50 CHAR),
+177   "F_C_RISK_GROUP_3" VARCHAR(50 CHAR),
+178   "F_C_REF_LMT_3" VARCHAR(50 CHAR),
+179   "F_C_ELSE_1_3" VARCHAR(50 CHAR),
+180   "F_L_CASE_NO_3" VARCHAR(50 CHAR),
+181   "F_L_APP_DATE_3" VARCHAR(50 CHAR),
+182   "F_L_APP_TIME_3" VARCHAR(50 CHAR),
+183   "F_L_CHANNEL_CODE_3" VARCHAR(50 CHAR),
+184   "F_L_RESULT_CODE_3" VARCHAR(50 CHAR),
+185   "F_L_GROUP_CODE_3" VARCHAR(50 CHAR),
+186   "F_L_RISK_GROUP_3" VARCHAR(50 CHAR),
+187   "F_L_REF_LMT_3" VARCHAR(50 CHAR),
+188   "F_L_CASH_LIMIT_3" VARCHAR(50 CHAR),
+189   "F_L_MCH_LIMIT_3" VARCHAR(50 CHAR),
+190   "F_L_ELSE_1_3" VARCHAR(50 CHAR),
+191   "F_J_RESULT_CODE_L_3" VARCHAR(50 CHAR),
+192   "F_J_RESULT_CODE_V_3" VARCHAR(50 CHAR),
+193   "M_APP_DATE" VARCHAR(50 CHAR),
+194   "M_APP_TIME" VARCHAR(50 CHAR),
+195   "M_CHANNEL_CODE" VARCHAR(50 CHAR),
+196   "M_RESULT_CODE" VARCHAR(50 CHAR),
+197   "M_GROUP_CODE" VARCHAR(50 CHAR),
+198   "M_RISK_GROUP" VARCHAR(50 CHAR),
+199   "M_REF_LMT" VARCHAR(50 CHAR),
+200   "M_ELSE_1" VARCHAR(50 CHAR),
+201   "M_CLT_ID" VARCHAR(50 CHAR),
+202   "C_CASE_NO" VARCHAR(50 CHAR),
+203   "C_APP_DATE" VARCHAR(50 CHAR),
+204   "C_APP_TIME" VARCHAR(50 CHAR),
+205   "C_CHANNEL_CODE" VARCHAR(50 CHAR),
+206   "C_RESULT_CODE" VARCHAR(50 CHAR),
+207   "C_GROUP_CODE" VARCHAR(50 CHAR),
+208   "C_RISK_GROUP" VARCHAR(50 CHAR),
+209   "C_REF_LMT" VARCHAR(50 CHAR),
+210   "C_ELSE_1" VARCHAR(50 CHAR),
+211   "STATUS_LWHC" VARCHAR(50 CHAR),
+212   "STATUS_RENH" VARCHAR(50 CHAR),
+213   "STATUS_XLCP" VARCHAR(50 CHAR),
+214   "STATUS_GDDT" VARCHAR(50 CHAR),
+215   "STATUS_GAGZ" VARCHAR(50 CHAR),
+216   "STATUS_GZTGZ" VARCHAR(50 CHAR),
+217   "STATUS_SB_WH" VARCHAR(50 CHAR),
+218   "STATUS_SB_GD" VARCHAR(50 CHAR),
+219   "STATUS_SHXX" VARCHAR(50 CHAR),
+220   "STATUS_ZGDX" VARCHAR(50 CHAR),
+221   "STATUS_TD" VARCHAR(50 CHAR),
+222   "STATUS_SJS1" VARCHAR(50 CHAR),
+223   "STATUS_SJS2" VARCHAR(50 CHAR),
+224   "LWHC_RESULT" VARCHAR(50 CHAR),
+225   "STLOANCARD_STATS" VARCHAR(50 CHAR),
+226   "CREDITCARD_STATS" VARCHAR(50 CHAR),
+227   "DEBIT_STATS" VARCHAR(50 CHAR),
+228   "FIRSTLOANOPEN_MON" VARCHAR(50 CHAR),
+229   "FIRSTCREDITCARD_MON" VARCHAR(50 CHAR),
+230   "CREDITCARD_UNSETAMOUN_TOTAL" VARCHAR(50 CHAR),
+231   "CREDITCARD_UNSETLIMIT_MAX" VARCHAR(50 CHAR),
+232   "CREDITCARD_UNSETLIMIT_MIN" VARCHAR(50 CHAR),
+233   "CREDITCARD_UNSETAMOUN_CMBCARD" VARCHAR(50 CHAR),
+234   "CREDITCARD_UNSETLIMIT_USED" VARCHAR(50 CHAR),
+235   "CREDITCARD_UNSETUSAGE_6MONTHS" VARCHAR(50 CHAR),
+236   "DEBIT_UNSETSIXAVG" VARCHAR(50 CHAR),
+237   "DEBIT_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+238   "CREDITCARD_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+239   "FINANCEORG_UNFULLNUM" VARCHAR(50 CHAR),
+240   "FINANCEORG_UNFULLBALANCE" VARCHAR(50 CHAR),
+241   "CREDITCARD_UNFULLLIMIT" VARCHAR(50 CHAR),
+242   "FINANCEORG_SDNUM" VARCHAR(50 CHAR),
+243   "CREDITCARD_UNSET_24CYCLE" VARCHAR(50 CHAR),
+244   "LOAN_UNSET_24CYCLE" VARCHAR(50 CHAR),
+245   "CREDITCARD_LTLIMIT_MAX" VARCHAR(50 CHAR),
+246   "DEBIT_DELAYNUM" VARCHAR(50 CHAR),
+247   "DEBIT_DELAYMONTHS" VARCHAR(50 CHAR),
+248   "DEBIT_DELAYAMOUNT_MAX" VARCHAR(50 CHAR),
+249   "DEBIT_DELAYMONTH_MAX" VARCHAR(50 CHAR),
+250   "CREDITCARD_DELAY_NUM" VARCHAR(50 CHAR),
+251   "CREDITCARD_DELAY_MONTHS" VARCHAR(50 CHAR),
+252   "CREDITCARD_MONTHDELAYAMOUNT_MAX" VARCHAR(50 CHAR),
+253   "CREDITCARD_DELAYMONTHS_MAX" VARCHAR(50 CHAR),
+254   "CREDITCARD_1MONTH_QUERYTIMES" VARCHAR(50 CHAR),
+255   "ACC_AFSTATE" VARCHAR(50 CHAR),
+256   "ACC_AFPAY" VARCHAR(50 CHAR),
+257   "ACC_OWNPERCENT" VARCHAR(50 CHAR),
+258   "ACC_COMPERCENT" VARCHAR(50 CHAR),
+259   "ACC_TOMONTH" VARCHAR(50 CHAR),
+260   "ID_TYP" VARCHAR(50 CHAR),
+261   "CERTNO" VARCHAR(50 CHAR),
+262   "NAME" VARCHAR(50 CHAR),
+263   "QUERY_DATE" VARCHAR(50 CHAR),
+264   "REPORTSN" VARCHAR(50 CHAR),
+265   "QUERY_TIME" VARCHAR(50 CHAR),
+266   "EDU_LVL" VARCHAR(50 CHAR),
+267   "OCCUPATION_F" VARCHAR(50 CHAR),
+268   "INDUSTRY_F" VARCHAR(50 CHAR),
+269   "DUTY_F" VARCHAR(50 CHAR),
+270   "INDUSTRY_GETTIME_F" VARCHAR(50 CHAR),
+271   "SCORE" VARCHAR(50 CHAR),
+272   "SCOREMONTH" VARCHAR(50 CHAR),
+273   "DEBIT_STATS_BL" VARCHAR(50 CHAR),
+274   "CREDIT_STATS" VARCHAR(50 CHAR),
+275   "CREDITCARD_ABNORFLAG" VARCHAR(50 CHAR),
+276   "DEBIT_ABNORFLAG" VARCHAR(50 CHAR),
+277   "CREDITCARD_DELAYFALG" VARCHAR(50 CHAR),
+278   "DEBIT_DELAYFLAG" VARCHAR(50 CHAR),
+279   "HOUSELOAN_NUM" VARCHAR(50 CHAR),
+280   "OTHERSLOAN_NUM" VARCHAR(50 CHAR),
+281   "CREDITCARD_NUM" VARCHAR(50 CHAR),
+282   "STLOANCARD_NUM" VARCHAR(50 CHAR),
+283   "FIRSTSTLOANCARD_MON" VARCHAR(50 CHAR),
+284   "STLOANCARD_DELAY_NUM" VARCHAR(50 CHAR),
+285   "STLOANCARD_DELAY_MONTHS" VARCHAR(50 CHAR),
+286   "STLOANCARD_DELAYAMOUNT_MAX" VARCHAR(50 CHAR),
+287   "STLOANCARD_DELAYMONTHS_MAX" VARCHAR(50 CHAR),
+288   "DEBIT_FINANCECORP_UNSETCOUNT" VARCHAR(50 CHAR),
+289   "DEBIT_FINANCEORG_UNSETCOUNT" VARCHAR(50 CHAR),
+290   "DEBIT_UNSETNUM" VARCHAR(50 CHAR),
+291   "DEBIT_UNSETAMOUNTOTAL" VARCHAR(50 CHAR),
+292   "DEBIT_UNSETBALANCE" VARCHAR(50 CHAR),
+293   "CREDITCARD_FINANCECORP_UNSETNUM" VARCHAR(50 CHAR),
+294   "CREDITCARD_FINANCEORG_UNSETNUM" VARCHAR(50 CHAR),
+295   "CREDITCARD_UNSETNUM" VARCHAR(50 CHAR),
+296   "CREDITCARD_DELAYAMOUNT_TOTAL_BL" VARCHAR(50 CHAR),
+297   "STLOANCARDD_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+298   "DEBIT_DELAYTIMES_6MONTH" VARCHAR(50 CHAR),
+299   "CREDITCARD_DELAYTIMES_6MONTH" VARCHAR(50 CHAR),
+300   "CREDITCARD_DELAYTIMES_6MONTH_BL" VARCHAR(50 CHAR),
+301   "DEBIT_DELAYTIMES_12MONTH" VARCHAR(50 CHAR),
+302   "CREDITCARD_DELAYTIMES_12MONTH" VARCHAR(50 CHAR),
+303   "CREDITCARD_MONTHLYBALANCE" VARCHAR(50 CHAR),
+304   "STLOANCARD_MONTHLYBALANCE" VARCHAR(50 CHAR),
+305   "DEBIT_MONTHLYBALANCE" VARCHAR(50 CHAR),
+306   "DEBIT_UNSET_24CYCLE" VARCHAR(50 CHAR),
+307   "CREDITCARD_UNSETIMES_24MONTH" VARCHAR(50 CHAR),
+308   "CREDIT_UNSETIMES_24MONTH" VARCHAR(50 CHAR),
+309   "DEBIT_DELAY_AMOUNT1" VARCHAR(50 CHAR),
+310   "DEBIT_DELAY_AMOUNT2" VARCHAR(50 CHAR),
+311   "DEBIT_DELAY_AMOUNT3" VARCHAR(50 CHAR),
+312   "CREDITCARD_DELAY_AMOUNT1" VARCHAR(50 CHAR),
+313   "CREDITCARD_DELAY_AMOUNT2" VARCHAR(50 CHAR),
+314   "CREDITCARD_DELAY_AMOUNT3" VARCHAR(50 CHAR),
+315   "CREDITCARD_DELAY_AMOUNT4" VARCHAR(50 CHAR),
+316   "CREDITCARD_LTNUM" VARCHAR(50 CHAR),
+317   "CREDITCARD_ACTIVENUM" VARCHAR(50 CHAR),
+318   "CREDITCARD_LTLIMIT_MIN" VARCHAR(50 CHAR),
+319   "CREDITCARD_UNFULLNUM" VARCHAR(50 CHAR),
+320   "CREDITCARD_UNFULLBALANCE" VARCHAR(50 CHAR),
+321   "CREDITCARD_UNFULLREPAY" VARCHAR(50 CHAR),
+322   "CREDITCARD_UNFULLLIMIT_USED" VARCHAR(50 CHAR),
+323   "CREDITCARD_TOTALBALANCE" VARCHAR(50 CHAR),
+324   "CREDITCARD_TOTALNUM" VARCHAR(50 CHAR),
+325   "CREDITCARD_TOTALLIMIT" VARCHAR(50 CHAR),
+326   "CREDITCARD_TOTALLIMIT_USED" VARCHAR(50 CHAR),
+327   "CREDITCARD_EIGHTYUSAGE_NUM" VARCHAR(50 CHAR),
+328   "HOUSEDEBIT_UNSETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+329   "HOUSEDEBIT_UNSETNUM_TOTAL" VARCHAR(50 CHAR),
+330   "HOUSEDEBIT_MONTHLYBALANCE" VARCHAR(50 CHAR),
+331   "HOUSEDEBIT_SETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+332   "HOUSEDEBIT_SETNUM_TOTAL" VARCHAR(50 CHAR),
+333   "HOUSEDEBIT_DELAYPERIODS_MAX" VARCHAR(50 CHAR),
+334   "HOUSEDEBIT_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+335   "CARDEBIT_UNSETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+336   "CARDEBIT_UNSETNUM_TOTAL" VARCHAR(50 CHAR),
+337   "CARDEBIT_MONTHLYBALANCE" VARCHAR(50 CHAR),
+338   "CARDEBIT_SETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+339   "CARDEBIT_SETNUM_TOTAL" VARCHAR(50 CHAR),
+340   "CARDEBIT_DELAYPERIODS_MAX" VARCHAR(50 CHAR),
+341   "CARDEBIT_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+342   "CONSUMEDEBIT_UNSETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+343   "CONSUMEDEBIT_UNSETNUM_TOTAL" VARCHAR(50 CHAR),
+344   "CONSUMEDEBIT_MONTHLYBALANCE" VARCHAR(50 CHAR),
+345   "CONSUMEDEBIT_SETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+346   "CONSUMEDEBIT_SETNUM_TOTAL" VARCHAR(50 CHAR),
+347   "CONSUMEDEBIT_DELAYPERIODS_MAX" VARCHAR(50 CHAR),
+348   "CONSUMEDEBIT_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+349   "OPERATEDEBIT_UNSETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+350   "OPERATEDEBIT_UNSETNUM_TOTAL" VARCHAR(50 CHAR),
+351   "OPERATEDEBIT_MONTHLYBALANCE" VARCHAR(50 CHAR),
+352   "OPERATEDEBIT_SETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+353   "OPERATEDEBIT_SETNUM_TOTAL" VARCHAR(50 CHAR),
+354   "OPERATEDEBIT_DELAYPERIODS_MAX" VARCHAR(50 CHAR),
+355   "OPERATEDEBIT_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+356   "OTHERDEBIT_UNSETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+357   "OTHERDEBIT_UNSETNUM_TOTAL" VARCHAR(50 CHAR),
+358   "OTHERDEBIT_MONTHLYBALANCE" VARCHAR(50 CHAR),
+359   "OTHERDEBIT_SETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+360   "OTHERDEBIT_SETNUM_TOTAL" VARCHAR(50 CHAR),
+361   "OTHERDEBIT_DELAYPERIODS_MAX" VARCHAR(50 CHAR),
+362   "OTHERDEBIT_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+363   "DEBITGRANT_1MONTHNUM" VARCHAR(50 CHAR),
+364   "DEBITGRANT_1MONTHAMOUNT" VARCHAR(50 CHAR),
+365   "DEBITGRANT_3MONTHNUM" VARCHAR(50 CHAR),
+366   "DEBITGRANT_3MONTHAMOUNT" VARCHAR(50 CHAR),
+367   "CREDITCARDGRANT_1MONTHNUM" VARCHAR(50 CHAR),
+368   "CREDITCARDGRANT_1MONTHAMOUNT" VARCHAR(50 CHAR),
+369   "CREDITCARDGRANT_3MONTHNUM" VARCHAR(50 CHAR),
+370   "CREDITCARDGRANT_3MONTHAMOUNT" VARCHAR(50 CHAR),
+371   "DEBIT_1MONTH_QUERYTIMES" VARCHAR(50 CHAR),
+372   "DEBIT_2MONTH_QUERYTIMES" VARCHAR(50 CHAR),
+373   "DEBIT_3MONTH_QUERYTIMES" VARCHAR(50 CHAR),
+374   "CREDITCARD_2MONTH_QUERYTIMES" VARCHAR(50 CHAR),
+375   "CREDITCARD_3MONTH_QUERYTIMES" VARCHAR(50 CHAR),
+376   "AFFIRSTMONTH" VARCHAR(50 CHAR),
+377   "AFORGANNAME" VARCHAR(50 CHAR),
+378   "AFGETTIME" VARCHAR(50 CHAR),
+379   "EIDAREA" VARCHAR(50 CHAR),
+380   "EIDREGISTERDATE" VARCHAR(50 CHAR),
+381   "EIDMONTHDURATION" VARCHAR(50 CHAR),
+382   "EIDSTATE" VARCHAR(50 CHAR),
+383   "EIDOWNBASICMONEY" VARCHAR(50 CHAR),
+384   "EIDMONEY" VARCHAR(50 CHAR),
+385   "EIDGETTIME" VARCHAR(50 CHAR),
+386   "CLASS5STATE" VARCHAR(50 CHAR),
+387   "CLASS5STATE_AMOUNT" VARCHAR(50 CHAR),
+388   "CLASS5STATE_DATE" VARCHAR(50 CHAR),
+389   "TAXARREAAMOUNT" VARCHAR(50 CHAR),
+390   "REVENUEDATE" VARCHAR(50 CHAR),
+391   "CIVILJUDGECOUNT" VARCHAR(50 CHAR),
+392   "OLDCASEDATE" VARCHAR(50 CHAR),
+393   "LATESTCASEDATE" VARCHAR(50 CHAR),
+394   "EXECUTIONCOUNT" VARCHAR(50 CHAR),
+395   "OLDCLOSEDDATE" VARCHAR(50 CHAR),
+396   "LATESTCLOSEDDATE" VARCHAR(50 CHAR),
+397   "PUNISHMENTCOUNT" VARCHAR(50 CHAR),
+398   "OLDBEGINDATE" VARCHAR(50 CHAR),
+399   "LATESTBEGINDATE" VARCHAR(50 CHAR),
+400   "SALVATIONCOUNT" VARCHAR(50 CHAR),
+401   "ANNOUNCEINFOCOUNT" VARCHAR(50 CHAR),
+402   "DISSENTINFOCOUNT" VARCHAR(50 CHAR),
+403   "CREDITCARD_SDNUM" VARCHAR(50 CHAR),
+404   "CREDITCARD_HYNUM" VARCHAR(50 CHAR),
+405   "FELLBACK_SUM" VARCHAR(50 CHAR),
+406   "GENDER" VARCHAR(50 CHAR),
+407   "MARITALSTATE" VARCHAR(50 CHAR),
+408   "RESIDENCE_ADDRESS_F" VARCHAR(50 CHAR),
+409   "RESIDENCETYPE_F" VARCHAR(50 CHAR),
+410   "RESIDENCE_GETTIME_F" VARCHAR(50 CHAR),
+411   "SCORELEVEL" VARCHAR(50 CHAR),
+412   "LOAD_QUERY_COUNT_IN2" VARCHAR(50 CHAR),
+413   "CAREER_UPDATE_TIME" VARCHAR(50 CHAR),
+414   "FEATURE" VARCHAR(50 CHAR),
+415   "OTHER_BANK_ORG_COUNT" VARCHAR(50 CHAR),
+416   "MOBILE" VARCHAR(50 CHAR),
+417   "OFFICE_TELEPHONE" VARCHAR(50 CHAR),
+418   "HOME_TELEPHONE" VARCHAR(50 CHAR),
+419   "POST_ADDRESS" VARCHAR(50 CHAR),
+420   "REGISTER_ADDRESS" VARCHAR(50 CHAR),
+421   "EMPLOYER" VARCHAR(50 CHAR),
+422   "EMPLOYER_ADDRESS" VARCHAR(50 CHAR),
+423   "FUND_AREA" VARCHAR(50 CHAR),
+424   "FUND_REGISTER_DATE" VARCHAR(50 CHAR),
+425   "EID_ORGAN_NAME" VARCHAR(50 CHAR),
+426   "COMPETENCY_NAME" VARCHAR(50 CHAR),
+427   "COMPEENCY_GRADE" VARCHAR(50 CHAR),
+428   "VEHICLE1_LICENSE_CODE" VARCHAR(50 CHAR),
+429   "VEHICLE1_STATUS" VARCHAR(50 CHAR),
+430   "VEHICLE1_PLEDGE_FLAG" VARCHAR(50 CHAR),
+431   "VEHICLE2_LICENSE_CODE" VARCHAR(50 CHAR),
+432   "VEHICLE2_STATUS" VARCHAR(50 CHAR),
+433   "VEHICLE2_PLEDGE_FLAG" VARCHAR(50 CHAR),
+434   "VEHICLE2_BRAND" VARCHAR(50 CHAR),
+435   "VEHICLE1_BRAND" VARCHAR(50 CHAR),
+436   "SPOUSE_CERT_TYPE" VARCHAR(50 CHAR),
+437   "SPOUSE_EMPLOYER" VARCHAR(50 CHAR),
+438   "PROFESSIONAL_EMPLOYER" VARCHAR(50 CHAR),
+439   "FARMER_LOAN_FLAG" VARCHAR(50 CHAR),
+440   "RH_QUERY_TIMES" VARCHAR(50 CHAR),
+441   "LIMIT_USED_RATE_FLAG" VARCHAR(50 CHAR),
+442   "LATEST_3MONTH_QUERY_TIMES" VARCHAR(50 CHAR),
+443   "LATEST_6MONTH_QUERY_TIMES" VARCHAR(50 CHAR),
+444   "LATEST_12MONTH_QUERY_TIMES" VARCHAR(50 CHAR),
+445   "LATEST_6MONTH_CREDIT_QUERY_TIMES" VARCHAR(50 CHAR),
+446   "LATEST_12MONTH_CREDIT_QUERY_TIMES" VARCHAR(50 CHAR),
+447   "AVAILABLE_POSITION_COUNT" VARCHAR(50 CHAR),
+448   "CREDIT_DEBT_BALANCE" VARCHAR(50 CHAR),
+449   "LATEST_QUERY_SPACE_MONTHS" VARCHAR(50 CHAR),
+450   "RESIDENCE_COUNT" VARCHAR(50 CHAR),
+451   "DEBT_MANAGE_QUERY_TIMES" VARCHAR(50 CHAR),
+452   "CREDIT_LOAN_FLAG" VARCHAR(50 CHAR),
+453   "AVERAGE_LIMIT_RATE" VARCHAR(50 CHAR),
+454   "FINACE_CORP_COUNT" VARCHAR(50 CHAR),
+455   "OVERDUE_CYC_FLAG1" VARCHAR(50 CHAR),
+456   "OVERDUE_CYC_FLAG2" VARCHAR(50 CHAR),
+457   "CREDIT_MONTHS" VARCHAR(50 CHAR),
+458   "INTERVAL_REPAY" VARCHAR(50 CHAR),
+459   "SDCARD_COUNT" VARCHAR(50 CHAR),
+460   "MAX_OVERDRAFT_LIMIT" VARCHAR(50 CHAR),
+461   "ALLSTATE_OVERDUE_AMOUNT" VARCHAR(50 CHAR),
+462   "CURR_OVERDUE_CYC_COUNT" VARCHAR(50 CHAR),
+463   "MAX_CURR_OVERDUE_CYC" VARCHAR(50 CHAR),
+464   "MAX_OVERDUE_CYC_INYEAR" VARCHAR(50 CHAR),
+465   "MAX_OVERDUE_CYC_IN2YEARS" VARCHAR(50 CHAR),
+466   "MAX_DEBT_CREDITCARD_COUNT" VARCHAR(50 CHAR),
+467   "MAX_LIMIT_USEDRATE" VARCHAR(50 CHAR),
+468   "TOTAL_MAX_LIMIT_USERRATE" VARCHAR(50 CHAR),
+469   "ACTIVE_CARD_COUNT" VARCHAR(50 CHAR),
+470   "USED_LIMIT_AMOUNT" VARCHAR(50 CHAR),
+471   "CURR_MONTH_REPAY_TOTAL" VARCHAR(50 CHAR),
+472   "SHARE_CREDIT_LIMIT_TOTAL" VARCHAR(50 CHAR),
+473   "CURR_MAX_OVERDUE_CYC" VARCHAR(50 CHAR),
+474   "LIMIT_USEDRATE" VARCHAR(50 CHAR),
+475   "ORG_COUNT" VARCHAR(50 CHAR),
+476   "STANDARD_CARD_COUNT" VARCHAR(50 CHAR),
+477   "NORMAL_CREDITCARD_COUNT" VARCHAR(50 CHAR),
+478   "FROZEN_CREDITCARD_COUNT" VARCHAR(50 CHAR),
+479   "STOPPAY_CREDITCARD_COUNT" VARCHAR(50 CHAR),
+480   "CLOSED_CREDITCARD_COUNT" VARCHAR(50 CHAR),
+481   "BADDEBT_CREDITCARD_COUNT" VARCHAR(50 CHAR),
+482   "INACTIVE_CREDITCARD_COUNT" VARCHAR(50 CHAR),
+483   "MAX_CURR_OVERDUE_AMOUNT" VARCHAR(50 CHAR),
+484   "CREDIT_AGE" VARCHAR(50 CHAR),
+485   "NEWLY_3MONTHS_CREDIT_COUNT" VARCHAR(50 CHAR),
+486   "NEWLY_6MONTHS_CREDIT_COUNT" VARCHAR(50 CHAR),
+487   "NEWLY_12MONTHS_CREDIT_COUNT" VARCHAR(50 CHAR),
+488   "AVERAGE_MAX_DEBT" VARCHAR(50 CHAR),
+489   "OWEAVE_PERCENT" VARCHAR(50 CHAR),
+490   "HIS_MAXDEBT_AMOUNT" VARCHAR(50 CHAR),
+491   "LATEST12_NEWACT_USED_CREDITCAR" VARCHAR(50 CHAR),
+492   "LATEST_3MONTHS_VOERDUE_COUNT" VARCHAR(50 CHAR),
+493   "LATEST_12MONTHS_VOERDUE_COUNT" VARCHAR(50 CHAR),
+494   "LATEST_3MONTHS_OVERDUECRD_COUNT" VARCHAR(50 CHAR),
+495   "LATEST_6MONTHS_OVERDUECRD_COUNT" VARCHAR(50 CHAR),
+496   "LATEST_12MONTHS_OVERDUECRD_COUNT" VARCHAR(50 CHAR),
+497   "LOANCARD_ASSETPAID_FLAG" VARCHAR(50 CHAR),
+498   "CURR_MONTH_SCHEDPAY_AMOUNT" VARCHAR(50 CHAR),
+499   "HOUSE_DEBT_AMOUNT" VARCHAR(50 CHAR),
+500   "LATEST_6MONTHS_OVERDUE_COUNT" VARCHAR(50 CHAR),
+501   "CAR_DEBT_AMOUNT" VARCHAR(50 CHAR),
+502   "POLICY_FLAG" VARCHAR(50 CHAR),
+503   "LOAN_OVERDUE_CYC_FLAG1" VARCHAR(50 CHAR),
+504   "LOAN_OVERDUE_CYC_FLAG2" VARCHAR(50 CHAR),
+505   "FARMER_DEBT_COUNT" VARCHAR(50 CHAR),
+506   "UNSETTLEMENT_DEBT_COUNT" VARCHAR(50 CHAR),
+507   "CMB_DEBT_COUNT" VARCHAR(50 CHAR),
+508   "SETTLE_DEBT_COUNT" VARCHAR(50 CHAR),
+509   "UNSETTLE_DEBT_COUNT" VARCHAR(50 CHAR),
+510   "CMB_CAR_DEBT_COUNT" VARCHAR(50 CHAR),
+511   "CMB_SETTLE_CAR_DEBT_COUNT" VARCHAR(50 CHAR),
+512   "CMB_UNSETTLE_CAR_DEBT_COUNT" VARCHAR(50 CHAR),
+513   "CMB_HOUSE_DEBT_COUNT" VARCHAR(50 CHAR),
+514   "CMB_SETTLE_HOUSE_DEBT_COUNT" VARCHAR(50 CHAR),
+515   "CMB_UNSETTLE_HOUSE_DEBT_COUNT" VARCHAR(50 CHAR),
+516   "LATEST_12MONTH_PAYCOUNT" VARCHAR(50 CHAR),
+517   "LATEST_6MONTH_PAYCOUNT" VARCHAR(50 CHAR),
+518   "LATEST_24MONTH_PAYCOUT" VARCHAR(50 CHAR),
+519   "LATEST_6MONTH_PAYMENT_COUNT" VARCHAR(50 CHAR),
+520   "LATEST_12MONTH_PAYMENT_COUNT" VARCHAR(50 CHAR),
+521   "LATEST_24MONTH_PAYMENT_COUNT" VARCHAR(50 CHAR),
+522   "LOAN_OVERDUE_AMOUNT" VARCHAR(50 CHAR),
+523   "LOAN_BADNESS_FLAG1" VARCHAR(50 CHAR),
+524   "LOAN_BADNESS_FLAG2" VARCHAR(50 CHAR),
+525   "LOAN_OVERDUE_FLAG3" VARCHAR(50 CHAR),
+526   "LOAN_OVERDUE_FLAG4" VARCHAR(50 CHAR),
+527   "OPERATE_LOAN_COUNT" VARCHAR(50 CHAR),
+528   "DEBT_TYPE_COUNT" VARCHAR(50 CHAR),
+529   "EARLIERS_DEBT_SPACE_MONTHS" VARCHAR(50 CHAR),
+530   "PERSONAL_HOUSE_DEBT_AMOUNT" VARCHAR(50 CHAR),
+531   "MAX_DEBT_AMOUNT" VARCHAR(50 CHAR),
+532   "LATEST_3MONTH_NEWLY_DEBT_COUNT" VARCHAR(50 CHAR),
+533   "LATEST_6MONTH_NEWLY_DEBT_COUNT" VARCHAR(50 CHAR),
+534   "LATEST_12MONTH_NEWLY_DEBT_COUNT" VARCHAR(50 CHAR),
+535   "DEBT_AMOUNT_TOTAL" VARCHAR(50 CHAR),
+536   "NORMAL_LOAN_COUNT" VARCHAR(50 CHAR),
+537   "OVERDUE_LOAN_COUNT" VARCHAR(50 CHAR),
+538   "BAD_DEBT_LOAN_COUNT" VARCHAR(50 CHAR),
+539   "SETTLE_LOAN_COUNT" VARCHAR(50 CHAR),
+540   "TRANSFER_LOAN_COUNT" VARCHAR(50 CHAR),
+541   "MONTHLY_TOTAL_AMOUNT" VARCHAR(50 CHAR),
+542   "HOUSE_DEBT_TOTAL_AMOUNT" VARCHAR(50 CHAR),
+543   "HOUSE_DEBT_TOTAL_COUNT" VARCHAR(50 CHAR),
+544   "CAR_DEBT_TOTAL_AMOUNT" VARCHAR(50 CHAR),
+545   "SCORE_ELEMENTS1" VARCHAR(50 CHAR),
+546   "SCORE_ELEMENTS2" VARCHAR(50 CHAR),
+547   "SCORE_ELEMENTS3" VARCHAR(50 CHAR),
+548   "SCORE_ELEMENTS4" VARCHAR(50 CHAR),
+549   "SCORE_ELEMENTS5" VARCHAR(50 CHAR),
+550   "OWNER_QUERY_TIMES" VARCHAR(50 CHAR),
+551   "OWNER_LATEST_1MONTH_QUERY_TIMES" VARCHAR(50 CHAR),
+552   "OWNER_LATEST_3MONTH_QUERY_TIMES" VARCHAR(50 CHAR),
+553   "OWNER_LATEST_6MONTH_QUERY_TIMES" VARCHAR(50 CHAR),
+554   "OWNER_LATEST_12MONTH_QUERY_TIMES" VARCHAR(50 CHAR),
+555   "UNDESTORY_SLOANCARD_FINANCE_CORP_COUNT" VARCHAR(50 CHAR),
+556   "UNDESTORY_SLOANCARD_CORP_COUNT" VARCHAR(50 CHAR),
+557   "UNDESTORY_SLOANCARD_ACCOUNT_COUNT" VARCHAR(50 CHAR),
+558   "UNDESTORY_SLOANCARD_LIMIT_TOTAL" VARCHAR(50 CHAR),
+559   "UNDESTORY_SLOANCARD_EACHBACK_HIGHER_LIMIT" VARCHAR(50 CHAR),
+560   "UNDESTORY_SLOANCARD_EACHBACK_LOWER_LIMIT" VARCHAR(50 CHAR),
+561   "UNDESTORY_SLOANCARD_USED_LIMIT" VARCHAR(50 CHAR),
+562   "UNDESTORY_SLOANCARD_LATEST_6MONTH_AVG_USEDAMONUT" VARCHAR(50 CHAR),
+563   "LOANCARD_HISTORY_MAX_DEBT_AMOUNT" VARCHAR(50 CHAR),
+564   "RHNO_DUE_MAX_COUNT" VARCHAR(50 CHAR),
+565   "RHL_DUE_MAX_COUNT" VARCHAR(50 CHAR),
+566   "RHH_DUE_MAX_COUNT" VARCHAR(50 CHAR),
+567   "CURR_USEDACCONT_COUNT2" VARCHAR(50 CHAR),
+568   "CIRC_ACCOUNT_COUNT2" VARCHAR(50 CHAR),
+569   "CIRC_MIN_LIMIT2" VARCHAR(50 CHAR),
+570   "HOUSEDENT_MAXOVERDUE_AMOUNT" VARCHAR(50 CHAR),
+571   "CARDENT_MAXOVERDUE_AMOUNT" VARCHAR(50 CHAR),
+572   "JYXDEBT_MAX_OVERDUE_TOTAL" VARCHAR(50 CHAR),
+573   "OTHERDEBT_MAX_OVERDUE_TOTAL" VARCHAR(50 CHAR),
+574   "LATEST_3MONTH_UNSETTLE_CARDEBT_FLAG" VARCHAR(50 CHAR),
+575   "NOT_BADHOUSEDEBT_MONTHLY" VARCHAR(50 CHAR),
+576   "NOT_CARHOUSEDEBT_MONTHLY" VARCHAR(50 CHAR),
+577   "FEATURE_FARMER_DEBT" VARCHAR(50 CHAR),
+578   "DEBIT_CLASS5MATE" VARCHAR(50 CHAR),
+579   "CREDITCARD_CLASS5MATE" VARCHAR(50 CHAR),
+580   "PAUSEREASON" VARCHAR(50 CHAR),
+581   "OCCUPATION_12M_COUNT" VARCHAR(50 CHAR),
+582   "INDUSTRY_12M_COUNT" VARCHAR(50 CHAR),
+583   "RESIDENCE_12M_CNT" VARCHAR(50 CHAR),
+584   "RESIDENCE_12M_AMT" VARCHAR(50 CHAR),
+585   "NORMAL_HOUSEDEBIT_CNT" VARCHAR(50 CHAR),
+586   "TRANSFER_HOUSEDEBIT_CNT" VARCHAR(50 CHAR),
+587   "NORMAL_HOUSEDEBIT_AMT" VARCHAR(50 CHAR),
+588   "TRANSFER_HOUSEDEBIT_AMT" VARCHAR(50 CHAR),
+589   "INDI_HOUSEDEBIT_NUM" VARCHAR(50 CHAR),
+590   "FUND_HOUSEDEBIT_NUM" VARCHAR(50 CHAR),
+591   "INDI_HOUSEDEBIT_AMOUNT" VARCHAR(50 CHAR),
+592   "FUND_HOUSEDEBIT_AMOUNT" VARCHAR(50 CHAR),
+593   "HOUSELOAN_SETHOUSEFUND_NUM" VARCHAR(50 CHAR),
+594   "HOUSELOAN_NORMHOUSEFUND_NUM" VARCHAR(50 CHAR),
+595   "HOUSEDEBIT_HF_MONTHLYBALANCE" VARCHAR(50 CHAR),
+596   "HOUSEDEBIT_INDI_MONTHLYBALANCE" VARCHAR(50 CHAR),
+597   "HOUSEDEBIT_SET_LATEDATE" VARCHAR(50 CHAR),
+598   "HOUSEDEBIT_NORM_LATEDATE" VARCHAR(50 CHAR),
+599   "NORMAL_HOUSEDEBIT_MAXPERIOD" VARCHAR(50 CHAR),
+600   "SET_HOUSEDEBIT_MAXPERIOD" VARCHAR(50 CHAR),
+601   "FARMERDEBIT_UNSETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+602   "FARMERDEBIT_UNSETNUM_TOTAL" VARCHAR(50 CHAR),
+603   "FARMERDEBIT_MONTHLYBALANCE" VARCHAR(50 CHAR),
+604   "FARMERDEBIT_SETAMOUNT_TOTAL" VARCHAR(50 CHAR),
+605   "FARMERDEBIT_SETNUM_TOTAL" VARCHAR(50 CHAR),
+606   "FARMERDEBIT_DELAYPERIODS_MAX" VARCHAR(50 CHAR),
+607   "FARMERDEBIT_DELAYAMOUNT_TOTAL" VARCHAR(50 CHAR),
+608   "EXTENDDEBIT_AMOUNT" VARCHAR(50 CHAR),
+609   "EXTENDDEBIT_DATE" VARCHAR(50 CHAR),
+610   "EXTENDDEBIT_CHANGINGMONTHS" VARCHAR(50 CHAR),
+611   "CREDITCARD_FROZEN_NUM" VARCHAR(50 CHAR),
+612   "ID" VARCHAR(50 CHAR),
+613   "CERT_NO_EDU" VARCHAR(50 CHAR),
+614   "SEX_EDU" VARCHAR(50 CHAR),
+615   "MSG_ID" VARCHAR(50 CHAR),
+616   "QRY_FLAG" VARCHAR(50 CHAR),
+617   "USER_NAME" VARCHAR(50 CHAR),
+618   "ID_CARD" VARCHAR(50 CHAR),
+619   "DEGREE" VARCHAR(50 CHAR),
+620   "GRADUATION_SCHOOL" VARCHAR(50 CHAR),
+621   "GRADUATION_CONCLUSTIONS" VARCHAR(50 CHAR),
+622   "ENROLL_DATE" VARCHAR(50 CHAR),
+623   "GRADUATION_DATE" VARCHAR(50 CHAR),
+624   "PROFESSION" VARCHAR(50 CHAR),
+625   "TYPE" VARCHAR(50 CHAR),
+626   "IS_COLLEGE_211" VARCHAR(50 CHAR),
+627   "IS_211" VARCHAR(50 CHAR),
+628   "QUERY_FLG" VARCHAR(50 CHAR),
+629   "QUERY_TIME_EDU" VARCHAR(50 CHAR),
+630   "QRY_TIME" VARCHAR(50 CHAR),
+631   "DISTANCE" VARCHAR(50 CHAR),
+632   "WORK_MATCH" VARCHAR(50 CHAR),
+633   "GARY_RETURNFLAG" VARCHAR(50 CHAR),
+634   "IS_PERSONAL_BAD" VARCHAR(50 CHAR),
+635   "CERT_NO_SB" VARCHAR(50 CHAR),
+636   "CERT_TYPE_SB" VARCHAR(50 CHAR),
+637   "NAME_SB" VARCHAR(50 CHAR),
+638   "PRODUCT_ID" VARCHAR(50 CHAR),
+639   "PAY_BASE" VARCHAR(50 CHAR),
+640   "PAY_EMPLOYER" VARCHAR(50 CHAR),
+641   "PAY_MONTHS_IN6" VARCHAR(50 CHAR),
+642   "PAY_FLAG" VARCHAR(50 CHAR),
+643   "ZGDX_FLAG" VARCHAR(50 CHAR),
+644   "IDTYPE_MATCH" VARCHAR(50 CHAR),
+645   "IDNO_MATCH" VARCHAR(50 CHAR),
+646   "NAME_MATCH" VARCHAR(50 CHAR),
+647   "NUMBER_STATE" VARCHAR(50 CHAR),
+648   "TIMELENGTH" VARCHAR(50 CHAR),
+649   "API_RETURN_TAG" VARCHAR(50 CHAR),
+650   "IS_MOBILE_BLACK" VARCHAR(50 CHAR),
+651   "MOBILE_BLACK_REASON" VARCHAR(50 CHAR),
+652   "MOBILE_BLACK_SCORE" VARCHAR(50 CHAR),
+653   "MOBILE_BLACK_TIMES" VARCHAR(50 CHAR),
+654   "IS_EMAIL_BLACK" VARCHAR(50 CHAR),
+655   "EMAIL_BLACK_REASON" VARCHAR(50 CHAR),
+656   "EMAIL_BLACK_SCORE" VARCHAR(50 CHAR),
+657   "EMAIL_BLACK_TIMES" VARCHAR(50 CHAR),
+658   "IS_IP_BLACK" VARCHAR(50 CHAR),
+659   "IP_BLACK_REASON" VARCHAR(50 CHAR),
+660   "IP_BLACK_SCORE" VARCHAR(50 CHAR),
+661   "IP_BLACK_TIMES" VARCHAR(50 CHAR),
+662   "IS_MOBILE_GREY" VARCHAR(50 CHAR),
+663   "MOBILE_GREY_REASON" VARCHAR(50 CHAR),
+664   "MOBILE_GREY_SCORE" VARCHAR(50 CHAR),
+665   "MOBILE_GREY_TIMES" VARCHAR(50 CHAR),
+666   "IS_EMAIL_GREY" VARCHAR(50 CHAR),
+667   "EMAIL_GREY_REASON" VARCHAR(50 CHAR),
+668   "EMAIL_GREY_SCORE" VARCHAR(50 CHAR),
+669   "EMAIL_GREY_TIMES" VARCHAR(50 CHAR),
+670   "IS_IP_GREY" VARCHAR(50 CHAR),
+671   "IP_GREY_REASON" VARCHAR(50 CHAR),
+672   "IP_GREY_SCORE" VARCHAR(50 CHAR),
+673   "IP_GREY_TIMES" VARCHAR(50 CHAR),
+674   "MOBILE_P2P_3_TIMES" VARCHAR(50 CHAR),
+675   "MOBILE_P2P_6_TIMES" VARCHAR(50 CHAR),
+676   "EMAIL_P2P_3_TIMES" VARCHAR(50 CHAR),
+677   "EMAIL_P2P_6_TIMES" VARCHAR(50 CHAR),
+678   "CERT_NO_SH" VARCHAR(50 CHAR),
+679   "NAME_SH" VARCHAR(50 CHAR),
+680   "IS_THEFT" VARCHAR(50 CHAR),
+681   "IS_FRAUD" VARCHAR(50 CHAR),
+682   "IS_SWINDLE" VARCHAR(50 CHAR),
+683   "IS_FORGERY" VARCHAR(50 CHAR),
+684   "IS_ILLEGAL" VARCHAR(50 CHAR),
+685   "IS_SALVATION" VARCHAR(50 CHAR),
+686   "IS_UNENFORCED" VARCHAR(50 CHAR),
+687   "IS_DISHONESTY" VARCHAR(50 CHAR),
+688   "IS_EXPENSE" VARCHAR(50 CHAR),
+689   "IS_EXPOSURE" VARCHAR(50 CHAR),
+690   "IS_ONLINE_TRACE" VARCHAR(50 CHAR),
+691   "IS_RESTRICTION" VARCHAR(50 CHAR),
+692   "IS_CIVIL_VERDICT" VARCHAR(50 CHAR),
+693   "IS_CRIMINAL_VERDICT" VARCHAR(50 CHAR),
+694   "IS_INSURANCE_FRAUD" VARCHAR(50 CHAR),
+695   "IS_BANK_PENALTY" VARCHAR(50 CHAR),
+696   "IS_AWARD_PENALTY" VARCHAR(50 CHAR),
+697   "IS_TAX" VARCHAR(50 CHAR),
+698   "IS_ESCAPE" VARCHAR(50 CHAR),
+699   "SI_OFC_NAM" VARCHAR(50 CHAR),
+700   "SI_PAY_TIME" VARCHAR(50 CHAR),
+701   "VEHICLE_CONDITION" VARCHAR(50 CHAR),
+702   "FIRST_REG_TIME" VARCHAR(50 CHAR),
+703   "PLATE_NO" VARCHAR(50 CHAR),
+704   "CURR_USER_STAT" VARCHAR(50 CHAR),
+705   "MOBILE_INNET_PERIOD" VARCHAR(50 CHAR),
+706   "M1_DEVICE_CNT" VARCHAR(50 CHAR),
+707   "IS_ID_MATCH_ALL" VARCHAR(50 CHAR),
+708   "CARRIER_SIGN" VARCHAR(50 CHAR),
+709   "CUST_ID" VARCHAR(50 CHAR),
+710   "CUST_BLK_CODE_CI" VARCHAR(50 CHAR),
+711   "CUST_CREDIT_LIMIT" VARCHAR(50 CHAR),
+712   "CUST_PERM_LIMIT" VARCHAR(50 CHAR),
+713   "CUST_TEMP_LIMIT" VARCHAR(50 CHAR),
+714   "CUST_AVAIL_LIMIT" VARCHAR(50 CHAR),
+715   "ACCT_SEQ_004" VARCHAR(50 CHAR),
+716   "CREDIT_LIMIT_004" VARCHAR(50 CHAR),
+717   "PERM_LIMIT_004" VARCHAR(50 CHAR),
+718   "EX_PLIMIT_004" VARCHAR(50 CHAR),
+719   "PLIMIT_CHANGE_DAYS_004" VARCHAR(50 CHAR),
+720   "CASH_LIMIT_004" VARCHAR(50 CHAR),
+721   "SHADOW_LIMIT_PCT_004" VARCHAR(50 CHAR),
+722   "TRX_AVAIL_LIMIT_004" VARCHAR(50 CHAR),
+723   "SINSTL_AVAIL_LIMIT_004" VARCHAR(50 CHAR),
+724   "AR_004" VARCHAR(50 CHAR),
+725   "CASH_AMT_004" VARCHAR(50 CHAR),
+726   "PMT_AMT_004" VARCHAR(50 CHAR),
+727   "INSTL_BAL_004" VARCHAR(50 CHAR),
+728   "CASH_LIMIT_PCT_004" VARCHAR(50 CHAR),
+729   "INSTL_ACCT_X_004" VARCHAR(50 CHAR),
+730   "INSTL_FLAG_004" VARCHAR(50 CHAR),
+731   "SINSTL_LIMIT_004" VARCHAR(50 CHAR),
+732   "CASH_AVAIL_LIMIT_004" VARCHAR(50 CHAR),
+733   "ACL2_TRX_AVAIL_LIMIT_004" VARCHAR(50 CHAR),
+734   "ACL2_CASH_AVAIL_LIMIT_004" VARCHAR(50 CHAR),
+735   "INSTL_OUTST_004" VARCHAR(50 CHAR),
+736   "CASH_OUTST_004" VARCHAR(50 CHAR),
+737   "SINSTL_OUTST_004" VARCHAR(50 CHAR),
+738   "BLK_CODE_004_R" VARCHAR(50 CHAR),
+739   "BLK_CODE_004_U" VARCHAR(50 CHAR),
+740   "ZHANGSHANGSS_FLAG" VARCHAR(50 CHAR),
+741   "WEIXIN_FLAG" VARCHAR(50 CHAR),
+742   "CASH_INSTL_AR" VARCHAR(50 CHAR),
+743   "CASH_LOAN_AR" VARCHAR(50 CHAR),
+744   "COMD_INSTL_AR" VARCHAR(50 CHAR),
+745   "CASH_INSTL_OUTST" VARCHAR(50 CHAR),
+746   "CASH_INSTL_BAL" VARCHAR(50 CHAR),
+747   "CASH_LOAN_OUTST" VARCHAR(50 CHAR),
+748   "COMD_INSTL_OUTST" VARCHAR(50 CHAR),
+749   "COMD_INSTL_BAL" VARCHAR(50 CHAR),
+750   "M_RTL_LMT" VARCHAR(50 CHAR),
+751   "M_RISK_LIST" VARCHAR(50 CHAR),
+752   "ID_RISK_LIST" VARCHAR(50 CHAR),
+753   "RISK_LIST_EHD_CASH" VARCHAR(50 CHAR),
+754   "RISK_LIST_EHD_MCH" VARCHAR(50 CHAR),
+755   "UPLOAD_LIMIT" VARCHAR(50 CHAR),
+756   "CLT_ID" VARCHAR(50 CHAR),
+757   "CLT_LVL_COD" VARCHAR(50 CHAR),
+758   "CLT_EOM_BAL" VARCHAR(50 CHAR),
+759   "BBK_AST_AVGD_BAL" VARCHAR(50 CHAR),
+760   "AST_AVGD_BAL" VARCHAR(50 CHAR),
+761   "RMB_DPS_AVGD_BAL" VARCHAR(50 CHAR),
+762   "FOR_DPS_AVGD_BAL" VARCHAR(50 CHAR),
+763   "FXD_DPS_AVGD_BAL" VARCHAR(50 CHAR),
+764   "RMB_DPS_BAL" VARCHAR(50 CHAR),
+765   "FOR_DPS_BAL" VARCHAR(50 CHAR),
+766   "CG_AVGD_BAL" VARCHAR(50 CHAR),
+767   "FND_AVGD_BAL" VARCHAR(50 CHAR),
+768   "BND_AVGD_BAL" VARCHAR(50 CHAR),
+769   "OTH_INV_AVGD_BAL" VARCHAR(50 CHAR),
+770   "INS_AVGD_BAL" VARCHAR(50 CHAR),
+771   "LON_BAL" VARCHAR(50 CHAR),
+772   "LON_HOS_BAL" VARCHAR(50 CHAR),
+773   "LON_HOSID_BAL" VARCHAR(50 CHAR),
+774   "LON_HOSBU_BAL" VARCHAR(50 CHAR),
+775   "LON_CAR_BAL" VARCHAR(50 CHAR),
+776   "LON_CON_BAL" VARCHAR(50 CHAR),
+777   "LON_OTH_BAL" VARCHAR(50 CHAR),
+778   "DF_LST_AMT" VARCHAR(50 CHAR),
+779   "DF_LST_DTE" VARCHAR(50 CHAR),
+780   "AST_RGN_VAL" VARCHAR(50 CHAR),
+781   "LON_TOT_CNT" VARCHAR(50 CHAR),
+782   "LON_HOS_CNT" VARCHAR(50 CHAR),
+783   "LON_CAR_CNT" VARCHAR(50 CHAR),
+784   "LON_OTH_CNT" VARCHAR(50 CHAR),
+785   "LON_TOT_AMT" VARCHAR(50 CHAR),
+786   "LON_HOS_TOT_AMT" VARCHAR(50 CHAR),
+787   "LON_HOSID_TOT_AMT" VARCHAR(50 CHAR),
+788   "LON_HOSBU_TOT_AMT" VARCHAR(50 CHAR),
+789   "LON_CAR_TOT_AMT" VARCHAR(50 CHAR),
+790   "LON_CON_TOT_AMT" VARCHAR(50 CHAR),
+791   "HOS_SQR_VAL" VARCHAR(50 CHAR),
+792   "LON_HOS_MON_AMT" VARCHAR(50 CHAR),
+793   "LON_HOSID_MON_AMT" VARCHAR(50 CHAR),
+794   "LON_HOSBU_MON_AMT" VARCHAR(50 CHAR),
+795   "LON_CAR_MON_AMT" VARCHAR(50 CHAR),
+796   "LON_CON_MON_AMT" VARCHAR(50 CHAR),
+797   "DLQ_CNT" VARCHAR(50 CHAR),
+798   "YKT_FLG" VARCHAR(50 CHAR),
+799   "ZYB_FLG" VARCHAR(50 CHAR),
+800   "DF_FLG" VARCHAR(50 CHAR),
+801   "DKDJ_FLG" VARCHAR(50 CHAR),
+802   "KYLC_FLG" VARCHAR(50 CHAR),
+803   "CG_FLG" VARCHAR(50 CHAR),
+804   "TRX_CNT" VARCHAR(50 CHAR),
+805   "TRX_MAX_AMT" VARCHAR(50 CHAR),
+806   "TRX_TOT_AMT" VARCHAR(50 CHAR),
+807   "POS_CNT" VARCHAR(50 CHAR),
+808   "POS_MAX_AMT" VARCHAR(50 CHAR),
+809   "POS_TOT_AMT" VARCHAR(50 CHAR),
+810   "CSH_CNT" VARCHAR(50 CHAR),
+811   "CSH_MAX_AMT" VARCHAR(50 CHAR),
+812   "CSH_TOT_AMT" VARCHAR(50 CHAR),
+813   "BAL_AMD" VARCHAR(50 CHAR),
+814   "PAY_STS" VARCHAR(50 CHAR),
+815   "CPT_STS" VARCHAR(50 CHAR),
+816   "FIV_CLS" VARCHAR(50 CHAR),
+817   "DFR_ATS" VARCHAR(50 CHAR),
+818   "USD_ATD" VARCHAR(50 CHAR),
+819   "OVD_CP1" VARCHAR(50 CHAR),
+820   "OVD_CP2" VARCHAR(50 CHAR),
+821   "OVD_CP3" VARCHAR(50 CHAR),
+822   "OVD_CP4" VARCHAR(50 CHAR),
+823   "RTL_FLG" VARCHAR(50 CHAR),
+824   "RETAIL_TYPE" VARCHAR(50 CHAR),
+825   "DF_LST_AMT_3MONTH" VARCHAR(50 CHAR),
+826   "RETAIL_SCORE" VARCHAR(50 CHAR),
+827   "CLT_3MONTH_BAL" VARCHAR(50 CHAR),
+828   "RETAIL_OPN_DTE" VARCHAR(50 CHAR),
+829   "CUST_BLK_CODE" VARCHAR(50 CHAR),
+830   "SEX" VARCHAR(50 CHAR),
+831   "AGE" VARCHAR(50 CHAR),
+832   "MARRIAGE" VARCHAR(50 CHAR),
+833   "EDUCATION" VARCHAR(50 CHAR),
+834   "COMPANY_CODE" VARCHAR(50 CHAR),
+835   "OCCPN_CODE" VARCHAR(50 CHAR),
+836   "CUST_MEMBER_SINCE_MONTH" VARCHAR(50 CHAR),
+837   "MAIL_ZIP" VARCHAR(50 CHAR),
+838   "RISK_FLAG16" VARCHAR(50 CHAR),
+839   "RISK_FLAG17" VARCHAR(50 CHAR),
+840   "RISK_FLAG18" VARCHAR(50 CHAR),
+841   "RISK_FLAG19" VARCHAR(50 CHAR),
+842   "RISK_FLAG20" VARCHAR(50 CHAR),
+843   "IN_DEGREE" VARCHAR(50 CHAR),
+844   "CCD_CLT_NUM" VARCHAR(50 CHAR),
+845   "F_SCORE" VARCHAR(50 CHAR),
+846   "F_VAR1" VARCHAR(50 CHAR),
+847   "PROB_VAR1" VARCHAR(50 CHAR),
+848   "F_VAR2" VARCHAR(50 CHAR),
+849   "PROB_VAR2" VARCHAR(50 CHAR),
+850   "F_VAR3" VARCHAR(50 CHAR),
+851   "PROB_VAR3" VARCHAR(50 CHAR),
+852   "F_VAR4" VARCHAR(50 CHAR),
+853   "PROB_VAR4" VARCHAR(50 CHAR),
+854   "F_VAR5" VARCHAR(50 CHAR),
+855   "PROB_VAR5" VARCHAR(50 CHAR),
+856   "F_VAR6" VARCHAR(50 CHAR),
+857   "PROB_VAR6" VARCHAR(50 CHAR),
+858   "F_VAR7" VARCHAR(50 CHAR),
+859   "PROB_VAR7" VARCHAR(50 CHAR),
+860   "F_VAR8" VARCHAR(50 CHAR),
+861   "PROB_VAR8" VARCHAR(50 CHAR),
+862   "F_VAR9" VARCHAR(50 CHAR),
+863   "PROB_VAR9" VARCHAR(50 CHAR),
+864   "F_VAR10" VARCHAR(50 CHAR),
+865   "PROB_VAR10" VARCHAR(50 CHAR),
+866   "NAME1" VARCHAR(50 CHAR),
+867   "NAME2" VARCHAR(50 CHAR),
+868   "NAME3" VARCHAR(50 CHAR),
+869   "NAME4" VARCHAR(50 CHAR),
+870   "NAME5" VARCHAR(50 CHAR),
+871   "NAME6" VARCHAR(50 CHAR),
+872   "NAME7" VARCHAR(50 CHAR),
+873   "NAME8" VARCHAR(50 CHAR),
+874   "RESV_VAR" VARCHAR(50 CHAR),
+875   "CYCLE_DAY_004" VARCHAR(50 CHAR),
+876   "PAY_DUE_DAY_004" VARCHAR(50 CHAR),
+877   "BLK_CODE_004" VARCHAR(50 CHAR),
+878   "CYCLE_DUE_004" VARCHAR(50 CHAR),
+879   "DELQ_1_24_004" VARCHAR(50 CHAR),
+880   "AR_1_004" VARCHAR(50 CHAR),
+881   "AR_2_004" VARCHAR(50 CHAR),
+882   "AR_3_004" VARCHAR(50 CHAR),
+883   "AR_4_004" VARCHAR(50 CHAR),
+884   "AR_5_004" VARCHAR(50 CHAR),
+885   "AR_6_004" VARCHAR(50 CHAR),
+886   "PMT_AMT_1_004" VARCHAR(50 CHAR),
+887   "PMT_AMT_2_004" VARCHAR(50 CHAR),
+888   "PMT_AMT_3_004" VARCHAR(50 CHAR),
+889   "PMT_AMT_4_004" VARCHAR(50 CHAR),
+890   "PMT_AMT_5_004" VARCHAR(50 CHAR),
+891   "PMT_AMT_6_004" VARCHAR(50 CHAR),
+892   "INSTL_BAL_1_004" VARCHAR(50 CHAR),
+893   "INSTL_BAL_2_004" VARCHAR(50 CHAR),
+894   "INSTL_BAL_3_004" VARCHAR(50 CHAR),
+895   "INSTL_BAL_4_004" VARCHAR(50 CHAR),
+896   "MAX_INSTL_TIMES_004" VARCHAR(50 CHAR),
+897   "INITIAL_LIMIT_004" VARCHAR(50 CHAR),
+898   "PMT_NUM_1_004" VARCHAR(50 CHAR),
+899   "PMT_NUM_2_004" VARCHAR(50 CHAR),
+900   "PMT_NUM_3_004" VARCHAR(50 CHAR),
+901   "CSH_BUS_LATE_PAY_DT" VARCHAR(50 CHAR),
+902   "APP_HOME_TEL" VARCHAR(50 CHAR),
+903   "EHD_CLT_FLG" VARCHAR(50 CHAR),
+904   "SCENE_COD" VARCHAR(50 CHAR),
+905   "CTF_AUT_ORG_NAM" VARCHAR(50 CHAR),
+906   "TERM_TYP" VARCHAR(50 CHAR),
+907   "TERM_SEQ_NBR" VARCHAR(50 CHAR),
+908   "TERM_MAC_ADR" VARCHAR(50 CHAR),
+909   "MOB_IMSI_NBR" VARCHAR(50 CHAR),
+910   "USR_TYP" VARCHAR(50 CHAR),
+911   "BND_CRD_TYP" VARCHAR(50 CHAR),
+912   "OPR_SYS" VARCHAR(50 CHAR),
+913   "OPER_NAM" VARCHAR(50 CHAR),
+914   "RSLT_RAT" VARCHAR(50 CHAR),
+915   "WIFI_NAM" VARCHAR(50 CHAR),
+916   "WIFI_MAC" VARCHAR(50 CHAR),
+917   "WEB_IP_ADR" VARCHAR(50 CHAR),
+918   "CNVS_FGPRT" VARCHAR(50 CHAR),
+919   "OCR_ID" VARCHAR(50 CHAR),
+920   "OCR_NAME" VARCHAR(50 CHAR),
+921   "OCR_IF_MODIFY" VARCHAR(50 CHAR),
+922   "IF_IP_WKBLACK" VARCHAR(50 CHAR),
+923   "IF_MAC_WKBLACK" VARCHAR(50 CHAR),
+924   "IF_SSID_WKBLACK" VARCHAR(50 CHAR),
+925   "STATUS_XJBD" VARCHAR(50 CHAR),
+926   "STATUS_BFD1" VARCHAR(50 CHAR),
+927   "STATUS_ARHZ" VARCHAR(50 CHAR),
+928   "EDU_CHECK_TAG" VARCHAR(50 CHAR),
+929   "GRADUATE_TIME" VARCHAR(50 CHAR),
+930   "IS_STUDENT" VARCHAR(50 CHAR),
+931   "CAMP_NAME_CHECK" VARCHAR(50 CHAR),
+932   "EDU_LEVEL_CHECK" VARCHAR(50 CHAR),
+933   "ENROLL_DATE_CHECK" VARCHAR(50 CHAR),
+934   "EDU_BACKGROUND_CHECK" VARCHAR(50 CHAR),
+935   "AL_COUNT" VARCHAR(50 CHAR),
+936   "ZX_COUNT" VARCHAR(50 CHAR),
+937   "SX_COUNT" VARCHAR(50 CHAR),
+938   "SW_COUNT" VARCHAR(50 CHAR),
+939   "CQGG_COUNT" VARCHAR(50 CHAR),
+940   "WDYQ_COUNT" VARCHAR(50 CHAR),
+941   "P2P_APPLY_CNT" VARCHAR(50 CHAR),
+942   "P2P_APPLY_SIGN" VARCHAR(50 CHAR),
+943   "P2P_BREACH_AMT" VARCHAR(50 CHAR),
+944   "P2P_BREACH_CNT" VARCHAR(50 CHAR),
+945   "P2P_LOAN_AMT" VARCHAR(50 CHAR),
+946   "P2P_LOAN_CNT" VARCHAR(50 CHAR),
+947   "PUBLIC_TIME" VARCHAR(50 CHAR),
+948   "SHIXIN_INFO_SIGN" VARCHAR(50 CHAR),
+949   "P2P_APPLY_AMT" VARCHAR(50 CHAR),
+950   "XD_APPLY_SIGN" VARCHAR(50 CHAR),
+951   "XD_APPLY_CNT" VARCHAR(50 CHAR),
+952   "XD_APPLY_AMT" VARCHAR(50 CHAR),
+953   "XD_BREACH_AMT" VARCHAR(50 CHAR),
+954   "XD_BREACH_CNT" VARCHAR(50 CHAR),
+955   "XD_LOAN_AMT" VARCHAR(50 CHAR),
+956   "XD_LOAN_CNT" VARCHAR(50 CHAR),
+957   "XFJR_APPLY_SIGN" VARCHAR(50 CHAR),
+958   "XFJR_APPLY_CNT" VARCHAR(50 CHAR),
+959   "XFJR_APPLY_AMT" VARCHAR(50 CHAR),
+960   "XFJR_BREACH_AMT" VARCHAR(50 CHAR),
+961   "XFJR_BREACH_CNT" VARCHAR(50 CHAR),
+962   "XFJR_LOAN_AMT" VARCHAR(50 CHAR),
+963   "XFJR_LOAN_CNT" VARCHAR(50 CHAR),
+964   "MJJD_APPLY_SIGN" VARCHAR(50 CHAR),
+965   "MJJD_APPLY_CNT" VARCHAR(50 CHAR),
+966   "MJJD_APPLY_AMT" VARCHAR(50 CHAR),
+967   "MJJD_BREACH_AMT" VARCHAR(50 CHAR),
+968   "MJJD_BREACH_CNT" VARCHAR(50 CHAR),
+969   "MJJD_LOAN_AMT" VARCHAR(50 CHAR),
+970   "MJJD_LOAN_CNT" VARCHAR(50 CHAR),
+971   "DBGS_APPLY_SIGN" VARCHAR(50 CHAR),
+972   "DBGS_APPLY_CNT" VARCHAR(50 CHAR),
+973   "DBGS_APPLY_AMT" VARCHAR(50 CHAR),
+974   "DBGS_BREACH_AMT" VARCHAR(50 CHAR),
+975   "DBGS_BREACH_CNT" VARCHAR(50 CHAR),
+976   "DBGS_LOAN_AMT" VARCHAR(50 CHAR),
+977   "DBGS_LOAN_CNT" VARCHAR(50 CHAR),
+978   "OTHER_APPLY_SIGN" VARCHAR(50 CHAR),
+979   "OTHER_APPLY_CNT" VARCHAR(50 CHAR),
+980   "OTHER_APPLY_AMT" VARCHAR(50 CHAR),
+981   "OTHER_BREACH_AMT" VARCHAR(50 CHAR),
+982   "OTHER_BREACH_CNT" VARCHAR(50 CHAR),
+983   "OTHER_LOAN_AMT" VARCHAR(50 CHAR),
+984   "OTHER_LOAN_CNT" VARCHAR(50 CHAR),
+985   "ALL_APPLY_SIGN" VARCHAR(50 CHAR),
+986   "ALL_APPLY_CNT" VARCHAR(50 CHAR),
+987   "ALL_APPLY_AMT" VARCHAR(50 CHAR),
+988   "ALL_BREACH_AMT" VARCHAR(50 CHAR),
+989   "ALL_BREACH_CNT" VARCHAR(50 CHAR),
+990   "ALL_LOAN_AMT" VARCHAR(50 CHAR),
+991   "ALL_LOAN_CNT" VARCHAR(50 CHAR),
+992   "MATCH_STATUS" VARCHAR(50 CHAR),
+993   "CREDIT_SCORE" VARCHAR(50 CHAR),
+994   "RISK_SCORE" VARCHAR(50 CHAR),
+995   "STABLE_SCORE" VARCHAR(50 CHAR),
+996   "PER_ID_NUM_SIGN" VARCHAR(50 CHAR),
+997   "PER_ID_TAR_SIGN" VARCHAR(50 CHAR),
+998   "PER_CELL_NUM_SIGN" VARCHAR(50 CHAR),
+999   "PER_CELL_TAR_SIGN" VARCHAR(50 CHAR),
+1000   "PER_MAIL_NUM_SIGN" VARCHAR(50 CHAR),
+1001   "PER_MAIL_TAR_SIGN" VARCHAR(50 CHAR),
+1002   "PER_NAME_NUM_SIGN" VARCHAR(50 CHAR),
+1003   "AL_M3_GID_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1004   "AL_M3_ID_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1005   "AL_M3_CELL_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1006   "AL_M6_GID_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1007   "AL_M6_ID_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1008   "AL_M6_CELL_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1009   "AL_M12_GID_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1010   "AL_M12_ID_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1011   "AL_M12_CELL_NOTBANK_ALLNUM" VARCHAR(50 CHAR),
+1012   "CUST_EX_PLIMIT" VARCHAR(50 CHAR),
+1013   "CUST_PLIMIT_CHANGE_DAYS" VARCHAR(50 CHAR),
+1014   "CUST_TEMP_EFF_DTE" VARCHAR(50 CHAR),
+1015   "CUST_TEMP_EXP_DTE" VARCHAR(50 CHAR),
+1016   "ACL1_1_CREDIT_LIMIT" VARCHAR(50 CHAR),
+1017   "ACL1_1_AVAIL_LIMIT" VARCHAR(50 CHAR),
+1018   "ACL1_1_PERM_LIMIT" VARCHAR(50 CHAR),
+1019   "ACL1_1_TEMP_LIMIT" VARCHAR(50 CHAR),
+1020   "ACL1_2_CREDIT_LIMIT" VARCHAR(50 CHAR),
+1021   "ACL1_2_AVAIL_LIMIT" VARCHAR(50 CHAR),
+1022   "ACL1_2_PERM_LIMIT" VARCHAR(50 CHAR),
+1023   "ACL1_2_TEMP_LIMIT" VARCHAR(50 CHAR),
+1024   "ACL1_3_CREDIT_LIMIT" VARCHAR(50 CHAR),
+1025   "ACL1_3_AVAIL_LIMIT" VARCHAR(50 CHAR),
+1026   "ACL1_3_PERM_LIMIT" VARCHAR(50 CHAR),
+1027   "ACL1_3_TEMP_LIMIT" VARCHAR(50 CHAR),
+1028   "ACL1_4_CREDIT_LIMIT" VARCHAR(50 CHAR),
+1029   "ACL1_4_AVAIL_LIMIT" VARCHAR(50 CHAR),
+1030   "ACL1_4_PERM_LIMIT" VARCHAR(50 CHAR),
+1031   "ACL1_4_TEMP_LIMIT" VARCHAR(50 CHAR),
+1032   "CLT_SER_COD1" VARCHAR(50 CHAR),
+1033   "INDI_ACCT_SEQ" VARCHAR(50 CHAR),
+1034   "INDI_CREDIT_LIMIT" VARCHAR(50 CHAR),
+1035   "INDI_PERM_LIMIT" VARCHAR(50 CHAR),
+1036   "INDI_EX_PLIMIT" VARCHAR(50 CHAR),
+1037   "INDI_PLIMIT_CHANGE_DAYS" VARCHAR(50 CHAR),
+1038   "INDI_TEMP_LIMIT" VARCHAR(50 CHAR),
+1039   "INDI_CASH_LIMIT_PCT" VARCHAR(50 CHAR),
+1040   "INDI_INSTL_LIMIT_SW" VARCHAR(50 CHAR),
+1041   "INDI_INSTL_ACCT_X" VARCHAR(50 CHAR),
+1042   "INDI_INSTL_LIMIT" VARCHAR(50 CHAR),
+1043   "INDI_TRX_AVAIL_LIMIT" VARCHAR(50 CHAR),
+1044   "INDI_AR" VARCHAR(50 CHAR),
+1045   "INDI_SINSTL_AMT" VARCHAR(50 CHAR),
+1046   "INDI_CASH_INST_BAL" VARCHAR(50 CHAR),
+1047   "INSTL_SUC_DATE" VARCHAR(50 CHAR),
+1048   "CREDIT_PRE_MOB" VARCHAR(50 CHAR),
+1049   "CREDIT_MOB" VARCHAR(50 CHAR),
+1050   "PINSTL_ACCT_SEQ" VARCHAR(50 CHAR),
+1051   "PINSTL_CREDIT_LIMIT" VARCHAR(50 CHAR),
+1052   "PINSTL_PERM_LIMIT" VARCHAR(50 CHAR),
+1053   "PINSTL_EX_PLIMIT" VARCHAR(50 CHAR),
+1054   "PINSTL_PLIMIT_CHANGE_DAYS" VARCHAR(50 CHAR),
+1055   "PINSTL_TEMP_LIMIT" VARCHAR(50 CHAR),
+1056   "PINSTL_TRX_AVAIL_LIMIT" VARCHAR(50 CHAR),
+1057   "PINSTL_AR" VARCHAR(50 CHAR),
+1058   "PINSTL_SINSTL_AMT" VARCHAR(50 CHAR),
+1059   "SS_ACCT_SEQ" VARCHAR(50 CHAR),
+1060   "SS_PERM_LIMIT" VARCHAR(50 CHAR),
+1061   "SS_EX_PLIMIT" VARCHAR(50 CHAR),
+1062   "SS_PLIMIT_CHANGE_DAYS" VARCHAR(50 CHAR),
+1063   "SS_TRX_AVAIL_LIMIT" VARCHAR(50 CHAR),
+1064   "SS_AR" VARCHAR(50 CHAR),
+1065   "SS_CASH_INST_BAL" VARCHAR(50 CHAR),
+1066   "STAFF_CORP_ACCT_SEQ" VARCHAR(50 CHAR),
+1067   "STAFF_CORP_CREDIT_LIMIT" VARCHAR(50 CHAR),
+1068   "STAFF_CORP_PLIMIT_CHANGE_DAYS" VARCHAR(50 CHAR),
+1069   "STAFF_CORP_TRX_AVAIL_LIMIT" VARCHAR(50 CHAR),
+1070   "STAFF_CORP_AR" VARCHAR(50 CHAR),
+1071   "STAFF_CORP_SINSTL_AMT" VARCHAR(50 CHAR),
+1072   "ACCT_SEQ_030" VARCHAR(50 CHAR),
+1073   "CREDIT_LIMIT_030" VARCHAR(50 CHAR),
+1074   "PERM_LIMIT_030" VARCHAR(50 CHAR),
+1075   "EX_PLIMIT_030" VARCHAR(50 CHAR),
+1076   "PLIMIT_CHANGE_DAYS_030" VARCHAR(50 CHAR),
+1077   "TRX_AVAIL_LIMIT_030" VARCHAR(50 CHAR),
+1078   "AR_030" VARCHAR(50 CHAR),
+1079   "PMT_AMT_030" VARCHAR(50 CHAR),
+1080   "INSTL_BAL_030" VARCHAR(50 CHAR),
+1081   "DTE_OPENED_030" VARCHAR(50 CHAR),
+1082   "ACCT_SEQ_050" VARCHAR(50 CHAR),
+1083   "CREDIT_LIMIT_050" VARCHAR(50 CHAR),
+1084   "PERM_LIMIT_050" VARCHAR(50 CHAR),
+1085   "EX_PLIMIT_050" VARCHAR(50 CHAR),
+1086   "PLIMIT_CHANGE_DAYS_050" VARCHAR(50 CHAR),
+1087   "TRX_AVAIL_LIMIT_050" VARCHAR(50 CHAR),
+1088   "AR_050" VARCHAR(50 CHAR),
+1089   "PMT_AMT_050" VARCHAR(50 CHAR),
+1090   "INSTL_BAL_050" VARCHAR(50 CHAR),
+1091   "DTE_OPENED_050" VARCHAR(50 CHAR),
+1092   "ACCT_SEQ_055" VARCHAR(50 CHAR),
+1093   "CREDIT_LIMIT_055" VARCHAR(50 CHAR),
+1094   "PERM_LIMIT_055" VARCHAR(50 CHAR),
+1095   "EX_PLIMIT_055" VARCHAR(50 CHAR),
+1096   "PLIMIT_CHANGE_DAYS_055" VARCHAR(50 CHAR),
+1097   "TRX_AVAIL_LIMIT_055" VARCHAR(50 CHAR),
+1098   "AR_055" VARCHAR(50 CHAR),
+1099   "PMT_AMT_055" VARCHAR(50 CHAR),
+1100   "INSTL_BAL_055" VARCHAR(50 CHAR),
+1101   "DTE_OPENED_055" VARCHAR(50 CHAR),
+1102   "ACCT_SEQ_065" VARCHAR(50 CHAR),
+1103   "CREDIT_LIMIT_065" VARCHAR(50 CHAR),
+1104   "PERM_LIMIT_065" VARCHAR(50 CHAR),
+1105   "EX_PLIMIT_065" VARCHAR(50 CHAR),
+1106   "PLIMIT_CHANGE_DAYS_065" VARCHAR(50 CHAR),
+1107   "TRX_AVAIL_LIMIT_065" VARCHAR(50 CHAR),
+1108   "AR_065" VARCHAR(50 CHAR),
+1109   "PMT_AMT_065" VARCHAR(50 CHAR),
+1110   "INSTL_BAL_065" VARCHAR(50 CHAR),
+1111   "DTE_OPENED_065" VARCHAR(50 CHAR),
+1112   "INDI_BLK_CODE_R" VARCHAR(50 CHAR),
+1113   "INDI_BLK_CODE_U" VARCHAR(50 CHAR),
+1114   "PINSTL_BLK_CODE_R" VARCHAR(50 CHAR),
+1115   "PINSTL_BLK_CODE_U" VARCHAR(50 CHAR),
+1116   "SS_BLK_CODE_R" VARCHAR(50 CHAR),
+1117   "STAFF_CORP_BLK_CODE_R" VARCHAR(50 CHAR),
+1118   "STAFF_CORP_BLK_CODE_U" VARCHAR(50 CHAR),
+1119   "BLK_CODE_050_R" VARCHAR(50 CHAR),
+1120   "BLK_CODE_055_R" VARCHAR(50 CHAR),
+1121   "BLK_CODE_060_R" VARCHAR(50 CHAR),
+1122   "BLK_CODE_065_R" VARCHAR(50 CHAR),
+1123   "BLK_CODE_030_R" VARCHAR(50 CHAR),
+1124   "BLK_CODE_030_U" VARCHAR(50 CHAR),
+1125   "BJ_BLK_CODE_TIME" VARCHAR(50 CHAR),
+1126   "STU_FLG" VARCHAR(50 CHAR),
+1127   "CUST_AAC" VARCHAR(50 CHAR),
+1128   "ACL1_1_AAC" VARCHAR(50 CHAR),
+1129   "ACL2_INDI_AAC" VARCHAR(50 CHAR),
+1130   "INSTL_OUTST_050" VARCHAR(50 CHAR),
+1131   "INSTL_ORD_TIME_050" VARCHAR(50 CHAR),
+1132   "INSTL_PLIMIT_CHANGE_TIME_050" VARCHAR(50 CHAR),
+1133   "INSTL_OUTST_055" VARCHAR(50 CHAR),
+1134   "INSTL_ORD_TIME_055" VARCHAR(50 CHAR),
+1135   "INSTL_PLIMIT_CHANGE_TIME_055" VARCHAR(50 CHAR),
+1136   "INSTL_OUTST_065" VARCHAR(50 CHAR),
+1137   "INSTL_ORD_TIME_065" VARCHAR(50 CHAR),
+1138   "INSTL_PLIMIT_CHANGE_TIME_065" VARCHAR(50 CHAR),
+1139   "GHHMD_FLAG" VARCHAR(50 CHAR),
+1140   "YOUNG_CARD_FLAG" VARCHAR(50 CHAR),
+1141   "CUST_CYCLE_DUE" VARCHAR(50 CHAR),
+1142   "CUST_DELQ_1_24" VARCHAR(50 CHAR),
+1143   "ACL1_1_BLK_CODE" VARCHAR(50 CHAR),
+1144   "ACL1_1_CYCLE_DUE" VARCHAR(50 CHAR),
+1145   "ACL1_1_DELQ_1_24" VARCHAR(50 CHAR),
+1146   "ACL1_2_BLK_CODE" VARCHAR(50 CHAR),
+1147   "ACL1_2_CYCLE_DUE" VARCHAR(50 CHAR),
+1148   "ACL1_2_DELQ_1_24" VARCHAR(50 CHAR),
+1149   "INCOME" VARCHAR(50 CHAR),
+1150   "APPLICANT_CLASS" VARCHAR(50 CHAR),
+1151   "CUST_SALES_UNIT" VARCHAR(50 CHAR),
+1152   "PROJECT_CODE" VARCHAR(50 CHAR),
+1153   "TEST_CODE" VARCHAR(50 CHAR),
+1154   "CARD_TYPE" VARCHAR(50 CHAR),
+1155   "ACL1_1_PLIMIT_CHANGE_DAYS" VARCHAR(50 CHAR),
+1156   "ACL1_2_PLIMIT_CHANGE_DAYS" VARCHAR(50 CHAR),
+1157   "ACL1_3_BLK_CODE" VARCHAR(50 CHAR),
+1158   "ACL1_3_CYCLE_DUE" VARCHAR(50 CHAR),
+1159   "ACL1_3_DELQ_1_24" VARCHAR(50 CHAR),
+1160   "ACL1_3_PLIMIT_CHANGE_DAYS" VARCHAR(50 CHAR),
+1161   "ACL1_04_BLK_CODE" VARCHAR(50 CHAR),
+1162   "ACL1_04_CYCLE_DUE" VARCHAR(50 CHAR),
+1163   "ACL1_04_DELQ_24" VARCHAR(50 CHAR),
+1164   "ACL1_04_PERM_CDAYS" VARCHAR(50 CHAR),
+1165   "BSCORE" VARCHAR(50 CHAR),
+1166   "BSCORE2" VARCHAR(50 CHAR),
+1167   "BSCORE3" VARCHAR(50 CHAR),
+1168   "BSCORE4" VARCHAR(50 CHAR),
+1169   "BSCORE5" VARCHAR(50 CHAR),
+1170   "RISK_FLAG1" VARCHAR(50 CHAR),
+1171   "RISK_FLAG2" VARCHAR(50 CHAR),
+1172   "RISK_FLAG3" VARCHAR(50 CHAR),
+1173   "RISK_FLAG4" VARCHAR(50 CHAR),
+1174   "RISK_FLAG5" VARCHAR(50 CHAR),
+1175   "RISK_FLAG6" VARCHAR(50 CHAR),
+1176   "RISK_FLAG7" VARCHAR(50 CHAR),
+1177   "RISK_FLAG8" VARCHAR(50 CHAR),
+1178   "RISK_FLAG9" VARCHAR(50 CHAR),
+1179   "RISK_FLAG10" VARCHAR(50 CHAR),
+1180   "RISK_FLAG11" VARCHAR(50 CHAR),
+1181   "RISK_FLAG12" VARCHAR(50 CHAR),
+1182   "RISK_FLAG13" VARCHAR(50 CHAR),
+1183   "RISK_FLAG14" VARCHAR(50 CHAR),
+1184   "RISK_FLAG15" VARCHAR(50 CHAR),
+1185   "YKT_FLG_RF" VARCHAR(50 CHAR),
+1186   "ANA_FLAG" VARCHAR(50 CHAR),
+1187   "CI_FLAG" VARCHAR(50 CHAR),
+1188   "INDI_CYCLE_DAY" VARCHAR(50 CHAR),
+1189   "INDI_PAY_DUE_DAY" VARCHAR(50 CHAR),
+1190   "INDI_BLK_CODE" VARCHAR(50 CHAR),
+1191   "INDI_CYCLE_DUE" VARCHAR(50 CHAR),
+1192   "INDI_DELQ_1_24" VARCHAR(50 CHAR),
+1193   "INDI_MEMBER_SINCE_MONTH" VARCHAR(50 CHAR),
+1194   "INDI_INITIAL_LIMIT" VARCHAR(50 CHAR),
+1195   "PINSTL_CYCLE_DAY" VARCHAR(50 CHAR),
+1196   "PINSTL_PAY_DUE_DAY" VARCHAR(50 CHAR),
+1197   "PINSTL_BLK_CODE" VARCHAR(50 CHAR),
+1198   "PINSTL_CYCLE_DUE" VARCHAR(50 CHAR),
+1199   "PINSTL_DELQ_1_24" VARCHAR(50 CHAR),
+1200   "PINSTL_MEMBER_SINCE_MONTH" VARCHAR(50 CHAR),
+1201   "PINSTL_INITIAL_LIMIT" VARCHAR(50 CHAR),
+1202   "PINSTL_OTHER_INSTL_TIMES_HIS" VARCHAR(50 CHAR),
+1203   "PINSTL_TRX_INSTL_TIMES_HIS" VARCHAR(50 CHAR),
+1204   "SS_CYCLE_DAY" VARCHAR(50 CHAR),
+1205   "SS_PAY_DUE_DAY" VARCHAR(50 CHAR),
+1206   "SS_BLK_CODE" VARCHAR(50 CHAR),
+1207   "SS_CYCLE_DUE" VARCHAR(50 CHAR),
+1208   "SS_DELQ_1_24" VARCHAR(50 CHAR),
+1209   "SS_MEMBER_SINCE_MONTH" VARCHAR(50 CHAR),
+1210   "PAY_DUE_DAY_030" VARCHAR(50 CHAR),
+1211   "BLK_CODE_030" VARCHAR(50 CHAR),
+1212   "CYCLE_DAY_030" VARCHAR(50 CHAR),
+1213   "DELQ_1_24_030" VARCHAR(50 CHAR),
+1214   "CYCLE_DUE_030" VARCHAR(50 CHAR),
+1215   "MEMBER_SINCE_MONTH_030" VARCHAR(50 CHAR),
+1216   "CYCLE_DAY_055" VARCHAR(50 CHAR),
+1217   "PAY_DUE_DAY_055" VARCHAR(50 CHAR),
+1218   "BLK_CODE_055" VARCHAR(50 CHAR),
+1219   "CYCLE_DUE_055" VARCHAR(50 CHAR),
+1220   "DELQ_1_24_055" VARCHAR(50 CHAR),
+1221   "MEMBER_SINCE_MONTH_055" VARCHAR(50 CHAR),
+1222   "CYCLE_DAY_060" VARCHAR(50 CHAR),
+1223   "PAY_DUE_DAY_060" VARCHAR(50 CHAR),
+1224   "BLK_CODE_060" VARCHAR(50 CHAR),
+1225   "CYCLE_DUE_060" VARCHAR(50 CHAR),
+1226   "DELQ_1_24_060" VARCHAR(50 CHAR),
+1227   "MEMBER_SINCE_MONTH_060" VARCHAR(50 CHAR),
+1228   "CYCLE_DAY_050" VARCHAR(50 CHAR),
+1229   "PAY_DUE_DAY_050" VARCHAR(50 CHAR),
+1230   "BLK_CODE_050" VARCHAR(50 CHAR),
+1231   "CYCLE_DUE_050" VARCHAR(50 CHAR),
+1232   "DELQ_1_24_050" VARCHAR(50 CHAR),
+1233   "MEMBER_SINCE_MONTH_050" VARCHAR(50 CHAR),
+1234   "CYCLE_DAY_065" VARCHAR(50 CHAR),
+1235   "PAY_DUE_DAY_065" VARCHAR(50 CHAR),
+1236   "BLK_CODE_065" VARCHAR(50 CHAR),
+1237   "CYCLE_DUE_065" VARCHAR(50 CHAR),
+1238   "DELQ_1_24_065" VARCHAR(50 CHAR),
+1239   "MEMBER_SINCE_MONTH_065" VARCHAR(50 CHAR),
+1240   "STAFF_CORP_CYCLE_DAY" VARCHAR(50 CHAR),
+1241   "STAFF_CORP_DUE_DAY" VARCHAR(50 CHAR),
+1242   "STAFF_CORP_BLK_CODE" VARCHAR(50 CHAR),
+1243   "STAFF_CORP_CYCLE_DUE" VARCHAR(50 CHAR),
+1244   "STAFF_CORP_DELQ_1_24" VARCHAR(50 CHAR),
+1245   "STAFF_CORP_MEMBER_SINCE_MONTH" VARCHAR(50 CHAR),
+1246   "STAFF_CORP_SALES_UNIT" VARCHAR(50 CHAR),
+1247   "STAFF_CORP_COST_CENTER" VARCHAR(50 CHAR),
+1248   "STAFF_CORP_PAYMENT" VARCHAR(50 CHAR),
+1249   "STAFF_CORP_TYPE" VARCHAR(50 CHAR),
+1250   "MCH_RISK_LVL" VARCHAR(50 CHAR),
+1251   "APP_MCH_ADDR" VARCHAR(50 CHAR),
+1252   "PRODUCT_NO" VARCHAR(50 CHAR),
+1253   "PRODUCT_NAME" VARCHAR(50 CHAR),
+1254   "EHD_CUST_TYPE" VARCHAR(50 CHAR),
+1255   "LST_REF_CASH_LIMIT_F" VARCHAR(50 CHAR),
+1256   "DANBAO_FLAG" VARCHAR(50 CHAR),
+1257   "LST_DANBAO_FLAG" VARCHAR(50 CHAR),
+1258   "DTE_DANBAO_FLAG" VARCHAR(50 CHAR),
+1259   "COR_NM_MATCH" VARCHAR(50 CHAR),
+1260   "INT_NM_MATCH" VARCHAR(50 CHAR),
+1261   "ZJ_NM_MATCH" VARCHAR(50 CHAR),
+1262   "HAVE_CAR_FLAG" VARCHAR(50 CHAR),
+1263   "HAVE_FANG_FLAG" VARCHAR(50 CHAR),
+1264   "AUTH_FIN_LAST_1M_CNT" VARCHAR(50 CHAR),
+1265   "AUTH_FIN_LAST_3M_CNT" VARCHAR(50 CHAR),
+1266   "AUTH_FIN_LAST_6M_CNT" VARCHAR(50 CHAR),
+1267   "OVD_ORDER_CNT_6M" VARCHAR(50 CHAR),
+1268   "OVD_ORDER_AMT_6M" VARCHAR(50 CHAR),
+1269   "MOBILE_FIXED_DAYS" VARCHAR(50 CHAR),
+1270   "ADR_STABILITY_DAYS" VARCHAR(50 CHAR),
+1271   "LAST_6M_AVG_ASSET_TOTAL" VARCHAR(50 CHAR),
+1272   "TOT_PAY_AMOUNT_6M" VARCHAR(50 CHAR),
+1273   "XFDC_INDEX" VARCHAR(50 CHAR),
+1274   "POSITIVE_BIZ_CNT_1Y" VARCHAR(50 CHAR),
+1275   "IS_JSONB_PRE_CREDIT_CUST" VARCHAR(50 CHAR),
+1276   "AL_ADDRESS" VARCHAR(50 CHAR),
+1277   "AL_CITY" VARCHAR(50 CHAR),
+1278   "AL_PROV" VARCHAR(50 CHAR),
+1279   "AL_AREA" VARCHAR(50 CHAR),
+1280   "ZM_SCORE" VARCHAR(50 CHAR),
+1281   "ZM_FRAUD_FLAG" VARCHAR(50 CHAR),
+1282   "ZM_INDURSTRY_FLAG" VARCHAR(50 CHAR),
+1283   "TB_USE_DVSN" VARCHAR(50 CHAR),
+1284   "XRETURNCODE1_N" VARCHAR(50 CHAR),
+1285   "XSCORE_N" VARCHAR(50 CHAR),
+1286   "XRETURNCODE2_N" VARCHAR(50 CHAR),
+1287   "XRISKLEVEL_N" VARCHAR(50 CHAR),
+1288   "XRISKDESC_N" VARCHAR(50 CHAR),
+1289   "DTE_OPENED_004" VARCHAR(50 CHAR),
+1290   "STATUS_IVS" VARCHAR(50 CHAR),
+1291   "STATUS_LDYS" VARCHAR(50 CHAR),
+1292   "STATUS_XSCR" VARCHAR(50 CHAR),
+1293   "STATUS_ALRH" VARCHAR(50 CHAR),
+1294   "MONTH_OUT" VARCHAR(50 CHAR),
+1295   "MONTH_IN" VARCHAR(50 CHAR),
+1296   "USER_BANK" VARCHAR(50 CHAR),
+1297   "AST_LVL" VARCHAR(50 CHAR),
+1298   "CREDIT_LIMIT" VARCHAR(50 CHAR),
+1299   "IVS_SCORE" VARCHAR(50 CHAR),
+1300   "HIT_RISK" VARCHAR(50 CHAR),
+1301   "INSTL_SUC_PERM" VARCHAR(50 CHAR),
+1302   "INSTL_SUC_PERM_LST" VARCHAR(50 CHAR),
+1303   "CASHADV_3MONTH_CNT" VARCHAR(50 CHAR),
+1304   "PINSTL_TRX_AMT" VARCHAR(50 CHAR),
+1305   "PINSTL_PMT_AMT" VARCHAR(50 CHAR),
+1306   "PINSTL_CASH_AMT" VARCHAR(50 CHAR),
+1307   "PINSTL_SMALL_INST_BAL" VARCHAR(50 CHAR),
+1308   "PINSTL_CASH_INST_BAL" VARCHAR(50 CHAR),
+1309   "STAFF_CORP_PERM_LIMIT" VARCHAR(50 CHAR),
+1310   "STAFF_CORP_EX_PLIMIT" VARCHAR(50 CHAR),
+1311   "ORDER_EXP_050" VARCHAR(50 CHAR),
+1312   "ORDER_EXP_055" VARCHAR(50 CHAR),
+1313   "ORDER_EXP_065" VARCHAR(50 CHAR),
+1314   "ORDER_EXP_060" VARCHAR(50 CHAR),
+1315   "ORDER_EXP_030" VARCHAR(50 CHAR),
+1316   "CASH_INSTL_LST_DTE" VARCHAR(50 CHAR),
+1317   "RISK_LIST_P" VARCHAR(50 CHAR),
+1318   "RISK_LIST_T" VARCHAR(50 CHAR),
+1319   "RISK_LIST_C" VARCHAR(50 CHAR),
+1320   "RISK_LIST_S" VARCHAR(50 CHAR),
+1321   "RISK_LIST2_Q" VARCHAR(50 CHAR),
+1322   "LIMIT_EXP_050" VARCHAR(50 CHAR),
+1323   "LIMIT_EXP_055" VARCHAR(50 CHAR),
+1324   "LIMIT_EXP_060" VARCHAR(50 CHAR),
+1325   "LIMIT_EXP_065" VARCHAR(50 CHAR),
+1326   "LIMIT_EXP_030" VARCHAR(50 CHAR),
+1327   "INSTL_OUTST_060" VARCHAR(50 CHAR),
+1328   "INSTL_OUTST_030" VARCHAR(50 CHAR),
+1329   "INSTL_PLIMIT_CHANGE_TIME_060" VARCHAR(50 CHAR),
+1330   "INSTL_PLIMIT_CHANGE_TIME_030" VARCHAR(50 CHAR),
+1331   "RISK_LIST_ST" VARCHAR(50 CHAR),
+1332   "RISK_LIST_TR" VARCHAR(50 CHAR),
+1333   "RISK_LIST_CT" VARCHAR(50 CHAR),
+1334   "RISK_LIST_XE" VARCHAR(50 CHAR),
+1335   "RISK_LIST_CL" VARCHAR(50 CHAR),
+1336   "RISK_LIST_RF" VARCHAR(50 CHAR),
+1337   "RISK_LIST_CF" VARCHAR(50 CHAR),
+1338   "INSTL_ORD_TIME_030" VARCHAR(50 CHAR),
+1339   "CUST_AR" VARCHAR(50 CHAR),
+1340   "CUST_AR_1" VARCHAR(50 CHAR),
+1341   "CUST_AR_2" VARCHAR(50 CHAR),
+1342   "CUST_AR_3" VARCHAR(50 CHAR),
+1343   "CUST_AR_4" VARCHAR(50 CHAR),
+1344   "CUST_AR_5" VARCHAR(50 CHAR),
+1345   "CUST_AR_6" VARCHAR(50 CHAR),
+1346   "CUST_INSTL_AR_REMAIN" VARCHAR(50 CHAR),
+1347   "CUST_INSTL_AR_REMAIN_1" VARCHAR(50 CHAR),
+1348   "CUST_INSTL_AR_REMAIN_2" VARCHAR(50 CHAR),
+1349   "CUST_INSTL_AR_REMAIN_3" VARCHAR(50 CHAR),
+1350   "INDI_AR_1" VARCHAR(50 CHAR),
+1351   "INDI_AR_2" VARCHAR(50 CHAR),
+1352   "INDI_AR_3" VARCHAR(50 CHAR),
+1353   "INDI_AR_4" VARCHAR(50 CHAR),
+1354   "INDI_AR_5" VARCHAR(50 CHAR),
+1355   "INDI_AR_6" VARCHAR(50 CHAR),
+1356   "INDI_AR_REMN_1" VARCHAR(50 CHAR),
+1357   "INDI_AR_REMN_2" VARCHAR(50 CHAR),
+1358   "INDI_AR_REMN_3" VARCHAR(50 CHAR),
+1359   "INDI_AR_REMN_4" VARCHAR(50 CHAR),
+1360   "INDI_MAX_TIMES" VARCHAR(50 CHAR),
+1361   "INDI_TRX_AMT_1" VARCHAR(50 CHAR),
+1362   "INDI_TRX_AMT_2" VARCHAR(50 CHAR),
+1363   "INDI_TRX_AMT_3" VARCHAR(50 CHAR),
+1364   "INDI_TRX_AMT_4" VARCHAR(50 CHAR),
+1365   "INDI_TRX_AMT_5" VARCHAR(50 CHAR),
+1366   "INDI_TRX_AMT_6" VARCHAR(50 CHAR),
+1367   "INDI_CASH_AMT_1" VARCHAR(50 CHAR),
+1368   "INDI_CASH_AMT_2" VARCHAR(50 CHAR),
+1369   "INDI_CASH_AMT_3" VARCHAR(50 CHAR),
+1370   "INDI_CASH_AMT_4" VARCHAR(50 CHAR),
+1371   "INDI_CASH_AMT_5" VARCHAR(50 CHAR),
+1372   "INDI_CASH_AMT_6" VARCHAR(50 CHAR),
+1373   "INDI_PMT_AMT_1" VARCHAR(50 CHAR),
+1374   "INDI_PMT_AMT_2" VARCHAR(50 CHAR),
+1375   "INDI_PMT_AMT_3" VARCHAR(50 CHAR),
+1376   "INDI_PMT_AMT_4" VARCHAR(50 CHAR),
+1377   "INDI_PMT_AMT_5" VARCHAR(50 CHAR),
+1378   "INDI_PMT_AMT_6" VARCHAR(50 CHAR),
+1379   "PINSTL_AR_1" VARCHAR(50 CHAR),
+1380   "PINSTL_AR_2" VARCHAR(50 CHAR),
+1381   "PINSTL_AR_3" VARCHAR(50 CHAR),
+1382   "PINSTL_AR_4" VARCHAR(50 CHAR),
+1383   "PINSTL_AR_5" VARCHAR(50 CHAR),
+1384   "PINSTL_AR_6" VARCHAR(50 CHAR),
+1385   "PINSTL_AR_REMN_1" VARCHAR(50 CHAR),
+1386   "PINSTL_AR_REMN_2" VARCHAR(50 CHAR),
+1387   "PINSTL_AR_REMN_3" VARCHAR(50 CHAR),
+1388   "PINSTL_AR_REMN_4" VARCHAR(50 CHAR),
+1389   "PINSTL_MAX_TIMES" VARCHAR(50 CHAR),
+1390   "SS_AR_1" VARCHAR(50 CHAR),
+1391   "SS_AR_2" VARCHAR(50 CHAR),
+1392   "SS_AR_3" VARCHAR(50 CHAR),
+1393   "SS_AR_4" VARCHAR(50 CHAR),
+1394   "SS_AR_5" VARCHAR(50 CHAR),
+1395   "SS_AR_6" VARCHAR(50 CHAR),
+1396   "AT003_AR_REMN_1" VARCHAR(50 CHAR),
+1397   "AT003_AR_REMN_2" VARCHAR(50 CHAR),
+1398   "AT003_AR_REMN_3" VARCHAR(50 CHAR),
+1399   "AT003_AR_REMN_4" VARCHAR(50 CHAR),
+1400   "AT003_MAX_TIMES" VARCHAR(50 CHAR),
+1401   "AR_1_030" VARCHAR(50 CHAR),
+1402   "AR_2_030" VARCHAR(50 CHAR),
+1403   "AR_3_030" VARCHAR(50 CHAR),
+1404   "AR_4_030" VARCHAR(50 CHAR),
+1405   "AR_5_030" VARCHAR(50 CHAR),
+1406   "AR_6_030" VARCHAR(50 CHAR),
+1407   "PMT_AMT_1_030" VARCHAR(50 CHAR),
+1408   "PMT_AMT_2_030" VARCHAR(50 CHAR),
+1409   "PMT_AMT_3_030" VARCHAR(50 CHAR),
+1410   "PMT_AMT_4_030" VARCHAR(50 CHAR),
+1411   "PMT_AMT_5_030" VARCHAR(50 CHAR),
+1412   "PMT_AMT_6_030" VARCHAR(50 CHAR),
+1413   "AR_REMN_1_030" VARCHAR(50 CHAR),
+1414   "AR_REMN_2_030" VARCHAR(50 CHAR),
+1415   "AR_REMN_3_030" VARCHAR(50 CHAR),
+1416   "AR_REMN_4_030" VARCHAR(50 CHAR),
+1417   "MAX_TIMES_030" VARCHAR(50 CHAR),
+1418   "AR_1_050" VARCHAR(50 CHAR),
+1419   "AR_2_050" VARCHAR(50 CHAR),
+1420   "AR_3_050" VARCHAR(50 CHAR),
+1421   "AR_4_050" VARCHAR(50 CHAR),
+1422   "AR_5_050" VARCHAR(50 CHAR),
+1423   "AR_6_050" VARCHAR(50 CHAR),
+1424   "AR_REMN_1_050" VARCHAR(50 CHAR),
+1425   "AR_REMN_2_050" VARCHAR(50 CHAR),
+1426   "AR_REMN_3_050" VARCHAR(50 CHAR),
+1427   "AR_REMN_4_050" VARCHAR(50 CHAR),
+1428   "MAX_TIMES_050" VARCHAR(50 CHAR),
+1429   "AR_1_055" VARCHAR(50 CHAR),
+1430   "AR_2_055" VARCHAR(50 CHAR),
+1431   "AR_3_055" VARCHAR(50 CHAR),
+1432   "AR_4_055" VARCHAR(50 CHAR),
+1433   "AR_5_055" VARCHAR(50 CHAR),
+1434   "AR_6_055" VARCHAR(50 CHAR),
+1435   "AR_REMN_1_055" VARCHAR(50 CHAR),
+1436   "AR_REMN_2_055" VARCHAR(50 CHAR),
+1437   "AR_REMN_3_055" VARCHAR(50 CHAR),
+1438   "AR_REMN_4_055" VARCHAR(50 CHAR),
+1439   "MAX_TIMES_055" VARCHAR(50 CHAR),
+1440   "AR_1_060" VARCHAR(50 CHAR),
+1441   "AR_2_060" VARCHAR(50 CHAR),
+1442   "AR_3_060" VARCHAR(50 CHAR),
+1443   "AR_4_060" VARCHAR(50 CHAR),
+1444   "AR_5_060" VARCHAR(50 CHAR),
+1445   "AR_6_060" VARCHAR(50 CHAR),
+1446   "AR_REMN_1_060" VARCHAR(50 CHAR),
+1447   "AR_REMN_2_060" VARCHAR(50 CHAR),
+1448   "AR_REMN_3_060" VARCHAR(50 CHAR),
+1449   "AR_REMN_4_060" VARCHAR(50 CHAR),
+1450   "MAX_TIMES_060" VARCHAR(50 CHAR),
+1451   "AR_1_065" VARCHAR(50 CHAR),
+1452   "AR_2_065" VARCHAR(50 CHAR),
+1453   "AR_3_065" VARCHAR(50 CHAR),
+1454   "AR_4_065" VARCHAR(50 CHAR),
+1455   "AR_5_065" VARCHAR(50 CHAR),
+1456   "AR_6_065" VARCHAR(50 CHAR),
+1457   "AR_REMN_1_065" VARCHAR(50 CHAR),
+1458   "AR_REMN_2_065" VARCHAR(50 CHAR),
+1459   "AR_REMN_3_065" VARCHAR(50 CHAR),
+1460   "AR_REMN_4_065" VARCHAR(50 CHAR),
+1461   "MAX_TIMES_065" VARCHAR(50 CHAR),
+1462   "STAFF_CORP_AR_1" VARCHAR(50 CHAR),
+1463   "STAFF_CORP_AR_2" VARCHAR(50 CHAR),
+1464   "STAFF_CORP_AR_3" VARCHAR(50 CHAR),
+1465   "STAFF_CORP_AR_4" VARCHAR(50 CHAR),
+1466   "STAFF_CORP_AR_5" VARCHAR(50 CHAR),
+1467   "STAFF_CORP_AR_6" VARCHAR(50 CHAR),
+1468   "STAFF_CORP_AR_REMN_1" VARCHAR(50 CHAR),
+1469   "STAFF_CORP_AR_REMN_2" VARCHAR(50 CHAR),
+1470   "STAFF_CORP_AR_REMN_3" VARCHAR(50 CHAR),
+1471   "STAFF_CORP_AR_REMN_4" VARCHAR(50 CHAR),
+1472   "STAFF_CORP_MAX_TIMES" VARCHAR(50 CHAR),
+1473   "STATUS_ZMDS" VARCHAR(50 CHAR),
+1474   "OCP_TYPE" VARCHAR(50 CHAR),
+1475   "FXQRL_RSKLVL" VARCHAR(50 CHAR),
+1476   "FXQBL_RESULTTAG" VARCHAR(50 CHAR),
+1477   "STATUS_FXQRL" VARCHAR(50 CHAR),
+1478   "STATUS_FXQBL" VARCHAR(50 CHAR),
+1479   "ZL_RESULT" VARCHAR(50 CHAR),
+1480   "ZL_LIMIT" VARCHAR(50 CHAR),
+1481   "MTH_ZDFQ_AMT_1" VARCHAR(50 CHAR),
+1482   "MTH_ZDFQ_AMT_2" VARCHAR(50 CHAR),
+1483   "MTH_ZDFQ_AMT_3" VARCHAR(50 CHAR),
+1484   "MTH_ZDFQ_AMT_4" VARCHAR(50 CHAR),
+1485   "MTH_ZDFQ_AMT_5" VARCHAR(50 CHAR),
+1486   "MTH_ZDFQ_AMT_6" VARCHAR(50 CHAR),
+1487   "MTH_JYFQ_AMT_1" VARCHAR(50 CHAR),
+1488   "MTH_JYFQ_AMT_2" VARCHAR(50 CHAR),
+1489   "MTH_JYFQ_AMT_3" VARCHAR(50 CHAR),
+1490   "MTH_JYFQ_AMT_4" VARCHAR(50 CHAR),
+1491   "MTH_JYFQ_AMT_5" VARCHAR(50 CHAR),
+1492   "MTH_JYFQ_AMT_6" VARCHAR(50 CHAR),
+1493   "MTH1_XJFQ_NUM" VARCHAR(50 CHAR),
+1494   "MTH2_XJFQ_NUM" VARCHAR(50 CHAR),
+1495   "MTH3_XJFQ_NUM" VARCHAR(50 CHAR),
+1496   "MTH4_XJFQ_NUM" VARCHAR(50 CHAR),
+1497   "MTH5_XJFQ_NUM" VARCHAR(50 CHAR),
+1498   "MTH6_XJFQ_NUM" VARCHAR(50 CHAR),
+1499   "MTH12_XJFQ_NUM" VARCHAR(50 CHAR),
+1500   "MTH_XJFQ_AMT_1" VARCHAR(50 CHAR),
+1501   "MTH_XJFQ_AMT_2" VARCHAR(50 CHAR),
+1502   "MTH_XJFQ_AMT_3" VARCHAR(50 CHAR),
+1503   "MTH_XJFQ_AMT_4" VARCHAR(50 CHAR),
+1504   "MTH_XJFQ_AMT_5" VARCHAR(50 CHAR),
+1505   "MTH_XJFQ_AMT_6" VARCHAR(50 CHAR),
+1506   "SS_CASH_AMT_1" VARCHAR(50 CHAR),
+1507   "SS_CASH_AMT_2" VARCHAR(50 CHAR),
+1508   "SS_CASH_AMT_3" VARCHAR(50 CHAR),
+1509   "SS_CASH_AMT_4" VARCHAR(50 CHAR),
+1510   "SS_CASH_AMT_5" VARCHAR(50 CHAR),
+1511   "SS_CASH_AMT_6" VARCHAR(50 CHAR),
+1512   "CSH_M1_CNT" VARCHAR(50 CHAR),
+1513   "CSH_M2_CNT" VARCHAR(50 CHAR),
+1514   "CUST_NO_JIEB" VARCHAR(50 CHAR),
+1515   "ACT_NO_JIEB" VARCHAR(50 CHAR),
+1516   "ACT_STATUS_JIEB" VARCHAR(50 CHAR),
+1517   "CREDIT_LIMIT_JIEB" VARCHAR(50 CHAR),
+1518   "LIMIT_DATE_JIEB" VARCHAR(50 CHAR),
+1519   "LIMIT_END_DATE_JIEB" VARCHAR(50 CHAR),
+1520   "EX_LIMIT_JIEB" VARCHAR(50 CHAR),
+1521   "LIMIT_CHANGE_DAYS_JIEB" VARCHAR(50 CHAR),
+1522   "LIMIT_AVAIL_JIEB" VARCHAR(50 CHAR),
+1523   "LIMIT_AVAIL1_JIEB" VARCHAR(50 CHAR),
+1524   "LIMIT_AVAIL2_JIEB" VARCHAR(50 CHAR),
+1525   "LIMIT_AVAIL3_JIEB" VARCHAR(50 CHAR),
+1526   "LIMIT_AVAIL4_JIEB" VARCHAR(50 CHAR),
+1527   "LIMIT_AVAIL5_JIEB" VARCHAR(50 CHAR),
+1528   "LIMIT_AVAIL6_JIEB" VARCHAR(50 CHAR),
+1529   "AR_JIEB" VARCHAR(50 CHAR),
+1530   "AR1_JIEB" VARCHAR(50 CHAR),
+1531   "AR2_JIEB" VARCHAR(50 CHAR),
+1532   "AR3_JIEB" VARCHAR(50 CHAR),
+1533   "AR4_JIEB" VARCHAR(50 CHAR),
+1534   "AR5_JIEB" VARCHAR(50 CHAR),
+1535   "AR6_JIEB" VARCHAR(50 CHAR),
+1536   "PMT_AMT_JIEB" VARCHAR(50 CHAR),
+1537   "PMT_AMT1_JIEB" VARCHAR(50 CHAR),
+1538   "PMT_AMT2_JIEB" VARCHAR(50 CHAR),
+1539   "PMT_AMT3_JIEB" VARCHAR(50 CHAR),
+1540   "PMT_AMT4_JIEB" VARCHAR(50 CHAR),
+1541   "PMT_AMT5_JIEB" VARCHAR(50 CHAR),
+1542   "PMT_AMT6_JIEB" VARCHAR(50 CHAR),
+1543   "INSTL_BAL1_JIEB" VARCHAR(50 CHAR),
+1544   "INSTL_BAL2_JIEB" VARCHAR(50 CHAR),
+1545   "INSTL_BAL3_JIEB" VARCHAR(50 CHAR),
+1546   "INSTL_BAL4_JIEB" VARCHAR(50 CHAR),
+1547   "INSTL_BAL5_JIEB" VARCHAR(50 CHAR),
+1548   "INSTL_BAL6_JIEB" VARCHAR(50 CHAR),
+1549   "INSTL_BAL7_JIEB" VARCHAR(50 CHAR),
+1550   "BLK_CODE_JIEB" VARCHAR(50 CHAR),
+1551   "PAY_DUE_DAY_JIEB" VARCHAR(50 CHAR),
+1552   "CYCLE_DUE_JIEB" VARCHAR(50 CHAR),
+1553   "DELQ24_JIEB" VARCHAR(50 CHAR),
+1554   "MAX_INSTL_TIMES_JIEB" VARCHAR(50 CHAR),
+1555   "DTE_OPENED_JIEB" VARCHAR(50 CHAR),
+1556   "ORDER_TOTAL_JIEB" VARCHAR(50 CHAR),
+1557   "ORDER_TOTAL1_JIEB" VARCHAR(50 CHAR),
+1558   "ORDER_TOTAL2_JIEB" VARCHAR(50 CHAR),
+1559   "ORDER_TOTAL3_JIEB" VARCHAR(50 CHAR),
+1560   "ORDER_TOTAL4_JIEB" VARCHAR(50 CHAR),
+1561   "ORDER_TOTAL5_JIEB" VARCHAR(50 CHAR),
+1562   "ORDER_TOTAL6_JIEB" VARCHAR(50 CHAR),
+1563   "ORDER_AMT_TOTAL_JIEB" VARCHAR(50 CHAR),
+1564   "ORDER_AMT_TOTAL1_JIEB" VARCHAR(50 CHAR),
+1565   "ORDER_AMT_TOTAL2_JIEB" VARCHAR(50 CHAR),
+1566   "ORDER_AMT_TOTAL3_JIEB" VARCHAR(50 CHAR),
+1567   "ORDER_AMT_TOTAL4_JIEB" VARCHAR(50 CHAR),
+1568   "ORDER_AMT_TOTAL5_JIEB" VARCHAR(50 CHAR),
+1569   "ORDER_AMT_TOTAL6_JIEB" VARCHAR(50 CHAR),
+1570   "LOCAL_RHSCORE" VARCHAR(50 CHAR),
+1571   "LOCAL_ASCORE" VARCHAR(50 CHAR),
+1572   "ORG_JIEB" VARCHAR(50 CHAR),
+1573   "WATCHLIST_NUM" VARCHAR(50 CHAR),
+1574   "WATCHLIST_CODES" VARCHAR(50 CHAR),
+1575   "LOCAL_RHSCOREMONTH" VARCHAR(50 CHAR),
+1576   "RH_MSG_ID" VARCHAR(50 CHAR),
+1577   "RH_MID_ONE_MSG_ID" VARCHAR(50 CHAR),
+1578   "RH_MID_TWO_MSG_ID" VARCHAR(50 CHAR),
+1579   "EDU_MSG_ID" VARCHAR(50 CHAR),
+1580   "TDUN_MSG_ID" VARCHAR(50 CHAR),
+1581   "GDMAP_MSG_ID" VARCHAR(50 CHAR),
+1582   "SJS_SJ_MSG_ID" VARCHAR(50 CHAR),
+1583   "XJBD_MSG_ID" VARCHAR(50 CHAR),
+1584   "ARHZ_TASK_ID" VARCHAR(50 CHAR),
+1585   "KX_TASK_ID" VARCHAR(50 CHAR),
+1586   "MF114_TASK_ID" VARCHAR(50 CHAR),
+1587   "STATUS_MF114" VARCHAR(50 CHAR),
+1588   "MF114_REV_CUB_CNAM" VARCHAR(50 CHAR),
+1589   "MF114_REV_CUB_CADR" VARCHAR(50 CHAR),
+1590   "MF114_DIR_CUB_CTEL" VARCHAR(50 CHAR),
+1591   "MF114_DIR_CUB_CADR" VARCHAR(50 CHAR),
+1592   "MF114_RTN_RST_COD" VARCHAR(50 CHAR),
+1593   "MF114_SER_RST_COD" VARCHAR(50 CHAR),
+1594   "MF114_IF_REV_CUB_CNAM" VARCHAR(50 CHAR),
+1595   "MF114_IF_DIR_CUB_CTEL" VARCHAR(50 CHAR),
+1596   "MF114_IF_REV_CUB_CADR" VARCHAR(50 CHAR),
+1597   "MF114_IF_DIR_CUB_CADR" VARCHAR(50 CHAR),
+1598   "MF114_EXC_FLG" VARCHAR(50 CHAR),
+1599   "MF114_CRDT_QRY_RTN_FLG" VARCHAR(50 CHAR),
+1600   "STATUS_FL" VARCHAR(50 CHAR),
+1601   "FL_CARD_HI_GRD" VARCHAR(50 CHAR),
+1602   "FL_CARD_HI_GRD_NM" VARCHAR(50 CHAR),
+1603   "FL_ELY_OPN_DT" VARCHAR(50 CHAR),
+1604   "FL_CONT_OPN_DAYS" VARCHAR(50 CHAR),
+1605   "FL_EMP_IND" VARCHAR(50 CHAR),
+1606   "FL_PROF_EDTN_OPN_IND" VARCHAR(50 CHAR),
+1607   "FL_AIO_CARD_ELY_OPN_DT" VARCHAR(50 CHAR),
+1608   "FL_AIO_CARD_LATE_OPN_DT" VARCHAR(50 CHAR),
+1609   "STATUS_FXQDW" VARCHAR(50 CHAR),
+1610   "FXQDW_ORG_COD" VARCHAR(50 CHAR),
+1611   "FXQDW_RSK_LVL" VARCHAR(50 CHAR),
+1612   "SMRZ_TASK_ID" VARCHAR(50 CHAR),
+1613   "STATUS_SMRZ" VARCHAR(50 CHAR),
+1614   "SMRZ_RNV_RESULT" VARCHAR(50 CHAR),
+1615   "SMRZ_QRY_TYPE" VARCHAR(50 CHAR),
+1616   "SMRZ_IDTYPECHECK_RESULT" VARCHAR(50 CHAR),
+1617   "SMRZ_IDNOCHECK_RESULT" VARCHAR(50 CHAR),
+1618   "SMRZ_NAMECHECK_RESULT" VARCHAR(50 CHAR),
+1619   "SMRZ_ISIDMATCH_ALL" VARCHAR(50 CHAR),
+1620   "SMRZ_CARRIER_SIGN" VARCHAR(50 CHAR),
+1621   "SMRZ_CHECK_RESULT" VARCHAR(50 CHAR),
+1622   "ZGDXZW_TASK_ID" VARCHAR(50 CHAR),
+1623   "DXYZZ_TASK_ID" VARCHAR(50 CHAR),
+1624   "STATUS_DXYZZ" VARCHAR(50 CHAR),
+1625   "DXYZZ_VALUE" VARCHAR(50 CHAR),
+1626   "HM_TASK_ID" VARCHAR(50 CHAR),
+1627   "STATUS_HM" VARCHAR(50 CHAR),
+1628   "HM_HAS_PUN_INFO" VARCHAR(50 CHAR),
+1629   "HM_HAS_NOR_PRO" VARCHAR(50 CHAR),
+1630   "HM_HAS_MOR_PRO" VARCHAR(50 CHAR),
+1631   "HM_HAS_SEAL_PRO" VARCHAR(50 CHAR),
+1632   "HM_HAS_PER_LOS_INFO" VARCHAR(50 CHAR),
+1633   "HM_HAS_COM_LOS_INFO" VARCHAR(50 CHAR),
+1634   "HM_HAS_LOAN" VARCHAR(50 CHAR),
+1635   "HM_RES_PER_LOAN" VARCHAR(50 CHAR),
+1636   "HM_HAS_OVER" VARCHAR(50 CHAR),
+1637   "HM_RES_PAY_STS" VARCHAR(50 CHAR),
+1638   "HM_RES_PAY_COM" VARCHAR(50 CHAR),
+1639   "HM_RES_PAY_AMO" VARCHAR(50 CHAR),
+1640   "HM_RES_PAY_DATE" VARCHAR(50 CHAR),
+1641   "HM_EDW_DATE" VARCHAR(50 CHAR),
+1642   "HM_MED_DATE" VARCHAR(50 CHAR),
+1643   "HM_UEM_DATE" VARCHAR(50 CHAR),
+1644   "HM_EMP_DATE" VARCHAR(50 CHAR),
+1645   "HM_MAT_DATE" VARCHAR(50 CHAR),
+1646   "HM_ANN_DATE" VARCHAR(50 CHAR),
+1647   "HM_LST_SOL_COM" VARCHAR(50 CHAR),
+1648   "HM_HAS_DRI_INFO" VARCHAR(50 CHAR),
+1649   "HM_IS_MARR" VARCHAR(50 CHAR),
+1650   "HM_MAT_ID" VARCHAR(50 CHAR),
+1651   "HM_MAT_NAME" VARCHAR(50 CHAR),
+1652   "HM_MARR_DATE" VARCHAR(50 CHAR),
+1653   "HM_IS_DIV" VARCHAR(50 CHAR),
+1654   "HM_DIV_MAT_ID" VARCHAR(50 CHAR),
+1655   "HM_DIV_MAT_NAME" VARCHAR(50 CHAR),
+1656   "HM_DIV_DATE" VARCHAR(50 CHAR),
+1657   "HM_IS_DISA" VARCHAR(50 CHAR),
+1658   "HM_IS_SUS" VARCHAR(50 CHAR),
+1659   "HM_HAS_TOU_CERT" VARCHAR(50 CHAR),
+1660   "HM_SOL_STS" VARCHAR(50 CHAR),
+1661   "HM_SOL_COM" VARCHAR(50 CHAR),
+1662   "HM_RES_PAY_NUM" VARCHAR(50 CHAR),
+1663   "HM_SOL_PAY_NUM" VARCHAR(50 CHAR),
+1664   "HM_IS_RES_CST" VARCHAR(50 CHAR),
+1665   "HM_IS_SOL_CST" VARCHAR(50 CHAR),
+1666   "SJSBL_TASK_ID" VARCHAR(50 CHAR),
+1667   "STATUS_SJSBL" VARCHAR(50 CHAR),
+1668   "SJSBL_RISK_GRADE" VARCHAR(50 CHAR),
+1669   "SJSBL_SECONDLEVEL_SYSTEM" VARCHAR(50 CHAR),
+1670   "SJSBL_FIRSTLEVEL_SYSTEM" VARCHAR(50 CHAR),
+1671   "SJSBL_CODE" VARCHAR(50 CHAR),
+1672   "SJSBL_MSG" VARCHAR(50 CHAR),
+1673   "LHJM1_TASK_ID" VARCHAR(50 CHAR),
+1674   "STATUS_LHJM1" VARCHAR(50 CHAR),
+1675   "LHJM1_CREDITSCORE" VARCHAR(50 CHAR),
+1676   "LHJM2_TASK_ID" VARCHAR(50 CHAR),
+1677   "STATUS_LHJM2" VARCHAR(50 CHAR),
+1678   "LHJM2_CREDITSCORE" VARCHAR(50 CHAR),
+1679   "LHJMJ_TASK_ID" VARCHAR(50 CHAR),
+1680   "STATUS_LHJMJ" VARCHAR(50 CHAR),
+1681   "LHJMJ_CREDITSCORE" VARCHAR(50 CHAR),
+1682   "BD_BLACK_TASK_ID" VARCHAR(50 CHAR),
+1683   "STATUS_BD_BLACK" VARCHAR(50 CHAR),
+1684   "BD_BLACK_LEVEL" VARCHAR(50 CHAR),
+1685   "BD_BLACK_REASON" VARCHAR(50 CHAR),
+1686   "BD_BLACK_DETAILS" VARCHAR(50 CHAR),
+1687   "BD_SCORE_TASK_ID" VARCHAR(50 CHAR),
+1688   "STATUS_BD_SCORE" VARCHAR(50 CHAR),
+1689   "BD_SCORE_MODELS" VARCHAR(50 CHAR),
+1690   "BD_SCORE" VARCHAR(50 CHAR),
+1691   "BD_LBS_TASK_ID" VARCHAR(50 CHAR),
+1692   "STATUS_BD_LBS" VARCHAR(50 CHAR),
+1693   "BD_LBS_CMP_ADD_VERIFY_RESULT" VARCHAR(50 CHAR),
+1694   "BD_LBS_CMP_ADD_CONFIDENCE" VARCHAR(50 CHAR),
+1695   "BD_LBS_CMP_ADD_VALIDITY" VARCHAR(50 CHAR),
+1696   "BD_LBS_CMP_ADD_MATCH_LEVEL" VARCHAR(50 CHAR),
+1697   "BD_LBS_CMP_ADD_FREQUENCY" VARCHAR(50 CHAR),
+1698   "BD_LBS_CMP_ADD_INACTIVEDAY" VARCHAR(50 CHAR),
+1699   "BD_LBS_CMP_BDHOM_ADD_VERIFY_RESULT" VARCHAR(50 CHAR),
+1700   "BD_LBS_CMP_BDHOM_ADD_CONFIDENCE" VARCHAR(50 CHAR),
+1701   "BD_LBS_CMP_BDHOM_ADD_VALIDITY" VARCHAR(50 CHAR),
+1702   "BD_LBS_CMP_BDHOM_ADD_MATCH_LEVEL" VARCHAR(50 CHAR),
+1703   "BD_LBS_CMP_BDHOM_ADD_FREQUENCY" VARCHAR(50 CHAR),
+1704   "BD_LBS_CMP_BDHOM_ADD_INACTIVEDAY" VARCHAR(50 CHAR),
+1705   "QJK_TASK_ID" VARCHAR(50 CHAR),
+1706   "STATUS_QJK" VARCHAR(50 CHAR),
+1707   "QJK_QYSL" VARCHAR(50 CHAR),
+1708   "QJK_ZCQY" VARCHAR(50 CHAR),
+1709   "QJK_ZCZB" VARCHAR(50 CHAR),
+1710   "QJK_GS_TASK_ID" VARCHAR(50 CHAR),
+1711   "STATUS_QJK_GS" VARCHAR(50 CHAR),
+1712   "QJK_GS_ZCBS" VARCHAR(50 CHAR),
+1713   "QJK_GS_YCBS" VARCHAR(50 CHAR),
+1714   "QJK_GS_BG" VARCHAR(50 CHAR),
+1715   "QJK_GS_ZT" VARCHAR(50 CHAR),
+1716   "QJK_GS_ZCZB" VARCHAR(50 CHAR),
+1717   "QJK_GS_SSZB" VARCHAR(50 CHAR),
+1718   "QJK_GS_JJSJ" VARCHAR(50 CHAR),
+1719   "QJK_GS_JJQX" VARCHAR(50 CHAR),
+1720   "PY_RPT_MSG_ID" VARCHAR(50 CHAR),
+1721   "STATUS_PY_RPT" VARCHAR(50 CHAR),
+1722   "PYXY_CAR_DEBIT_AMT" VARCHAR(50 CHAR),
+1723   "PYXY_MONTH3_QUERY_CNT" VARCHAR(50 CHAR),
+1724   "PYXY_DEBIT_DELAY_AMT" VARCHAR(50 CHAR),
+1725   "PYXY_DEBIT_UNNORMAL_STATUS" VARCHAR(50 CHAR),
+1726   "PYXY_DEBIT_DELAY_AMT_DQ" VARCHAR(50 CHAR),
+1727   "PYXY_DEBIT_CONDELAY1_CNT" VARCHAR(50 CHAR),
+1728   "PYXY_DEBIT_CONDELAY2_CNT" VARCHAR(50 CHAR),
+1729   "PYXY_DEBIT_CONDELAY3_CNT" VARCHAR(50 CHAR),
+1730   "PYXY_DEBIT_CONDELAY4_CNT" VARCHAR(50 CHAR),
+1731   "PYXY_DEBIT_CONDELAY5_CNT" VARCHAR(50 CHAR),
+1732   "PYXY_DEBIT_CONDELAY6_CNT" VARCHAR(50 CHAR),
+1733   "PYXY_DEBIT_CONDELAY7_CNT" VARCHAR(50 CHAR),
+1734   "PYXY_DEBIT_CONDELAY12_CNT" VARCHAR(50 CHAR),
+1735   "PYXY_UNSET_CAR_DEBIT_AMT" VARCHAR(50 CHAR),
+1736   "PYXY_UNSET_CAR_DEBIT_MONTHLY_AMT" VARCHAR(50 CHAR),
+1737   "PYXY_SET_CAR_DEBIT_CNT" VARCHAR(50 CHAR),
+1738   "PYXY_MONTH6_CB_CNT" VARCHAR(50 CHAR),
+1739   "PYXY_PAY_FLAG" VARCHAR(50 CHAR),
+1740   "PYXY_RETURN_FLAG" VARCHAR(50 CHAR),
+1741   "PYXY_ID_FLAG" VARCHAR(50 CHAR),
+1742   "PYXY_SP_FLAG" VARCHAR(50 CHAR),
+1743   "CLT_REA_IND" VARCHAR(50 CHAR),
+1744   "CR_IC_END_DTE" VARCHAR(50 CHAR),
+1745   "CR_ID_DTE_FLG" VARCHAR(50 CHAR),
+1746   "CR_IC_FLAG" VARCHAR(50 CHAR),
+1747   "CLT_CTF_NBR" VARCHAR(50 CHAR),
+1748   "CLT_CTF_TYP" VARCHAR(50 CHAR),
+1749   "LST_ELSE1" VARCHAR(50 CHAR),
+1750   "LST_ELSE2" VARCHAR(50 CHAR),
+1751   "LST_ELSE3" VARCHAR(50 CHAR),
+1752   "LST_ELSE4" VARCHAR(50 CHAR),
+1753   "LST_ELSE5" VARCHAR(50 CHAR),
+1754   "LST_ELSE6" VARCHAR(50 CHAR),
+1755   "LST_REF_MCH_LIMIT_F" VARCHAR(50 CHAR),
+1756   "LST_CASH_LIMIT_CHANGE_DATE" VARCHAR(50 CHAR),
+1757   "LST_MCH_LIMIT_CHANGE_DATE" VARCHAR(50 CHAR),
+1758   "COM_BAS_TYP" VARCHAR(50 CHAR),
+1759   "CMDT_NBR" VARCHAR(50 CHAR),
+1760   "MCNT_NBR" VARCHAR(50 CHAR),
+1761   "RHZX_ORI_TASK_ID" VARCHAR(50 CHAR),
+1762   "RHZX_ONE_TASK_ID" VARCHAR(50 CHAR),
+1763   "RHZX_TWO_TASK_ID" VARCHAR(50 CHAR),
+1764   "ZM_INF_TASK_ID" VARCHAR(50 CHAR),
+1765   "ZP_SOURCE_CODE" VARCHAR(50 CHAR),
+1766   "STATUS_JIEB_ACCT" VARCHAR(50 CHAR)
+1767 )
+1768 TABLESPACE "USERS"
+1769 INITRANS 2
+1770 MAXTRANS 255
+1771 PCTFREE 8;
+
+Succeed.
+
+SQL> exp tables=EHLVINPUT file="./data/table_much_column.dmp" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = EHLVINPUT
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/table_much_column.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_REMAP.EHLVINPUT ...
+  exporting DDL of TEST_REMAP.EHLVINPUT ...
+  exporting data of TEST_REMAP.EHLVINPUT ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_REMAP.EHLVINPUT ...
+  exporting constraints on TEST_REMAP.EHLVINPUT ...
+
+Logical export succeeded.
+
+SQL> create tablespace table_too_much_column_EHLVINPUT datafile 'table_too_much_column_EHLVINPUT' size 10m autoextend on;
+
+Succeed.
+
+SQL> imp tables=EHLVINPUT file="./data/table_much_column.dmp" filetype=bin remap_tablespace=USERS:TABLE_TOO_MUCH_COLUMN_EHLVINPUT log="./data/imp_table_much_column.log";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = EHLVINPUT
+-- DUMP FILE = ./data/table_much_column.dmp
+-- LOG FILE = ./data/imp_table_much_column.log
+-- REMAP TABLESPACE = USERS:TABLE_TOO_MUCH_COLUMN_EHLVINPUT
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_REMAP ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_REMAP ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_REMAP ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_REMAP ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_REMAP ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_REMAP ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_REMAP ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_REMAP ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_REMAP ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select TABLE_NAME,TABLESPACE_NAME from all_tables where OWNER = UPPER('test_remap');
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                 
+---------------------------------------------------------------- ----------------------------------------------------------------
+EHLVINPUT                                                        TABLE_TOO_MUCH_COLUMN_EHLVINPUT                                 
+
+1 rows fetched.
+
+SQL> drop user test_remap cascade;
+
+Succeed.
+
+SQL> drop tablespace table_too_much_column_EHLVINPUT including contents and datafiles;
+
+Succeed.
+
+SQL> 
+SQL> -- filter content of export file
+SQL> drop user if exists test_content_filter;
+
+Succeed.
+
+SQL> create user test_content_filter identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_content_filter;
+
+Succeed.
+
+SQL> conn test_content_filter/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table test ( c int , c1 int);
+
+Succeed.
+
+SQL> insert into test values (1,2),(3,4);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> -- 1. exp table with 3 content type
+SQL> exp tables = test content = all filetype=bin file = "./data/test_content_filter_all.dmp";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = TEST
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_content_filter_all.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CONTENT_FILTER.TEST ...
+  exporting DDL of TEST_CONTENT_FILTER.TEST ...
+  exporting data of TEST_CONTENT_FILTER.TEST ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_CONTENT_FILTER.TEST ...
+  exporting constraints on TEST_CONTENT_FILTER.TEST ...
+
+Logical export succeeded.
+
+SQL> exp tables = test content = metadata_only filetype=bin file = "./data/test_content_filter_meta.dmp";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = TEST
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_content_filter_meta.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = METADATA_ONLY
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CONTENT_FILTER.TEST ...
+  exporting DDL of TEST_CONTENT_FILTER.TEST ...
+
+  exporting indexes on TEST_CONTENT_FILTER.TEST ...
+  exporting constraints on TEST_CONTENT_FILTER.TEST ...
+
+Logical export succeeded.
+
+SQL> exp tables = test content = data_only filetype=bin file = "./data/test_content_filter_data.dmp";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = TEST
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_content_filter_data.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = DATA_ONLY
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CONTENT_FILTER.TEST ...
+  exporting data of TEST_CONTENT_FILTER.TEST ...
+    data exporting success, 2 rows are dumped.
+
+Logical export succeeded.
+
+SQL> -- 2. imp these files with different content type
+SQL> -- 2.1 use content = all import
+SQL> imp tables =  test content = all filetype=bin file = "./data/test_content_filter_all.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_all.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TEST                                                             2         
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+1            2           
+3            4           
+
+2 rows fetched.
+
+SQL> imp tables = test content = all filetype=bin file = "./data/test_content_filter_meta.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_meta.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> imp tables = test content = all filetype=bin file = "./data/test_content_filter_data.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_data.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TEST                                                             2         
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+1            2           
+3            4           
+
+2 rows fetched.
+
+SQL> -- 2.2 use content = metadata_only import
+SQL> imp tables =  test content = metadata_only filetype=bin file = "./data/test_content_filter_all.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_all.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = METADATA_ONLY
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> imp tables = test content = metadata_only filetype=bin file = "./data/test_content_filter_meta.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_meta.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = METADATA_ONLY
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> imp tables = test content = metadata_only filetype=bin file = "./data/test_content_filter_data.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_data.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = METADATA_ONLY
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> -- 2.3 use content = data_only import
+SQL> imp tables =  test content = data_only filetype=bin file = "./data/test_content_filter_all.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_all.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = DATA_ONLY
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TEST                                                             2         
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+1            2           
+3            4           
+
+2 rows fetched.
+
+SQL> imp tables = test content = data_only filetype=bin file = "./data/test_content_filter_meta.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_meta.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = DATA_ONLY
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+1            2           
+3            4           
+
+2 rows fetched.
+
+SQL> imp tables = test content = data_only filetype=bin file = "./data/test_content_filter_data.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST
+-- DUMP FILE = ./data/test_content_filter_data.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = DATA_ONLY
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CONTENT_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CONTENT_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CONTENT_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CONTENT_FILTER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TEST                                                             2         
+
+  Importing foreign key of schema TEST_CONTENT_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CONTENT_FILTER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CONTENT_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CONTENT_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CONTENT_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from test order by c;
+
+C            C1          
+------------ ------------
+1            2           
+1            2           
+3            4           
+3            4           
+
+4 rows fetched.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user test_content_filter cascade;
+
+Succeed.
+
+SQL> 
+SQL> -- filter triggers of tables
+SQL> drop user if exists test_trigger_filter;
+
+Succeed.
+
+SQL> create user test_trigger_filter identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_trigger_filter;
+
+Succeed.
+
+SQL> conn test_trigger_filter/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists test1;
+
+Succeed.
+
+SQL> create table test1 (c int);
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger trig_test1 
+  2 BEFORE INSERT ON test1
+  3 BEGIN
+  4         dbe_output.print_line('BEFORE test1');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test2;
+
+Succeed.
+
+SQL> create table test2(c int);
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists "test3";
+
+Succeed.
+
+SQL> create table "test3"(c int);
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger trig_test3 
+  2 BEFORE INSERT ON "test3"
+  3 BEGIN
+  4         dbe_output.print_line('BEFORE test3');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> select * from my_triggers where trigger_name='TRIG_TEST1' and table_name = 'TEST1';
+
+TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+TRIG_TEST1                                                       TEST_TRIGGER_FILTER                                              TEST1                                                            BEFORE INSERT ON test1
+BEGIN
+        dbe_output.print_line('BEFORE test1');
+END;
+/
+ ENABLED         
+
+1 rows fetched.
+
+SQL> select * from my_triggers where trigger_name='TRIG_TEST3' and table_name = 'test3';
+
+TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+TRIG_TEST3                                                       TEST_TRIGGER_FILTER                                              test3                                                            BEFORE INSERT ON "test3"
+BEGIN
+        dbe_output.print_line('BEFORE test3');
+END;
+/
+ ENABLED         
+
+1 rows fetched.
+
+SQL> 
+SQL> exp tables=test1,test2,"test3" filetype=bin file="./data/test_trigger_filter.dmp";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = TEST1, TEST2, test3
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_trigger_filter.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_TRIGGER_FILTER.TEST1 ...
+  exporting DDL of TEST_TRIGGER_FILTER.TEST1 ...
+  exporting data of TEST_TRIGGER_FILTER.TEST1 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_TRIGGER_FILTER.TEST1 ...
+  exporting constraints on TEST_TRIGGER_FILTER.TEST1 ...
+
+exporting table TEST_TRIGGER_FILTER.TEST2 ...
+  exporting DDL of TEST_TRIGGER_FILTER.TEST2 ...
+  exporting data of TEST_TRIGGER_FILTER.TEST2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_TRIGGER_FILTER.TEST2 ...
+  exporting constraints on TEST_TRIGGER_FILTER.TEST2 ...
+
+exporting table TEST_TRIGGER_FILTER.test3 ...
+  exporting DDL of TEST_TRIGGER_FILTER.test3 ...
+  exporting data of TEST_TRIGGER_FILTER.test3 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_TRIGGER_FILTER.test3 ...
+  exporting constraints on TEST_TRIGGER_FILTER.test3 ...
+
+Exporting triggers of table TEST1 ...
+  exporting trigger TRIG_TEST1
+Exporting triggers of table test3 ...
+  exporting trigger TRIG_TEST3
+Logical export succeeded.
+
+SQL> drop table test1;
+
+Succeed.
+
+SQL> drop table test2;
+
+Succeed.
+
+SQL> drop table "test3";
+
+Succeed.
+
+SQL> imp tables=test1,"test3" filetype=bin file="./data/test_trigger_filter.dmp";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TEST1, test3
+-- DUMP FILE = ./data/test_trigger_filter.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_TRIGGER_FILTER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_TRIGGER_FILTER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_TRIGGER_FILTER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_TRIGGER_FILTER ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_TRIGGER_FILTER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_TRIGGER_FILTER ...
+    Fuction/procedure/trigger importing success, 2 rows are loaded.
+
+  Importing view of schema TEST_TRIGGER_FILTER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_TRIGGER_FILTER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_TRIGGER_FILTER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> select * from my_triggers where trigger_name='TRIG_TEST1' and table_name = 'TEST1';
+
+TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+TRIG_TEST1                                                       TEST_TRIGGER_FILTER                                              TEST1                                                            BEFORE INSERT ON test1
+BEGIN
+        dbe_output.print_line('BEFORE test1');
+END;
+ ENABLED         
+
+1 rows fetched.
+
+SQL> select * from my_triggers where trigger_name='TRIG_TEST3' and table_name = 'test3';
+
+TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+TRIG_TEST3                                                       TEST_TRIGGER_FILTER                                              test3                                                            BEFORE INSERT ON "test3"
+BEGIN
+        dbe_output.print_line('BEFORE test3');
+END;
+ ENABLED         
+
+1 rows fetched.
+
+SQL> 
+
+

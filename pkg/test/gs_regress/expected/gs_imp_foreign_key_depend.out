@@ -1,0 +1,675 @@
+
+
+SQL> -- foreign key dependencies cascade, multi threads oper may cause dead lock 'DTS2020081207Y1POP0G00' 
+SQL> drop user if exists imp_foreign_key cascade;
+
+Succeed.
+
+SQL> create user imp_foreign_key identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to imp_foreign_key;
+
+Succeed.
+
+SQL> conn imp_foreign_key/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> create table t1(c int primary key, c1 int);
+
+Succeed.
+
+SQL> create table t2(c int primary key, c1 int);
+
+Succeed.
+
+SQL> create table t3(c int primary key, c1 int);
+
+Succeed.
+
+SQL> alter table t2 add foreign key(c1) references t1(c);
+
+Succeed.
+
+SQL> alter table t3 add foreign key(c1) references t2(c);
+
+Succeed.
+
+SQL> 
+SQL> exp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = IMP_FOREIGN_KEY
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema IMP_FOREIGN_KEY ...
+Exporting sequence of schema IMP_FOREIGN_KEY ...
+Exporting profile of schema IMP_FOREIGN_KEY ...
+Exporting type of schema IMP_FOREIGN_KEY ...
+Exporting tables of schema IMP_FOREIGN_KEY ...
+Reading table objects of IMP_FOREIGN_KEY
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T1                                                               1         
+T2                                                               2         
+T3                                                               3         
+
+Exporting tables (scripts or data) of IMP_FOREIGN_KEY
+exporting table IMP_FOREIGN_KEY.T1 ...
+  exporting DDL of IMP_FOREIGN_KEY.T1 ...
+  exporting data of IMP_FOREIGN_KEY.T1 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on IMP_FOREIGN_KEY.T1 ...
+  exporting constraints on IMP_FOREIGN_KEY.T1 ...
+
+exporting table IMP_FOREIGN_KEY.T2 ...
+  exporting DDL of IMP_FOREIGN_KEY.T2 ...
+  exporting data of IMP_FOREIGN_KEY.T2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on IMP_FOREIGN_KEY.T2 ...
+  exporting constraints on IMP_FOREIGN_KEY.T2 ...
+
+exporting table IMP_FOREIGN_KEY.T3 ...
+  exporting DDL of IMP_FOREIGN_KEY.T3 ...
+  exporting data of IMP_FOREIGN_KEY.T3 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on IMP_FOREIGN_KEY.T3 ...
+  exporting constraints on IMP_FOREIGN_KEY.T3 ...
+
+Exporting procedures/functions/triggers of schema IMP_FOREIGN_KEY ...
+Exporting views of schema IMP_FOREIGN_KEY ...
+Exporting synonyms of schema IMP_FOREIGN_KEY ...
+Exporting package of schema IMP_FOREIGN_KEY ...
+End of export schema IMP_FOREIGN_KEY ...
+
+Logical export succeeded.
+
+SQL> -- try 10 times, do not have dead lock
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=imp_foreign_key filetype=bin file="./data/imp_foreign_key.dmp" ddl_parallel=10  log="./data/imp_foreign_key.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = IMP_FOREIGN_KEY
+-- DUMP FILE = ./data/imp_foreign_key.dmp
+-- LOG FILE = ./data/imp_foreign_key.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 10
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema IMP_FOREIGN_KEY ... 
+  Importing sequence of schema IMP_FOREIGN_KEY ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema IMP_FOREIGN_KEY ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema IMP_FOREIGN_KEY ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema IMP_FOREIGN_KEY ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema IMP_FOREIGN_KEY ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema IMP_FOREIGN_KEY ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema IMP_FOREIGN_KEY ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema IMP_FOREIGN_KEY ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema IMP_FOREIGN_KEY ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+
+
