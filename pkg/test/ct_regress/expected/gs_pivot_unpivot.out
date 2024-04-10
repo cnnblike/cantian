@@ -1,0 +1,832 @@
+
+
+SQL> --pivot plan
+SQL> DROP TABLE IF EXISTS T_FOR_PIVOT_1;
+
+Succeed.
+
+SQL> CREATE TABLE T_FOR_PIVOT_1 (EMPNO INT, ENAME VARCHAR(20), JOB VARCHAR(20), MGR INT, SAL INT, DEPTNO INT);
+
+Succeed.
+
+SQL> INSERT INTO T_FOR_PIVOT_1 VALUES (7369, 'SMITH', 'CLERK', 7902, 800, 20);
+
+1 rows affected.
+
+
+SQL> DROP TABLE T_FOR_PIVOT_1;
+
+Succeed.
+
+SQL> --unpivot plan
+SQL> drop table IF EXISTS for_unpivot_1;
+
+Succeed.
+
+SQL> create table for_unpivot_1 (f1 int,f2 int, f3 int, f4 int, f5 int,f6 int);
+
+Succeed.
+
+SQL> insert into for_unpivot_1 values(1,1,3,4,5,6);
+
+1 rows affected.
+
+SQL> drop table for_unpivot_1;
+
+Succeed.
+
+SQL> --DTS2019091400983
+SQL> drop table if exists PIVOT_T001;
+
+Succeed.
+
+SQL> CREATE TABLE  PIVOT_T001(
+  2      COL_1 int,
+  3      COL_2 integer,
+  4      COL_3 bigint,
+  5      COL_4 real,
+  6      COL_5 double,
+  7      COL_6 float,
+  8      COL_7 decimal(12,6),
+  9      COL_8 number,
+ 10      COL_9 numeric,
+ 11      COL_10 char(30),
+ 12      COL_11 varchar(30),
+ 13      COL_12 varchar2(30),
+ 14      COL_13 image,
+ 15      COL_14 date,
+ 16      COL_15 datetime,
+ 17      COL_16 timestamp,
+ 18      COL_17 timestamp with time zone,
+ 19      COL_18 timestamp with local time zone,
+ 20      COL_19 bool,
+ 21      COL_20 boolean,
+ 22      COL_21 interval year to month,
+ 23      COL_22 interval day to second
+ 24 );
+
+Succeed.
+
+SQL> create sequence pivot_seq increment by 1 start with 10;
+
+Succeed.
+
+SQL> begin
+  2     for i in 1..10 loop
+  3       insert into PIVOT_T001 values(
+  4       i,
+  5       i+1,
+  6       pivot_seq.nextval,
+  7       i+3.1415926,
+  8       i+445.255,
+  9       3.1415926-i*2,
+ 10       98*0.99*i,
+ 11       99*1.01*i,
+ 12       -98*0.99*i,
+ 13       lpad('abc','10','@'),
+ 14       lpad('abc','10','b'),
+ 15       rpad('abc','10','e'),
+ 16       '1111111111',
+ 17       TIMESTAMPADD(SECOND,i,'2018-11-03 14:14:12'),
+ 18       TIMESTAMPADD(MINUTE,i,'2019-01-03 14:14:12'),
+ 19       to_timestamp('2019-01-03 14:58:54.000000','YYYY-MM-DD HH24:MI:SS.FFFFFF'),
+ 20       TIMESTAMPADD(HOUR,i,'2019-01-03 14:14:12'),
+ 21       TIMESTAMPADD(DAY,i,'2019-08-17 15:36:00'),
+ 22       true,
+ 23       false,
+ 24       (INTERVAL '99-02' YEAR TO MONTH),
+ 25       (INTERVAL '4 5:12:10.222' DAY TO SECOND(3))
+ 26       );
+ 27       commit;
+ 28     end loop;
+ 29 end;
+ 30 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> select * from (select col_1,col_2,col_3,col_4,col_5,col_6,col_7,col_8,col_9 from pivot_t001) pivot(count(col_6) for col_6 in (1.1415926,-0.8584074)) order by col_1;
+
+COL_1        COL_2        COL_3                COL_4                COL_5                COL_7                                    COL_8                                    COL_9                                    1.1415926            -0.8584074
+------------ ------------ -------------------- -------------------- -------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- -------------------- --------------------
+1            2            10                   4.1415926            446.255              97.02                                    99.99                                    -97.02                                   1                    0
+
+2            3            11                   5.1415926            447.255              194.04                                   199.98                                   -194.04                                  0                    1
+
+3            4            12                   6.1415926            448.255              291.06                                   299.97                                   -291.06                                  0                    0
+
+4            5            13                   7.1415926            449.255              388.08                                   399.96                                   -388.08                                  0                    0
+
+5            6            14                   8.1415926            450.255              485.1                                    499.95                                   -485.1                                   0                    0
+
+6            7            15                   9.1415926            451.255              582.12                                   599.94                                   -582.12                                  0                    0
+
+7            8            16                   10.1415926           452.255              679.14                                   699.93                                   -679.14                                  0                    0
+
+8            9            17                   11.1415926           453.255              776.16                                   799.92                                   -776.16                                  0                    0
+
+9            10           18                   12.1415926           454.255              873.18                                   899.91                                   -873.18                                  0                    0
+
+10           11           19                   13.1415926           455.255              970.2                                    999.9                                    -970.2                                   0                    0
+
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_19) for col_19 in (FALSE)) order by col_1;
+
+COL_1        COL_18                           COL_20 COL_21     COL_22                   FALSE
+------------ -------------------------------- ------ ---------- ------------------------ --------------------
+1            2019-08-18 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+2            2019-08-19 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+3            2019-08-20 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+4            2019-08-21 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+5            2019-08-22 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+6            2019-08-23 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+7            2019-08-24 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+8            2019-08-25 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+9            2019-08-26 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+10           2019-08-27 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_19) for col_19 in (true,FALSE)) order by col_1;
+
+COL_1        COL_18                           COL_20 COL_21     COL_22                   TRUE                 FALSE
+------------ -------------------------------- ------ ---------- ------------------------ -------------------- --------------------
+1            2019-08-18 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+2            2019-08-19 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+3            2019-08-20 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+4            2019-08-21 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+5            2019-08-22 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+6            2019-08-23 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+7            2019-08-24 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+8            2019-08-25 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+9            2019-08-26 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+10           2019-08-27 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_19) for col_19 in (0)) order by col_1;
+
+COL_1        COL_18                           COL_20 COL_21     COL_22                   0
+------------ -------------------------------- ------ ---------- ------------------------ --------------------
+1            2019-08-18 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+2            2019-08-19 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+3            2019-08-20 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+4            2019-08-21 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+5            2019-08-22 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+6            2019-08-23 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+7            2019-08-24 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+8            2019-08-25 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+9            2019-08-26 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+10           2019-08-27 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_19) for col_19 in (1)) order by col_1;
+
+COL_1        COL_18                           COL_20 COL_21     COL_22                   1
+------------ -------------------------------- ------ ---------- ------------------------ --------------------
+1            2019-08-18 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+2            2019-08-19 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+3            2019-08-20 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+4            2019-08-21 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+5            2019-08-22 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+6            2019-08-23 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+7            2019-08-24 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+8            2019-08-25 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+9            2019-08-26 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+10           2019-08-27 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_19) for col_19 in (0,1)) order by col_1;
+
+COL_1        COL_18                           COL_20 COL_21     COL_22                   0                    1
+------------ -------------------------------- ------ ---------- ------------------------ -------------------- --------------------
+1            2019-08-18 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+2            2019-08-19 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+3            2019-08-20 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+4            2019-08-21 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+5            2019-08-22 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+6            2019-08-23 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+7            2019-08-24 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+8            2019-08-25 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+9            2019-08-26 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+10           2019-08-27 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_19) for col_19 in (FALSE,1)) order by col_1;
+
+COL_1        COL_18                           COL_20 COL_21     COL_22                   FALSE                1
+------------ -------------------------------- ------ ---------- ------------------------ -------------------- --------------------
+1            2019-08-18 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+2            2019-08-19 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+3            2019-08-20 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+4            2019-08-21 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+5            2019-08-22 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+6            2019-08-23 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+7            2019-08-24 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+8            2019-08-25 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+9            2019-08-26 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+10           2019-08-27 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      0                    1
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_19) for col_19 in (true, 0)) order by col_1;
+
+COL_1        COL_18                           COL_20 COL_21     COL_22                   TRUE                 0
+------------ -------------------------------- ------ ---------- ------------------------ -------------------- --------------------
+1            2019-08-18 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+2            2019-08-19 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+3            2019-08-20 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+4            2019-08-21 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+5            2019-08-22 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+6            2019-08-23 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+7            2019-08-24 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+8            2019-08-25 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+9            2019-08-26 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+10           2019-08-27 15:36:00.000000       FALSE  +99-02     +04 05:12:10.222000      1                    0
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_20) for col_20 in (FALSE)) order by col_1;
+
+COL_1        COL_18                           COL_19 COL_21     COL_22                   FALSE
+------------ -------------------------------- ------ ---------- ------------------------ --------------------
+1            2019-08-18 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+2            2019-08-19 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+3            2019-08-20 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+4            2019-08-21 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+5            2019-08-22 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+6            2019-08-23 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+7            2019-08-24 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+8            2019-08-25 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+9            2019-08-26 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+10           2019-08-27 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_20) for col_20 in (true,FALSE)) order by col_1;
+
+COL_1        COL_18                           COL_19 COL_21     COL_22                   TRUE                 FALSE
+------------ -------------------------------- ------ ---------- ------------------------ -------------------- --------------------
+1            2019-08-18 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+2            2019-08-19 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+3            2019-08-20 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+4            2019-08-21 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+5            2019-08-22 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+6            2019-08-23 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+7            2019-08-24 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+8            2019-08-25 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+9            2019-08-26 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+10           2019-08-27 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_20) for col_20 in (0)) order by col_1;
+
+COL_1        COL_18                           COL_19 COL_21     COL_22                   0
+------------ -------------------------------- ------ ---------- ------------------------ --------------------
+1            2019-08-18 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+2            2019-08-19 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+3            2019-08-20 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+4            2019-08-21 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+5            2019-08-22 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+6            2019-08-23 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+7            2019-08-24 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+8            2019-08-25 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+9            2019-08-26 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+10           2019-08-27 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_20) for col_20 in (1)) order by col_1;
+
+COL_1        COL_18                           COL_19 COL_21     COL_22                   1
+------------ -------------------------------- ------ ---------- ------------------------ --------------------
+1            2019-08-18 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+2            2019-08-19 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+3            2019-08-20 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+4            2019-08-21 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+5            2019-08-22 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+6            2019-08-23 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+7            2019-08-24 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+8            2019-08-25 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+9            2019-08-26 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+10           2019-08-27 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_20) for col_20 in (0,1)) order by col_1;
+
+COL_1        COL_18                           COL_19 COL_21     COL_22                   0                    1
+------------ -------------------------------- ------ ---------- ------------------------ -------------------- --------------------
+1            2019-08-18 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+2            2019-08-19 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+3            2019-08-20 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+4            2019-08-21 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+5            2019-08-22 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+6            2019-08-23 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+7            2019-08-24 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+8            2019-08-25 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+9            2019-08-26 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+10           2019-08-27 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_20) for col_20 in (FALSE,1)) order by col_1;
+
+COL_1        COL_18                           COL_19 COL_21     COL_22                   FALSE                1
+------------ -------------------------------- ------ ---------- ------------------------ -------------------- --------------------
+1            2019-08-18 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+2            2019-08-19 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+3            2019-08-20 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+4            2019-08-21 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+5            2019-08-22 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+6            2019-08-23 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+7            2019-08-24 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+8            2019-08-25 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+9            2019-08-26 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+10           2019-08-27 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      1                    0
+
+10 rows fetched.
+
+SQL> select * from (select col_1,col_18,col_19,col_20,col_21,col_22 from pivot_t001) pivot(count(col_20) for col_20 in (true, 0)) order by col_1;
+
+COL_1        COL_18                           COL_19 COL_21     COL_22                   TRUE                 0
+------------ -------------------------------- ------ ---------- ------------------------ -------------------- --------------------
+1            2019-08-18 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+2            2019-08-19 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+3            2019-08-20 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+4            2019-08-21 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+5            2019-08-22 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+6            2019-08-23 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+7            2019-08-24 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+8            2019-08-25 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+9            2019-08-26 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+10           2019-08-27 15:36:00.000000       TRUE   +99-02     +04 05:12:10.222000      0                    1
+
+10 rows fetched.
+
+SQL> drop table PIVOT_T001;
+
+Succeed.
+
+SQL> drop table if exists pivot_002;
+
+Succeed.
+
+SQL> create table pivot_002 (id int, c_blob blob, c_clob clob);
+
+Succeed.
+
+SQL> insert into pivot_002 values(1,lpad('10','12','01010'),rpad('abc','9','a@123&^%djgk'));
+
+1 rows affected.
+
+SQL> select * from (select id, c_blob from pivot_002) pivot (max(id) for id in (1));
+
+CT-00601, Sql syntax error: unexpected lob column occurs
+SQL> select * from (select id, c_clob from pivot_002) pivot (max(id) for id in (1));
+
+CT-00601, Sql syntax error: unexpected lob column occurs
+SQL> drop table pivot_002;
+
+Succeed.
+
+SQL> drop table if exists partition_test_8429_pivot2;
+
+Succeed.
+
+SQL> create table partition_test_8429_pivot2(id int not null,c_int int,c_vchar varchar(20) not null,c_vchar2 varchar(50) not null,c_date date,constraint partition_test_8429_con2 primary key(c_vchar2))
+  2 PARTITION BY RANGE(id) interval(10)
+  3 (
+  4 PARTITION p1 VALUES LESS THAN(100),
+  5 PARTITION p2 VALUES LESS THAN(200),
+  6 PARTITION p3 VALUES LESS THAN(300)
+  7 );
+
+Succeed.
+
+SQL> insert into partition_test_8429_pivot2 values(1,100,'abc123',lpad('123abc',10,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into partition_test_8429_pivot2 values(1,200,'abc456',lpad('123abc',11,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into partition_test_8429_pivot2 values(2,201,'abc789',lpad('123abc',12,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into partition_test_8429_pivot2 values(101,107,'abc123',lpad('123abc',15,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into partition_test_8429_pivot2 values(101,202,'abc456',lpad('123abc',16,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into partition_test_8429_pivot2 values(102,203,'abc789',lpad('123abc',17,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into partition_test_8429_pivot2 values(201,104,'abc123',lpad('123abc',19,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into partition_test_8429_pivot2 values(201,205,'abc456',lpad('123abc',20,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into partition_test_8429_pivot2 values(202,206,'abc789',lpad('123abc',30,'abc'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from ((partition_test_8429_pivot2) partition(p1) pivot (sum(c_int) for c_vchar in ('abc123','abc456','abc789'))) order by c_vchar2;
+
+ID           C_VCHAR2                                           C_DATE                 'ABC123'             'ABC456'             'ABC789'
+------------ -------------------------------------------------- ---------------------- -------------------- -------------------- --------------------
+1            abca123abc                                         1800-01-01 10:51:47    100
+1            abcab123abc                                        1800-01-01 10:51:47                         200
+2            abcabc123abc                                       1800-01-01 10:51:47                                              201
+
+3 rows fetched.
+
+SQL> select * from ((partition_test_8429_pivot2) partition pivot (sum(c_int) for c_vchar in ('abc123','abc456','abc789')) aaa) order by c_vchar2;
+
+CT-00601, [1:61]Sql syntax error: expected end in bracket but pivot found
+SQL> select * from ((partition_test_8429_pivot2) partition(p1) pivot (sum(c_int) for c_vchar in ('abc123','abc456','abc789'))) bbb order by c_vchar2;
+
+ID           C_VCHAR2                                           C_DATE                 'ABC123'             'ABC456'             'ABC789'
+------------ -------------------------------------------------- ---------------------- -------------------- -------------------- --------------------
+1            abca123abc                                         1800-01-01 10:51:47    100
+1            abcab123abc                                        1800-01-01 10:51:47                         200
+2            abcabc123abc                                       1800-01-01 10:51:47                                              201
+
+3 rows fetched.
+
+SQL> drop table if exists partition_test_8429_pivot2;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS T_FOR_UNPIVOT;
+
+Succeed.
+
+SQL> CREATE TABLE T_FOR_UNPIVOT (CITY VARCHAR(10), MONDAY INT, TUESDAY INT);
+
+Succeed.
+
+SQL> INSERT INTO T_FOR_UNPIVOT VALUES('BJ', '30', '32');
+
+1 rows affected.
+
+SQL> SELECT * FROM DUAL JOIN T_FOR_UNPIVOT ON DUMMY != CITY UNPIVOT(TEMPERATURE FOR DAY_1 IN (MONDAY, TUESDAY));
+
+DUMMY CITY       DAY_1   TEMPERATURE 
+----- ---------- ------- ------------
+X     BJ         MONDAY  30          
+X     BJ         TUESDAY 32          
+
+2 rows fetched.
+
+SQL> DROP TABLE T_FOR_UNPIVOT;
+Succeed.
+
+SQL> 
+SQL> -- DTS202011190HGVG9P1N00
+SQL> -- the len of pivot set alias larger than 64
+SQL> drop table if exists pivot_long_set_alias;
+
+Succeed.
+
+SQL> create table pivot_long_set_alias
+  2 (
+  3   emp_no number(8) not null,
+  4   dept_no char(30 byte) not null,
+  5   from_date date not null,
+  6   to_date date not null
+  7 );
+
+Succeed.
+
+SQL> insert into pivot_long_set_alias values(10001,'d005                          ','1986-06-26 00:00:00','9999-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into pivot_long_set_alias values(10002,'d008                          ','1996-08-03 00:00:00','2000-06-26 00:00:00');
+
+1 rows affected.
+
+SQL> insert into pivot_long_set_alias values(10003,'d006                          ','1995-12-03 00:00:00','1996-11-09 00:00:00');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select *
+  2 from 
+  3   (pivot_long_set_alias pivot(max(emp_no) as aggr_0
+  4       for (from_date, emp_no, dept_no, to_date)
+  5       in (('1996-08-03 00:00:00', 10002, 'd008                          ', '2000-06-26 00:00:00') as pexpr_0, 
+  6           ('1995-12-03 00:00:00', 10003, 'd006                          ', '1996-11-09 00:00:00') as pexpr_1
+  7          )) as ref_0);
+
+PEXPR_0_AGGR_0                           PEXPR_1_AGGR_0                          
+---------------------------------------- ----------------------------------------
+10002                                    10003                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select *
+  2 from 
+  3   (pivot_long_set_alias pivot(max(emp_no) as aggr_0
+  4       for (from_date, emp_no, dept_no, to_date)
+  5       in (('1996-08-03 00:00:00', 10002, 'd008                          ', '2000-06-26 00:00:00'), 
+  6           ('1995-12-03 00:00:00', 10003, 'd006                          ', '1996-11-09 00:00:00') as pexpr_1
+  7          )) as ref_0);
+
+'1996-08-03 00:00:00'_10002_'D008                          '_'20 PEXPR_1_AGGR_0                          
+---------------------------------------------------------------- ----------------------------------------
+10002                                                            10003                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select *
+  2 from 
+  3   (pivot_long_set_alias pivot(max(emp_no) as aggr_0
+  4       for (from_date, emp_no, dept_no, to_date)
+  5       in (('1996-08-03 00:00:00', 10002, 'd008                                 ', '2000-06-26 00:00:00') as pexpr_0, 
+  6           ('1995-12-03 00:00:00', 10003, 'd006                                 ', '1996-11-09 00:00:00') as pexpr_1
+  7          )) as ref_0);
+
+PEXPR_0_AGGR_0                           PEXPR_1_AGGR_0                          
+---------------------------------------- ----------------------------------------
+10002                                    10003                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table pivot_long_set_alias;
+Succeed.
+
+SQL> 
+SQL> -- DTS20201124080CE8P1100
+SQL> drop table if exists unpivot_merge_into_t1;
+
+Succeed.
+
+SQL> drop table if exists unpivot_merge_into_t2;
+
+Succeed.
+
+SQL> 
+SQL> create table unpivot_merge_into_t1(id number(8), name varchar(30), grade number(5));
+
+Succeed.
+
+SQL> insert into unpivot_merge_into_t1 values(1, 'Tom', 100);
+
+1 rows affected.
+
+SQL> insert into unpivot_merge_into_t1 values(2, 'Tim', 88);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create table unpivot_merge_into_t2(id number(8), stu_id number(8), c_name varchar(30), grade number(5));
+
+Succeed.
+
+SQL> insert into unpivot_merge_into_t2 values(1, 10001, 'Tom', 99);
+
+1 rows affected.
+
+SQL> insert into unpivot_merge_into_t2 values(2, 10002, 'Bob', 66);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> merge into unpivot_merge_into_t1 target_0
+  2 using (unpivot_merge_into_t2 unpivot include nulls ((newcol_0, newcol_1)
+  3        for (forcol_0)
+  4        in ((c_name, stu_id) as ('unpivot_value_0'), 
+  5            (c_name, grade), 
+  6            (c_name, stu_id) as ('unpivot_value_0'), 
+  7            (c_name, id) as ('unpivot_value_0'), 
+  8            (c_name, id) as ('unpivot_value_0')
+  9            )) ref_6)
+ 10 on (target_0.name = ref_6.forcol_0)
+ 11 when matched then update set grade = 99
+ 12 when not matched then insert values (3, 'John', 88);
+
+10 rows affected.
+
+SQL> drop table unpivot_merge_into_t1;
+
+Succeed.
+
+SQL> drop table unpivot_merge_into_t2;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS "WINFUNC_TAB_HASH4077";
+
+Succeed.
+
+SQL> CREATE TABLE "WINFUNC_TAB_HASH4077"
+  2 (
+  3   "C_ID" BINARY_INTEGER,
+  4   "C_D_ID" BINARY_INTEGER,
+  5   "C_W_ID" BINARY_INTEGER,
+  6   "C_FIRST" VARCHAR(16 BYTE),
+  7   "C_MIDDLE" CHAR(2 BYTE),
+  8   "C_LAST" VARCHAR(16 BYTE),
+  9   "C_STREET_1" VARCHAR(20 BYTE),
+ 10   "C_STREET_2" VARCHAR(20 BYTE),
+ 11   "C_CITY" VARCHAR(20 BYTE),
+ 12   "C_STATE" CHAR(2 BYTE),
+ 13   "C_ZIP" CHAR(9 BYTE),
+ 14   "C_PHONE" CHAR(16 BYTE),
+ 15   "C_SINCE" TIMESTAMP(6),
+ 16   "C_CREDIT" CHAR(2 BYTE),
+ 17   "C_CREDIT_LIM" NUMBER(12, 2),
+ 18   "C_DISCOUNT" NUMBER(4, 4),
+ 19   "C_BALANCE" NUMBER(12, 2),
+ 20   "C_YTD_PAYMENT" NUMBER(12, 2),
+ 21   "C_PAYMENT_CNT" BINARY_INTEGER,
+ 22   "C_DELIVERY_CNT" BINARY_INTEGER,
+ 23   "C_DATA" VARCHAR(500 BYTE)
+ 24 );
+
+Succeed.
+
+SQL> INSERT INTO "WINFUNC_TAB_HASH4077" ("C_ID","C_D_ID","C_W_ID","C_FIRST","C_MIDDLE","C_LAST","C_STREET_1","C_STREET_2","C_CITY","C_STATE","C_ZIP","C_PHONE","C_SINCE","C_CREDIT","C_CREDIT_LIM","C_DISCOUNT","C_BALANCE","C_YTD_PAYMENT","C_PAYMENT_CNT","C_DELIVERY_CNT","C_DATA") values
+  2   (1,1,1,'iscmvlstpn','OE','BARBARBAR','bkilipzfcxcle','pmbwodmpvhvpafbj','dyfaoptppzjcgjrvyqa','uq','480211111','9400872216162535','2013-01-04 11:26:41.000000','GC',50000,.4361,-10,10,1,0,'qvldetanrbrburbmzqujshoqnggsmnteccipriirdhirwiynpfzcsykxxyscdsfqafhatdokmjogfgslucunvwbtbfsqzjeclbacpjqdhjchvgbnrkjrgjrycsgppsocnevautzfeosviaxbvobffnjuqhlvnwuqhtgjqsbfacwjpbvpgthpyxcpmnutcjxrbxxbmrmwwxcepwiixvvleyajautcesljhrsfsmsnmzjcxvcuxdwmyijbwywiirsgocwktedbbokhynznceaesuifkgoaafagugetfhbcylksrjukvbufqcvbffaxnzssyquidvwefktknrchyxfphunqktwnipnsrvqswsymocnoexbabwnpmnxsvshdsjhazcauvqjgvqjfkjjgqrceyjmbumkapmcbxeashybpgekjkfezthnjbhfqiwbutbxtkjkndyylrvrhsazhijvmkmhdgvuyvyayiavdmypqomgobo');
+
+1 rows affected.
+
+SQL> INSERT INTO "WINFUNC_TAB_HASH4077" ("C_ID","C_D_ID","C_W_ID","C_FIRST","C_MIDDLE","C_LAST","C_STREET_1","C_STREET_2","C_CITY","C_STATE","C_ZIP","C_PHONE","C_SINCE","C_CREDIT","C_CREDIT_LIM","C_DISCOUNT","C_BALANCE","C_YTD_PAYMENT","C_PAYMENT_CNT","C_DELIVERY_CNT","C_DATA") values
+  2   (1,1,2,'gjgqcmfix','OE','BARBARBAR','ggfjukmdjw','iujitnapyeuiqsxqyyew','xkojyrcmqrf','ak','845411111','9488565345835462','2013-01-04 11:26:52.000000','GC',50000,.3627,-10,10,1,0,'hqdllnjpwmoblfghkrykuzgxtmcozjrixdigcqiuqhaajltawxbwcfyhqodvajsdrpwprkfwunstamgubmoaoqxrzxjemfcgoxxvekigdqnxrjskrvzljcdnqdkzbrximjjyrhpliahpprfikyntzirtoztlmmzzqrrenmfadffaoefttzgfmlttkribbefxdzamrzawhvpoetdhllvitjezoxwkegyaajuwwwcloykiiddlekoxqfkfqoklcdbmciskiijwmjjazecdquivygmmageiyelyecofrivbqwyyetmelrlommimlvnszcz');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> SELECT
+  2   REF_0.PEXPR_0_AGGR_0 AS C0,
+  3   CURRENT_TIMESTAMP() AS C1,
+  4   REF_0.PEXPR_0_AGGR_0 AS C2
+  5 FROM
+  6   WINFUNC_TAB_HASH4077 PIVOT(MIN(
+  7       CAST(WINFUNC_TAB_HASH4077.C_CREDIT AS CHAR(2))) AS AGGR_0
+  8      FOR (C_PHONE)
+  9     IN (('9488565345835462') AS PEXPR_0)) AS REF_0
+ 10 WHERE REGEXP_LIKE(REF_0.PEXPR_0_AGGR_0,'.*')
+ 11 CONNECT BY 0 IS NOT NULL;
+
+CT-00664, CONNECT BY level can not exceed 256
+
+SQL>
+SQL> DROP TABLE "WINFUNC_TAB_HASH4077";
+
+Succeed.
+
+SQL> --20210902
+SQL> DROP TABLE IF EXISTS "OM_TRADECONTACT_INFO";
+
+Succeed.
+
+SQL> CREATE TABLE "OM_TRADECONTACT_INFO"
+  2 (
+  3   "CONTACT_INFO_ID" NUMBER(20) NOT NULL,
+  4   "ORDER_ID" NUMBER(20),
+  5   "FIRST_NAME" VARCHAR(128 BYTE),
+  6   "MIDDLE_NAME" VARCHAR(128 BYTE),
+  7   "LAST_NAME" VARCHAR(128 BYTE),
+  8   "HOME_PHONE" VARCHAR(32 BYTE),
+  9   "MOBILE_PHONE" VARCHAR(32 BYTE),
+ 10   "EMAIL" VARCHAR(512 BYTE),
+ 11   "BE_ID" NUMBER(10) NOT NULL,
+ 12   "PARTITION_ID" NUMBER(8) NOT NULL,
+ 13   "CREATE_TIME" DATE NOT NULL,
+ 14   "EX_FIELD1" VARCHAR(32 BYTE),
+ 15   "EX_FIELD2" VARCHAR(32 BYTE),
+ 16   "EX_FIELD3" VARCHAR(32 BYTE),
+ 17   "EX_FIELD4" VARCHAR(32 BYTE),
+ 18   "EX_FIELD5" VARCHAR(32 BYTE),
+ 19   "EX_FIELD6" VARCHAR(32 BYTE),
+ 20   "EX_FIELD7" VARCHAR(32 BYTE),
+ 21   "EX_FIELD8" VARCHAR(32 BYTE),
+ 22   "EX_FIELD9" VARCHAR(32 BYTE),
+ 23   "EX_FIELD10" VARCHAR(32 BYTE),
+ 24   "EX_FIELD11" VARCHAR(32 BYTE),
+ 25   "EX_FIELD12" VARCHAR(32 BYTE),
+ 26   "EX_FIELD13" VARCHAR(32 BYTE),
+ 27   "EX_FIELD14" VARCHAR(32 BYTE),
+ 28   "EX_FIELD15" VARCHAR(32 BYTE),
+ 29   "EX_FIELD16" VARCHAR(32 BYTE),
+ 30   "EX_FIELD17" VARCHAR(32 BYTE),
+ 31   "EX_FIELD18" VARCHAR(32 BYTE),
+ 32   "EX_FIELD19" VARCHAR(32 BYTE),
+ 33   "EX_FIELD20" VARCHAR(32 BYTE),
+ 34   "HIS_DATE" DATE,
+ 35   "TENANT_ID" NUMBER(20),
+ 36   "C_EX_FIELD1" VARCHAR(32 BYTE),
+ 37   "C_EX_FIELD2" VARCHAR(32 BYTE),
+ 38   "C_EX_FIELD3" VARCHAR(32 BYTE),
+ 39   "C_EX_FIELD4" VARCHAR(32 BYTE),
+ 40   "C_EX_FIELD5" VARCHAR(32 BYTE),
+ 41   "C_EX_FIELD6" VARCHAR(32 BYTE),
+ 42   "C_EX_FIELD7" VARCHAR(32 BYTE),
+ 43   "C_EX_FIELD8" VARCHAR(32 BYTE),
+ 44   "C_EX_FIELD9" VARCHAR(32 BYTE),
+ 45   "C_EX_FIELD10" VARCHAR(32 BYTE),
+ 46   "C_EX_FIELD11" VARCHAR(32 BYTE),
+ 47   "C_EX_FIELD12" VARCHAR(32 BYTE),
+ 48   "C_EX_FIELD13" VARCHAR(32 BYTE),
+ 49   "C_EX_FIELD14" VARCHAR(32 BYTE),
+ 50   "C_EX_FIELD15" VARCHAR(32 BYTE),
+ 51   "C_EX_FIELD16" VARCHAR(32 BYTE),
+ 52   "C_EX_FIELD17" VARCHAR(32 BYTE),
+ 53   "C_EX_FIELD18" VARCHAR(32 BYTE),
+ 54   "C_EX_FIELD19" VARCHAR(32 BYTE),
+ 55   "C_EX_FIELD20" VARCHAR(32 BYTE),
+ 56   "REF_CONTACT_INFO_ID" NUMBER(20),
+ 57   "OP_CODE" VARCHAR(1 BYTE),
+ 58   "TITLE" VARCHAR(32 BYTE),
+ 59   "OFFICE_PHONE" VARCHAR(32 BYTE),
+ 60   "FAX" VARCHAR(32 BYTE)
+ 61 );
+
+Succeed.
+
+SQL> INSERT INTO "OM_TRADECONTACT_INFO" ("CONTACT_INFO_ID","ORDER_ID","FIRST_NAME","MIDDLE_NAME","LAST_NAME","HOME_PHONE","MOBILE_PHONE","EMAIL","BE_ID","PARTITION_ID","CREATE_TIME","EX_FIELD1","EX_FIELD2","EX_FIELD3","EX_FIELD4","EX_FIELD5","EX_FIELD6","EX_FIELD7","EX_FIELD8","EX_FIELD9","EX_FIELD10","EX_FIELD11","EX_FIELD12","EX_FIELD13","EX_FIELD14","EX_FIELD15","EX_FIELD16","EX_FIELD17","EX_FIELD18","EX_FIELD19","EX_FIELD20","HIS_DATE","TENANT_ID","C_EX_FIELD1","C_EX_FIELD2","C_EX_FIELD3","C_EX_FIELD4","C_EX_FIELD5","C_EX_FIELD6","C_EX_FIELD7","C_EX_FIELD8","C_EX_FIELD9","C_EX_FIELD10","C_EX_FIELD11","C_EX_FIELD12","C_EX_FIELD13","C_EX_FIELD14","C_EX_FIELD15","C_EX_FIELD16","C_EX_FIELD17","C_EX_FIELD18","C_EX_FIELD19","C_EX_FIELD20","REF_CONTACT_INFO_ID","OP_CODE","TITLE","OFFICE_PHONE","FAX") values
+  2   (100100000000005005,100100000000054414,'eer',null,'erreerre',null,'1588888',null,101,0,'2020-07-15 03:07:35',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,999999,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'1',null,null);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX "IDX_OM_TRADECONTACT_INFO" ON "OM_TRADECONTACT_INFO"("CONTACT_INFO_ID", "CREATE_TIME", "BE_ID") ;
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_OM_TRADECONTACT_INFO_CO" ON "OM_TRADECONTACT_INFO"("ORDER_ID") ;
+
+Succeed.
+
+SQL> SELECT    REF_0.PEXPR_2_AGGR_1 AS C0 FROM    OM_TRADECONTACT_INFO PIVOT(APPROX_COUNT_DISTINCT(CAST(OM_TRADECONTACT_INFO.ORDER_ID AS NUMBER(20,0))) AS AGGR_0, STDDEV_SAMP(       CAST(1 AS NUMBER(20,0))) AS AGGR_1, MAX(       CAST(OM_TRADECONTACT_INFO.HIS_DATE AS DATE)) AS AGGR_2      FOR (FIRST_NAME)     IN (('ee') AS PEXPR_0, ('AutoTestName') AS PEXPR_1, ('z') AS PEXPR_2, ('GLSmKT') AS PEXPR_3, ('eLbCcP') AS PEXPR_4, ('tang') AS PEXPR_5, ('ge') AS PEXPR_6, ('11') AS PEXPR_7)) AS REF_0 ;
+
+CT-00601, [1:73]Sql syntax error: unsupported aggr type in pivot
+SQL> DROP TABLE IF EXISTS T_FOR_PIVOT;
+
+Succeed.
+
+SQL> CREATE TABLE T_FOR_PIVOT (CITY VARCHAR(10),DAY_1 VARCHAR(20),TEMPERATURE INT);
+
+Succeed.
+
+SQL> INSERT INTO T_FOR_PIVOT VALUES('BJ','MONDAY','30');
+
+1 rows affected.
+
+SQL> INSERT INTO T_FOR_PIVOT VALUES('BJ','TUESDAY','32');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM T_FOR_PIVOT PIVOT(APPROX_COUNT_DISTINCT(TEMPERATURE) FOR DAY_1  IN ('MONDAY','TUESDAY'));
+
+CT-00601, [1:33]Sql syntax error: unsupported aggr type in pivot

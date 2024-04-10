@@ -1,0 +1,1083 @@
+
+SQL> select SRC_TEXT,DST_TEXT from SYS_SQL_MAPS;
+
+SRC_TEXT                                                         DST_TEXT                                                        
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> ALTER SQL_MAP (select count(*) from dual) REWRITE TO (select count(1) as cnt from dual);
+
+CT-00213, Parameter "ENABLE_SQL_MAP" must be set
+SQL> select SRC_TEXT,DST_TEXT from SYS_SQL_MAPS;
+
+SRC_TEXT                                                         DST_TEXT                                                        
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select count(*) from dual;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> alter system set enable_sql_map = true;
+
+Succeed.
+
+SQL> select count(*) from dual;
+
+COUNT(*)                 
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> ALTER SQL_MAP (select count(*) from dual
+  2 ) REWRITE TO (select count(1) as cnt2 from dual);
+
+Succeed.
+
+SQL> select count(*) from dual
+  2 ;
+
+CNT2                
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> select count(*) from dual  ;
+
+CNT2                
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> DROP SQL_MAP (select count(*) from dual);
+
+Succeed.
+
+SQL> DROP SQL_MAP (select count(*) from dual);
+
+CT-01353, SQL mapping does not exist
+SQL> DROP SQL_MAP IF EXISTS (select count(*) from dual);
+
+Succeed.
+
+SQL> select SRC_TEXT,DST_TEXT from SYS_SQL_MAPS;
+
+SRC_TEXT                                                         DST_TEXT                                                        
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select ? from dual where ? = 1;
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: The 2th param:
+Direction : DataType : BindValue: Bind params successfully.
+?                                                               
+----------------------------------------------------------------
+abc                                                             
+
+1 rows fetched.
+
+SQL> ALTER SQL_MAP (select ? from dual where ? = 1) REWRITE TO (select ? from dual where 1 = 1);
+
+Succeed.
+
+SQL> select ? from dual where ? = 1;
+
++-------------------------------------------------+
+|                CTSQL Bind Param                  |
++-------------------------------------------------+
+The 1th param:
+Direction : DataType : BindValue: Bind params successfully.
+?                                                               
+----------------------------------------------------------------
+abc                                                             
+
+1 rows fetched.
+
+SQL> DROP SQL_MAP (select ? from dual where ? = 1);
+
+Succeed.
+
+SQL> alter system set enable_sql_map = false;
+
+Succeed.
+
+SQL> 
+SQL> alter system set _SQL_MAP_BUCKETS = 0;
+
+CT-00209, The value of parameter "_SQL_MAP_BUCKETS" is too small, at least 1
+SQL> alter system set _SQL_MAP_BUCKETS = 4294967295;
+
+CT-00210, The value of parameter "_SQL_MAP_BUCKETS" is too large, at most 1000000
+SQL> ALTER SQL_MAP (select * from test) REWRITE TO (create user test1 identified by Cantian_234);
+
+CT-01352, SQL mapping only supports DML and DQL statements
+SQL> 
+SQL> create user sql_map_user1 identified by Mypwd123;
+
+Succeed.
+
+SQL> create user sql_map_user2 identified by Mypwd123;
+
+Succeed.
+
+SQL> grant connect to sql_map_user1,sql_map_user2;
+
+Succeed.
+
+SQL> alter system set enable_sql_map = true;
+
+Succeed.
+
+SQL> ALTER SQL_MAP (select 1 from dual) REWRITE TO (select 'sys' from dual);
+
+Succeed.
+
+SQL> conn sql_map_user1/Mypwd123@127.0.0.1:1611
+
+connected.
+
+SQL> ALTER SQL_MAP (select 1 from dual) REWRITE TO (select 'sql_map_user1' from dual);
+
+Succeed.
+
+SQL> conn sql_map_user2/Mypwd123@127.0.0.1:1611
+
+connected.
+
+SQL> ALTER SQL_MAP (select 1 from dual) REWRITE TO (select 'sql_map_user2' from dual);
+
+Succeed.
+
+SQL> select 1 from dual;
+
+'SQL_MAP_USER2'
+---------------
+sql_map_user2  
+
+1 rows fetched.
+
+SQL> conn sql_map_user1/Mypwd123@127.0.0.1:1611
+
+connected.
+
+SQL> select 1 from dual;
+
+'SQL_MAP_USER1'
+---------------
+sql_map_user1  
+
+1 rows fetched.
+
+SQL> DROP SQL_MAP (select 1 from dual);
+
+Succeed.
+
+SQL> select 1 from dual;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> conn sql_map_user2/Mypwd123@127.0.0.1:1611
+
+connected.
+
+SQL> select 1 from dual;
+
+'SQL_MAP_USER2'
+---------------
+sql_map_user2  
+
+1 rows fetched.
+
+SQL> select count(*) from dual;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP USER sql_map_user1;
+
+Succeed.
+
+SQL> DROP USER sql_map_user2;
+
+CT-00815, user objects is being used, can not drop
+
+SQL> DROP USER sql_map_user2 cascade;
+
+Succeed.
+
+SQL> select 1 from dual;
+
+'SYS'
+-----
+sys  
+
+1 rows fetched.
+
+SQL> DROP SQL_MAP (select 1 from dual);
+
+Succeed.
+
+SQL> select SRC_TEXT,DST_TEXT from SYS_SQL_MAPS;
+
+SRC_TEXT                                                         DST_TEXT                                                        
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> --test remap by sql_id
+SQL> select count(*) from dual;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> alter sql_map 2455653625 rewrite to (select count(1) as cnt from dual);
+
+Succeed.
+
+SQL> select count(*) from dual;
+
+CNT                 
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> alter system set enable_sql_map = false;
+
+Succeed.
+
+SQL> --DTS2019112514113
+SQL> drop table if exists oracle_test_tbl_001;
+
+Succeed.
+
+SQL> create table oracle_test_tbl_001(c_id int,
+  2 c_d_id bigint NOT NULL,
+  3 c_w_id tinyint unsigned NOT NULL,
+  4 c_first varchar(16) NOT NULL,
+  5 c_middle char(2),
+  6 c_last varchar(16) NOT NULL,
+  7 c_street_1 varchar(20) NOT NULL,
+  8 c_street_2 varchar(20),
+  9 c_city varchar(20) NOT NULL,
+ 10 c_state char(2) NOT NULL,
+ 11 c_zip char(9) NOT NULL,
+ 12 c_phone char(16) NOT NULL,
+ 13 c_since timestamp,
+ 14 c_credit char(2) NOT NULL,
+ 15 c_credit_lim numeric(12,2),
+ 16 c_discount numeric(4,4),
+ 17 c_balance numeric(12,2),
+ 18 c_end date NOT NULL,
+ 19 c_data1 varchar(8000),
+ 20 c_data2 varchar(8000),
+ 21 c_data3 varchar(8000),
+ 22 c_data4 varchar(8000),
+ 23 c_data5 varchar(8000),
+ 24 c_data6 varchar(8000),
+ 25 c_data7 varchar(8000),
+ 26 c_data8 varchar(8000),
+ 27 c_clob clob,
+ 28 c_blob blob,
+ 29 column_int int default 1,
+ 30 column_bigint bigint default 1,
+ 31 column_tinyint tinyint unsigned default 1,
+ 32 column_float float default 0.001,
+ 33 column_double double default 1.001,
+ 34 column_decimal decimal default 1.001,
+ 35 column_number number default 1.001,
+ 36 column_numeric numeric default 1.001,
+ 37 column_char char default 'A',
+ 38 column_varchar varchar(100) default lpad('aa',80,'bb'),
+ 39 column_varchar2 varchar2(100) default lpad('aa',80,'bb'),
+ 40 column_binary binary(100) default lpad('111',80,'222'),
+ 41 column_varbinary varbinary(100) default lpad('111',80,'222'),
+ 42 column_date date default sysdate,
+ 43 column_timestamp timestamp default systimestamp,
+ 44 add_int_0 int default  12345,
+ 45 add_varchar2_0 varchar2(100) default 'abcde',
+ 46 add_varchar_0 varchar(8000) default 'abcde',
+ 47 add_clob_0 clob default 'abcde',
+ 48 add_blob_0 blob default 'abcde',
+ 49 add_int_1 int default  12345,
+ 50 add_varchar2_1 varchar2(100) default 'abcde',
+ 51 add_varchar_1 varchar(8000) default 'abcde',
+ 52 add_clob_1 clob default 'abcde',
+ 53 add_blob_1 blob default 'abcde',
+ 54 add_int_2 int default  12345,
+ 55 add_varchar2_2 varchar2(100) default 'abcde',
+ 56 add_varchar_2 varchar(8000) default 'abcde',
+ 57 add_clob_2 clob default 'abcde',
+ 58 add_blob_2 blob default 'abcde',
+ 59 add_int_3 int default  12345,
+ 60 add_varchar2_3 varchar2(100) default 'abcde',
+ 61 add_varchar_3 varchar(8000) default 'abcde',
+ 62 add_clob_3 clob default 'abcde',
+ 63 add_blob_3 blob default 'abcde',
+ 64 add_int_4 int default  12345,
+ 65 add_varchar2_4 varchar2(100) default 'abcde',
+ 66 add_varchar_4 varchar(8000) default 'abcde',
+ 67 add_clob_4 clob default 'abcde',
+ 68 add_blob_4 blob default 'abcde',
+ 69 add_int_5 int default  12345,
+ 70 add_varchar2_5 varchar2(100) default 'abcde',
+ 71 add_varchar_5 varchar(8000) default 'abcde',
+ 72 add_clob_5 clob default 'abcde',
+ 73 add_blob_5 blob default 'abcde',
+ 74 add_int_6 int default  12345,
+ 75 add_varchar2_6 varchar2(100) default 'abcde',
+ 76 add_varchar_6 varchar(8000) default 'abcde',
+ 77 add_clob_6 clob default 'abcde',
+ 78 add_blob_6 blob default 'abcde',
+ 79 add_int_7 int default  12345,
+ 80 add_varchar2_7 varchar2(100) default 'abcde',
+ 81 add_varchar_7 varchar(8000) default 'abcde',
+ 82 add_clob_7 clob default 'abcde',
+ 83 add_blob_7 blob default 'abcde',
+ 84 add_int_8 int default  12345,
+ 85 add_varchar2_8 varchar2(100) default 'abcde',
+ 86 add_varchar_8 varchar(8000) default 'abcde',
+ 87 add_clob_8 clob default 'abcde',
+ 88 add_blob_8 blob default 'abcde',
+ 89 add_int_9 int default  12345,
+ 90 add_varchar2_9 varchar2(100) default 'abcde',
+ 91 add_varchar_9 varchar(8000) default 'abcde',
+ 92 add_clob_9 clob default 'abcde',
+ 93 add_blob_9 blob default 'abcde',
+ 94 add_int_10 int default  12345,
+ 95 add_varchar2_10 varchar2(100) default 'abcde',
+ 96 add_varchar_10 varchar(8000) default 'abcde',
+ 97 add_clob_10 clob default 'abcde',
+ 98 add_blob_10 blob default 'abcde',
+ 99 add_int_11 int default  12345,
+100 add_varchar2_11 varchar2(100) default 'abcde',
+101 add_varchar_11 varchar(8000) default 'abcde',
+102 add_clob_11 clob default 'abcde',
+103 add_blob_11 blob default 'abcde',
+104 add_int_12 int default  12345,
+105 add_varchar2_12 varchar2(100) default 'abcde',
+106 add_varchar_12 varchar(8000) default 'abcde',
+107 add_clob_12 clob default 'abcde',
+108 add_blob_12 blob default 'abcde',
+109 add_int_13 int default  12345,
+110 add_varchar2_13 varchar2(100) default 'abcde',
+111 add_varchar_13 varchar(8000) default 'abcde',
+112 add_clob_13 clob default 'abcde',
+113 add_blob_13 blob default 'abcde',
+114 add_int_14 int default  12345,
+115 add_varchar2_14 varchar2(100) default 'abcde',
+116 add_varchar_14 varchar(8000) default 'abcde',
+117 add_clob_14 clob default 'abcde',
+118 add_blob_14 blob default 'abcde',
+119 add_int_15 int default  12345,
+120 add_varchar2_15 varchar2(100) default 'abcde',
+121 add_varchar_15 varchar(8000) default 'abcde',
+122 add_clob_15 clob default 'abcde',
+123 add_blob_15 blob default 'abcde',
+124 add_int_16 int default  12345,
+125 add_varchar2_16 varchar2(100) default 'abcde',
+126 add_varchar_16 varchar(8000) default 'abcde',
+127 add_clob_16 clob default 'abcde',
+128 add_blob_16 blob default 'abcde',
+129 add_int_17 int default  12345,
+130 add_varchar2_17 varchar2(100) default 'abcde',
+131 add_varchar_17 varchar(8000) default 'abcde',
+132 add_clob_17 clob default 'abcde',
+133 add_blob_17 blob default 'abcde',
+134 add_int_18 int default  12345,
+135 add_varchar2_18 varchar2(100) default 'abcde',
+136 add_varchar_18 varchar(8000) default 'abcde',
+137 add_clob_18 clob default 'abcde',
+138 add_blob_18 blob default 'abcde',
+139 add_int_19 int default  12345,
+140 add_varchar2_19 varchar2(100) default 'abcde',
+141 add_varchar_19 varchar(8000) default 'abcde',
+142 add_clob_19 clob default 'abcde',
+143 add_blob_19 blob default 'abcde',
+144 add_int_20 int default  12345,
+145 add_varchar2_20 varchar2(100) default 'abcde',
+146 add_varchar_20 varchar(8000) default 'abcde',
+147 add_clob_20 clob default 'abcde',
+148 add_blob_20 blob default 'abcde',
+149 add_int_21 int default  12345,
+150 add_varchar2_21 varchar2(100) default 'abcde',
+151 add_varchar_21 varchar(8000) default 'abcde',
+152 add_clob_21 clob default 'abcde',
+153 add_blob_21 blob default 'abcde',
+154 add_int_22 int default  12345,
+155 add_varchar2_22 varchar2(100) default 'abcde',
+156 add_varchar_22 varchar(8000) default 'abcde',
+157 add_clob_22 clob default 'abcde',
+158 add_blob_22 blob default 'abcde',
+159 add_int_23 int default  12345,
+160 add_varchar2_23 varchar2(100) default 'abcde',
+161 add_varchar_23 varchar(8000) default 'abcde',
+162 add_clob_23 clob default 'abcde',
+163 add_blob_23 blob default 'abcde',
+164 add_int_24 int default  12345,
+165 add_varchar2_24 varchar2(100) default 'abcde',
+166 add_varchar_24 varchar(8000) default 'abcde',
+167 add_clob_24 clob default 'abcde',
+168 add_blob_24 blob default 'abcde',
+169 add_int_25 int default  12345,
+170 add_varchar2_25 varchar2(100) default 'abcde',
+171 add_varchar_25 varchar(8000) default 'abcde',
+172 add_clob_25 clob default 'abcde',
+173 add_blob_25 blob default 'abcde',
+174 add_int_26 int default  12345,
+175 add_varchar2_26 varchar2(100) default 'abcde',
+176 add_varchar_26 varchar(8000) default 'abcde',
+177 add_clob_26 clob default 'abcde',
+178 add_blob_26 blob default 'abcde',
+179 add_int_27 int default  12345,
+180 add_varchar2_27 varchar2(100) default 'abcde',
+181 add_varchar_27 varchar(8000) default 'abcde',
+182 add_clob_27 clob default 'abcde',
+183 add_blob_27 blob default 'abcde',
+184 add_int_28 int default  12345,
+185 add_varchar2_28 varchar2(100) default 'abcde',
+186 add_varchar_28 varchar(8000) default 'abcde',
+187 add_clob_28 clob default 'abcde',
+188 add_blob_28 blob default 'abcde',
+189 add_int_29 int default  12345,
+190 add_varchar2_29 varchar2(100) default 'abcde',
+191 add_varchar_29 varchar(8000) default 'abcde',
+192 add_clob_29 clob default 'abcde',
+193 add_blob_29 blob default 'abcde',
+194 add_int_30 int default  12345,
+195 add_varchar2_30 varchar2(100) default 'abcde',
+196 add_varchar_30 varchar(8000) default 'abcde',
+197 add_clob_30 clob default 'abcde',
+198 add_blob_30 blob default 'abcde',
+199 add_int_31 int default  12345,
+200 add_varchar2_31 varchar2(100) default 'abcde',
+201 add_varchar_31 varchar(8000) default 'abcde',
+202 add_clob_31 clob default 'abcde',
+203 add_blob_31 blob default 'abcde',
+204 add_int_32 int default  12345,
+205 add_varchar2_32 varchar2(100) default 'abcde',
+206 add_varchar_32 varchar(8000) default 'abcde',
+207 add_clob_32 clob default 'abcde',
+208 add_blob_32 blob default 'abcde',
+209 add_int_33 int default  12345,
+210 add_varchar2_33 varchar2(100) default 'abcde',
+211 add_varchar_33 varchar(8000) default 'abcde',
+212 add_clob_33 clob default 'abcde',
+213 add_blob_33 blob default 'abcde',
+214 add_int_34 int default  12345,
+215 add_varchar2_34 varchar2(100) default 'abcde',
+216 add_varchar_34 varchar(8000) default 'abcde',
+217 add_clob_34 clob default 'abcde',
+218 add_blob_34 blob default 'abcde',
+219 add_int_35 int default  12345,
+220 add_varchar2_35 varchar2(100) default 'abcde',
+221 add_varchar_35 varchar(8000) default 'abcde',
+222 add_clob_35 clob default 'abcde',
+223 add_blob_35 blob default 'abcde',
+224 add_int_36 int default  12345,
+225 add_varchar2_36 varchar2(100) default 'abcde',
+226 add_varchar_36 varchar(8000) default 'abcde',
+227 add_clob_36 clob default 'abcde',
+228 add_blob_36 blob default 'abcde',
+229 add_int_37 int default  12345,
+230 add_varchar2_37 varchar2(100) default 'abcde',
+231 add_varchar_37 varchar(8000) default 'abcde',
+232 add_clob_37 clob default 'abcde',
+233 add_blob_37 blob default 'abcde',
+234 add_int_38 int default  12345,
+235 add_varchar2_38 varchar2(100) default 'abcde',
+236 add_varchar_38 varchar(8000) default 'abcde',
+237 add_clob_38 clob default 'abcde',
+238 add_blob_38 blob default 'abcde',
+239 add_int_39 int default  12345,
+240 add_varchar2_39 varchar2(100) default 'abcde',
+241 add_varchar_39 varchar(8000) default 'abcde',
+242 add_clob_39 clob default 'abcde',
+243 add_blob_39 blob default 'abcde',
+244 add_int_40 int default  12345,
+245 add_varchar2_40 varchar2(100) default 'abcde',
+246 add_varchar_40 varchar(8000) default 'abcde',
+247 add_clob_40 clob default 'abcde',
+248 add_blob_40 blob default 'abcde',
+249 add_int_41 int default  12345,
+250 add_varchar2_41 varchar2(100) default 'abcde',
+251 add_varchar_41 varchar(8000) default 'abcde',
+252 add_clob_41 clob default 'abcde',
+253 add_blob_41 blob default 'abcde',
+254 add_int_42 int default  12345,
+255 add_varchar2_42 varchar2(100) default 'abcde',
+256 add_varchar_42 varchar(8000) default 'abcde',
+257 add_clob_42 clob default 'abcde',
+258 add_blob_42 blob default 'abcde',
+259 add_int_43 int default  12345,
+260 add_varchar2_43 varchar2(100) default 'abcde',
+261 add_varchar_43 varchar(8000) default 'abcde',
+262 add_clob_43 clob default 'abcde',
+263 add_blob_43 blob default 'abcde',
+264 add_int_44 int default  12345,
+265 add_varchar2_44 varchar2(100) default 'abcde',
+266 add_varchar_44 varchar(8000) default 'abcde',
+267 add_clob_44 clob default 'abcde',
+268 add_blob_44 blob default 'abcde',
+269 add_int_45 int default  12345,
+270 add_varchar2_45 varchar2(100) default 'abcde',
+271 add_varchar_45 varchar(8000) default 'abcde',
+272 add_clob_45 clob default 'abcde',
+273 add_blob_45 blob default 'abcde',
+274 add_int_46 int default  12345,
+275 add_varchar2_46 varchar2(100) default 'abcde',
+276 add_varchar_46 varchar(8000) default 'abcde',
+277 add_clob_46 clob default 'abcde',
+278 add_blob_46 blob default 'abcde',
+279 add_int_47 int default  12345,
+280 add_varchar2_47 varchar2(100) default 'abcde',
+281 add_varchar_47 varchar(8000) default 'abcde',
+282 add_clob_47 clob default 'abcde',
+283 add_blob_47 blob default 'abcde',
+284 add_int_48 int default  12345,
+285 add_varchar2_48 varchar2(100) default 'abcde',
+286 add_varchar_48 varchar(8000) default 'abcde',
+287 add_clob_48 clob default 'abcde',
+288 add_blob_48 blob default 'abcde',
+289 add_int_49 int default  12345,
+290 add_varchar2_49 varchar2(100) default 'abcde',
+291 add_varchar_49 varchar(8000) default 'abcde',
+292 add_clob_49 clob default 'abcde',
+293 add_blob_49 blob default 'abcde',
+294 add_int_50 int default  12345,
+295 add_varchar2_50 varchar2(100) default 'abcde',
+296 add_varchar_50 varchar(8000) default 'abcde',
+297 add_clob_50 clob default 'abcde',
+298 add_blob_50 blob default 'abcde'
+299 );
+
+Succeed.
+
+SQL>
+SQL> alter system set enable_sql_map=true;
+
+Succeed.
+
+SQL> ALTER SQL_MAP (select count(*) from oracle_test_tbl_001 where c_id is not null and c_d_id is not null and c_w_id is not null and c_first is not null and
+  2 c_middle is not null and c_last is not null and c_street_1 is not null and c_street_2 is not null and c_city is not null and c_state is not null and
+  3 c_zip is not null and c_phone is not null and c_since is not null and c_credit is not null and c_credit_lim is not null and c_discount is not null and
+  4 c_balance is not null and c_end is not null and c_data1 is not null and c_data2 is not null and c_data3 is not null and c_data4 is not null and c_data5 is not null
+  5 and c_data6 is not null and c_data7 is not null and c_data8 is not null and c_clob is not null and c_blob is not null and column_int is not null and column_bigint is not null and
+  6 column_tinyint is not null and column_float is not null and column_double is not null and column_decimal is not null and column_number is not null and column_numeric is not null and
+  7 column_char is not null and column_varchar is not null and column_varchar2 is not null and column_binary is not null and column_varbinary is not null and column_date is not null and
+  8 column_timestamp is not null and add_int_0 is not null and add_varchar2_0 is not null and add_varchar_0 is not null and add_clob_0 is not null and add_blob_0 is not null and add_int_1 is not null and
+  9 add_varchar2_1 is not null and add_varchar_1 is not null and add_clob_1 is not null and add_blob_1 is not null and add_int_2 is not null and add_varchar2_2 is not null and add_varchar_2 is not null and
+ 10 add_clob_2 is not null and add_blob_2 is not null and add_int_3 is not null and add_varchar2_3 is not null and add_varchar_3 is not null and add_clob_3 is not null and add_blob_3 is not null and add_int_4 is not null and
+ 11 add_varchar2_4 is not null and add_varchar_4 is not null and add_clob_4 is not null and add_blob_4 is not null and add_int_5 is not null and add_varchar2_5 is not null and add_varchar_5 is not null and add_clob_5 is not null and
+ 12 add_blob_5 is not null and add_int_6 is not null and add_varchar2_6 is not null and add_varchar_6 is not null and add_clob_6 is not null and add_blob_6 is not null and add_int_7 is not null and add_varchar2_7 is not null and
+ 13 add_varchar_7 is not null and add_clob_7 is not null and add_blob_7 is not null and add_int_8 is not null and add_varchar2_8 is not null and add_varchar_8 is not null and add_clob_8 is not null and add_blob_8 is not null and
+ 14 add_int_9 is not null and add_varchar2_9 is not null and add_varchar_9 is not null and add_clob_9 is not null and add_blob_9 is not null and add_int_10 is not null and add_varchar2_10 is not null and add_varchar_10 is not null and
+ 15 add_clob_10 is not null and add_blob_10 is not null and add_int_11 is not null and add_varchar2_11 is not null and add_varchar_11 is not null and add_clob_11 is not null and add_blob_11 is not null and add_int_12 is not null and
+ 16 add_varchar2_12 is not null and add_varchar_12 is not null and add_clob_12 is not null and add_blob_12 is not null and add_int_13 is not null and add_varchar2_13 is not null and add_varchar_13 is not null and
+ 17 add_clob_13 is not null and add_blob_13 is not null and add_int_14 is not null and add_varchar2_14 is not null and add_varchar_14 is not null and add_clob_14 is not null and add_blob_14 is not null and
+ 18 add_int_15 is not null and add_varchar2_15 is not null and add_varchar_15 is not null and add_clob_15 is not null and add_blob_15 is not null and add_int_16 is not null and add_varchar2_16 is not null and
+ 19 add_varchar_16 is not null and add_clob_16 is not null and add_blob_16 is not null and add_int_17 is not null and add_varchar2_17 is not null and add_varchar_17 is not null and add_clob_17 is not null and
+ 20 add_blob_17 is not null and add_int_18 is not null and add_varchar2_18 is not null and add_varchar_18 is not null and add_clob_18 is not null and add_blob_18 is not null and add_int_19 is not null and
+ 21 add_varchar2_19 is not null and add_varchar_19 is not null and add_clob_19 is not null and add_blob_19 is not null and add_int_20 is not null and add_varchar2_20 is not null and add_varchar_20 is not null and
+ 22 add_clob_20 is not null and add_blob_20 is not null and add_int_21 is not null and add_varchar2_21 is not null and add_varchar_21 is not null and add_clob_21 is not null and add_blob_21 is not null and
+ 23 add_int_22 is not null and add_varchar2_22 is not null and add_varchar_22 is not null and add_clob_22 is not null and add_blob_22 is not null and add_int_23 is not null and add_varchar2_23 is not null and
+ 24 add_varchar_23 is not null and add_clob_23 is not null and add_blob_23 is not null and add_int_24 is not null and add_varchar2_24 is not null and add_varchar_24 is not null and add_clob_24 is not null and
+ 25 add_blob_24 is not null and add_int_25 is not null and add_varchar2_25 is not null and add_varchar_25 is not null and add_clob_25 is not null and add_blob_25 is not null and add_int_26 is not null and
+ 26 add_varchar2_26 is not null and add_varchar_26 is not null and add_clob_26 is not null and add_blob_26 is not null and add_int_27 is not null and add_varchar2_27 is not null and add_varchar_27 is not null and
+ 27 add_clob_27 is not null and add_blob_27 is not null and add_int_28 is not null and add_varchar2_28 is not null and add_varchar_28 is not null and add_clob_28 is not null and add_blob_28 is not null and
+ 28 add_int_29 is not null and add_varchar2_29 is not null and add_varchar_29 is not null and add_clob_29 is not null and add_blob_29 is not null and add_int_30 is not null and add_varchar2_30 is not null and
+ 29 add_varchar_30 is not null and add_clob_30 is not null and add_blob_30 is not null and add_int_31 is not null and add_varchar2_31 is not null and add_varchar_31 is not null and add_clob_31 is not null and
+ 30 add_blob_31 is not null and add_int_32 is not null and add_varchar2_32 is not null and add_varchar_32 is not null and add_clob_32 is not null and add_blob_32 is not null and add_int_33 is not null and
+ 31 add_varchar2_33 is not null and add_varchar_33 is not null and add_clob_33 is not null and add_blob_33 is not null and add_int_34 is not null and add_varchar2_34 is not null and add_varchar_34 is not null and
+ 32 add_clob_34 is not null and add_blob_34 is not null and add_int_35 is not null and add_varchar2_35 is not null and add_varchar_35 is not null and add_clob_35 is not null and add_blob_35 is not null and
+ 33 add_int_36 is not null and add_varchar2_36 is not null and add_varchar_36 is not null and add_clob_36 is not null and add_blob_36 is not null and add_int_37 is not null and add_varchar2_37 is not null and
+ 34 add_varchar_37 is not null and add_clob_37 is not null and add_blob_37 is not null and add_int_38 is not null and add_varchar2_38 is not null and add_varchar_38 is not null and add_clob_38 is not null and
+ 35 add_blob_38 is not null and add_int_39 is not null and add_varchar2_39 is not null and add_varchar_39 is not null and add_clob_39 is not null and add_blob_39 is not null and add_int_40 is not null and
+ 36 add_varchar2_40 is not null and add_varchar_40 is not null and add_clob_40 is not null and add_blob_40 is not null and add_int_41 is not null and add_varchar2_41 is not null and add_varchar_41 is not null and
+ 37 add_clob_41 is not null and add_blob_41 is not null and add_int_42 is not null and add_varchar2_42 is not null and add_varchar_42 is not null and add_clob_42 is not null and add_blob_42 is not null and
+ 38 add_int_43 is not null and add_varchar2_43 is not null and add_varchar_43 is not null and add_clob_43 is not null and add_blob_43 is not null and add_int_44 is not null and add_varchar2_44 is not null and
+ 39 add_varchar_44 is not null and add_clob_44 is not null and add_blob_44 is not null and add_int_45 is not null and add_varchar2_45 is not null and add_varchar_45 is not null and add_clob_45 is not null and
+ 40 add_blob_45 is not null and add_int_46 is not null and add_varchar2_46 is not null and add_varchar_46 is not null and add_clob_46 is not null and add_blob_46 is not null and add_int_47 is not null and
+ 41 add_varchar2_47 is not null and add_varchar_47 is not null and add_clob_47 is not null and add_blob_47 is not null and add_int_48 is not null and add_varchar2_48 is not null and
+ 42 add_varchar_48 is not null and add_clob_48 is not null and add_blob_48 is not null and add_int_49 is not null and add_varchar2_49 is not null and add_varchar_49 is not null and
+ 43 add_clob_49 is not null and add_blob_49 is not null and add_int_50 is not null and add_varchar2_50 is not null and add_varchar_50 is not null and add_clob_50 is not null and add_blob_50 is not null and
+ 44 c_id is not null and c_d_id is not null and c_w_id is not null and c_first is not null and
+ 45 c_middle is not null and c_last is not null and c_street_1 is not null and c_street_2 is not null and c_city is not null and c_state is not null and
+ 46 c_zip is not null and c_phone is not null and c_since is not null and c_credit is not null and c_credit_lim is not null and c_discount is not null and
+ 47 c_balance is not null and c_end is not null and c_data1 is not null and c_data2 is not null and c_data3 is not null and c_data4 is not null and c_data5 is not null
+ 48 and c_data6 is not null and c_data7 is not null and c_data8 is not null and c_clob is not null and c_blob is not null and column_int is not null and column_bigint is not null and
+ 49 column_tinyint is not null and column_float is not null and column_double is not null and column_decimal is not null and column_number is not null and column_numeric is not null and
+ 50 column_char is not null and column_varchar is not null and column_varchar2 is not null and column_binary is not null and column_varbinary is not null and column_date is not null and
+ 51 column_timestamp is not null and add_int_0 is not null and add_varchar2_0 is not null and add_varchar_0 is not null and add_clob_0 is not null and add_blob_0 is not null and add_int_1 is not null and
+ 52 add_varchar2_1 is not null and add_varchar_1 is not null and add_clob_1 is not null and add_blob_1 is not null and add_int_2 is not null and add_varchar2_2 is not null and add_varchar_2 is not null and
+ 53 add_clob_2 is not null and add_blob_2 is not null and add_int_3 is not null and add_varchar2_3 is not null and add_varchar_3 is not null and add_clob_3 is not null and add_blob_3 is not null and add_int_4 is not null and
+ 54 add_varchar2_4 is not null and add_varchar_4 is not null and add_clob_4 is not null and add_blob_4 is not null and add_int_5 is not null and add_varchar2_5 is not null and add_varchar_5 is not null and add_clob_5 is not null and
+ 55 add_blob_5 is not null and add_int_6 is not null and add_varchar2_6 is not null and add_varchar_6 is not null and add_clob_6 is not null and add_blob_6 is not null and add_int_7 is not null and add_varchar2_7 is not null and
+ 56 add_varchar_7 is not null and add_clob_7 is not null and add_blob_7 is not null and add_int_8 is not null and add_varchar2_8 is not null and add_varchar_8 is not null and add_clob_8 is not null and add_blob_8 is not null and
+ 57 add_int_9 is not null and add_varchar2_9 is not null and add_varchar_9 is not null and add_clob_9 is not null and add_blob_9 is not null and add_int_10 is not null and add_varchar2_10 is not null and add_varchar_10 is not null and
+ 58 add_clob_10 is not null and add_blob_10 is not null and add_int_11 is not null and add_varchar2_11 is not null and add_varchar_11 is not null and add_clob_11 is not null and add_blob_11 is not null and add_int_12 is not null and
+ 59 add_varchar2_12 is not null and add_varchar_12 is not null and add_clob_12 is not null and add_blob_12 is not null and add_int_13 is not null and add_varchar2_13 is not null and add_varchar_13 is not null and
+ 60 add_clob_13 is not null and add_blob_13 is not null and add_int_14 is not null and add_varchar2_14 is not null and add_varchar_14 is not null and add_clob_14 is not null and add_blob_14 is not null and
+ 61 add_int_15 is not null and add_varchar2_15 is not null and add_varchar_15 is not null and add_clob_15 is not null and add_blob_15 is not null and add_int_16 is not null and add_varchar2_16 is not null and
+ 62 add_varchar_16 is not null and add_clob_16 is not null and add_blob_16 is not null and add_int_17 is not null and add_varchar2_17 is not null and add_varchar_17 is not null and add_clob_17 is not null and
+ 63 add_blob_17 is not null and add_int_18 is not null and add_varchar2_18 is not null and add_varchar_18 is not null and add_clob_18 is not null and add_blob_18 is not null and add_int_19 is not null and
+ 64 add_varchar2_19 is not null and add_varchar_19 is not null and add_clob_19 is not null and add_blob_19 is not null and add_int_20 is not null and add_varchar2_20 is not null and add_varchar_20 is not null and
+ 65 add_clob_20 is not null and add_blob_20 is not null and add_int_21 is not null and add_varchar2_21 is not null and add_varchar_21 is not null and add_clob_21 is not null and add_blob_21 is not null and
+ 66 add_int_22 is not null and add_varchar2_22 is not null and add_varchar_22 is not null and add_clob_22 is not null and add_blob_22 is not null and add_int_23 is not null and add_varchar2_23 is not null and
+ 67 add_varchar_23 is not null and add_clob_23 is not null and add_blob_23 is not null and add_int_24 is not null and add_varchar2_24 is not null and add_varchar_24 is not null and add_clob_24 is not null and
+ 68 add_blob_24 is not null and add_int_25 is not null and add_varchar2_25 is not null and add_varchar_25 is not null and add_clob_25 is not null and add_blob_25 is not null and add_int_26 is not null and
+ 69 add_varchar2_26 is not null and add_varchar_26 is not null and add_clob_26 is not null and add_blob_26 is not null and add_int_27 is not null and add_varchar2_27 is not null and add_varchar_27 is not null and
+ 70 add_clob_27 is not null and add_blob_27 is not null and add_int_28 is not null and add_varchar2_28 is not null and add_varchar_28 is not null and add_clob_28 is not null and add_blob_28 is not null and
+ 71 add_int_29 is not null and add_varchar2_29 is not null and add_varchar_29 is not null and add_clob_29 is not null and add_blob_29 is not null and add_int_30 is not null and add_varchar2_30 is not null and
+ 72 add_varchar_30 is not null and add_clob_30 is not null and add_blob_30 is not null and add_int_31 is not null and add_varchar2_31 is not null and add_varchar_31 is not null and add_clob_31 is not null and
+ 73 add_blob_31 is not null and add_int_32 is not null and add_varchar2_32 is not null and add_varchar_32 is not null and add_clob_32 is not null and add_blob_32 is not null and add_int_33 is not null and
+ 74 add_varchar2_33 is not null and add_varchar_33 is not null and add_clob_33 is not null and add_blob_33 is not null and add_int_34 is not null and add_varchar2_34 is not null and add_varchar_34 is not null and
+ 75 add_clob_34 is not null and add_blob_34 is not null and add_int_35 is not null and add_varchar2_35 is not null and add_varchar_35 is not null and add_clob_35 is not null and add_blob_35 is not null and
+ 76 add_int_36 is not null and add_varchar2_36 is not null and add_varchar_36 is not null and add_clob_36 is not null and add_blob_36 is not null and add_int_37 is not null and add_varchar2_37 is not null and
+ 77 add_varchar_37 is not null and add_clob_37 is not null and add_blob_37 is not null and add_int_38 is not null and add_varchar2_38 is not null and add_varchar_38 is not null and add_clob_38 is not null and
+ 78 add_blob_38 is not null and add_int_39 is not null and add_varchar2_39 is not null and add_varchar_39 is not null and add_clob_39 is not null and add_blob_39 is not null and add_int_40 is not null and
+ 79 add_varchar2_40 is not null and add_varchar_40 is not null and add_clob_40 is not null and add_blob_40 is not null and add_int_41 is not null and add_varchar2_41 is not null and add_varchar_41 is not null and
+ 80 add_clob_41 is not null and add_blob_41 is not null and add_int_42 is not null and add_varchar2_42 is not null and add_varchar_42 is not null and add_clob_42 is not null and add_blob_42 is not null and
+ 81 add_int_43 is not null and add_varchar2_43 is not null and add_varchar_43 is not null and add_clob_43 is not null and add_blob_43 is not null and add_int_44 is not null and add_varchar2_44 is not null and
+ 82 add_varchar_44 is not null and add_clob_44 is not null and add_blob_44 is not null and add_int_45 is not null and add_varchar2_45 is not null and add_varchar_45 is not null and add_clob_45 is not null and
+ 83 add_blob_45 is not null and add_int_46 is not null and add_varchar2_46 is not null and add_varchar_46 is not null and add_clob_46 is not null and add_blob_46 is not null and add_int_47 is not null and
+ 84 add_varchar2_47 is not null and add_varchar_47 is not null and add_clob_47 is not null and add_blob_47 is not null and add_int_48 is not null and add_varchar2_48 is not null and
+ 85 add_varchar_48 is not null and add_clob_48 is not null and add_blob_48 is not null and add_int_49 is not null and add_varchar2_49 is not null and add_varchar_49 is not null and
+ 86 add_clob_49 is not null and add_blob_49 is not null and add_int_50 is not null and add_varchar2_50 is not null and add_varchar_50 is not null and add_clob_50 is not null and add_blob_50 is not null)
+ 87 REWRITE TO (select count(1) as ff from oracle_test_tbl_001 where c_id is not null and c_d_id is not null and c_w_id is not null and c_first is not null and
+ 88 c_middle is not null and c_last is not null and c_street_1 is not null and c_street_2 is not null and c_city is not null and c_state is not null and
+ 89 c_zip is not null and c_phone is not null and c_since is not null and c_credit is not null and c_credit_lim is not null and c_discount is not null and
+ 90 c_balance is not null and c_end is not null and c_data1 is not null and c_data2 is not null and c_data3 is not null and c_data4 is not null and c_data5 is not null
+ 91 and c_data6 is not null and c_data7 is not null and c_data8 is not null and c_clob is not null and c_blob is not null and column_int is not null and column_bigint is not null and
+ 92 column_tinyint is not null and column_float is not null and column_double is not null and column_decimal is not null and column_number is not null and column_numeric is not null and
+ 93 column_char is not null and column_varchar is not null and column_varchar2 is not null and column_binary is not null and column_varbinary is not null and column_date is not null and
+ 94 column_timestamp is not null and add_int_0 is not null and add_varchar2_0 is not null and add_varchar_0 is not null and add_clob_0 is not null and add_blob_0 is not null and add_int_1 is not null and
+ 95 add_varchar2_1 is not null and add_varchar_1 is not null and add_clob_1 is not null and add_blob_1 is not null and add_int_2 is not null and add_varchar2_2 is not null and add_varchar_2 is not null and
+ 96 add_clob_2 is not null and add_blob_2 is not null and add_int_3 is not null and add_varchar2_3 is not null and add_varchar_3 is not null and add_clob_3 is not null and add_blob_3 is not null and add_int_4 is not null and
+ 97 add_varchar2_4 is not null and add_varchar_4 is not null and add_clob_4 is not null and add_blob_4 is not null and add_int_5 is not null and add_varchar2_5 is not null and add_varchar_5 is not null and add_clob_5 is not null and
+ 98 add_blob_5 is not null and add_int_6 is not null and add_varchar2_6 is not null and add_varchar_6 is not null and add_clob_6 is not null and add_blob_6 is not null and add_int_7 is not null and add_varchar2_7 is not null and
+ 99 add_varchar_7 is not null and add_clob_7 is not null and add_blob_7 is not null and add_int_8 is not null and add_varchar2_8 is not null and add_varchar_8 is not null and add_clob_8 is not null and add_blob_8 is not null and
+100 add_int_9 is not null and add_varchar2_9 is not null and add_varchar_9 is not null and add_clob_9 is not null and add_blob_9 is not null and add_int_10 is not null and add_varchar2_10 is not null and add_varchar_10 is not null and
+101 add_clob_10 is not null and add_blob_10 is not null and add_int_11 is not null and add_varchar2_11 is not null and add_varchar_11 is not null and add_clob_11 is not null and add_blob_11 is not null and add_int_12 is not null and
+102 add_varchar2_12 is not null and add_varchar_12 is not null and add_clob_12 is not null and add_blob_12 is not null and add_int_13 is not null and add_varchar2_13 is not null and add_varchar_13 is not null and
+103 add_clob_13 is not null and add_blob_13 is not null and add_int_14 is not null and add_varchar2_14 is not null and add_varchar_14 is not null and add_clob_14 is not null and add_blob_14 is not null and
+104 add_int_15 is not null and add_varchar2_15 is not null and add_varchar_15 is not null and add_clob_15 is not null and add_blob_15 is not null and add_int_16 is not null and add_varchar2_16 is not null and
+105 add_varchar_16 is not null and add_clob_16 is not null and add_blob_16 is not null and add_int_17 is not null and add_varchar2_17 is not null and add_varchar_17 is not null and add_clob_17 is not null and
+106 add_blob_17 is not null and add_int_18 is not null and add_varchar2_18 is not null and add_varchar_18 is not null and add_clob_18 is not null and add_blob_18 is not null and add_int_19 is not null and
+107 add_varchar2_19 is not null and add_varchar_19 is not null and add_clob_19 is not null and add_blob_19 is not null and add_int_20 is not null and add_varchar2_20 is not null and add_varchar_20 is not null and
+108 add_clob_20 is not null and add_blob_20 is not null and add_int_21 is not null and add_varchar2_21 is not null and add_varchar_21 is not null and add_clob_21 is not null and add_blob_21 is not null and
+109 add_int_22 is not null and add_varchar2_22 is not null and add_varchar_22 is not null and add_clob_22 is not null and add_blob_22 is not null and add_int_23 is not null and add_varchar2_23 is not null and
+110 add_varchar_23 is not null and add_clob_23 is not null and add_blob_23 is not null and add_int_24 is not null and add_varchar2_24 is not null and add_varchar_24 is not null and add_clob_24 is not null and
+111 add_blob_24 is not null and add_int_25 is not null and add_varchar2_25 is not null and add_varchar_25 is not null and add_clob_25 is not null and add_blob_25 is not null and add_int_26 is not null and
+112 add_varchar2_26 is not null and add_varchar_26 is not null and add_clob_26 is not null and add_blob_26 is not null and add_int_27 is not null and add_varchar2_27 is not null and add_varchar_27 is not null and
+113 add_clob_27 is not null and add_blob_27 is not null and add_int_28 is not null and add_varchar2_28 is not null and add_varchar_28 is not null and add_clob_28 is not null and add_blob_28 is not null and
+114 add_int_29 is not null and add_varchar2_29 is not null and add_varchar_29 is not null and add_clob_29 is not null and add_blob_29 is not null and add_int_30 is not null and add_varchar2_30 is not null and
+115 add_varchar_30 is not null and add_clob_30 is not null and add_blob_30 is not null and add_int_31 is not null and add_varchar2_31 is not null and add_varchar_31 is not null and add_clob_31 is not null and
+116 add_blob_31 is not null and add_int_32 is not null and add_varchar2_32 is not null and add_varchar_32 is not null and add_clob_32 is not null and add_blob_32 is not null and add_int_33 is not null and
+117 add_varchar2_33 is not null and add_varchar_33 is not null and add_clob_33 is not null and add_blob_33 is not null and add_int_34 is not null and add_varchar2_34 is not null and add_varchar_34 is not null and
+118 add_clob_34 is not null and add_blob_34 is not null and add_int_35 is not null and add_varchar2_35 is not null and add_varchar_35 is not null and add_clob_35 is not null and add_blob_35 is not null and
+119 add_int_36 is not null and add_varchar2_36 is not null and add_varchar_36 is not null and add_clob_36 is not null and add_blob_36 is not null and add_int_37 is not null and add_varchar2_37 is not null and
+120 add_varchar_37 is not null and add_clob_37 is not null and add_blob_37 is not null and add_int_38 is not null and add_varchar2_38 is not null and add_varchar_38 is not null and add_clob_38 is not null and
+121 add_blob_38 is not null and add_int_39 is not null and add_varchar2_39 is not null and add_varchar_39 is not null and add_clob_39 is not null and add_blob_39 is not null and add_int_40 is not null and
+122 add_varchar2_40 is not null and add_varchar_40 is not null and add_clob_40 is not null and add_blob_40 is not null and add_int_41 is not null and add_varchar2_41 is not null and add_varchar_41 is not null and
+123 add_clob_41 is not null and add_blob_41 is not null and add_int_42 is not null and add_varchar2_42 is not null and add_varchar_42 is not null and add_clob_42 is not null and add_blob_42 is not null and
+124 add_int_43 is not null and add_varchar2_43 is not null and add_varchar_43 is not null and add_clob_43 is not null and add_blob_43 is not null and add_int_44 is not null and add_varchar2_44 is not null and
+125 add_varchar_44 is not null and add_clob_44 is not null and add_blob_44 is not null and add_int_45 is not null and add_varchar2_45 is not null and add_varchar_45 is not null and add_clob_45 is not null and
+126 add_blob_45 is not null and add_int_46 is not null and add_varchar2_46 is not null and add_varchar_46 is not null and add_clob_46 is not null and add_blob_46 is not null and add_int_47 is not null and
+127 add_varchar2_47 is not null and add_varchar_47 is not null and add_clob_47 is not null and add_blob_47 is not null and add_int_48 is not null and add_varchar2_48 is not null and
+128 add_varchar_48 is not null and add_clob_48 is not null and add_blob_48 is not null and add_int_49 is not null and add_varchar2_49 is not null and add_varchar_49 is not null and
+129 add_clob_49 is not null and add_blob_49 is not null and add_int_50 is not null and add_varchar2_50 is not null and add_varchar_50 is not null and add_clob_50 is not null and add_blob_50 is not null and
+130 c_id is not null and c_d_id is not null and c_w_id is not null and c_first is not null and
+131 c_middle is not null and c_last is not null and c_street_1 is not null and c_street_2 is not null and c_city is not null and c_state is not null and
+132 c_zip is not null and c_phone is not null and c_since is not null and c_credit is not null and c_credit_lim is not null and c_discount is not null and
+133 c_balance is not null and c_end is not null and c_data1 is not null and c_data2 is not null and c_data3 is not null and c_data4 is not null and c_data5 is not null
+134 and c_data6 is not null and c_data7 is not null and c_data8 is not null and c_clob is not null and c_blob is not null and column_int is not null and column_bigint is not null and
+135 column_tinyint is not null and column_float is not null and column_double is not null and column_decimal is not null and column_number is not null and column_numeric is not null and
+136 column_char is not null and column_varchar is not null and column_varchar2 is not null and column_binary is not null and column_varbinary is not null and column_date is not null and
+137 column_timestamp is not null and add_int_0 is not null and add_varchar2_0 is not null and add_varchar_0 is not null and add_clob_0 is not null and add_blob_0 is not null and add_int_1 is not null and
+138 add_varchar2_1 is not null and add_varchar_1 is not null and add_clob_1 is not null and add_blob_1 is not null and add_int_2 is not null and add_varchar2_2 is not null and add_varchar_2 is not null and
+139 add_clob_2 is not null and add_blob_2 is not null and add_int_3 is not null and add_varchar2_3 is not null and add_varchar_3 is not null and add_clob_3 is not null and add_blob_3 is not null and add_int_4 is not null and
+140 add_varchar2_4 is not null and add_varchar_4 is not null and add_clob_4 is not null and add_blob_4 is not null and add_int_5 is not null and add_varchar2_5 is not null and add_varchar_5 is not null and add_clob_5 is not null and
+141 add_blob_5 is not null and add_int_6 is not null and add_varchar2_6 is not null and add_varchar_6 is not null and add_clob_6 is not null and add_blob_6 is not null and add_int_7 is not null and add_varchar2_7 is not null and
+142 add_varchar_7 is not null and add_clob_7 is not null and add_blob_7 is not null and add_int_8 is not null and add_varchar2_8 is not null and add_varchar_8 is not null and add_clob_8 is not null and add_blob_8 is not null and
+143 add_int_9 is not null and add_varchar2_9 is not null and add_varchar_9 is not null and add_clob_9 is not null and add_blob_9 is not null and add_int_10 is not null and add_varchar2_10 is not null and add_varchar_10 is not null and
+144 add_clob_10 is not null and add_blob_10 is not null and add_int_11 is not null and add_varchar2_11 is not null and add_varchar_11 is not null and add_clob_11 is not null and add_blob_11 is not null and add_int_12 is not null and
+145 add_varchar2_12 is not null and add_varchar_12 is not null and add_clob_12 is not null and add_blob_12 is not null and add_int_13 is not null and add_varchar2_13 is not null and add_varchar_13 is not null and
+146 add_clob_13 is not null and add_blob_13 is not null and add_int_14 is not null and add_varchar2_14 is not null and add_varchar_14 is not null and add_clob_14 is not null and add_blob_14 is not null and
+147 add_int_15 is not null and add_varchar2_15 is not null and add_varchar_15 is not null and add_clob_15 is not null and add_blob_15 is not null and add_int_16 is not null and add_varchar2_16 is not null and
+148 add_varchar_16 is not null and add_clob_16 is not null and add_blob_16 is not null and add_int_17 is not null and add_varchar2_17 is not null and add_varchar_17 is not null and add_clob_17 is not null and
+149 add_blob_17 is not null and add_int_18 is not null and add_varchar2_18 is not null and add_varchar_18 is not null and add_clob_18 is not null and add_blob_18 is not null and add_int_19 is not null and
+150 add_varchar2_19 is not null and add_varchar_19 is not null and add_clob_19 is not null and add_blob_19 is not null and add_int_20 is not null and add_varchar2_20 is not null and add_varchar_20 is not null and
+151 add_clob_20 is not null and add_blob_20 is not null and add_int_21 is not null and add_varchar2_21 is not null and add_varchar_21 is not null and add_clob_21 is not null and add_blob_21 is not null and
+152 add_int_22 is not null and add_varchar2_22 is not null and add_varchar_22 is not null and add_clob_22 is not null and add_blob_22 is not null and add_int_23 is not null and add_varchar2_23 is not null and
+153 add_varchar_23 is not null and add_clob_23 is not null and add_blob_23 is not null and add_int_24 is not null and add_varchar2_24 is not null and add_varchar_24 is not null and add_clob_24 is not null and
+154 add_blob_24 is not null and add_int_25 is not null and add_varchar2_25 is not null and add_varchar_25 is not null and add_clob_25 is not null and add_blob_25 is not null and add_int_26 is not null and
+155 add_varchar2_26 is not null and add_varchar_26 is not null and add_clob_26 is not null and add_blob_26 is not null and add_int_27 is not null and add_varchar2_27 is not null and add_varchar_27 is not null and
+156 add_clob_27 is not null and add_blob_27 is not null and add_int_28 is not null and add_varchar2_28 is not null and add_varchar_28 is not null and add_clob_28 is not null and add_blob_28 is not null and
+157 add_int_29 is not null and add_varchar2_29 is not null and add_varchar_29 is not null and add_clob_29 is not null and add_blob_29 is not null and add_int_30 is not null and add_varchar2_30 is not null and
+158 add_varchar_30 is not null and add_clob_30 is not null and add_blob_30 is not null and add_int_31 is not null and add_varchar2_31 is not null and add_varchar_31 is not null and add_clob_31 is not null and
+159 add_blob_31 is not null and add_int_32 is not null and add_varchar2_32 is not null and add_varchar_32 is not null and add_clob_32 is not null and add_blob_32 is not null and add_int_33 is not null and
+160 add_varchar2_33 is not null and add_varchar_33 is not null and add_clob_33 is not null and add_blob_33 is not null and add_int_34 is not null and add_varchar2_34 is not null and add_varchar_34 is not null and
+161 add_clob_34 is not null and add_blob_34 is not null and add_int_35 is not null and add_varchar2_35 is not null and add_varchar_35 is not null and add_clob_35 is not null and add_blob_35 is not null and
+162 add_int_36 is not null and add_varchar2_36 is not null and add_varchar_36 is not null and add_clob_36 is not null and add_blob_36 is not null and add_int_37 is not null and add_varchar2_37 is not null and
+163 add_varchar_37 is not null and add_clob_37 is not null and add_blob_37 is not null and add_int_38 is not null and add_varchar2_38 is not null and add_varchar_38 is not null and add_clob_38 is not null and
+164 add_blob_38 is not null and add_int_39 is not null and add_varchar2_39 is not null and add_varchar_39 is not null and add_clob_39 is not null and add_blob_39 is not null and add_int_40 is not null and
+165 add_varchar2_40 is not null and add_varchar_40 is not null and add_clob_40 is not null and add_blob_40 is not null and add_int_41 is not null and add_varchar2_41 is not null and add_varchar_41 is not null and
+166 add_clob_41 is not null and add_blob_41 is not null and add_int_42 is not null and add_varchar2_42 is not null and add_varchar_42 is not null and add_clob_42 is not null and add_blob_42 is not null and
+167 add_int_43 is not null and add_varchar2_43 is not null and add_varchar_43 is not null and add_clob_43 is not null and add_blob_43 is not null and add_int_44 is not null and add_varchar2_44 is not null and
+168 add_varchar_44 is not null and add_clob_44 is not null and add_blob_44 is not null and add_int_45 is not null and add_varchar2_45 is not null and add_varchar_45 is not null and add_clob_45 is not null and
+169 add_blob_45 is not null and add_int_46 is not null and add_varchar2_46 is not null and add_varchar_46 is not null and add_clob_46 is not null and add_blob_46 is not null and add_int_47 is not null and
+170 add_varchar2_47 is not null and add_varchar_47 is not null and add_clob_47 is not null and add_blob_47 is not null and add_int_48 is not null and add_varchar2_48 is not null and
+171 add_varchar_48 is not null and add_clob_48 is not null and add_blob_48 is not null and add_int_49 is not null and add_varchar2_49 is not null and add_varchar_49 is not null and
+172 add_clob_49 is not null and add_blob_49 is not null and add_int_50 is not null and add_varchar2_50 is not null and add_varchar_50 is not null and add_clob_50 is not null and add_blob_50 is not null);
+
+Succeed.
+
+SQL>
+SQL> select count(*) from oracle_test_tbl_001 where c_id is not null and c_d_id is not null and c_w_id is not null and c_first is not null and
+  2 c_middle is not null and c_last is not null and c_street_1 is not null and c_street_2 is not null and c_city is not null and c_state is not null and
+  3 c_zip is not null and c_phone is not null and c_since is not null and c_credit is not null and c_credit_lim is not null and c_discount is not null and
+  4 c_balance is not null and c_end is not null and c_data1 is not null and c_data2 is not null and c_data3 is not null and c_data4 is not null and c_data5 is not null
+  5 and c_data6 is not null and c_data7 is not null and c_data8 is not null and c_clob is not null and c_blob is not null and column_int is not null and column_bigint is not null and
+  6 column_tinyint is not null and column_float is not null and column_double is not null and column_decimal is not null and column_number is not null and column_numeric is not null and
+  7 column_char is not null and column_varchar is not null and column_varchar2 is not null and column_binary is not null and column_varbinary is not null and column_date is not null and
+  8 column_timestamp is not null and add_int_0 is not null and add_varchar2_0 is not null and add_varchar_0 is not null and add_clob_0 is not null and add_blob_0 is not null and add_int_1 is not null and
+  9 add_varchar2_1 is not null and add_varchar_1 is not null and add_clob_1 is not null and add_blob_1 is not null and add_int_2 is not null and add_varchar2_2 is not null and add_varchar_2 is not null and
+ 10 add_clob_2 is not null and add_blob_2 is not null and add_int_3 is not null and add_varchar2_3 is not null and add_varchar_3 is not null and add_clob_3 is not null and add_blob_3 is not null and add_int_4 is not null and
+ 11 add_varchar2_4 is not null and add_varchar_4 is not null and add_clob_4 is not null and add_blob_4 is not null and add_int_5 is not null and add_varchar2_5 is not null and add_varchar_5 is not null and add_clob_5 is not null and
+ 12 add_blob_5 is not null and add_int_6 is not null and add_varchar2_6 is not null and add_varchar_6 is not null and add_clob_6 is not null and add_blob_6 is not null and add_int_7 is not null and add_varchar2_7 is not null and
+ 13 add_varchar_7 is not null and add_clob_7 is not null and add_blob_7 is not null and add_int_8 is not null and add_varchar2_8 is not null and add_varchar_8 is not null and add_clob_8 is not null and add_blob_8 is not null and
+ 14 add_int_9 is not null and add_varchar2_9 is not null and add_varchar_9 is not null and add_clob_9 is not null and add_blob_9 is not null and add_int_10 is not null and add_varchar2_10 is not null and add_varchar_10 is not null and
+ 15 add_clob_10 is not null and add_blob_10 is not null and add_int_11 is not null and add_varchar2_11 is not null and add_varchar_11 is not null and add_clob_11 is not null and add_blob_11 is not null and add_int_12 is not null and
+ 16 add_varchar2_12 is not null and add_varchar_12 is not null and add_clob_12 is not null and add_blob_12 is not null and add_int_13 is not null and add_varchar2_13 is not null and add_varchar_13 is not null and
+ 17 add_clob_13 is not null and add_blob_13 is not null and add_int_14 is not null and add_varchar2_14 is not null and add_varchar_14 is not null and add_clob_14 is not null and add_blob_14 is not null and
+ 18 add_int_15 is not null and add_varchar2_15 is not null and add_varchar_15 is not null and add_clob_15 is not null and add_blob_15 is not null and add_int_16 is not null and add_varchar2_16 is not null and
+ 19 add_varchar_16 is not null and add_clob_16 is not null and add_blob_16 is not null and add_int_17 is not null and add_varchar2_17 is not null and add_varchar_17 is not null and add_clob_17 is not null and
+ 20 add_blob_17 is not null and add_int_18 is not null and add_varchar2_18 is not null and add_varchar_18 is not null and add_clob_18 is not null and add_blob_18 is not null and add_int_19 is not null and
+ 21 add_varchar2_19 is not null and add_varchar_19 is not null and add_clob_19 is not null and add_blob_19 is not null and add_int_20 is not null and add_varchar2_20 is not null and add_varchar_20 is not null and
+ 22 add_clob_20 is not null and add_blob_20 is not null and add_int_21 is not null and add_varchar2_21 is not null and add_varchar_21 is not null and add_clob_21 is not null and add_blob_21 is not null and
+ 23 add_int_22 is not null and add_varchar2_22 is not null and add_varchar_22 is not null and add_clob_22 is not null and add_blob_22 is not null and add_int_23 is not null and add_varchar2_23 is not null and
+ 24 add_varchar_23 is not null and add_clob_23 is not null and add_blob_23 is not null and add_int_24 is not null and add_varchar2_24 is not null and add_varchar_24 is not null and add_clob_24 is not null and
+ 25 add_blob_24 is not null and add_int_25 is not null and add_varchar2_25 is not null and add_varchar_25 is not null and add_clob_25 is not null and add_blob_25 is not null and add_int_26 is not null and
+ 26 add_varchar2_26 is not null and add_varchar_26 is not null and add_clob_26 is not null and add_blob_26 is not null and add_int_27 is not null and add_varchar2_27 is not null and add_varchar_27 is not null and
+ 27 add_clob_27 is not null and add_blob_27 is not null and add_int_28 is not null and add_varchar2_28 is not null and add_varchar_28 is not null and add_clob_28 is not null and add_blob_28 is not null and
+ 28 add_int_29 is not null and add_varchar2_29 is not null and add_varchar_29 is not null and add_clob_29 is not null and add_blob_29 is not null and add_int_30 is not null and add_varchar2_30 is not null and
+ 29 add_varchar_30 is not null and add_clob_30 is not null and add_blob_30 is not null and add_int_31 is not null and add_varchar2_31 is not null and add_varchar_31 is not null and add_clob_31 is not null and
+ 30 add_blob_31 is not null and add_int_32 is not null and add_varchar2_32 is not null and add_varchar_32 is not null and add_clob_32 is not null and add_blob_32 is not null and add_int_33 is not null and
+ 31 add_varchar2_33 is not null and add_varchar_33 is not null and add_clob_33 is not null and add_blob_33 is not null and add_int_34 is not null and add_varchar2_34 is not null and add_varchar_34 is not null and
+ 32 add_clob_34 is not null and add_blob_34 is not null and add_int_35 is not null and add_varchar2_35 is not null and add_varchar_35 is not null and add_clob_35 is not null and add_blob_35 is not null and
+ 33 add_int_36 is not null and add_varchar2_36 is not null and add_varchar_36 is not null and add_clob_36 is not null and add_blob_36 is not null and add_int_37 is not null and add_varchar2_37 is not null and
+ 34 add_varchar_37 is not null and add_clob_37 is not null and add_blob_37 is not null and add_int_38 is not null and add_varchar2_38 is not null and add_varchar_38 is not null and add_clob_38 is not null and
+ 35 add_blob_38 is not null and add_int_39 is not null and add_varchar2_39 is not null and add_varchar_39 is not null and add_clob_39 is not null and add_blob_39 is not null and add_int_40 is not null and
+ 36 add_varchar2_40 is not null and add_varchar_40 is not null and add_clob_40 is not null and add_blob_40 is not null and add_int_41 is not null and add_varchar2_41 is not null and add_varchar_41 is not null and
+ 37 add_clob_41 is not null and add_blob_41 is not null and add_int_42 is not null and add_varchar2_42 is not null and add_varchar_42 is not null and add_clob_42 is not null and add_blob_42 is not null and
+ 38 add_int_43 is not null and add_varchar2_43 is not null and add_varchar_43 is not null and add_clob_43 is not null and add_blob_43 is not null and add_int_44 is not null and add_varchar2_44 is not null and
+ 39 add_varchar_44 is not null and add_clob_44 is not null and add_blob_44 is not null and add_int_45 is not null and add_varchar2_45 is not null and add_varchar_45 is not null and add_clob_45 is not null and
+ 40 add_blob_45 is not null and add_int_46 is not null and add_varchar2_46 is not null and add_varchar_46 is not null and add_clob_46 is not null and add_blob_46 is not null and add_int_47 is not null and
+ 41 add_varchar2_47 is not null and add_varchar_47 is not null and add_clob_47 is not null and add_blob_47 is not null and add_int_48 is not null and add_varchar2_48 is not null and
+ 42 add_varchar_48 is not null and add_clob_48 is not null and add_blob_48 is not null and add_int_49 is not null and add_varchar2_49 is not null and add_varchar_49 is not null and
+ 43 add_clob_49 is not null and add_blob_49 is not null and add_int_50 is not null and add_varchar2_50 is not null and add_varchar_50 is not null and add_clob_50 is not null and add_blob_50 is not null and
+ 44 c_id is not null and c_d_id is not null and c_w_id is not null and c_first is not null and
+ 45 c_middle is not null and c_last is not null and c_street_1 is not null and c_street_2 is not null and c_city is not null and c_state is not null and
+ 46 c_zip is not null and c_phone is not null and c_since is not null and c_credit is not null and c_credit_lim is not null and c_discount is not null and
+ 47 c_balance is not null and c_end is not null and c_data1 is not null and c_data2 is not null and c_data3 is not null and c_data4 is not null and c_data5 is not null
+ 48 and c_data6 is not null and c_data7 is not null and c_data8 is not null and c_clob is not null and c_blob is not null and column_int is not null and column_bigint is not null and
+ 49 column_tinyint is not null and column_float is not null and column_double is not null and column_decimal is not null and column_number is not null and column_numeric is not null and
+ 50 column_char is not null and column_varchar is not null and column_varchar2 is not null and column_binary is not null and column_varbinary is not null and column_date is not null and
+ 51 column_timestamp is not null and add_int_0 is not null and add_varchar2_0 is not null and add_varchar_0 is not null and add_clob_0 is not null and add_blob_0 is not null and add_int_1 is not null and
+ 52 add_varchar2_1 is not null and add_varchar_1 is not null and add_clob_1 is not null and add_blob_1 is not null and add_int_2 is not null and add_varchar2_2 is not null and add_varchar_2 is not null and
+ 53 add_clob_2 is not null and add_blob_2 is not null and add_int_3 is not null and add_varchar2_3 is not null and add_varchar_3 is not null and add_clob_3 is not null and add_blob_3 is not null and add_int_4 is not null and
+ 54 add_varchar2_4 is not null and add_varchar_4 is not null and add_clob_4 is not null and add_blob_4 is not null and add_int_5 is not null and add_varchar2_5 is not null and add_varchar_5 is not null and add_clob_5 is not null and
+ 55 add_blob_5 is not null and add_int_6 is not null and add_varchar2_6 is not null and add_varchar_6 is not null and add_clob_6 is not null and add_blob_6 is not null and add_int_7 is not null and add_varchar2_7 is not null and
+ 56 add_varchar_7 is not null and add_clob_7 is not null and add_blob_7 is not null and add_int_8 is not null and add_varchar2_8 is not null and add_varchar_8 is not null and add_clob_8 is not null and add_blob_8 is not null and
+ 57 add_int_9 is not null and add_varchar2_9 is not null and add_varchar_9 is not null and add_clob_9 is not null and add_blob_9 is not null and add_int_10 is not null and add_varchar2_10 is not null and add_varchar_10 is not null and
+ 58 add_clob_10 is not null and add_blob_10 is not null and add_int_11 is not null and add_varchar2_11 is not null and add_varchar_11 is not null and add_clob_11 is not null and add_blob_11 is not null and add_int_12 is not null and
+ 59 add_varchar2_12 is not null and add_varchar_12 is not null and add_clob_12 is not null and add_blob_12 is not null and add_int_13 is not null and add_varchar2_13 is not null and add_varchar_13 is not null and
+ 60 add_clob_13 is not null and add_blob_13 is not null and add_int_14 is not null and add_varchar2_14 is not null and add_varchar_14 is not null and add_clob_14 is not null and add_blob_14 is not null and
+ 61 add_int_15 is not null and add_varchar2_15 is not null and add_varchar_15 is not null and add_clob_15 is not null and add_blob_15 is not null and add_int_16 is not null and add_varchar2_16 is not null and
+ 62 add_varchar_16 is not null and add_clob_16 is not null and add_blob_16 is not null and add_int_17 is not null and add_varchar2_17 is not null and add_varchar_17 is not null and add_clob_17 is not null and
+ 63 add_blob_17 is not null and add_int_18 is not null and add_varchar2_18 is not null and add_varchar_18 is not null and add_clob_18 is not null and add_blob_18 is not null and add_int_19 is not null and
+ 64 add_varchar2_19 is not null and add_varchar_19 is not null and add_clob_19 is not null and add_blob_19 is not null and add_int_20 is not null and add_varchar2_20 is not null and add_varchar_20 is not null and
+ 65 add_clob_20 is not null and add_blob_20 is not null and add_int_21 is not null and add_varchar2_21 is not null and add_varchar_21 is not null and add_clob_21 is not null and add_blob_21 is not null and
+ 66 add_int_22 is not null and add_varchar2_22 is not null and add_varchar_22 is not null and add_clob_22 is not null and add_blob_22 is not null and add_int_23 is not null and add_varchar2_23 is not null and
+ 67 add_varchar_23 is not null and add_clob_23 is not null and add_blob_23 is not null and add_int_24 is not null and add_varchar2_24 is not null and add_varchar_24 is not null and add_clob_24 is not null and
+ 68 add_blob_24 is not null and add_int_25 is not null and add_varchar2_25 is not null and add_varchar_25 is not null and add_clob_25 is not null and add_blob_25 is not null and add_int_26 is not null and
+ 69 add_varchar2_26 is not null and add_varchar_26 is not null and add_clob_26 is not null and add_blob_26 is not null and add_int_27 is not null and add_varchar2_27 is not null and add_varchar_27 is not null and
+ 70 add_clob_27 is not null and add_blob_27 is not null and add_int_28 is not null and add_varchar2_28 is not null and add_varchar_28 is not null and add_clob_28 is not null and add_blob_28 is not null and
+ 71 add_int_29 is not null and add_varchar2_29 is not null and add_varchar_29 is not null and add_clob_29 is not null and add_blob_29 is not null and add_int_30 is not null and add_varchar2_30 is not null and
+ 72 add_varchar_30 is not null and add_clob_30 is not null and add_blob_30 is not null and add_int_31 is not null and add_varchar2_31 is not null and add_varchar_31 is not null and add_clob_31 is not null and
+ 73 add_blob_31 is not null and add_int_32 is not null and add_varchar2_32 is not null and add_varchar_32 is not null and add_clob_32 is not null and add_blob_32 is not null and add_int_33 is not null and
+ 74 add_varchar2_33 is not null and add_varchar_33 is not null and add_clob_33 is not null and add_blob_33 is not null and add_int_34 is not null and add_varchar2_34 is not null and add_varchar_34 is not null and
+ 75 add_clob_34 is not null and add_blob_34 is not null and add_int_35 is not null and add_varchar2_35 is not null and add_varchar_35 is not null and add_clob_35 is not null and add_blob_35 is not null and
+ 76 add_int_36 is not null and add_varchar2_36 is not null and add_varchar_36 is not null and add_clob_36 is not null and add_blob_36 is not null and add_int_37 is not null and add_varchar2_37 is not null and
+ 77 add_varchar_37 is not null and add_clob_37 is not null and add_blob_37 is not null and add_int_38 is not null and add_varchar2_38 is not null and add_varchar_38 is not null and add_clob_38 is not null and
+ 78 add_blob_38 is not null and add_int_39 is not null and add_varchar2_39 is not null and add_varchar_39 is not null and add_clob_39 is not null and add_blob_39 is not null and add_int_40 is not null and
+ 79 add_varchar2_40 is not null and add_varchar_40 is not null and add_clob_40 is not null and add_blob_40 is not null and add_int_41 is not null and add_varchar2_41 is not null and add_varchar_41 is not null and
+ 80 add_clob_41 is not null and add_blob_41 is not null and add_int_42 is not null and add_varchar2_42 is not null and add_varchar_42 is not null and add_clob_42 is not null and add_blob_42 is not null and
+ 81 add_int_43 is not null and add_varchar2_43 is not null and add_varchar_43 is not null and add_clob_43 is not null and add_blob_43 is not null and add_int_44 is not null and add_varchar2_44 is not null and
+ 82 add_varchar_44 is not null and add_clob_44 is not null and add_blob_44 is not null and add_int_45 is not null and add_varchar2_45 is not null and add_varchar_45 is not null and add_clob_45 is not null and
+ 83 add_blob_45 is not null and add_int_46 is not null and add_varchar2_46 is not null and add_varchar_46 is not null and add_clob_46 is not null and add_blob_46 is not null and add_int_47 is not null and
+ 84 add_varchar2_47 is not null and add_varchar_47 is not null and add_clob_47 is not null and add_blob_47 is not null and add_int_48 is not null and add_varchar2_48 is not null and
+ 85 add_varchar_48 is not null and add_clob_48 is not null and add_blob_48 is not null and add_int_49 is not null and add_varchar2_49 is not null and add_varchar_49 is not null and
+ 86 add_clob_49 is not null and add_blob_49 is not null and add_int_50 is not null and add_varchar2_50 is not null and add_varchar_50 is not null and add_clob_50 is not null and add_blob_50 is not null;
+
+FF
+--------------------
+0
+
+1 rows fetched.
+
+SQL>
+SQL> drop sql_map(select count(*) from oracle_test_tbl_001 where c_id is not null and c_d_id is not null and c_w_id is not null and c_first is not null and
+  2 c_middle is not null and c_last is not null and c_street_1 is not null and c_street_2 is not null and c_city is not null and c_state is not null and
+  3 c_zip is not null and c_phone is not null and c_since is not null and c_credit is not null and c_credit_lim is not null and c_discount is not null and
+  4 c_balance is not null and c_end is not null and c_data1 is not null and c_data2 is not null and c_data3 is not null and c_data4 is not null and c_data5 is not null
+  5 and c_data6 is not null and c_data7 is not null and c_data8 is not null and c_clob is not null and c_blob is not null and column_int is not null and column_bigint is not null and
+  6 column_tinyint is not null and column_float is not null and column_double is not null and column_decimal is not null and column_number is not null and column_numeric is not null and
+  7 column_char is not null and column_varchar is not null and column_varchar2 is not null and column_binary is not null and column_varbinary is not null and column_date is not null and
+  8 column_timestamp is not null and add_int_0 is not null and add_varchar2_0 is not null and add_varchar_0 is not null and add_clob_0 is not null and add_blob_0 is not null and add_int_1 is not null and
+  9 add_varchar2_1 is not null and add_varchar_1 is not null and add_clob_1 is not null and add_blob_1 is not null and add_int_2 is not null and add_varchar2_2 is not null and add_varchar_2 is not null and
+ 10 add_clob_2 is not null and add_blob_2 is not null and add_int_3 is not null and add_varchar2_3 is not null and add_varchar_3 is not null and add_clob_3 is not null and add_blob_3 is not null and add_int_4 is not null and
+ 11 add_varchar2_4 is not null and add_varchar_4 is not null and add_clob_4 is not null and add_blob_4 is not null and add_int_5 is not null and add_varchar2_5 is not null and add_varchar_5 is not null and add_clob_5 is not null and
+ 12 add_blob_5 is not null and add_int_6 is not null and add_varchar2_6 is not null and add_varchar_6 is not null and add_clob_6 is not null and add_blob_6 is not null and add_int_7 is not null and add_varchar2_7 is not null and
+ 13 add_varchar_7 is not null and add_clob_7 is not null and add_blob_7 is not null and add_int_8 is not null and add_varchar2_8 is not null and add_varchar_8 is not null and add_clob_8 is not null and add_blob_8 is not null and
+ 14 add_int_9 is not null and add_varchar2_9 is not null and add_varchar_9 is not null and add_clob_9 is not null and add_blob_9 is not null and add_int_10 is not null and add_varchar2_10 is not null and add_varchar_10 is not null and
+ 15 add_clob_10 is not null and add_blob_10 is not null and add_int_11 is not null and add_varchar2_11 is not null and add_varchar_11 is not null and add_clob_11 is not null and add_blob_11 is not null and add_int_12 is not null and
+ 16 add_varchar2_12 is not null and add_varchar_12 is not null and add_clob_12 is not null and add_blob_12 is not null and add_int_13 is not null and add_varchar2_13 is not null and add_varchar_13 is not null and
+ 17 add_clob_13 is not null and add_blob_13 is not null and add_int_14 is not null and add_varchar2_14 is not null and add_varchar_14 is not null and add_clob_14 is not null and add_blob_14 is not null and
+ 18 add_int_15 is not null and add_varchar2_15 is not null and add_varchar_15 is not null and add_clob_15 is not null and add_blob_15 is not null and add_int_16 is not null and add_varchar2_16 is not null and
+ 19 add_varchar_16 is not null and add_clob_16 is not null and add_blob_16 is not null and add_int_17 is not null and add_varchar2_17 is not null and add_varchar_17 is not null and add_clob_17 is not null and
+ 20 add_blob_17 is not null and add_int_18 is not null and add_varchar2_18 is not null and add_varchar_18 is not null and add_clob_18 is not null and add_blob_18 is not null and add_int_19 is not null and
+ 21 add_varchar2_19 is not null and add_varchar_19 is not null and add_clob_19 is not null and add_blob_19 is not null and add_int_20 is not null and add_varchar2_20 is not null and add_varchar_20 is not null and
+ 22 add_clob_20 is not null and add_blob_20 is not null and add_int_21 is not null and add_varchar2_21 is not null and add_varchar_21 is not null and add_clob_21 is not null and add_blob_21 is not null and
+ 23 add_int_22 is not null and add_varchar2_22 is not null and add_varchar_22 is not null and add_clob_22 is not null and add_blob_22 is not null and add_int_23 is not null and add_varchar2_23 is not null and
+ 24 add_varchar_23 is not null and add_clob_23 is not null and add_blob_23 is not null and add_int_24 is not null and add_varchar2_24 is not null and add_varchar_24 is not null and add_clob_24 is not null and
+ 25 add_blob_24 is not null and add_int_25 is not null and add_varchar2_25 is not null and add_varchar_25 is not null and add_clob_25 is not null and add_blob_25 is not null and add_int_26 is not null and
+ 26 add_varchar2_26 is not null and add_varchar_26 is not null and add_clob_26 is not null and add_blob_26 is not null and add_int_27 is not null and add_varchar2_27 is not null and add_varchar_27 is not null and
+ 27 add_clob_27 is not null and add_blob_27 is not null and add_int_28 is not null and add_varchar2_28 is not null and add_varchar_28 is not null and add_clob_28 is not null and add_blob_28 is not null and
+ 28 add_int_29 is not null and add_varchar2_29 is not null and add_varchar_29 is not null and add_clob_29 is not null and add_blob_29 is not null and add_int_30 is not null and add_varchar2_30 is not null and
+ 29 add_varchar_30 is not null and add_clob_30 is not null and add_blob_30 is not null and add_int_31 is not null and add_varchar2_31 is not null and add_varchar_31 is not null and add_clob_31 is not null and
+ 30 add_blob_31 is not null and add_int_32 is not null and add_varchar2_32 is not null and add_varchar_32 is not null and add_clob_32 is not null and add_blob_32 is not null and add_int_33 is not null and
+ 31 add_varchar2_33 is not null and add_varchar_33 is not null and add_clob_33 is not null and add_blob_33 is not null and add_int_34 is not null and add_varchar2_34 is not null and add_varchar_34 is not null and
+ 32 add_clob_34 is not null and add_blob_34 is not null and add_int_35 is not null and add_varchar2_35 is not null and add_varchar_35 is not null and add_clob_35 is not null and add_blob_35 is not null and
+ 33 add_int_36 is not null and add_varchar2_36 is not null and add_varchar_36 is not null and add_clob_36 is not null and add_blob_36 is not null and add_int_37 is not null and add_varchar2_37 is not null and
+ 34 add_varchar_37 is not null and add_clob_37 is not null and add_blob_37 is not null and add_int_38 is not null and add_varchar2_38 is not null and add_varchar_38 is not null and add_clob_38 is not null and
+ 35 add_blob_38 is not null and add_int_39 is not null and add_varchar2_39 is not null and add_varchar_39 is not null and add_clob_39 is not null and add_blob_39 is not null and add_int_40 is not null and
+ 36 add_varchar2_40 is not null and add_varchar_40 is not null and add_clob_40 is not null and add_blob_40 is not null and add_int_41 is not null and add_varchar2_41 is not null and add_varchar_41 is not null and
+ 37 add_clob_41 is not null and add_blob_41 is not null and add_int_42 is not null and add_varchar2_42 is not null and add_varchar_42 is not null and add_clob_42 is not null and add_blob_42 is not null and
+ 38 add_int_43 is not null and add_varchar2_43 is not null and add_varchar_43 is not null and add_clob_43 is not null and add_blob_43 is not null and add_int_44 is not null and add_varchar2_44 is not null and
+ 39 add_varchar_44 is not null and add_clob_44 is not null and add_blob_44 is not null and add_int_45 is not null and add_varchar2_45 is not null and add_varchar_45 is not null and add_clob_45 is not null and
+ 40 add_blob_45 is not null and add_int_46 is not null and add_varchar2_46 is not null and add_varchar_46 is not null and add_clob_46 is not null and add_blob_46 is not null and add_int_47 is not null and
+ 41 add_varchar2_47 is not null and add_varchar_47 is not null and add_clob_47 is not null and add_blob_47 is not null and add_int_48 is not null and add_varchar2_48 is not null and
+ 42 add_varchar_48 is not null and add_clob_48 is not null and add_blob_48 is not null and add_int_49 is not null and add_varchar2_49 is not null and add_varchar_49 is not null and
+ 43 add_clob_49 is not null and add_blob_49 is not null and add_int_50 is not null and add_varchar2_50 is not null and add_varchar_50 is not null and add_clob_50 is not null and add_blob_50 is not null and
+ 44 c_id is not null and c_d_id is not null and c_w_id is not null and c_first is not null and
+ 45 c_middle is not null and c_last is not null and c_street_1 is not null and c_street_2 is not null and c_city is not null and c_state is not null and
+ 46 c_zip is not null and c_phone is not null and c_since is not null and c_credit is not null and c_credit_lim is not null and c_discount is not null and
+ 47 c_balance is not null and c_end is not null and c_data1 is not null and c_data2 is not null and c_data3 is not null and c_data4 is not null and c_data5 is not null
+ 48 and c_data6 is not null and c_data7 is not null and c_data8 is not null and c_clob is not null and c_blob is not null and column_int is not null and column_bigint is not null and
+ 49 column_tinyint is not null and column_float is not null and column_double is not null and column_decimal is not null and column_number is not null and column_numeric is not null and
+ 50 column_char is not null and column_varchar is not null and column_varchar2 is not null and column_binary is not null and column_varbinary is not null and column_date is not null and
+ 51 column_timestamp is not null and add_int_0 is not null and add_varchar2_0 is not null and add_varchar_0 is not null and add_clob_0 is not null and add_blob_0 is not null and add_int_1 is not null and
+ 52 add_varchar2_1 is not null and add_varchar_1 is not null and add_clob_1 is not null and add_blob_1 is not null and add_int_2 is not null and add_varchar2_2 is not null and add_varchar_2 is not null and
+ 53 add_clob_2 is not null and add_blob_2 is not null and add_int_3 is not null and add_varchar2_3 is not null and add_varchar_3 is not null and add_clob_3 is not null and add_blob_3 is not null and add_int_4 is not null and
+ 54 add_varchar2_4 is not null and add_varchar_4 is not null and add_clob_4 is not null and add_blob_4 is not null and add_int_5 is not null and add_varchar2_5 is not null and add_varchar_5 is not null and add_clob_5 is not null and
+ 55 add_blob_5 is not null and add_int_6 is not null and add_varchar2_6 is not null and add_varchar_6 is not null and add_clob_6 is not null and add_blob_6 is not null and add_int_7 is not null and add_varchar2_7 is not null and
+ 56 add_varchar_7 is not null and add_clob_7 is not null and add_blob_7 is not null and add_int_8 is not null and add_varchar2_8 is not null and add_varchar_8 is not null and add_clob_8 is not null and add_blob_8 is not null and
+ 57 add_int_9 is not null and add_varchar2_9 is not null and add_varchar_9 is not null and add_clob_9 is not null and add_blob_9 is not null and add_int_10 is not null and add_varchar2_10 is not null and add_varchar_10 is not null and
+ 58 add_clob_10 is not null and add_blob_10 is not null and add_int_11 is not null and add_varchar2_11 is not null and add_varchar_11 is not null and add_clob_11 is not null and add_blob_11 is not null and add_int_12 is not null and
+ 59 add_varchar2_12 is not null and add_varchar_12 is not null and add_clob_12 is not null and add_blob_12 is not null and add_int_13 is not null and add_varchar2_13 is not null and add_varchar_13 is not null and
+ 60 add_clob_13 is not null and add_blob_13 is not null and add_int_14 is not null and add_varchar2_14 is not null and add_varchar_14 is not null and add_clob_14 is not null and add_blob_14 is not null and
+ 61 add_int_15 is not null and add_varchar2_15 is not null and add_varchar_15 is not null and add_clob_15 is not null and add_blob_15 is not null and add_int_16 is not null and add_varchar2_16 is not null and
+ 62 add_varchar_16 is not null and add_clob_16 is not null and add_blob_16 is not null and add_int_17 is not null and add_varchar2_17 is not null and add_varchar_17 is not null and add_clob_17 is not null and
+ 63 add_blob_17 is not null and add_int_18 is not null and add_varchar2_18 is not null and add_varchar_18 is not null and add_clob_18 is not null and add_blob_18 is not null and add_int_19 is not null and
+ 64 add_varchar2_19 is not null and add_varchar_19 is not null and add_clob_19 is not null and add_blob_19 is not null and add_int_20 is not null and add_varchar2_20 is not null and add_varchar_20 is not null and
+ 65 add_clob_20 is not null and add_blob_20 is not null and add_int_21 is not null and add_varchar2_21 is not null and add_varchar_21 is not null and add_clob_21 is not null and add_blob_21 is not null and
+ 66 add_int_22 is not null and add_varchar2_22 is not null and add_varchar_22 is not null and add_clob_22 is not null and add_blob_22 is not null and add_int_23 is not null and add_varchar2_23 is not null and
+ 67 add_varchar_23 is not null and add_clob_23 is not null and add_blob_23 is not null and add_int_24 is not null and add_varchar2_24 is not null and add_varchar_24 is not null and add_clob_24 is not null and
+ 68 add_blob_24 is not null and add_int_25 is not null and add_varchar2_25 is not null and add_varchar_25 is not null and add_clob_25 is not null and add_blob_25 is not null and add_int_26 is not null and
+ 69 add_varchar2_26 is not null and add_varchar_26 is not null and add_clob_26 is not null and add_blob_26 is not null and add_int_27 is not null and add_varchar2_27 is not null and add_varchar_27 is not null and
+ 70 add_clob_27 is not null and add_blob_27 is not null and add_int_28 is not null and add_varchar2_28 is not null and add_varchar_28 is not null and add_clob_28 is not null and add_blob_28 is not null and
+ 71 add_int_29 is not null and add_varchar2_29 is not null and add_varchar_29 is not null and add_clob_29 is not null and add_blob_29 is not null and add_int_30 is not null and add_varchar2_30 is not null and
+ 72 add_varchar_30 is not null and add_clob_30 is not null and add_blob_30 is not null and add_int_31 is not null and add_varchar2_31 is not null and add_varchar_31 is not null and add_clob_31 is not null and
+ 73 add_blob_31 is not null and add_int_32 is not null and add_varchar2_32 is not null and add_varchar_32 is not null and add_clob_32 is not null and add_blob_32 is not null and add_int_33 is not null and
+ 74 add_varchar2_33 is not null and add_varchar_33 is not null and add_clob_33 is not null and add_blob_33 is not null and add_int_34 is not null and add_varchar2_34 is not null and add_varchar_34 is not null and
+ 75 add_clob_34 is not null and add_blob_34 is not null and add_int_35 is not null and add_varchar2_35 is not null and add_varchar_35 is not null and add_clob_35 is not null and add_blob_35 is not null and
+ 76 add_int_36 is not null and add_varchar2_36 is not null and add_varchar_36 is not null and add_clob_36 is not null and add_blob_36 is not null and add_int_37 is not null and add_varchar2_37 is not null and
+ 77 add_varchar_37 is not null and add_clob_37 is not null and add_blob_37 is not null and add_int_38 is not null and add_varchar2_38 is not null and add_varchar_38 is not null and add_clob_38 is not null and
+ 78 add_blob_38 is not null and add_int_39 is not null and add_varchar2_39 is not null and add_varchar_39 is not null and add_clob_39 is not null and add_blob_39 is not null and add_int_40 is not null and
+ 79 add_varchar2_40 is not null and add_varchar_40 is not null and add_clob_40 is not null and add_blob_40 is not null and add_int_41 is not null and add_varchar2_41 is not null and add_varchar_41 is not null and
+ 80 add_clob_41 is not null and add_blob_41 is not null and add_int_42 is not null and add_varchar2_42 is not null and add_varchar_42 is not null and add_clob_42 is not null and add_blob_42 is not null and
+ 81 add_int_43 is not null and add_varchar2_43 is not null and add_varchar_43 is not null and add_clob_43 is not null and add_blob_43 is not null and add_int_44 is not null and add_varchar2_44 is not null and
+ 82 add_varchar_44 is not null and add_clob_44 is not null and add_blob_44 is not null and add_int_45 is not null and add_varchar2_45 is not null and add_varchar_45 is not null and add_clob_45 is not null and
+ 83 add_blob_45 is not null and add_int_46 is not null and add_varchar2_46 is not null and add_varchar_46 is not null and add_clob_46 is not null and add_blob_46 is not null and add_int_47 is not null and
+ 84 add_varchar2_47 is not null and add_varchar_47 is not null and add_clob_47 is not null and add_blob_47 is not null and add_int_48 is not null and add_varchar2_48 is not null and
+ 85 add_varchar_48 is not null and add_clob_48 is not null and add_blob_48 is not null and add_int_49 is not null and add_varchar2_49 is not null and add_varchar_49 is not null and
+ 86 add_clob_49 is not null and add_blob_49 is not null and add_int_50 is not null and add_varchar2_50 is not null and add_varchar_50 is not null and add_clob_50 is not null and add_blob_50 is not null);
+
+Succeed.
+
+SQL>
+SQL> alter system set enable_sql_map=false;
+
+Succeed.
+
+SQL> drop table oracle_test_tbl_001;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS202006010P5KBSP0D00
+SQL> show parameter MAX_SQL_MAP_PER_USER
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE           
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+MAX_SQL_MAP_PER_USER                                             CT_TYPE_UINT32       100                                                              100                                                              immediately         
+
+
+SQL> alter system set MAX_SQL_MAP_PER_USER = 5;
+
+Succeed.
+
+SQL> alter system set enable_sql_map = true;
+
+Succeed.
+
+SQL> drop user if exists sql_map_user3 cascade;
+
+Succeed.
+
+SQL> create user sql_map_user3 identified by Changeme_123;
+
+Succeed.
+
+SQL> grant create session to sql_map_user3;
+
+Succeed.
+
+SQL> grant create table to sql_map_user3;
+
+Succeed.
+
+SQL> select count(*) from sys_sql_maps;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> conn sql_map_user3/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> alter SQL_MAP (insert into t1 values(1)) REWRITE TO (insert into t0 values(1));
+
+Succeed.
+
+SQL> alter SQL_MAP (insert into t2 values(1)) REWRITE TO (insert into t0 values(1));
+
+Succeed.
+
+SQL> alter SQL_MAP (insert into t3 values(1)) REWRITE TO (insert into t0 values(1));
+
+Succeed.
+
+SQL> alter SQL_MAP (insert into t4 values(1)) REWRITE TO (insert into t0 values(1));
+
+Succeed.
+
+SQL> alter SQL_MAP (insert into t5 values(1)) REWRITE TO (insert into t0 values(1));
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select count(*) from sys_sql_maps;
+
+COUNT(*)            
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> conn sql_map_user3/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> alter SQL_MAP (insert into t6 values(1)) REWRITE TO (insert into t0 values(1));
+
+CT-00210, The value of parameter "SQL_MAP_PER_USER" is too large, at most 5
+SQL> drop SQL_MAP IF EXISTS (insert into t1 values(1));
+
+Succeed.
+
+SQL> drop SQL_MAP IF EXISTS (insert into t2 values(1));
+
+Succeed.
+
+SQL> drop SQL_MAP IF EXISTS (insert into t3 values(1));
+
+Succeed.
+
+SQL> drop SQL_MAP IF EXISTS (insert into t4 values(1));
+
+Succeed.
+
+SQL> drop SQL_MAP IF EXISTS (insert into t5 values(1));
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select count(*) from sys_sql_maps;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> drop user sql_map_user3 cascade;
+
+Succeed.
+
+SQL> alter system set enable_sql_map = false;
+
+Succeed.
+
+SQL> alter system set MAX_SQL_MAP_PER_USER = 100;
+Succeed.
+

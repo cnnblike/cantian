@@ -1,0 +1,286 @@
+
+
+SQL> drop table if exists test;
+
+Succeed.
+
+SQL> create table test(id int, str varchar(96));
+
+Succeed.
+
+SQL> insert into test values (0, 'this is a very very long string.this is a very very long string.this is a very very long string.');
+
+1 rows affected.
+
+SQL> insert into test (id, str) select id + 1, str from test;
+
+1 rows affected.
+
+SQL> insert into test (id, str) select id + 2, str from test;
+
+2 rows affected.
+
+SQL> insert into test (id, str) select id + 4, str from test;
+
+4 rows affected.
+
+SQL> insert into test (id, str) select id + 8, str from test;
+
+8 rows affected.
+
+SQL> insert into test (id, str) select id + 16, str from test;
+
+16 rows affected.
+
+SQL> insert into test (id, str) select id + 32, str from test;
+
+32 rows affected.
+
+SQL> insert into test (id, str) select id + 64, str from test;
+
+64 rows affected.
+
+SQL> insert into test (id, str) select id + 128, str from test;
+
+128 rows affected.
+
+SQL> insert into test (id, str) select id + 256, str from test;
+
+256 rows affected.
+
+SQL> insert into test (id, str) select id + 512, str from test;
+
+512 rows affected.
+
+SQL> insert into test (id, str) select id + 1024, str from test;
+
+1024 rows affected.
+
+SQL> insert into test (id, str) select id + 2048, str from test;
+
+2048 rows affected.
+
+SQL> insert into test (id, str) select id + 4096, str from test;
+
+4096 rows affected.
+
+SQL> insert into test (id, str) select id + 8192, str from test;
+
+8192 rows affected.
+
+SQL> insert into test (id, str) select id + 16384, str from test;
+
+16384 rows affected.
+
+SQL> insert into test (id, str) select id + 32768, str from test;
+
+32768 rows affected.
+
+SQL> insert into test (id, str) select id + 65536, str from test;
+
+65536 rows affected.
+
+SQL> insert into test (id, str) select id + 131072, str from test;
+
+131072 rows affected.
+
+SQL> insert into test (id, str) select id + 262144, str from test;
+
+262144 rows affected.
+
+SQL> insert into test (id, str) select id + 524288, str from test;
+
+524288 rows affected.
+
+SQL> insert into test (id, str) select id + 1048576, str from test;
+
+1048576 rows affected.
+
+SQL> insert into test (id, str) select id + 2097152, str from test;
+
+2097152 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists ddlt1;
+
+Succeed.
+
+SQL> drop table if exists ddlt2;
+
+Succeed.
+
+SQL> --expect error
+SQL> create table ddlt1(a int, b varchar2(8001));
+
+CT-00601, [1:38]Sql syntax error: size value must between 1 and 8000
+SQL> --expect error
+SQL> create table ddlt1(a int, b varchar2(4000) default lpad('*',4001));
+
+CT-01357, [1:52]The default size (4001) is too large for column "B" (4000)
+SQL> --expect error
+SQL> create table ddlt1(a int, b varchar2(4000) default rpad('*',4001));
+
+CT-01357, [1:52]The default size (4001) is too large for column "B" (4000)
+SQL> --expect right
+SQL> drop table if exists ddlt1;
+
+Succeed.
+
+SQL> create table ddlt1(a int, b varchar2(8000) default lpad('*',8001));
+
+Succeed.
+
+SQL> --expect right
+SQL> drop table if exists ddlt1;
+
+Succeed.
+
+SQL> create table ddlt1(a int, b varchar2(8000) default rpad('*',8001));
+
+Succeed.
+
+SQL> --expect right
+SQL> drop table if exists ddlt1;
+
+Succeed.
+
+SQL> create table ddlt1(a int, b1 varchar2(8000) default lpad('*',8000));
+
+Succeed.
+
+SQL> --expect right
+SQL> drop table if exists ddlt1;
+
+Succeed.
+
+SQL> create table ddlt1(a int, b1 varchar2(8000) default rpad('*',8000));
+
+Succeed.
+
+SQL> --expect right
+SQL> create table ddlt2(a int,
+  2 b1 varchar2(8000) default lpad('*',8000),
+  3 b2 varchar2(8000) default lpad('*',8000),
+  4 b3 varchar2(8000) default lpad('*',8000),
+  5 b4 varchar2(8000) default lpad('*',8000),
+  6 b5 varchar2(8000) default lpad('*',8000),
+  7 b6 varchar2(8000) default lpad('*',8000),
+  8 b7 varchar2(8000) default lpad('*',8000),
+  9 b8 varchar2(8000) default lpad('*',8000),
+ 10 b9 varchar2(8000) default lpad('*',8000),
+ 11 b10 varchar2(8000) default lpad('*',8000));
+
+Succeed.
+
+SQL> drop table if exists ddlt1;
+
+Succeed.
+
+SQL> drop table if exists ddlt2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists ddl_t;
+
+Succeed.
+
+SQL> drop user if exists ddl_u;
+
+Succeed.
+
+SQL> drop index if exists ddl_llt_idx on #ltt_tmp;
+
+Succeed.
+
+SQL> drop view if exists ddl_v;
+
+Succeed.
+
+SQL> drop view if exists ddl_r_v;
+
+Succeed.
+
+SQL> drop sequence if exists ddl_seq;
+
+Succeed.
+
+SQL> drop table if exists #ltt_tmp;
+
+Succeed.
+
+SQL> drop synonym syn_ddl_t;
+
+Succeed.
+
+SQL> drop table if exists test1;
+
+Succeed.
+
+SQL>
+SQL> create table test1(id int, str varchar(96));
+
+Succeed.
+
+SQL> insert into test1 select * from test;
+
+CT-00321, failed to recv from tcp pipe, errno 10054
+SQL> 
+SQL> create table ddl_t(id int);
+
+Succeed.
+
+SQL> analyze table ddl_t compute statistics;
+
+CT-00613, invalid operation,txn area is rollbacking,can't lock table exclusive,db_status[6]
+SQL> create view ddl_v as select * from ddl_t;
+
+Succeed.
+
+SQL> create or replace view ddl_r_v as select id from ddl_t;
+
+Succeed.
+
+SQL> create user ddl_u identified by Abc123456;
+
+Succeed.
+
+SQL> create role ddl_r identified by Abc123456;
+
+Succeed.
+
+SQL> create sequence ddl_seq;
+
+Succeed.
+
+SQL> alter system set local_temporary_table_enabled=true;
+
+Succeed.
+
+SQL> create temporary table #ltt_tmp (f1 int, f2 varchar(100));
+
+Succeed.
+
+SQL> create index ddl_llt_idx on #ltt_tmp (f1);
+
+Succeed.
+
+SQL> drop index ddl_llt_idx on #ltt_tmp;
+
+Succeed.
+
+SQL> drop table #ltt_tmp;
+
+Succeed.
+
+SQL> create synonym syn_ddl_t for ddl_t;
+
+Succeed.
+
+SQL> drop table ddl_t;
+
+CT-00867, invalid operation when database is rolling back

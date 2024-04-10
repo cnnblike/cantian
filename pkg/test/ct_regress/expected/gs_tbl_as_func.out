@@ -1,0 +1,1225 @@
+
+
+SQL> drop table if exists gs_tbl_as_test;
+
+Succeed.
+
+SQL> create table gs_tbl_as_test(a int, b int);
+
+Succeed.
+
+SQL> select * from table(dba_analyze_table('SYS','GS_TBL_AS_TEST'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      0                   
+total extents                                                    0                   
+total rows                                                       0                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 0                   
+
+6 rows fetched.
+
+SQL> explain select * from table(dba_analyze_table('SYS','GS_TBL_AS_TEST'));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------
+| Id  | Description          | Owner | Name | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |      |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   |      |      |      |       |        |
+----------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select * from table(get_tab_parallel('GS_TBL_AS_TEST', 10));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------
+| Id  | Description          | Owner | Name | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |      |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   |      |      |      |       |        |
+----------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select * from table(get_tab_rows('GS_TBL_AS_TEST', -1, 'NULL', 12345667, 12234, 12236));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name           | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | GS_TBL_AS_TEST |      |      |       |        |
+--------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain select * from table(parallel_scan('GS_TBL_AS_TEST',2243199784128513, -3689573981838376956, 4393751543808, 18153656));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name           | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | GS_TBL_AS_TEST |      |      |       |        |
+--------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> select * from table(dba_analyze_table('SYS',(select 'GS_TBL_AS_TEST' from dual)));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      0                   
+total extents                                                    0                   
+total rows                                                       0                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 0                   
+
+6 rows fetched.
+
+SQL> explain select * from table(dba_analyze_table('SYS',(select 'GS_TBL_AS_TEST' from dual)));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------
+| Id  | Description          | Owner | Name | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |      |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   |      |      |      |       |        |
+----------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> select STAT_ITEM from table(dba_analyze_table('SYS','GS_TBL_AS_TEST'));
+
+STAT_ITEM                                                       
+----------------------------------------------------------------
+total pages                                                     
+total extents                                                   
+total rows                                                      
+linked rows                                                     
+mirgated rows                                                   
+average row size                                                
+
+6 rows fetched.
+
+SQL> explain select STAT_ITEM from table(dba_analyze_table('SYS','GS_TBL_AS_TEST'));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------
+| Id  | Description          | Owner | Name | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |      |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   |      |      |      |       |        |
+----------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> select f1.STAT_ITEM from table(dba_analyze_table('SYS','GS_TBL_AS_TEST')) f1;
+
+STAT_ITEM                                                       
+----------------------------------------------------------------
+total pages                                                     
+total extents                                                   
+total rows                                                      
+linked rows                                                     
+mirgated rows                                                   
+average row size                                                
+
+6 rows fetched.
+
+SQL> explain select f1.STAT_ITEM from table(dba_analyze_table('SYS','GS_TBL_AS_TEST')) f1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------
+| Id  | Description          | Owner | Name | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |      |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | F1   |      |      |       |        |
+----------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> insert into gs_tbl_as_test values(1,2);
+
+1 rows affected.
+
+SQL> select stat_item from table(dba_analyze_table('SYS','GS_TBL_AS_TEST'));
+
+STAT_ITEM                                                       
+----------------------------------------------------------------
+total pages                                                     
+total extents                                                   
+total rows                                                      
+linked rows                                                     
+mirgated rows                                                   
+average row size                                                
+
+6 rows fetched.
+
+SQL> select stat_item from table(dba_analyze_table('SYS',(select 'GS_TBL_AS_TEST' from dual)));
+
+STAT_ITEM                                                       
+----------------------------------------------------------------
+total pages                                                     
+total extents                                                   
+total rows                                                      
+linked rows                                                     
+mirgated rows                                                   
+average row size                                                
+
+6 rows fetched.
+
+SQL> select * from table(dba_analyze_table('SYS','GS_TBL_AS_TEST')) where value = 0;
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+
+2 rows fetched.
+
+SQL> select * from table(dba_analyze_table('SYS','GS_TBL_AS_TEST')) a,table(dba_analyze_table('SYS','GS_TBL_AS_TEST')) b where a.value = 0 and b.value = 0 order by 1,2;
+
+STAT_ITEM                                                        VALUE                STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- --------------------
+linked rows                                                      0                    linked rows                                                      0                   
+linked rows                                                      0                    mirgated rows                                                    0                   
+mirgated rows                                                    0                    linked rows                                                      0                   
+mirgated rows                                                    0                    mirgated rows                                                    0                   
+
+4 rows fetched.
+
+SQL> select * from gs_tbl_as_test;
+
+A            B           
+------------ ------------
+1            2           
+
+1 rows fetched.
+
+SQL> select * from table(dba_analyze_table('SYS','GS_TBL_AS_TEST'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      8                   
+total extents                                                    1                   
+total rows                                                       1                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 16                  
+
+6 rows fetched.
+
+SQL> drop table gs_tbl_as_test;
+
+Succeed.
+
+SQL> select * from table(dba_analyze_table('SYS','ALL_TABLES'));
+
+CT-01323, dba_analyze_table not supported non-table query
+SQL> 
+SQL> select ID, ADD_COL2, IS_DEFAULT from table(get_tab_rows('ALL_TABLES', -1, 25779234820097, 'NULL'));
+
+CT-00601, [1:8]Sql syntax error: specifying column is not allowed for dynamic table function
+SQL> select * from table(get_tab_rows('ALL_TABLES', -1, (SELECT CURRENT_SCN FROM V$DATABASE), 'NULL'));
+
+CT-00252, The 1st argument of table function needs a normal table name
+SQL> 
+SQL> create or replace procedure tbl_func_p1
+  2 as
+  3 begin
+  4 null;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> select * from table(dba_proc_line('SYS','TBL_FUNC_P1'));
+
+LOC_LINE     SOURCE_LINE                                                     
+------------ ----------------------------------------------------------------
+1            CREATE OR REPLACE PROCEDURE TBL_FUNC_P1 as                      
+2            begin                                                           
+3            null;                                                           
+4            end;                                                            
+5            /                                                               
+
+5 rows fetched.
+
+SQL> explain select * from table(dba_proc_line('SYS','TBL_FUNC_P1'));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------
+| Id  | Description          | Owner | Name | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |      |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   |      |      |      |       |        |
+----------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> select * from table(dba_proc_decode('SYS', 'TBL_FUNC_P1', 'PROCEDURE'));
+
+LINE_NUM     LINE_TYPE                        LOC_LINE     SPECIAL_DESCRIPTION                                             
+------------ -------------------------------- ------------ ----------------------------------------------------------------
+1            LINE_BEGIN                       2            except[null];end[3];                                            
+2            LINE_NULL                        3                                                                            
+3            LINE_END                         4                                                                            
+
+3 rows fetched.
+
+SQL> explain select * from table(dba_proc_decode('SYS', 'TBL_FUNC_P1', 'PROCEDURE'));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------
+| Id  | Description          | Owner | Name | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |      |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   |      |      |      |       |        |
+----------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> select * from table(get_tab_parallel('', 4));
+
+CT-01355, Table function table name is null
+SQL> select * from table(dba_analyze_table('','t_usert_table'));
+
+CT-00212, The value of parameter "" cannot be recognized: "user name can not be null"
+SQL> 
+SQL> create or replace procedure procedure_sys_FVT_Security_User_privilege_248  is
+  2 v_SCN number;
+  3 v_BEG number;
+  4 v_END number;
+  5 v_result number;
+  6 v_sql varchar(1023);
+  7 begin
+  8   select ORG_SCN into v_SCN from SYS_TABLES where name='SYS_ROLES';
+  9   select BEG into v_BEG from table(get_tab_parallel('SYS_ROLES',4));
+ 10   select END into v_END from table(get_tab_parallel('SYS_ROLES',4));
+ 11 --dbe_output.print_line('v_SCN: '||v_SCN||'.');
+ 12 --dbe_output.print_line('v_BEG: '||v_BEG||'.');
+ 13 --dbe_output.print_line('v_END: '||v_END||'.');
+ 14   v_sql :='select count(*) from table(parallel_scan(''SYS_ROLES'',''||v_SCN||'',''||v_BEG||'',''||v_END||'',-1))';
+ 15   execute immediate v_sql;
+ 16 end;
+ 17 /
+
+Succeed.
+
+SQL> 
+SQL> exec procedure_sys_FVT_Security_User_privilege_248;
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from table(dba_proc_decode('bucunzaideyonghuming','bucunzai','PROCEDURE'));
+
+CT-00828, [1:1]procedure BUCUNZAIDEYONGHUMING.BUCUNZAI does not exist
+SQL> select DBE_DIAGNOSE.dba_user_name(14000);
+
+CT-00781, The user  does not exist.
+SQL> 
+SQL> --DTS2019091110247
+SQL> drop table  t_count_base_005;
+
+CT-00843, The table or view SYS.T_COUNT_BASE_005 does not exist.
+SQL> CREATE table t_count_base_005("ID" INT NOT NULL, "CHR_FIELD" VARCHAR(30), "VALUE" NUMBER);
+
+Succeed.
+
+SQL> insert into t_count_base_005 select rownum, decode(mod(rownum, 2), 0, NULL, rpad('CHR_', 10, chr(rownum + 64))), decode(mod(rownum, 3), 0, NULL, rownum * 10000) from dual connect by rownum < 6;
+
+5 rows affected.
+
+SQL> insert into t_count_base_005 select rownum + 10, decode(mod(rownum, 2), 0, NULL, rpad('CHR_', 10, chr(rownum + 64))), decode(mod(rownum, 3), 1, NULL, rownum * 10000) from dual connect by rownum < 6;
+
+5 rows affected.
+
+SQL> insert into t_count_base_005 select rownum + 15, decode(mod(rownum, 2), 0, NULL, rpad('CHR_', 10, chr(rownum + 64))), decode(mod(rownum, 3), 2, '', rownum * 10) from dual connect by rownum < 6;
+
+5 rows affected.
+
+SQL> insert into t_count_base_005 select rownum + 15, decode(mod(rownum, 2), 0, NULL, rpad('CHR_', 10, chr(rownum + 64))), decode(mod(rownum, 3), 2, '', rownum * 10) from dual connect by rownum < 6;
+
+5 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table test_table_func_join1 as select * from table(dba_analyze_table('SYS', 'T_COUNT_BASE_005'));
+
+Succeed.
+
+SQL> select t1.STAT_ITEM,t2.STAT_ITEM from table(dba_analyze_table('SYS', 'T_COUNT_BASE_005')) t1 join table(dba_analyze_table('SYS', 'T_COUNT_BASE_005')) t2 on t1.STAT_ITEM=t2.STAT_ITEM;
+
+STAT_ITEM                                                        STAT_ITEM                                                       
+---------------------------------------------------------------- ----------------------------------------------------------------
+total pages                                                      total pages                                                     
+total extents                                                    total extents                                                   
+total rows                                                       total rows                                                      
+linked rows                                                      linked rows                                                     
+mirgated rows                                                    mirgated rows                                                   
+average row size                                                 average row size                                                
+
+6 rows fetched.
+
+SQL> select t1.STAT_ITEM,t2.STAT_ITEM from test_table_func_join1 t1 join table(dba_analyze_table('SYS', 'T_COUNT_BASE_005')) t2 on t1.STAT_ITEM=t2.STAT_ITEM;
+
+STAT_ITEM                                                        STAT_ITEM                                                       
+---------------------------------------------------------------- ----------------------------------------------------------------
+total pages                                                      total pages                                                     
+total extents                                                    total extents                                                   
+total rows                                                       total rows                                                      
+linked rows                                                      linked rows                                                     
+mirgated rows                                                    mirgated rows                                                   
+average row size                                                 average row size                                                
+
+6 rows fetched.
+
+SQL> select t1.STAT_ITEM,t2.STAT_ITEM from table(dba_analyze_table('SYS', 'T_COUNT_BASE_005')) t1 join test_table_func_join1 t2 on t1.STAT_ITEM=t2.STAT_ITEM;
+
+STAT_ITEM                                                        STAT_ITEM                                                       
+---------------------------------------------------------------- ----------------------------------------------------------------
+total pages                                                      total pages                                                     
+total extents                                                    total extents                                                   
+total rows                                                       total rows                                                      
+linked rows                                                      linked rows                                                     
+mirgated rows                                                    mirgated rows                                                   
+average row size                                                 average row size                                                
+
+6 rows fetched.
+
+SQL> select t1.STAT_ITEM,t2.STAT_ITEM from table(dba_analyze_table('SYS', 'T_COUNT_BASE_005')) t1 left join table(dba_analyze_table('SYS', 'T_COUNT_BASE_005')) t2 on t1.STAT_ITEM=t2.STAT_ITEM;
+
+STAT_ITEM                                                        STAT_ITEM                                                       
+---------------------------------------------------------------- ----------------------------------------------------------------
+total pages                                                      total pages                                                     
+total extents                                                    total extents                                                   
+total rows                                                       total rows                                                      
+linked rows                                                      linked rows                                                     
+mirgated rows                                                    mirgated rows                                                   
+average row size                                                 average row size                                                
+
+6 rows fetched.
+
+SQL> select t1.STAT_ITEM,t2.STAT_ITEM from table(dba_analyze_table('SYS', 'T_COUNT_BASE_005')) t1 right join table(dba_analyze_table('SYS', 'T_COUNT_BASE_005')) t2 on t1.STAT_ITEM=t2.STAT_ITEM;
+
+STAT_ITEM                                                        STAT_ITEM                                                       
+---------------------------------------------------------------- ----------------------------------------------------------------
+total pages                                                      total pages                                                     
+total extents                                                    total extents                                                   
+total rows                                                       total rows                                                      
+linked rows                                                      linked rows                                                     
+mirgated rows                                                    mirgated rows                                                   
+average row size                                                 average row size                                                
+
+6 rows fetched.
+
+SQL> drop table t_count_base_005;
+
+Succeed.
+
+SQL> drop table test_table_func_join1;
+
+Succeed.
+
+SQL> --DTS2019092604539
+SQL> drop table if exists get_tab_rows_tab;
+
+Succeed.
+
+SQL> create table get_tab_rows_tab
+  2 (
+  3 a int,
+  4 b varchar(1024)
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2         for i in 1..100 loop
+  3                 insert into get_tab_rows_tab values(i,i||i);
+  4         end loop;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> set serveroutput on;
+
+ON
+SQL> declare
+  2 beg_id number;
+  3 end_id number;
+  4 scn_id number;
+  5 d int;
+  6 e varchar(1024);
+  7 begin
+  8     --获取 起始pageid  和 结束pageid
+  9     select BEG,END into beg_id,end_id from table(get_tab_parallel('get_tab_rows_tab', 1));
+ 10     --获取scn号
+ 11     select current_scn into scn_id from v$database;
+ 12     --直接获取存储引擎原始row记录。
+ 13     select * into d,e from table(get_tab_rows('get_tab_rows_tab', -1, null,scn_id, beg_id,end_id)) limit 1;
+ 14     dbe_output.print_line(d||'-'||e);
+ 15 end;
+ 16 /
+
+1-11
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table if exists get_tab_rows_tab;
+
+Succeed.
+
+SQL> 
+SQL> -- test for dba_page_corruption, normal
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('DATABASE')) where FILE_ID=0;
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+0            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('DATABASE')) where FILE_ID=2;
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+2            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('DATABASE')) where FILE_ID=3;
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+3            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('DATABASE')) where FILE_ID=4;
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+4            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('DATABASE')) where FILE_ID=5;
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+5            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('DATABASE')) where FILE_ID=6;
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+6            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('TABLESPACE',0));
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+0            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('TABLESPACE',3));
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+3            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('DATAFILE',4));
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+4            FILE SUMMARY  0           
+
+1 rows fetched.
+
+SQL> select FILE_ID, INFO_TYPE, CORRUPT_NUM from table(dba_page_corruption('PAGE',0,1));
+
+FILE_ID      INFO_TYPE     CORRUPT_NUM 
+------------ ------------- ------------
+0            PAGE          0           
+
+1 rows fetched.
+
+SQL> 
+SQL> -- test for dba_page_corruption, more or less parms
+SQL> select * from table(dba_page_corruption('DATABASE',0));
+
+CT-00614, Parameter error: invalid argument combination for table function dba_page_corruption
+SQL> select * from table(dba_page_corruption('DATABASE',0,1));
+
+CT-00614, Parameter error: invalid argument combination for table function dba_page_corruption
+SQL> select * from table(dba_page_corruption('TABLESPACE',0,1));
+
+CT-00614, Parameter error: invalid argument combination for table function dba_page_corruption
+SQL> select * from table(dba_page_corruption('TABLESPACE'));
+
+CT-00614, Parameter error: invalid argument combination for table function dba_page_corruption
+SQL> select * from table(dba_page_corruption('DATAFILE',0,1));
+
+CT-00614, Parameter error: invalid argument combination for table function dba_page_corruption
+SQL> select * from table(dba_page_corruption('DATAFILE'));
+
+CT-00614, Parameter error: invalid argument combination for table function dba_page_corruption
+SQL> select * from table(dba_page_corruption('PAGE',1));
+
+CT-00614, Parameter error: invalid argument combination for table function dba_page_corruption
+SQL> 
+SQL> -- test for dba_page_corruption, wrong parm
+SQL> select * from table(dba_page_corruption('TABLESPACE',-1));
+
+CT-00614, Parameter error: parameter can not be negative.
+SQL> select * from table(dba_page_corruption('DATAFILE','aaa'));
+
+CT-00636, Invalid number -- unexpected character
+SQL> 
+SQL> -- test for dba_page_corruption, over range
+SQL> select * from table(dba_page_corruption('TABLESPACE',2000));
+
+CT-00614, Parameter error: space id is larger than max space id(1024)
+SQL> select * from table(dba_page_corruption('DATAFILE',2000));
+
+CT-00614, Parameter error: file id should be less than max datafile id(1023)
+SQL> select * from table(dba_page_corruption('PAGE',3, 1073741823));
+
+CT-00614, Parameter error: page does not belong to datafile
+SQL> select * from table(dba_page_corruption('TABLESPACE',1024));
+
+CT-00614, Parameter error: space id is larger than max space id(1024)
+SQL> select * from table(dba_page_corruption('DATAFILE',1023));
+
+CT-00614, Parameter error: file id should be less than max datafile id(1023)
+SQL> select * from table(dba_page_corruption('PAGE',3, 1073741824));
+
+CT-00614, Parameter error: page id should be less than max datafile page id(1073741824)
+SQL> select * from table(dba_page_corruption('PAGE',1023, 1));
+
+CT-00614, Parameter error: file id should be less than max datafile id(1023)
+SQL> select * from table(dba_page_corruption('PAGE',1023, 1073741824));
+
+CT-00614, Parameter error: page id should be less than max datafile page id(1073741824)
+SQL> 
+SQL> -- test for dba_page_corruption
+SQL> drop table if exists page_corrupt_test;
+
+Succeed.
+
+SQL> create table page_corrupt_test(i int,j int) partition by range(i) (partition part_1 values less than(201),partition part_2 values less than(401),partition part_3 values less than(maxvalue));
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2  
+  3 i integer;
+  4 begin
+  5 for i in 1 .. 1000 loop
+  6 insert into page_corrupt_test values(i, i);
+  7 end loop;
+  8 commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from table(dba_table_corruption('SYS', 'page_corrupt_test'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table if exists page_corrupt_test;
+
+Succeed.
+
+SQL> create table page_corrupt_test(i int,j int);
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 
+  3 i integer;
+  4 begin
+  5 for i in 1 .. 1000 loop
+  6 insert into page_corrupt_test values(i, i);
+  7 end loop;
+  8 commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from table(dba_table_corruption('SYS', 'page_corrupt_test'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table if exists page_corrupt_test;
+
+Succeed.
+
+SQL> create table page_corrupt_test(f_lob BLOB);
+
+Succeed.
+
+SQL> declare
+  2 
+  3 i integer;
+  4 begin
+  5 for i in 1 .. 10 loop
+  6 INSERT INTO page_corrupt_test VALUES(lpad('a',10000,'a'));
+  7 end loop;
+  8 commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from table(dba_table_corruption('sys','page_corrupt_test'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table if exists page_corrupt_test;
+
+Succeed.
+
+SQL> create table page_corrupt_test(id int, f_lob clob)
+  2 partition by range(id)
+  3 (
+  4 partition p1 values less than (100),
+  5 partition p2 values less than (maxvalue)
+  6 );
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 
+  3 i integer;
+  4 begin
+  5 for i in 1 .. 1000 loop
+  6 INSERT INTO page_corrupt_test VALUES(i, lpad('a',10000,'a'));
+  7 end loop;
+  8 commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from table(dba_table_corruption('SYS', 'page_corrupt_test'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> -- test for dba_index_corruption
+SQL> drop table if exists index_corrupt_test;
+
+Succeed.
+
+SQL> create table index_corrupt_test(i int,j int) partition by range(i) (partition part_1 values less than(201),partition part_2 values less than(401),partition part_3 values less than(maxvalue));
+
+Succeed.
+
+SQL> create index idx_ctest_local on index_corrupt_test(i) local;
+
+Succeed.
+
+SQL> create index idx_ctest_global on index_corrupt_test(j);
+
+Succeed.
+
+SQL> 
+SQL> declare 
+  2 i integer;
+  3 begin
+  4 for i in 1 .. 1000 loop
+  5 insert into index_corrupt_test values(i, i);
+  6 end loop;
+  7 commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from table(dba_index_corruption('SYS', 'IDX_CTEST_LOCAL'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from table(dba_index_corruption('SYS', 'IDX_CTEST_GLOBAL'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table if exists index_corrupt_test;
+
+Succeed.
+
+SQL> create table index_corrupt_test(i int,j int);
+
+Succeed.
+
+SQL> create index idx_ctest on index_corrupt_test(i);
+
+Succeed.
+
+SQL> 
+SQL> declare 
+  2 i integer;
+  3 begin
+  4 for i in 1 .. 1000 loop
+  5 insert into index_corrupt_test values(i, i);
+  6 end loop;
+  7 commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from table(dba_index_corruption('SYS', 'IDX_CTEST'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from table(dba_index_corruption('', 'IDX_CTEST'));
+
+CT-00212, The value of parameter "USER" cannot be recognized: "user name can not be null"
+SQL> select * from table(dba_index_corruption('SYS', ''));
+
+CT-00212, The value of parameter "INDEX" cannot be recognized: "the index name's length must be larger than 0"
+SQL> select * from table(dba_index_corruption('sys', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'));
+
+CT-00212, The value of parameter "INDEX" cannot be recognized: "the index name's length must less than 64"
+SQL> select * from table(dba_index_corruption('sys', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'));
+
+CT-00830, Index SYS.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA does not exist
+SQL> 
+SQL> -- rowid/rowscn/rownodeid in func_as_table
+SQL> select column_value from table(cast(rowid as int));
+
+CT-00601, [1:37]Sql syntax error: unexpected rowid occurs
+SQL> select column_value from table(cast(rowscn as int));
+
+CT-00601, [1:37]Sql syntax error: unexpected rowscn occurs
+SQL> select column_value from table(cast(rownodeid as int));
+CT-00601, [1:37]Sql syntax error: unexpected rownodeid occurs
+SQL> 
+SQL> drop table if exists get_tab_parallel_error_t;
+
+Succeed.
+
+SQL> create table get_tab_parallel_error_t(id int);
+
+Succeed.
+
+SQL> select * from table(get_tab_parallel('tab11111111111111111111111111111111111111111111111111111111111111111111', 1, ''));
+
+CT-00800, A tab11111111111111111111111111111111111111111111111111111111111111111111 (sub)partition null does not exist.
+SQL> select * from table(get_tab_parallel('get_tab_parallel_error_t', 4, 'This is a very long string, the length of the string is larger than CT_MAX_NAME_LEN + 1'));
+
+CT-01100, The (sub)partition name violated the naming conventions.
+SQL> drop table get_tab_parallel_error_t;
+Succeed.
+
+SQL> 
+SQL> --DTS202104230KVGROP0K00
+SQL> drop user if exists test_func_tb1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_func_tb2 cascade;
+
+Succeed.
+
+SQL> create user test_func_tb1 identified by cantiandb_123;
+
+Succeed.
+
+SQL> grant dba to test_func_tb1;
+
+Succeed.
+
+SQL> create table test_func_tb1.table1(f1 int);
+
+Succeed.
+
+SQL> insert into test_func_tb1.table1 values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create user test_func_tb2 identified by Cantian_234;
+
+Succeed.
+
+SQL> 
+SQL> grant connect to test_func_tb2;
+
+Succeed.
+
+SQL> conn test_func_tb2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from table(parallel_scan('test_func_tb1.table1', 1641400608411649, 12884903244,4393751543808,-1));
+
+CT-01001, Permissions were insufficient
+SQL> select * from table(parallel_scan('test_func_tb1.tab1', 1641400608411649, 12884903244,4393751543808,-1));
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_func_tb1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_func_tb2 cascade;
+
+Succeed.
+
+SQL> 
+SQL> -- dba_analyze_table/dba_table_corruption/dba_index_corruption support more table types
+SQL> drop table if exists dc_type_t;
+
+Succeed.
+
+SQL> create table dc_type_t(c1 int, c2 int);
+
+Succeed.
+
+SQL> declare 
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 1000 loop
+  5         insert into dc_type_t values(i, i);
+  6     end loop;
+  7     commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- transaction temp table
+SQL> drop table if exists global_tx_temp_t;
+
+Succeed.
+
+SQL> create global temporary table global_tx_temp_t(c1 int, c2 int) on commit delete rows;
+
+Succeed.
+
+SQL> create index global_tx_temp_t_idx on global_tx_temp_t(c1);
+
+Succeed.
+
+SQL> 
+SQL> select * from table(dba_analyze_table('SYS','GLOBAL_TX_TEMP_T'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      0                   
+total extents                                                    0                   
+total rows                                                       0                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 0                   
+
+6 rows fetched.
+
+SQL> select * from table(dba_table_corruption('SYS','GLOBAL_TX_TEMP_T'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from table(dba_index_corruption('SYS', 'GLOBAL_TX_TEMP_T_IDX'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table global_tx_temp_t;
+
+Succeed.
+
+SQL> -- session temp table
+SQL> drop table if exists global_session_temp_t;
+
+Succeed.
+
+SQL> create global temporary table global_session_temp_t(c1 int, c2 int) on commit preserve rows;
+
+Succeed.
+
+SQL> insert into global_session_temp_t select * from dc_type_t;
+
+1000 rows affected.
+
+SQL> create index global_session_temp_t_idx on global_session_temp_t(c1);
+
+Succeed.
+
+SQL> 
+SQL> select * from table(dba_analyze_table('SYS','GLOBAL_SESSION_TEMP_T'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      0                   
+total extents                                                    0                   
+total rows                                                       1000                
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 16                  
+
+6 rows fetched.
+
+SQL> select * from table(dba_table_corruption('SYS','GLOBAL_SESSION_TEMP_T'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from table(dba_index_corruption('SYS', 'GLOBAL_SESSION_TEMP_T_IDX'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table global_session_temp_t;
+
+Succeed.
+
+SQL> 
+SQL> -- local temp table
+SQL> alter system set local_temporary_table_enabled=true;
+
+Succeed.
+
+SQL> drop table if exists #session_temp_t;
+
+Succeed.
+
+SQL> create temporary table #session_temp_t on commit preserve rows as select * from dc_type_t;
+
+Succeed.
+
+SQL> create index session_temp_t_idx on #session_temp_t(c1);
+
+Succeed.
+
+SQL> 
+SQL> select * from table(dba_analyze_table('SYS','#SESSION_TEMP_T'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      0                   
+total extents                                                    0                   
+total rows                                                       1000                
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 16                  
+
+6 rows fetched.
+
+SQL> select * from table(dba_table_corruption('SYS', '#SESSION_TEMP_T'));
+
+CT-01323, dba_table_corruption not supported local temporary table query
+SQL> select * from table(dba_index_corruption('SYS', 'SESSION_TEMP_T_IDX'));
+
+CT-00830, Index SYS.SESSION_TEMP_T_IDX does not exist
+SQL> 
+SQL> drop table #session_temp_t;
+
+Succeed.
+
+SQL> alter system set local_temporary_table_enabled=false;
+
+Succeed.
+
+SQL> -- nologging table
+SQL> drop table if exists nologging_t;
+
+Succeed.
+
+SQL> create table nologging_t(c1 int, c2 int) nologging;
+
+CT-00130, Operation create nologging table is not supported on cluster mode
+SQL> insert into nologging_t select * from dc_type_t;
+
+CT-00843, [1:13]The table or view SYS.NOLOGGING_T does not exist.
+SQL> create index nologging_t_idx on nologging_t(c1);
+
+CT-00843, The table or view SYS.NOLOGGING_T does not exist.
+SQL>
+SQL> select * from table(dba_analyze_table('SYS','NOLOGGING_T'));
+
+CT-00843, The table or view SYS.NOLOGGING_T does not exist.
+SQL> select * from table(dba_table_corruption('SYS', 'NOLOGGING_T'));
+
+CT-00843, The table or view SYS.NOLOGGING_T does not exist.
+SQL> select * from table(dba_index_corruption('SYS', 'NOLOGGING_T_IDX'));
+
+CT-00830, Index SYS.NOLOGGING_T_IDX does not exist
+SQL>
+SQL> drop table nologging_t;
+
+CT-00843, The table or view SYS.NOLOGGING_T does not exist.
+SQL>
+SQL> -- external table
+SQL> create or replace directory test_dir as './data';
+
+CT-00230, ./data is not an existing folder
+SQL> drop table if exists external_t;
+
+SQL> create table external_t(c1 int, c2 float, c3 decimal, c4 real, c5 varchar(32), c6 datetime, c7 timestamp) 
+  2 organization external
+  3 (
+  4 	type loader
+  5 	directory test_dir
+  6 	access parameters(
+  7 	    records delimited by newline
+  8 	    fields terminated by ',')
+  9     location 'external_1.data'
+ 10 );
+
+Succeed.
+
+SQL> 
+SQL> select * from table(dba_analyze_table('SYS','EXTERNAL_T'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      0                   
+total extents                                                    0                   
+total rows                                                       5                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 47                  
+
+6 rows fetched.
+
+SQL> select * from table(dba_table_corruption('SYS', 'EXTERNAL_T'));
+
+PAGE_ID                                                          SPACE_NAME                                                       DATAFILE_NAME                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table external_t;
+
+Succeed.
+
+SQL> drop directory test_dir;
+
+Succeed.
+
+SQL> 
+SQL> -- view
+SQL> drop view if exists dc_type_v;
+
+Succeed.
+
+SQL> create view dc_type_v as select * from dc_type_t;
+
+Succeed.
+
+SQL> select * from table(dba_analyze_table('SYS','DC_TYPE_V'));
+
+CT-01323, dba_analyze_table not supported non-table query
+SQL> select * from table(dba_table_corruption('SYS','DC_TYPE_V'));
+
+CT-01323, dba_table_corruption not supported non-table query
+SQL> drop view dc_type_v;
+
+Succeed.
+
+SQL> 
+SQL> -- dynamic view
+SQL> select * from table(dba_analyze_table('SYS','DV_SQL_PLAN'));
+
+CT-01323, dba_analyze_table not supported non-table query
+SQL> select * from table(dba_table_corruption('SYS','DV_SQL_PLAN'));
+
+CT-01323, dba_table_corruption not supported non-table query
+SQL> 
+SQL> drop table dc_type_t;
+Succeed.
+
+
+
+

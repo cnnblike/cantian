@@ -1,0 +1,2104 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP USER IF EXISTS exp_partition;
+
+Succeed.
+
+SQL> CREATE USER exp_partition identified by Changeme_123;
+
+Succeed.
+
+SQL> grant dba to exp_partition;
+
+Succeed.
+
+SQL> CONN exp_partition/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists t_partition_list;
+
+Succeed.
+
+SQL> create table t_partition_list(
+  2 id int,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,
+  4 c_long varchar(200),c_blob blob,c_raw varchar(100),c_date date,c_timestamp timestamp)
+  5 PARTITION BY LIST(id,c_int)
+  6 (
+  7 PARTITION p1 VALUES ((1,1000),(2,2000),(3,3000)),
+  8 PARTITION p2 VALUES ((4,4000),(5,5000),(6,6000),(7,7000)),
+  9 PARTITION p3 VALUES ((8,8000),(9,9000),(10,10000),(11,11000),(12,12000))
+ 10 );
+
+Succeed.
+
+SQL> insert into t_partition_list values(1,1000,100.123,100.456,100.789,100.123,'abc123','abcdefg',lpad('123abc',50,'abc'),lpad('123abc',50,'abc'),lpad('11100000',50,'1100'),lpad('11100001',50,'1100'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),to_timestamp(to_char('1800-03-05 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into t_partition_list values(5,5000,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> insert into t_partition_list values(8,8000,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_sigle_partition_list;
+
+Succeed.
+
+SQL> create table t_sigle_partition_list(
+  2 id int,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,
+  4 c_long varchar(200),c_blob blob,c_raw varchar(100),c_date date,c_timestamp timestamp)
+  5 PARTITION BY LIST(id)
+  6 (
+  7 PARTITION p1 VALUES (1,2,3),
+  8 PARTITION p2 VALUES (4,5,6,7),
+  9 PARTITION p3 VALUES (8,9,10,11,12)
+ 10 );
+
+Succeed.
+
+SQL> insert into t_sigle_partition_list values(1,1000,100.123,100.456,100.789,100.123,'abc123','abcdefg',lpad('123abc',50,'abc'),lpad('123abc',50,'abc'),lpad('11100000',50,'1100'),lpad('11100001',50,'1100'),
+  2 lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),to_timestamp(to_char('1800-03-05 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into t_sigle_partition_list values(5,null,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> insert into t_sigle_partition_list values(8,null,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_sigle_subpartition_list;
+
+Succeed.
+
+SQL> create table t_sigle_subpartition_list(
+  2 id int,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,
+  4 c_long varchar(200),c_blob blob,c_raw varchar(100),c_date date,c_timestamp timestamp)
+  5 PARTITION BY LIST(id) SUBPARTITION BY list(id)
+  6 (
+  7 PARTITION p1 VALUES (1,2,3) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 (
+  8 subpartition p4 values(1,2) TABLESPACE "USERS",
+  9 subpartition p5 values(3) TABLESPACE "USERS") ,
+ 10 PARTITION p2 VALUES (4,5,6,7) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 (
+ 11 subpartition p6 values(4,5) TABLESPACE "USERS",
+ 12 subpartition p7 values(6,7) TABLESPACE "USERS") ,
+ 13 PARTITION p3 VALUES (8,9,10,11,12) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 (
+ 14 subpartition p8 values(8,9) TABLESPACE "USERS",
+ 15 subpartition p9 values(10,11) TABLESPACE "USERS") 
+ 16 );
+
+Succeed.
+
+SQL> insert into t_sigle_subpartition_list values(1,1000,100.123,100.456,100.789,100.123,'abc123','abcdefg',lpad('123abc',50,'abc'),lpad('123abc',50,'abc'),lpad('11100000',50,'1100'),lpad('11100001',50,'1100'),lpad('11100011',50,'1100'),
+  2 to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),to_timestamp(to_char('1800-03-05 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into t_sigle_subpartition_list values(5,5000,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> insert into t_sigle_subpartition_list values(8,8000,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_mul_subpartition_list;
+
+Succeed.
+
+SQL> create table t_mul_subpartition_list(
+  2 id int,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,
+  4 c_long varchar(200),c_blob blob,c_raw varchar(100),c_date date,c_timestamp timestamp)
+  5 PARTITION BY LIST(id,c_int) SUBPARTITION BY LIST(id,c_int)
+  6 (
+  7 PARTITION p1 VALUES ((1,1000),(2,2000),(3,3000)) (
+  8 subpartition p4 values((1,1000),(2,2000)),
+  9 subpartition p5 values((3,3000))),
+ 10 PARTITION p2 VALUES ((4,4000),(5,5000),(6,6000),(7,7000)) (
+ 11 subpartition p6 values((4,4000),(5,5000)),
+ 12 subpartition p7 values((6,6000),(7,7000))),
+ 13 PARTITION p3 VALUES ((8,8000),(9,9000),(10,10000),(11,11000),(12,12000)) (
+ 14 subpartition p8 values((8,8000),(9,9000)),
+ 15 subpartition p9 values((10,10000),(11,11000)))
+ 16 );
+
+Succeed.
+
+SQL> insert into t_mul_subpartition_list values(1,1000,100.123,100.456,100.789,100.123,'abc123','abcdefg',lpad('123abc',50,'abc'),lpad('123abc',50,'abc'),lpad('11100000',50,'1100'),lpad('11100001',50,'1100'),lpad('11100011',50,'1100'),
+  2 to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),to_timestamp(to_char('1800-03-05 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into t_mul_subpartition_list values(5,5000,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> insert into t_mul_subpartition_list values(8,8000,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> show create table t_partition_list;
+
+CREATE TABLE "T_PARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID", "C_INT")
+(
+    PARTITION P1 VALUES((1,1000),(2,2000),(3,3000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P2 VALUES((4,4000),(5,5000),(6,6000),(7,7000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P3 VALUES((8,8000),(9,9000),(10,10000),(11,11000),(12,12000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table t_sigle_subpartition_list;
+
+CREATE TABLE "T_SIGLE_SUBPARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID")
+SUBPARTITION BY LIST ("ID")
+(
+    PARTITION P1 VALUES(1,2,3) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P4 VALUES(1,2) TABLESPACE "USERS", 
+        SUBPARTITION P5 VALUES(3) TABLESPACE "USERS"
+    ),
+    PARTITION P2 VALUES(4,5,6,7) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P6 VALUES(4,5) TABLESPACE "USERS", 
+        SUBPARTITION P7 VALUES(6,7) TABLESPACE "USERS"
+    ),
+    PARTITION P3 VALUES(8,9,10,11,12) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P8 VALUES(8,9) TABLESPACE "USERS", 
+        SUBPARTITION P9 VALUES(10,11) TABLESPACE "USERS"
+    )
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table t_mul_subpartition_list;
+
+CREATE TABLE "T_MUL_SUBPARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID", "C_INT")
+SUBPARTITION BY LIST ("ID", "C_INT")
+(
+    PARTITION P1 VALUES((1,1000),(2,2000),(3,3000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P4 VALUES((1,1000),(2,2000)) TABLESPACE "USERS", 
+        SUBPARTITION P5 VALUES((3,3000)) TABLESPACE "USERS"
+    ),
+    PARTITION P2 VALUES((4,4000),(5,5000),(6,6000),(7,7000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P6 VALUES((4,4000),(5,5000)) TABLESPACE "USERS", 
+        SUBPARTITION P7 VALUES((6,6000),(7,7000)) TABLESPACE "USERS"
+    ),
+    PARTITION P3 VALUES((8,8000),(9,9000),(10,10000),(11,11000),(12,12000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P8 VALUES((8,8000),(9,9000)) TABLESPACE "USERS", 
+        SUBPARTITION P9 VALUES((10,10000),(11,11000)) TABLESPACE "USERS"
+    )
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=t_partition_list,t_sigle_subpartition_list,t_mul_subpartition_list file="t_partition_list.sql" filetype=txt;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_PARTITION_LIST, T_SIGLE_SUBPARTITION_LIST, T_MUL_SUBPARTITION_LIST
+-- FILE TYPE = TXT
+-- DUMP FILE = t_partition_list.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table EXP_PARTITION.T_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+
+Logical export succeeded.
+
+SQL> 
+SQL> select count(*) from t_partition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from t_sigle_subpartition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from t_partition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists t_partition_list;
+
+Succeed.
+
+SQL> drop table if exists t_sigle_subpartition_list;
+
+Succeed.
+
+SQL> drop table if exists t_mul_subpartition_list;
+
+Succeed.
+
+SQL> imp tables=t_partition_list,t_sigle_subpartition_list,t_mul_subpartition_list file="t_partition_list.sql" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_PARTITION_LIST, T_SIGLE_SUBPARTITION_LIST, T_MUL_SUBPARTITION_LIST
+-- DUMP FILE = t_partition_list.sql
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 9 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> show create table t_partition_list;
+
+CREATE TABLE "T_PARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID", "C_INT")
+(
+    PARTITION P1 VALUES((1,1000),(2,2000),(3,3000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P2 VALUES((4,4000),(5,5000),(6,6000),(7,7000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P3 VALUES((8,8000),(9,9000),(10,10000),(11,11000),(12,12000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table t_sigle_subpartition_list;
+
+CREATE TABLE "T_SIGLE_SUBPARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID")
+SUBPARTITION BY LIST ("ID")
+(
+    PARTITION P1 VALUES(1,2,3) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P4 VALUES(1,2) TABLESPACE "USERS", 
+        SUBPARTITION P5 VALUES(3) TABLESPACE "USERS"
+    ),
+    PARTITION P2 VALUES(4,5,6,7) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P6 VALUES(4,5) TABLESPACE "USERS", 
+        SUBPARTITION P7 VALUES(6,7) TABLESPACE "USERS"
+    ),
+    PARTITION P3 VALUES(8,9,10,11,12) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P8 VALUES(8,9) TABLESPACE "USERS", 
+        SUBPARTITION P9 VALUES(10,11) TABLESPACE "USERS"
+    )
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table t_mul_subpartition_list;
+
+CREATE TABLE "T_MUL_SUBPARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID", "C_INT")
+SUBPARTITION BY LIST ("ID", "C_INT")
+(
+    PARTITION P1 VALUES((1,1000),(2,2000),(3,3000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P4 VALUES((1,1000),(2,2000)) TABLESPACE "USERS", 
+        SUBPARTITION P5 VALUES((3,3000)) TABLESPACE "USERS"
+    ),
+    PARTITION P2 VALUES((4,4000),(5,5000),(6,6000),(7,7000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P6 VALUES((4,4000),(5,5000)) TABLESPACE "USERS", 
+        SUBPARTITION P7 VALUES((6,6000),(7,7000)) TABLESPACE "USERS"
+    ),
+    PARTITION P3 VALUES((8,8000),(9,9000),(10,10000),(11,11000),(12,12000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P8 VALUES((8,8000),(9,9000)) TABLESPACE "USERS", 
+        SUBPARTITION P9 VALUES((10,10000),(11,11000)) TABLESPACE "USERS"
+    )
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> select count(*) from t_partition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from t_sigle_subpartition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from t_partition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists test_subpart_range;
+
+Succeed.
+
+SQL> create table test_subpart_range(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart_hash;
+
+Succeed.
+
+SQL> create table test_subpart_hash(id int, name varchar(20)) partition by list(id) subpartition by hash(name)
+  2 (
+  3 partition p1 values(1, 2, 3)
+  4 (
+  5 subpartition p11,
+  6 subpartition p12
+  7 ),
+  8 partition p2 values(4, 5, 6)
+  9 (
+ 10 subpartition p21,
+ 11 subpartition p22
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart_hash_range;
+
+Succeed.
+
+SQL> create table test_subpart_hash_range(id int, name varchar(20)) partition by hash(name) subpartition by range(id)
+  2 (
+  3 partition p1
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart_hash_list;
+
+Succeed.
+
+SQL> create table test_subpart_hash_list(id int, name varchar(20)) partition by hash(name) subpartition by list(id)
+  2 (
+  3 partition p1
+  4 (
+  5 subpartition p11 values(1, 2, 3),
+  6 subpartition p12 values(4, 5, 6)
+  7 ),
+  8 partition p2
+  9 (
+ 10 subpartition p21 values(1, 2, 3),
+ 11 subpartition p22 values(4, 5, 6)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart_range_range;
+
+Succeed.
+
+SQL> create table test_subpart_range_range(id int, c_id int, name varchar(20)) partition by range(id) interval(50) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_interval;
+
+Succeed.
+
+SQL> create table test_interval(id int) PARTITION BY RANGE(ID) INTERVAL(50) SUBPARTITION BY RANGE(id)
+  2 (
+  3 PARTITION P1 VALUES LESS THAN(50)
+  4 (
+  5 SUBPARTITION p2 VALUES LESS THAN (2),
+  6 SUBPARTITION p3 VALUES LESS THAN (4),
+  7 SUBPARTITION P4 VALUES LESS THAN(MAXVALUE)
+  8 )
+  9 );
+
+Succeed.
+
+SQL> 
+SQL> exp tables=% file="t_partition_com1.sql" filetype=txt;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = TXT
+-- DUMP FILE = t_partition_com1.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Reading table objects of EXP_PARTITION
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T_SIGLE_PARTITION_LIST                                           1         
+T_PARTITION_LIST                                                 2         
+T_SIGLE_SUBPARTITION_LIST                                        3         
+T_MUL_SUBPARTITION_LIST                                          4         
+TEST_SUBPART_RANGE                                               5         
+TEST_SUBPART_HASH                                                6         
+TEST_SUBPART_HASH_RANGE                                          7         
+TEST_SUBPART_HASH_LIST                                           8         
+TEST_SUBPART_RANGE_RANGE                                         9         
+TEST_INTERVAL                                                    10        
+
+Exporting tables (scripts or data) of EXP_PARTITION
+exporting table EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_RANGE ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+
+exporting table EXP_PARTITION.TEST_INTERVAL ...
+  exporting DDL of EXP_PARTITION.TEST_INTERVAL ...
+  exporting data of EXP_PARTITION.TEST_INTERVAL ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_INTERVAL ...
+  exporting constraints on EXP_PARTITION.TEST_INTERVAL ...
+
+Logical export succeeded.
+
+SQL> imp tables=% file="t_partition_com1.sql" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = t_partition_com1.sql
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 12 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> exp tables=% file="t_partition_com2.sql" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = BIN
+-- DUMP FILE = t_partition_com2.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Reading table objects of EXP_PARTITION
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T_SIGLE_PARTITION_LIST                                           1         
+T_PARTITION_LIST                                                 2         
+T_SIGLE_SUBPARTITION_LIST                                        3         
+T_MUL_SUBPARTITION_LIST                                          4         
+TEST_SUBPART_RANGE                                               5         
+TEST_SUBPART_HASH                                                6         
+TEST_SUBPART_HASH_RANGE                                          7         
+TEST_SUBPART_HASH_LIST                                           8         
+TEST_SUBPART_RANGE_RANGE                                         9         
+TEST_INTERVAL                                                    10        
+
+Exporting tables (scripts or data) of EXP_PARTITION
+exporting table EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_RANGE ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+
+exporting table EXP_PARTITION.TEST_INTERVAL ...
+  exporting DDL of EXP_PARTITION.TEST_INTERVAL ...
+  exporting data of EXP_PARTITION.TEST_INTERVAL ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_INTERVAL ...
+  exporting constraints on EXP_PARTITION.TEST_INTERVAL ...
+
+Logical export succeeded.
+
+SQL> imp tables=% file="t_partition_com2.sql" filetype=bin;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = t_partition_com2.sql
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema EXP_PARTITION ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema EXP_PARTITION ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema EXP_PARTITION ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema EXP_PARTITION ,total number : 10 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    T_SIGLE_PARTITION_LIST                                           3         
+    T_PARTITION_LIST                                                 3         
+    T_SIGLE_SUBPARTITION_LIST                                        3         
+    T_MUL_SUBPARTITION_LIST                                          3         
+
+  Importing foreign key of schema EXP_PARTITION ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema EXP_PARTITION ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema EXP_PARTITION ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema EXP_PARTITION ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema EXP_PARTITION ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 12 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> exp tables=% file="t_partition_com3.sql" filetype=txt CONSISTENT=Y;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = TXT
+-- DUMP FILE = t_partition_com3.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Reading table objects of EXP_PARTITION
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T_SIGLE_PARTITION_LIST                                           1         
+T_PARTITION_LIST                                                 2         
+T_SIGLE_SUBPARTITION_LIST                                        3         
+T_MUL_SUBPARTITION_LIST                                          4         
+TEST_SUBPART_RANGE                                               5         
+TEST_SUBPART_HASH                                                6         
+TEST_SUBPART_HASH_RANGE                                          7         
+TEST_SUBPART_HASH_LIST                                           8         
+TEST_SUBPART_RANGE_RANGE                                         9         
+TEST_INTERVAL                                                    10        
+
+Exporting tables (scripts or data) of EXP_PARTITION
+exporting table EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_RANGE ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+
+exporting table EXP_PARTITION.TEST_INTERVAL ...
+  exporting DDL of EXP_PARTITION.TEST_INTERVAL ...
+  exporting data of EXP_PARTITION.TEST_INTERVAL ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_INTERVAL ...
+  exporting constraints on EXP_PARTITION.TEST_INTERVAL ...
+
+Logical export succeeded.
+
+SQL> imp tables=% file="t_partition_com3.sql" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = t_partition_com3.sql
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 12 rows are loaded.
+Logical import succeeded.
+
+SQL> imp tables=% file="t_partition_com3.sql" filetype=txt DDL_PARALLEL=4 PARALLEL=4;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = t_partition_com3.sql
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 4
+-- DDL_PARALLEL = 4
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 12 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> exp tables=% file="t_partition_com4.sql" filetype=bin CONSISTENT=Y;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = BIN
+-- DUMP FILE = t_partition_com4.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Reading table objects of EXP_PARTITION
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T_SIGLE_PARTITION_LIST                                           1         
+T_PARTITION_LIST                                                 2         
+T_SIGLE_SUBPARTITION_LIST                                        3         
+T_MUL_SUBPARTITION_LIST                                          4         
+TEST_SUBPART_RANGE                                               5         
+TEST_SUBPART_HASH                                                6         
+TEST_SUBPART_HASH_RANGE                                          7         
+TEST_SUBPART_HASH_LIST                                           8         
+TEST_SUBPART_RANGE_RANGE                                         9         
+TEST_INTERVAL                                                    10        
+
+Exporting tables (scripts or data) of EXP_PARTITION
+exporting table EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_PARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_PARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting data of EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_MUL_SUBPARTITION_LIST ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_RANGE ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH_RANGE ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_HASH_LIST ...
+
+exporting table EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting DDL of EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting data of EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+  exporting constraints on EXP_PARTITION.TEST_SUBPART_RANGE_RANGE ...
+
+exporting table EXP_PARTITION.TEST_INTERVAL ...
+  exporting DDL of EXP_PARTITION.TEST_INTERVAL ...
+  exporting data of EXP_PARTITION.TEST_INTERVAL ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TEST_INTERVAL ...
+  exporting constraints on EXP_PARTITION.TEST_INTERVAL ...
+
+Logical export succeeded.
+
+SQL> imp tables=% file="t_partition_com4.sql" filetype=bin;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = t_partition_com4.sql
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema EXP_PARTITION ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema EXP_PARTITION ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema EXP_PARTITION ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema EXP_PARTITION ,total number : 10 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    T_SIGLE_PARTITION_LIST                                           3         
+    T_PARTITION_LIST                                                 3         
+    T_SIGLE_SUBPARTITION_LIST                                        3         
+    T_MUL_SUBPARTITION_LIST                                          3         
+
+  Importing foreign key of schema EXP_PARTITION ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema EXP_PARTITION ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema EXP_PARTITION ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema EXP_PARTITION ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema EXP_PARTITION ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 12 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> show create table t_partition_list;
+
+CREATE TABLE "T_PARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID", "C_INT")
+(
+    PARTITION P1 VALUES((1,1000),(2,2000),(3,3000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P2 VALUES((4,4000),(5,5000),(6,6000),(7,7000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P3 VALUES((8,8000),(9,9000),(10,10000),(11,11000),(12,12000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table t_sigle_subpartition_list;
+
+CREATE TABLE "T_SIGLE_SUBPARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID")
+SUBPARTITION BY LIST ("ID")
+(
+    PARTITION P1 VALUES(1,2,3) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P4 VALUES(1,2) TABLESPACE "USERS", 
+        SUBPARTITION P5 VALUES(3) TABLESPACE "USERS"
+    ),
+    PARTITION P2 VALUES(4,5,6,7) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P6 VALUES(4,5) TABLESPACE "USERS", 
+        SUBPARTITION P7 VALUES(6,7) TABLESPACE "USERS"
+    ),
+    PARTITION P3 VALUES(8,9,10,11,12) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P8 VALUES(8,9) TABLESPACE "USERS", 
+        SUBPARTITION P9 VALUES(10,11) TABLESPACE "USERS"
+    )
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table t_mul_subpartition_list;
+
+CREATE TABLE "T_MUL_SUBPARTITION_LIST"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(10 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" VARCHAR(100 BYTE),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+PARTITION BY LIST ("ID", "C_INT")
+SUBPARTITION BY LIST ("ID", "C_INT")
+(
+    PARTITION P1 VALUES((1,1000),(2,2000),(3,3000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P4 VALUES((1,1000),(2,2000)) TABLESPACE "USERS", 
+        SUBPARTITION P5 VALUES((3,3000)) TABLESPACE "USERS"
+    ),
+    PARTITION P2 VALUES((4,4000),(5,5000),(6,6000),(7,7000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P6 VALUES((4,4000),(5,5000)) TABLESPACE "USERS", 
+        SUBPARTITION P7 VALUES((6,6000),(7,7000)) TABLESPACE "USERS"
+    ),
+    PARTITION P3 VALUES((8,8000),(9,9000),(10,10000),(11,11000),(12,12000)) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P8 VALUES((8,8000),(9,9000)) TABLESPACE "USERS", 
+        SUBPARTITION P9 VALUES((10,10000),(11,11000)) TABLESPACE "USERS"
+    )
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> select count(*) from t_partition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from t_sigle_subpartition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from t_partition_list;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> 
+SQL> exp tables=% file="t_partition_com5.sql" filetype=txt PARALLEL=4;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = TXT
+-- DUMP FILE = t_partition_com5.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 4
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Reading table objects of EXP_PARTITION
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T_SIGLE_PARTITION_LIST                                           1         
+T_PARTITION_LIST                                                 2         
+T_SIGLE_SUBPARTITION_LIST                                        3         
+T_MUL_SUBPARTITION_LIST                                          4         
+TEST_SUBPART_RANGE                                               5         
+TEST_SUBPART_HASH                                                6         
+TEST_SUBPART_HASH_RANGE                                          7         
+TEST_SUBPART_HASH_LIST                                           8         
+TEST_SUBPART_RANGE_RANGE                                         9         
+TEST_INTERVAL                                                    10        
+
+Exporting tables (scripts or data) of EXP_PARTITION
+exporting table EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting indexes on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_PARTITION_LIST ...
+  exporting indexes on EXP_PARTITION.T_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+Failed to get table:T_SIGLE_SUBPARTITION_LIST parallel export parameter
+
+CT-01323, get_tab_parallel func not supported second partition
+Logical export failed.
+
+SQL> 
+SQL> exp tables=% file="t_partition_com6.sql" filetype=bin PARALLEL=4 CONSISTENT=Y;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = BIN
+-- DUMP FILE = t_partition_com6.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 4
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Reading table objects of EXP_PARTITION
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T_SIGLE_PARTITION_LIST                                           1         
+T_PARTITION_LIST                                                 2         
+T_SIGLE_SUBPARTITION_LIST                                        3         
+T_MUL_SUBPARTITION_LIST                                          4         
+TEST_SUBPART_RANGE                                               5         
+TEST_SUBPART_HASH                                                6         
+TEST_SUBPART_HASH_RANGE                                          7         
+TEST_SUBPART_HASH_LIST                                           8         
+TEST_SUBPART_RANGE_RANGE                                         9         
+TEST_INTERVAL                                                    10        
+
+Exporting tables (scripts or data) of EXP_PARTITION
+exporting table EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+    data exporting success! 3 rows are dumped.
+  exporting indexes on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_SIGLE_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_PARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_PARTITION_LIST ...
+    data exporting success! 3 rows are dumped.
+  exporting indexes on EXP_PARTITION.T_PARTITION_LIST ...
+  exporting constraints on EXP_PARTITION.T_PARTITION_LIST ...
+
+exporting table EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+  exporting DDL of EXP_PARTITION.T_SIGLE_SUBPARTITION_LIST ...
+Failed to get table:T_SIGLE_SUBPARTITION_LIST parallel export parameter
+
+CT-01323, get_tab_parallel func not supported second partition
+Logical export failed.
+
+SQL> 
+SQL> drop table if exists tab_list_list_partition_001; 
+
+Succeed.
+
+SQL> create table tab_list_list_partition_001(  
+  2 COL_1 bigint not null,  
+  3 COL_2 TIMESTAMP WITHOUT TIME ZONE,  
+  4 COL_3 bool, 
+  5 COL_4 decimal, 
+  6 COL_5 text, 
+  7 COL_6 smallint, 
+  8 COL_7 char(30), 
+  9 COL_8 double precision, 
+ 10 COL_9 longtext, 
+ 11 COL_10 character varying(30), 
+ 12 COL_11 bool , 
+ 13 COL_12 bytea , 
+ 14 COL_13 real , 
+ 15 COL_14 numeric , 
+ 16 COL_15 blob , 
+ 17 COL_16 integer , 
+ 18 COL_17 int , 
+ 19 COL_18 TIMESTAMP WITH TIME ZONE , 
+ 20 COL_19 binary_integer , 
+ 21 COL_20 interval day to second , 
+ 22 COL_21 boolean,  
+ 23 COL_22 nchar(30), 
+ 24 COL_23 binary_bigint, 
+ 25 COL_24 nchar(100), 
+ 26 COL_25 character(1000),  
+ 27 COL_26 text, 
+ 28 COL_27 float, 
+ 29 COL_28 double, 
+ 30 COL_29 bigint, 
+ 31 COL_30 TIMESTAMP WITH LOCAL TIME ZONE , 
+ 32 COL_31 TIMESTAMP, 
+ 33 COL_32 image, 
+ 34 COL_33 interval year to month, 
+ 35 COL_34 character(30), 
+ 36 COL_35 smallint, 
+ 37 COL_36 blob, 
+ 38 COL_37 char(300), 
+ 39 COL_38 float, 
+ 40 COL_39 raw(100), 
+ 41 COL_40 clob , 
+ 42 COL_41 binary_double, 
+ 43 COL_42 number(6,2), 
+ 44 COL_43 decimal(6,2), 
+ 45 COL_44 varchar2(50), 
+ 46 COL_45 varchar(30), 
+ 47 COL_46 nvarchar2(100), 
+ 48 COL_47 numeric(12,6), 
+ 49 COL_48 nvarchar(30), 
+ 50 COL_49 date, 
+ 51 COL_50 image , 
+ 52 COL_51 integer, 
+ 53 COL_52 binary_double, 
+ 54 COL_53 decimal(12,6), 
+ 55 COL_54 raw(8000), 
+ 56 COL_55 clob, 
+ 57 COL_56 varchar2(8000), 
+ 58 COL_57 datetime, 
+ 59 COL_58 number(12,6), 
+ 60 COL_59 nvarchar2(4000), 
+ 61 COL_60 varbinary(2000) , 
+ 62 COL_61 binary(200), 
+ 63 COL_62 datetime, 
+ 64 COL_63 binary(100), 
+ 65 COL_64 varchar(1000), 
+ 66 COL_65 date, 
+ 67  primary key(COL_1) 
+ 68 )
+ 69 PARTITION BY LIST(COL_1) SUBPARTITION BY LIST(COL_1)
+ 70 (
+ 71 PARTITION PART_1 VALUES(default) 
+ 72 (SUBPARTITION P1_1 VALUES(0,200),
+ 73  SUBPARTITION P1_2 VALUES(201,300),
+ 74  SUBPARTITION P1_3 VALUES(301,400),
+ 75  SUBPARTITION P1_4 VALUES(401,500),
+ 76  SUBPARTITION P1_5 VALUES(501,600),
+ 77  SUBPARTITION P1_6 VALUES(601,700),
+ 78  SUBPARTITION P1_7 VALUES(701,800),
+ 79  SUBPARTITION P1_8 VALUES(801,900),
+ 80  SUBPARTITION P1_9 VALUES(901,1000),
+ 81  SUBPARTITION P1_10 VALUES(default)
+ 82 )
+ 83 )
+ 84 ; 
+
+Succeed.
+
+SQL> 
+SQL> show create table tab_list_list_partition_001;
+
+CREATE TABLE "TAB_LIST_LIST_PARTITION_001"
+(
+  "COL_1" BINARY_BIGINT NOT NULL,
+  "COL_2" TIMESTAMP(6),
+  "COL_3" BOOLEAN,
+  "COL_4" NUMBER,
+  "COL_5" CLOB,
+  "COL_6" BINARY_INTEGER,
+  "COL_7" CHAR(30 BYTE),
+  "COL_8" BINARY_DOUBLE,
+  "COL_9" CLOB,
+  "COL_10" VARCHAR(30 BYTE),
+  "COL_11" BOOLEAN,
+  "COL_12" BLOB,
+  "COL_13" BINARY_DOUBLE,
+  "COL_14" NUMBER,
+  "COL_15" BLOB,
+  "COL_16" BINARY_INTEGER,
+  "COL_17" BINARY_INTEGER,
+  "COL_18" TIMESTAMP(6) WITH TIME ZONE,
+  "COL_19" BINARY_INTEGER,
+  "COL_20" INTERVAL DAY(2) TO SECOND(6),
+  "COL_21" BOOLEAN,
+  "COL_22" CHAR(30 CHAR),
+  "COL_23" BINARY_BIGINT,
+  "COL_24" CHAR(100 CHAR),
+  "COL_25" CHAR(1000 BYTE),
+  "COL_26" CLOB,
+  "COL_27" BINARY_DOUBLE,
+  "COL_28" BINARY_DOUBLE,
+  "COL_29" BINARY_BIGINT,
+  "COL_30" TIMESTAMP(6) WITH LOCAL TIME ZONE,
+  "COL_31" TIMESTAMP(6),
+  "COL_32" IMAGE,
+  "COL_33" INTERVAL YEAR(2) TO MONTH,
+  "COL_34" CHAR(30 BYTE),
+  "COL_35" BINARY_INTEGER,
+  "COL_36" BLOB,
+  "COL_37" CHAR(300 BYTE),
+  "COL_38" BINARY_DOUBLE,
+  "COL_39" RAW(100),
+  "COL_40" CLOB,
+  "COL_41" BINARY_DOUBLE,
+  "COL_42" NUMBER(6, 2),
+  "COL_43" NUMBER(6, 2),
+  "COL_44" VARCHAR(50 BYTE),
+  "COL_45" VARCHAR(30 BYTE),
+  "COL_46" VARCHAR(100 CHAR),
+  "COL_47" NUMBER(12, 6),
+  "COL_48" VARCHAR(30 CHAR),
+  "COL_49" DATE,
+  "COL_50" IMAGE,
+  "COL_51" BINARY_INTEGER,
+  "COL_52" BINARY_DOUBLE,
+  "COL_53" NUMBER(12, 6),
+  "COL_54" RAW(8000),
+  "COL_55" CLOB,
+  "COL_56" VARCHAR(8000 BYTE),
+  "COL_57" DATE,
+  "COL_58" NUMBER(12, 6),
+  "COL_59" VARCHAR(4000 CHAR),
+  "COL_60" VARBINARY(2000),
+  "COL_61" BINARY(200),
+  "COL_62" DATE,
+  "COL_63" BINARY(100),
+  "COL_64" VARCHAR(1000 BYTE),
+  "COL_65" DATE
+)
+PARTITION BY LIST ("COL_1")
+SUBPARTITION BY LIST ("COL_1")
+(
+    PARTITION PART_1 VALUES(default) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF(
+        SUBPARTITION P1_1 VALUES(0,200) TABLESPACE "USERS", 
+        SUBPARTITION P1_2 VALUES(201,300) TABLESPACE "USERS", 
+        SUBPARTITION P1_3 VALUES(301,400) TABLESPACE "USERS", 
+        SUBPARTITION P1_4 VALUES(401,500) TABLESPACE "USERS", 
+        SUBPARTITION P1_5 VALUES(501,600) TABLESPACE "USERS", 
+        SUBPARTITION P1_6 VALUES(601,700) TABLESPACE "USERS", 
+        SUBPARTITION P1_7 VALUES(701,800) TABLESPACE "USERS", 
+        SUBPARTITION P1_8 VALUES(801,900) TABLESPACE "USERS", 
+        SUBPARTITION P1_9 VALUES(901,1000) TABLESPACE "USERS", 
+        SUBPARTITION P1_10 VALUES(default) TABLESPACE "USERS"
+    )
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+ALTER TABLE "TAB_LIST_LIST_PARTITION_001" ADD PRIMARY KEY("COL_1");
+
+
+
+SQL> exp tables=tab_list_list_partition_001 file="tab_list_list_partition1.sql" filetype=txt;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = TAB_LIST_LIST_PARTITION_001
+-- FILE TYPE = TXT
+-- DUMP FILE = tab_list_list_partition1.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+  exporting DDL of EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+  exporting data of EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+  exporting constraints on EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+
+Logical export succeeded.
+
+SQL> imp tables=tab_list_list_partition_001 file="tab_list_list_partition1.sql" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TAB_LIST_LIST_PARTITION_001
+-- DUMP FILE = tab_list_list_partition1.sql
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> exp tables=tab_list_list_partition_001 file="tab_list_list_partition2.sql" filetype=txt CONSISTENT=Y;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = TAB_LIST_LIST_PARTITION_001
+-- FILE TYPE = TXT
+-- DUMP FILE = tab_list_list_partition2.sql
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = Y
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+  exporting DDL of EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+  exporting data of EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+  exporting constraints on EXP_PARTITION.TAB_LIST_LIST_PARTITION_001 ...
+
+Logical export succeeded.
+
+SQL> imp tables=tab_list_list_partition_001 file="tab_list_list_partition2.sql" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = TAB_LIST_LIST_PARTITION_001
+-- DUMP FILE = tab_list_list_partition2.sql
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP USER IF EXISTS exp_partition CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists T_SINGLE_PARTITION_001;
+
+Succeed.
+
+SQL> CREATE TABLE "T_SINGLE_PARTITION_001"
+  2 (
+  3   "ID" BINARY_INTEGER,
+  4   "C_INT" BINARY_INTEGER,
+  5   "C_REAL" BINARY_DOUBLE,
+  6   "C_FLOAT" BINARY_DOUBLE,
+  7   "C_DECIMAL" NUMBER,
+  8   "C_NUMBER" NUMBER,
+  9   "C_CHAR" CHAR(10 BYTE),
+ 10   "C_VCHAR" VARCHAR(20 BYTE) NOT NULL,
+ 11   "C_VCHAR2" VARCHAR(100 BYTE),
+ 12   "C_CLOB" CLOB,
+ 13   "C_LONG" VARCHAR(200 BYTE),
+ 14   "C_BLOB" BLOB,
+ 15   "C_RAW" RAW(100),
+ 16   "C_DATE" DATE,
+ 17   "C_TIMESTAMP" TIMESTAMP(6)
+ 18 );
+
+Succeed.
+
+SQL> show create table T_SINGLE_PARTITION_001;select 1;
+
+CREATE TABLE "T_SINGLE_PARTITION_001"
+(
+  "ID" BINARY_INTEGER,
+  "C_INT" BINARY_INTEGER,
+  "C_REAL" BINARY_DOUBLE,
+  "C_FLOAT" BINARY_DOUBLE,
+  "C_DECIMAL" NUMBER,
+  "C_NUMBER" NUMBER,
+  "C_CHAR" CHAR(10 BYTE),
+  "C_VCHAR" VARCHAR(20 BYTE) NOT NULL,
+  "C_VCHAR2" VARCHAR(100 BYTE),
+  "C_CLOB" CLOB,
+  "C_LONG" VARCHAR(200 BYTE),
+  "C_BLOB" BLOB,
+  "C_RAW" RAW(100),
+  "C_DATE" DATE,
+  "C_TIMESTAMP" TIMESTAMP(6)
+)
+TABLESPACE "SYSTEM"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> drop table if exists T_SINGLE_PARTITION_001;
+
+Succeed.
+
+SQL> 
+SQL> 
+
+

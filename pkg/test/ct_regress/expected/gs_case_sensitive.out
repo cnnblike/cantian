@@ -1,0 +1,1798 @@
+
+
+SQL> DROP TRIGGER IF EXISTS TRIG_OBJECTID;
+
+Succeed.
+
+SQL> DROP PROCEDURE IF EXISTS PROC_OBJECTID;
+
+Succeed.
+
+SQL> DROP FUNCTION IF EXISTS FUNC_OBJECTID;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TEMP_OBJECTID;
+
+Succeed.
+
+SQL> DROP VIEW IF EXISTS V_OBJECTID;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_OBJECTID;
+
+Succeed.
+
+SQL> 
+SQL> --make name case sensitive
+SQL> alter system set upper_case_table_names = false;
+
+Succeed.
+
+SQL> alter system set use_native_datatype = true;
+
+Succeed.
+
+SQL> --restart db
+SQL> --shutdown immediate;
+SQL> --startup;
+SQL> --conn sys/Huawei@123@127.0.0.1:1611
+SQL> 
+SQL> --table & columns
+SQL> drop table if exists cs_t1;
+
+Succeed.
+
+SQL> drop table if exists CS_T1;
+
+Succeed.
+
+SQL> create table cs_t1(f1 int, F1 int);
+
+Succeed.
+
+SQL> create table CS_T1(f2 int, F2 int);
+
+Succeed.
+
+SQL> 
+SQL> SELECT COUNT(1) FROM SYS_TABLES WHERE NAME = 'cs_t1';
+
+COUNT(1)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> SELECT COUNT(1) FROM SYS_TABLES WHERE NAME = 'CS_T1';
+
+COUNT(1)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> SELECT COUNT(1) FROM SYS_TABLES WHERE NAME = 'CS_t1';
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> --dml
+SQL> insert into cs_t1(f1,F1) values(1,2),(3,4);
+
+2 rows affected.
+
+SQL> select f1,F1 from cs_t1;
+
+f1           F1          
+------------ ------------
+1            2           
+3            4           
+
+2 rows fetched.
+
+SQL> update cs_t1 set f1=2,F1=3 where F1=4;
+
+1 rows affected.
+
+SQL> insert into CS_T1(f2,F2) values(1,2),(3,4);
+
+2 rows affected.
+
+SQL> select f1,f2 from cs_t1 INNER JOIN CS_T1 on f1=f2; 
+
+f1           f2          
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> MERGE INTO cs_t1 using CS_T1 on(cs_t1.f1 = CS_T1.f2) 
+  2   when matched then update set cs_t1.F1 = CS_T1.F2
+  3   when not matched then insert (f1,F1) values(CS_T1.f2, CS_T1.F2);
+
+2 rows affected.
+
+SQL> delete from cs_t1 where f1 = 1;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --index
+SQL> alter table cs_t1 add constraint pk_cs_t1 primary key(f1);
+
+Succeed.
+
+SQL> create index idx_cs_t1 on cs_t1(F1);
+
+Succeed.
+
+SQL> alter table CS_T1 add constraint PK_CS_T1 primary key(f2); 
+
+Succeed.
+
+SQL> create index IDX_CS_T1 on CS_T1(F2);
+
+Succeed.
+
+SQL> alter table CS_T1 drop constraint PK_CS_T1;
+
+Succeed.
+
+SQL> create index idx_CS_T1 ON CS_T1(f2);
+
+Succeed.
+
+SQL> 
+SQL> --view
+SQL> drop view if exists v_cs_t1;
+
+Succeed.
+
+SQL> drop view if exists V_CS_T1;
+
+Succeed.
+
+SQL> create view v_cs_t1(v_f1, V_F1) as select f1,F1 from cs_t1;
+
+Succeed.
+
+SQL> select * from v_cs_t1;
+
+v_f1         V_F1        
+------------ ------------
+2            3           
+3            4           
+
+2 rows fetched.
+
+SQL> create view V_CS_T1(v_f2, V_F2) AS SELECT f2, F2 From CS_T1;
+
+Succeed.
+
+SQL> select * from V_CS_T1;
+
+v_f2         V_F2        
+------------ ------------
+1            2           
+3            4           
+
+2 rows fetched.
+
+SQL> UPDATE CS_T1 SET F2 = f2+1, f2 = F2 - 2;
+
+2 rows affected.
+
+SQL> select * from V_CS_T1;
+
+v_f2         V_F2        
+------------ ------------
+0            2           
+2            4           
+
+2 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists cs_t1;
+
+Succeed.
+
+SQL> drop table if exists CS_T1;
+
+Succeed.
+
+SQL> drop view if exists v_cs_t1;
+
+Succeed.
+
+SQL> drop view if exists V_CS_T1;
+
+Succeed.
+
+SQL> 
+SQL> --tablespace
+SQL> 
+SQL> --procedures
+SQL> set serveroutput on;
+
+ON
+SQL> CREATE OR REPLACE PROCEDURE Zenith_Test_001
+  2 AS
+  3 Begin
+  4   dbe_output.print_line('Hello Zenith');
+  5 end Zenith_Test_001;
+  6 /
+
+Succeed.
+
+SQL> call Zenith_Test_001;
+
+Hello Zenith
+
+PL/SQL procedure successfully completed.
+
+SQL> call ZENITH_TEST_001;
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00828 procedure SYS.ZENITH_TEST_001 does not exist
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE ZENITH_TEST_001
+  2 AS
+  3 Begin
+  4   dbe_output.print_line('HELLO ZENITH');
+  5 end ZENITH_TEST_001;
+  6 /
+
+Succeed.
+
+SQL> call ZENITH_TEST_001;
+
+HELLO ZENITH
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DROP PROCEDURE IF EXISTS Zenith_Test_001;
+
+Succeed.
+
+SQL> DROP PROCEDURE IF EXISTS ZENITH_TEST_001;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists emp_test;
+
+Succeed.
+
+SQL> create table emp_test(empno number,ename varchar2(100),job varchar2(100), sal number);
+
+Succeed.
+
+SQL> insert into emp_test values(1,'wanghaifeng','doctor1',10000);
+
+1 rows affected.
+
+SQL> 
+SQL> --succ
+SQL> CREATE OR REPLACE PROCEDURE syscur(sys_cur OUT SYS_REFCURSOR) 
+  2 IS 
+  3 C1 SYS_REFCURSOR; 
+  4 BEGIN 
+  5 OPEN C1 FOR
+  6     SELECT empno,ename FROM emp_test  where empno=1 ORDER BY empno; 
+  7 sys_cur := C1; 
+  8 END; 
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> --fail_by_table_not_exists
+SQL> CREATE OR REPLACE PROCEDURE syscur_1(sys_cur OUT SYS_REFCURSOR) 
+  2 IS 
+  3 C1 SYS_REFCURSOR; 
+  4 BEGIN 
+  5 OPEN C1 FOR
+  6     SELECT empno,ename FROM EMP_test  where empno=1 ORDER BY empno; 
+  7 sys_cur := C1; 
+  8 END; 
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.syscur_1) terminated with compiling errors
+[6:29] PLC-00843 The table or view SYS.EMP_test does not exist.
+
+
+SQL> --fail_by_col_not_exists
+SQL> CREATE OR REPLACE PROCEDURE syscur_2(sys_cur OUT SYS_REFCURSOR) 
+  2 IS 
+  3 C1 SYS_REFCURSOR; 
+  4 BEGIN 
+  5 OPEN C1 FOR
+  6     SELECT EMPNO,ename FROM emp_test  where empno=1 ORDER BY empno; 
+  7 sys_cur := C1; 
+  8 END; 
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.syscur_2) terminated with compiling errors
+[6:12] PLC-00601 Sql syntax error: invalid column name 'EMPNO'
+
+
+SQL> 
+SQL> --succ
+SQL> DECLARE
+  2   cv SYS_REFCURSOR;
+  3   v_sal   emp_test.sal%type;
+  4   v_sal_mul     emp_test.sal%type;
+  5   factor   integer :=2;
+  6 BEGIN
+  7     open cv for
+  8           select sal,sal*factor from emp_test where job like '%1' and sal < 13000 order by sal;
+  9     loop
+ 10     fetch cv into v_sal,v_sal_mul;
+ 11     exit when cv%notfound;
+ 12     dbe_output.print_line('factor ='||factor||';');
+ 13     dbe_output.print_line('sal ='||v_sal||';');
+ 14     dbe_output.print_line('sal_mul ='||v_sal_mul||';');
+ 15     factor :=factor+1;
+ 16 
+ 17   END LOOP;
+ 18   close cv;
+ 19 end;
+ 20 /
+
+factor =2;
+sal =10000;
+sal_mul =20000;
+
+PL/SQL procedure successfully completed.
+
+SQL> --failed_by_tab_not_exists
+SQL> DECLARE
+  2   cv SYS_REFCURSOR;
+  3   v_sal   EMP_test.sal%type;
+  4   v_sal_mul     emp_test.sal%type;
+  5   factor   integer :=2;
+  6 BEGIN
+  7     open cv for
+  8           select sal,sal*factor from emp_test where job like '%1' and sal < 13000 order by sal;
+  9     loop
+ 10     fetch cv into v_sal,v_sal_mul;
+ 11     exit when cv%notfound;
+ 12     dbe_output.print_line('factor ='||factor||';');
+ 13     dbe_output.print_line('sal ='||v_sal||';');
+ 14     dbe_output.print_line('sal_mul ='||v_sal_mul||';');
+ 15     factor :=factor+1;
+ 16 
+ 17   END LOOP;
+ 18   close cv;
+ 19 end;
+ 20 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[3:11] PLC-00941 'EMP_test.sal'.TYPE was not a variable, column, or attribute.
+
+SQL> --failed_by_col_not_exists
+SQL> DECLARE
+  2   cv SYS_REFCURSOR;
+  3   v_sal   emp_test.SAL%type;
+  4   v_sal_mul     emp_test.sal%type;
+  5   factor   integer :=2;
+  6 BEGIN
+  7     open cv for
+  8           select sal,sal*factor from emp_test where job like '%1' and sal < 13000 order by sal;
+  9     loop
+ 10     fetch cv into v_sal,v_sal_mul;
+ 11     exit when cv%notfound;
+ 12     dbe_output.print_line('factor ='||factor||';');
+ 13     dbe_output.print_line('sal ='||v_sal||';');
+ 14     dbe_output.print_line('sal_mul ='||v_sal_mul||';');
+ 15     factor :=factor+1;
+ 16 
+ 17   END LOOP;
+ 18   close cv;
+ 19 end;
+ 20 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[3:11] PLC-00941 'emp_test.SAL'.TYPE was not a variable, column, or attribute.
+
+SQL> 
+SQL> set serveroutput off;
+
+OFF
+SQL> 
+SQL> DROP PROCEDURE syscur;
+
+Succeed.
+
+SQL> DROP PROCEDURE syscur_1;
+
+Succeed.
+
+SQL> DROP PROCEDURE syscur_2;
+
+Succeed.
+
+SQL> drop table if exists emp_test;
+
+Succeed.
+
+SQL> 
+SQL> --triggers
+SQL> drop table if exists T_TRIG_1;
+
+Succeed.
+
+SQL> drop table if exists T_TRIG_2;
+
+Succeed.
+
+SQL> drop table if exists T_TRIG_3;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_3 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --:new or :old.col case sensitive
+SQL> CREATE OR REPLACE TRIGGER trig_BEFORE_STMT BEFORE INSERT OR UPDATE OF F_INT1 ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:old.F_INT2, :NEW.f_int1, :old.F_CHAR1,:NEW.F_DATE);
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.trig_BEFORE_STMT) terminated with compiling errors
+[4:44] PLC-00920 Undefined symbol :NEW.f_int1
+
+
+SQL> 
+SQL> --update of col case sensitive
+SQL> CREATE OR REPLACE TRIGGER trig_BEFORE_STMT BEFORE INSERT OR UPDATE OF f_int1 ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:old.F_INT2, :NEW.F_INT1, :old.F_CHAR1,:NEW.F_DATE);
+  5 END;
+  6 /
+
+CT-00920, [1:71]Undefined symbol f_int1
+SQL> 
+SQL> -- on table case sensitive
+SQL> CREATE OR REPLACE TRIGGER trig_BEFORE_STMT BEFORE INSERT OR UPDATE OF F_INT1 ON t_trig_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:old.F_INT2, :NEW.F_INT1, :old.F_CHAR1,:NEW.F_DATE);
+  5 END;
+  6 /
+
+CT-00843, The table or view SYS.t_trig_1 does not exist.
+SQL> 
+SQL> --trigger name 
+SQL> CREATE OR REPLACE TRIGGER trig_BEFORE_STMT BEFORE INSERT OR UPDATE OF F_INT1 ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:old.F_INT2, :NEW.F_INT1, :old.F_CHAR1,:NEW.F_DATE);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_STMT BEFORE INSERT OR UPDATE OF F_INT1 ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_3 VALUES(:NEW.F_INT1, :OLD.F_INT2, :OLD.F_CHAR1,:NEW.F_DATE);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_3 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1                                          2017-12-11 14:08:00   
+1                                          2017-12-11 14:18:00   
+2                                          2017-12-11 16:08:00   
+3                                          2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> DROP TRIGGER IF EXISTS TRIG_BEFORE_STMT;
+
+Succeed.
+
+SQL> DROP TRIGGER IF EXISTS trig_BEFORE_STMT;
+
+Succeed.
+
+SQL> DROP TABLE T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE T_TRIG_2;
+
+Succeed.
+
+SQL> DROP TABLE T_TRIG_3;
+
+Succeed.
+
+SQL> 
+SQL> --user defined functions
+SQL> CREATE OR REPLACE FUNCTION Zenith_Test_HW return varchar2
+  2 IS
+  3  cunt varchar2(20);
+  4  Begin
+  5  select 'Hello' into cunt from DUAL;
+  6  dbe_output.print_line(cunt);
+  7  IF SQL % FOUND
+  8   then
+  9  return cunt;
+ 10  end if;
+ 11  End Zenith_Test_HW;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION ZENITH_TEST_HW return varchar2
+  2 IS
+  3  cunt varchar2(20);
+  4  Begin
+  5  select 'World' into cunt from DUAL;
+  6  dbe_output.print_line(cunt);
+  7  IF SQL % FOUND
+  8   then
+  9  return cunt;
+ 10  end if;
+ 11  End ZENITH_TEST_HW;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> --select
+SQL> select Zenith_Test_HW(),ZENITH_TEST_HW() from DUAL;
+
+ZENITH_TEST_HW()                                                 ZENITH_TEST_HW()                                                
+---------------------------------------------------------------- ----------------------------------------------------------------
+Hello                                                            World                                                           
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP FUNCTION Zenith_Test_HW;
+
+Succeed.
+
+SQL> DROP FUNCTION ZENITH_TEST_HW;
+
+Succeed.
+
+SQL> 
+SQL> --sequence
+SQL> drop sequence if exists seqtext;
+
+Succeed.
+
+SQL> drop sequence if exists SEQTEXT;
+
+Succeed.
+
+SQL> create sequence seqtext start with 1 increment by 1 minvalue 1 maxvalue 100000000000 cache 100 nocycle;
+
+Succeed.
+
+SQL> create sequence SEQTEXT start with 1 increment by 1 minvalue 1 maxvalue 100000000000 cache 100 nocycle;
+
+Succeed.
+
+SQL> select seqtext.nextval, SEQTEXT.NEXTVAL FROM DUAL;
+
+nextval              NEXTVAL             
+-------------------- --------------------
+1                    1                   
+
+1 rows fetched.
+
+SQL> select seqtext.currval, SEQTEXT.CURRVAL FROM DUAL;
+
+currval              CURRVAL             
+-------------------- --------------------
+1                    1                   
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --object_id()
+SQL> DROP VIEW IF EXISTS v_objectid;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS t_objectid;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS t_temp_objectid;
+
+Succeed.
+
+SQL> CREATE TABLE t_objectid (col1 INTEGER NOT NULL, col2 VARCHAR(32));
+
+Succeed.
+
+SQL> CREATE TABLE t_temp_objectid (col1 INTEGER NOT NULL, col2 VARCHAR(32));
+
+Succeed.
+
+SQL> CREATE USER tempuser IDENTIFIED BY Asdf1234;
+
+Succeed.
+
+SQL> CREATE VIEW v_objectid AS SELECT col1 FROM t_objectid;
+
+Succeed.
+
+SQL> 
+SQL> INSERT  INTO t_temp_objectid VALUES (1, 't_objectid');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('t_objectid') AND OBJECT_TYPE='TABLE';  --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+t_objectid                                                      
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('T_OBJECTID') AND OBJECT_TYPE='TABLE';  --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID IN (SELECT OBJECT_ID(col2, 'table') AS id FROM t_temp_objectid WHERE col2 = 't_objectid') AND OBJECT_TYPE='TABLE'; --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+t_objectid                                                      
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('SYS_TABLES','TABLE') AND OBJECT_TYPE='TABLE';  --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+SYS_TABLES                                                      
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('sys_tables','TABLE') AND OBJECT_TYPE='TABLE';  --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('SYS_TABLES','TABLE','tempuser') AND OBJECT_TYPE='TABLE';  --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('SYS_TABLES','TABLE','sys') AND OBJECT_TYPE='TABLE';  --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+SYS_TABLES                                                      
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('t_temp_objectid') AND OBJECT_TYPE='TABLE'; --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+t_temp_objectid                                                 
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('T_TEMP_OBJECTID') AND OBJECT_TYPE='TABLE'; --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('v_objectid', 'view') AND OBJECT_TYPE='VIEW'; --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+v_objectid                                                      
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('V_OBJECTID', 'view') AND OBJECT_TYPE='VIEW'; --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID(TRIM('  t_objectid  '), 'TABLE') AND OBJECT_TYPE='TABLE';  --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+t_objectid                                                      
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID(TRIM('  T_OBJECTID  '), 'TABLE') AND OBJECT_TYPE='TABLE';  --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID IN (SELECT OBJECT_ID(TRIM(col2), 'TABLE', 'sys') FROM t_temp_objectid WHERE col1=1) AND OBJECT_TYPE='TABLE';  --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+t_objectid                                                      
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM DB_OBJECTS WHERE OBJECT_ID=OBJECT_ID('DV_DATABASE', 'DYNAMIC VIEW') AND OBJECT_TYPE='DYNAMIC VIEW';  --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+DV_DATABASE                                                     
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('dv_database', 'DYNAMIC VIEW') AND OBJECT_TYPE='DYNAMIC VIEW';  --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER trig_objectid
+  2 BEFORE INSERT OR UPDATE OF col1 OR DELETE ON t_objectid
+  3 BEGIN
+  4   INSERT INTO t_temp_objectid VALUES(100,'triggered');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE PROCEDURE proc_objectid(param1 out varchar2)
+  2 IS
+  3     tmp varchar2(20) :='12345678';
+  4 begin
+  5  param1:=param1||tmp;
+  6 end proc_objectid;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE FUNCTION case_func_objectid(A varchar)
+  2 RETURN varchar
+  3 AS
+  4 BEGIN
+  5    if (case_func_objectid(A) = 'ab') then
+  6    	return A;
+  7    else
+  8    	return case_func_objectid(A);
+  9    end if; 
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('trig_objectid', 'trigger') AND OBJECT_TYPE='TRIGGER'; --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+trig_objectid                                                   
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('TRIG_OBJECTID', 'trigger') AND OBJECT_TYPE='TRIGGER'; --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT  NAME FROM SYS_PROCS WHERE OBJ# = OBJECT_ID('trig_objectid', 'trigger') AND SCN2DATE(ORG_SCN) IN (SELECT CREATED FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('trig_objectid', 'trigger') AND OBJECT_TYPE='TRIGGER'); --1 row found
+
+NAME                                                            
+----------------------------------------------------------------
+trig_objectid                                                   
+
+1 rows fetched.
+
+SQL> SELECT  NAME FROM SYS_PROCS WHERE OBJ# = OBJECT_ID('TRIG_OBJECTID', 'trigger') AND SCN2DATE(ORG_SCN) IN (SELECT CREATED FROM ALL_OBJECTS WHERE OBJECT_ID=OBJECT_ID('trig_objectid', 'trigger') AND OBJECT_TYPE='TRIGGER'); --0 row found
+
+NAME                                                            
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('proc_objectid', 'procedure') AND OBJECT_TYPE='PROCEDURE'; --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+proc_objectid                                                   
+
+1 rows fetched.
+
+SQL> SELECT  OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('PROC_OBJECTID', 'procedure') AND OBJECT_TYPE='PROCEDURE'; --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> SELECT  NAME FROM SYS_PROCS WHERE OBJ# = OBJECT_ID('proc_objectid', 'procedure') AND SCN2DATE(ORG_SCN) IN (SELECT CREATED FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('proc_objectid', 'procedure') AND OBJECT_TYPE='PROCEDURE'); --1 row found
+
+NAME                                                            
+----------------------------------------------------------------
+proc_objectid                                                   
+
+1 rows fetched.
+
+SQL> SELECT  NAME FROM SYS_PROCS WHERE OBJ# = OBJECT_ID('PROC_OBJECTID', 'procedure') AND SCN2DATE(ORG_SCN) IN (SELECT CREATED FROM ALL_OBJECTS WHERE OBJECT_ID=OBJECT_ID('proc_objectid', 'procedure') AND OBJECT_TYPE='PROCEDURE'); --0 row found
+
+NAME                                                            
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('case_func_objectid', 'function') AND OBJECT_TYPE='FUNCTION'; --1 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+case_func_objectid                                              
+
+1 rows fetched.
+
+SQL> SELECT OBJECT_NAME FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('CASE_FUNC_OBJECTID', 'function') AND OBJECT_TYPE='FUNCTION'; --0 row found
+
+OBJECT_NAME                                                     
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> SELECT NAME FROM SYS_PROCS WHERE OBJ# = OBJECT_ID('case_func_objectid', 'function') AND SCN2DATE(ORG_SCN) IN (SELECT CREATED FROM USER_OBJECTS WHERE OBJECT_ID=OBJECT_ID('case_func_objectid', 'function') AND OBJECT_TYPE='FUNCTION'); --1 row found
+
+NAME                                                            
+----------------------------------------------------------------
+case_func_objectid                                              
+
+1 rows fetched.
+
+SQL> SELECT NAME FROM SYS_PROCS WHERE OBJ# = OBJECT_ID('CASE_FUNC_OBJECTID', 'function') AND SCN2DATE(ORG_SCN) IN (SELECT CREATED FROM ALL_OBJECTS WHERE OBJECT_ID=OBJECT_ID('case_func_objectid', 'function') AND OBJECT_TYPE='FUNCTION'); --0 row found
+
+NAME                                                            
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> DROP TRIGGER trig_objectid;
+
+Succeed.
+
+SQL> DROP PROCEDURE proc_objectid;
+
+Succeed.
+
+SQL> DROP FUNCTION case_func_objectid;
+
+Succeed.
+
+SQL> DROP USER tempuser CASCADE;
+
+Succeed.
+
+SQL> DROP TABLE t_temp_objectid;
+
+Succeed.
+
+SQL> DROP VIEW v_objectid;
+
+Succeed.
+
+SQL> DROP TABLE t_objectid;
+
+Succeed.
+
+SQL> 
+SQL> --user defined function
+SQL> create user testuser identified by 'Cantian_234';
+
+Succeed.
+
+SQL> grant connect,resource,dba to testuser;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION testuser.Zenith_Test_HW return varchar2
+  2 IS
+  3  cunt varchar2(20);
+  4  Begin
+  5  select 'Hello' into cunt from DUAL;
+  6  dbe_output.print_line(cunt);
+  7  IF SQL % FOUND
+  8   then
+  9  return cunt;
+ 10  end if;
+ 11  End Zenith_Test_HW;
+ 12 /
+
+Succeed.
+
+SQL> select  TestUser.Zenith_Test_HW() from DUAL;
+
+TESTUSER.ZENITH_TEST_HW()                                       
+----------------------------------------------------------------
+Hello                                                           
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE testuser.Zenith_Test_001
+  2 AS
+  3 Begin
+  4   dbe_output.print_line('Hello Zenith');
+  5 end Zenith_Test_001;
+  6 /
+
+Succeed.
+
+SQL> call  TestUser.Zenith_Test_001;
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop user testuser cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018101005381
+SQL> drop user if exists cs_user1;
+
+Succeed.
+
+SQL> drop user if exists cs_user2;
+
+Succeed.
+
+SQL> create tablespace SPC_test_1 datafile 'spc_file_1' size 50m reuse;
+
+Succeed.
+
+SQL> create user cs_user1 identified by 'Changeme_123' default tablespace spc_test_1;--error
+
+CT-00780, The tablespace spc_test_1 does not exist.
+SQL> create user cs_user2 identified by 'Changeme_123' default tablespace SPC_test_1;--succ
+
+Succeed.
+
+SQL> drop user if exists cs_user1;
+
+Succeed.
+
+SQL> drop user if exists cs_user2;
+
+Succeed.
+
+SQL> alter tablespace SPC_test_1 rename to SPC_test_2;
+
+Succeed.
+
+SQL> drop tablespace SPC_test_2 including contents and datafiles;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018120703423
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> --DTS2019041010374 
+SQL> --make name case insensitive
+SQL> alter system set upper_case_table_names = false;
+
+Succeed.
+
+SQL> --DTS2019041010374 
+SQL> drop table if exists test_part_t1;
+
+Succeed.
+
+SQL> create table test_part_t1(f1 int, f2 real, f3 number, f4 char(300), f5 varchar(30), f6 date, f7 timestamp)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4 PARTITION p1 values less than(10),
+  5 PARTITION p2 values less than(20),
+  6 PARTITION p3 values less than(30),
+  7 PARTITION p4 values less than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> create index idx_t1_1 on test_part_t1(f2,f3) local;
+
+Succeed.
+
+SQL> create index idx_t1_2 on test_part_t1(f4,f5) local;
+
+Succeed.
+
+SQL> insert into test_part_t1 values(5, 15, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'),to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_part_t1 values(6, 16, 29, '16', '29', to_date('2018/01/24', 'YYYY/MM/DD'),to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_part_t1 values(5, 15, 28, 'abcde', 'abcde', to_date('2018/01/24', 'YYYY/MM/DD'),to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_part_t1 values(6, 16, 29, '161', '291', to_date('2018/01/24', 'YYYY/MM/DD'),to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','test_part_t1');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1')
+------------------------------------------------------------
+131072                                                      
+
+1 rows fetched.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','test_part_t1', 'idx_t1_1');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1', 'ID
+----------------------------------------------------------------
+65536                                                           
+
+1 rows fetched.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1');
+
+CT-00843, [1:8]The table or view SYS.TEST_PART_T1 does not exist.
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1','IDX_T1_2');
+
+CT-00843, [1:8]The table or view SYS.TEST_PART_T1 does not exist.
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','test_part_t1','idx_t1_2');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1','IDX
+----------------------------------------------------------------
+65536                                                           
+
+1 rows fetched.
+
+SQL> select * from table(dba_analyze_table('sys','test_part_t1'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      8                   
+total extents                                                    1                   
+total rows                                                       4                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 351                 
+
+6 rows fetched.
+
+SQL> select * from table(dba_analyze_table('SYS','TEST_PART_T1'));
+
+CT-00843, The table or view SYS.TEST_PART_T1 does not exist.
+SQL> select * from table(dba_analyze_table('SYS','test_part_t1'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      8                   
+total extents                                                    1                   
+total rows                                                       4                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 351                 
+
+6 rows fetched.
+
+SQL> drop table if exists test_part_t1;
+
+Succeed.
+
+SQL> 
+SQL> alter system set upper_case_table_names = true;
+
+Succeed.
+
+SQL> drop table if exists test_part_t1;
+
+Succeed.
+
+SQL> drop view if exists v_test_part_t1;
+
+Succeed.
+
+SQL> create table test_part_t1(f1 int, f2 real, f3 number, f4 char(300), f5 varchar(30), f6 date, f7 timestamp)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4 PARTITION p1 values less than(10),
+  5 PARTITION p2 values less than(20),
+  6 PARTITION p3 values less than(30),
+  7 PARTITION p4 values less than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> create index idx_t1_1 on test_part_t1(f2,f3) local;
+
+Succeed.
+
+SQL> create index idx_t1_2 on test_part_t1(f4,f5) local;
+
+Succeed.
+
+SQL> insert into test_part_t1 values(5, 15, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'),to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_part_t1 values(6, 16, 29, '16', '29', to_date('2018/01/24', 'YYYY/MM/DD'),to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_part_t1 values(5, 15, 28, 'abcde', 'abcde', to_date('2018/01/24', 'YYYY/MM/DD'),to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_part_t1 values(6, 16, 29, '161', '291', to_date('2018/01/24', 'YYYY/MM/DD'),to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create view v_test_part_t1 as select * from test_part_t1;
+
+Succeed.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','test_part_t1');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1')
+------------------------------------------------------------
+131072                                                      
+
+1 rows fetched.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1')
+------------------------------------------------------------
+131072                                                      
+
+1 rows fetched.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1','IDX_T1_2');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1','IDX
+----------------------------------------------------------------
+65536                                                           
+
+1 rows fetched.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'sys','test_PART_T1','IDX_t1_2');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1','IDX
+----------------------------------------------------------------
+65536                                                           
+
+1 rows fetched.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1','IDX_T1_2');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1','IDX
+----------------------------------------------------------------
+65536                                                           
+
+1 rows fetched.
+
+SQL> SELECT DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','test_part_t1','idx_t1_2');
+
+DBE_DIAGNOSE.DBA_PARTITIONED_INDSIZE(0,'SYS','TEST_PART_T1','IDX
+----------------------------------------------------------------
+65536                                                           
+
+1 rows fetched.
+
+SQL> select * from table(dba_analyze_table('sys','test_part_t1'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      8                   
+total extents                                                    1                   
+total rows                                                       4                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 351                 
+
+6 rows fetched.
+
+SQL> select * from table(dba_analyze_table('SYS','TEST_PART_T1'));
+
+STAT_ITEM                                                        VALUE               
+---------------------------------------------------------------- --------------------
+total pages                                                      8                   
+total extents                                                    1                   
+total rows                                                       4                   
+linked rows                                                      0                   
+mirgated rows                                                    0                   
+average row size                                                 351                 
+
+6 rows fetched.
+
+SQL> drop table if exists test_part_t1;
+
+Succeed.
+
+SQL> drop view if exists v_test_part_t1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists tbl_dq_chk;
+
+Succeed.
+
+SQL> create table tbl_dq_chk(a int, "b" varchar(20));
+
+Succeed.
+
+SQL> drop table if exists tbl_dq_mrg;
+
+Succeed.
+
+SQL> create table tbl_dq_mrg(a int, "b" varchar(20));
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   merge into tbl_dq_mrg v2 using (select a from tbl_dq_chk) v1 on (v1.a = v2.a) when matched then update set v2."b" = upper(to_char(v1.a));
+  3   dbe_output.print_line('OK');
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> --test package name
+SQL> --beign
+SQL> alter system set upper_case_table_names = false;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE pl_pkg_name_case1
+  2 IS
+  3 procedure proc1(a in int);
+  4 
+  5 FUNCTION fun1
+  6 (cnum IN char)
+  7 RETURN NUMBER;
+  8 
+  9 END pl_pkg_name_case1;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY pl_pkg_name_case1
+  2 IS
+  3 FUNCTION fun1
+  4 (cnum IN char)
+  5 RETURN NUMBER
+  6 AS
+  7 avger NUMBER;
+  8 BEGIN
+  9 SELECT count(*) INTO avger FROM dual;
+ 10 RETURN(avger);
+ 11 END fun1;
+ 12 
+ 13 procedure proc1(a in int)
+ 14 AS
+ 15 avger NUMBER;
+ 16 BEGIN
+ 17 avger :=1;
+ 18 END proc1;
+ 19 
+ 20 END pl_pkg_name_case1;
+ 21 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT OBJECT_NAME, OBJECT_TYPE,STATUS FROM MY_OBJECTS WHERE OBJECT_NAME IN ('pl_pkg_name_case1') ORDER BY OBJECT_NAME,OBJECT_TYPE;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+pl_pkg_name_case1                                                PACKAGE BODY       VALID  
+pl_pkg_name_case1                                                PACKAGE SPEC       VALID  
+
+2 rows fetched.
+
+SQL> 
+SQL> select pl_pkg_name_case1.fun1('a') from dual;
+
+PL_PKG_NAME_CASE1.FUN1('A')             
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select PL_PKG_NAME_CASE1.fun1('a') from dual;
+
+CT-00828, [1:8]function PL_PKG_NAME_CASE1.fun1 does not exist
+SQL> select pl_pkg_name_case1.FUN1('a') from dual;
+
+CT-00828, [1:8]function pl_pkg_name_case1.FUN1 does not exist
+SQL> select PL_PKG_NAME_CASE1.FUN1('a') from dual;
+
+CT-00828, [1:8]function PL_PKG_NAME_CASE1.FUN1 does not exist
+SQL> 
+SQL> begin
+  2 	pl_pkg_name_case1.proc1(1);
+  3 end;	
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop PACKAGE pl_pkg_name_case1;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> 
+SQL> alter system set upper_case_table_names = true;
+
+Succeed.
+
+SQL> create user "test1" identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to "test1";
+
+Succeed.
+
+SQL> grant create table to "test1";
+
+Succeed.
+
+SQL> conn test1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create table "tab%"(id int);
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create user "test2" identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to "test2";
+
+Succeed.
+
+SQL> conn test1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> grant select on "tab%" to "test2";
+
+Succeed.
+
+SQL> conn test2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from "test1"."tab%";
+
+ID          
+------------
+
+0 rows fetched.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user "test1" cascade;
+
+Succeed.
+
+SQL> drop user "test2" cascade;
+
+Succeed.
+
+SQL> 
+SQL> alter system SET UPPER_CASE_TABLE_NAMES = false;
+
+Succeed.
+
+SQL> drop table if exists upper_name_false_2_jdd;
+
+Succeed.
+
+SQL> create table upper_name_false_2_jdd (a int,A INT,b int);
+
+Succeed.
+
+SQL> alter table upper_name_false_2_jdd add constraint cc check(a is not null);
+
+Succeed.
+
+SQL> alter table upper_name_false_2_jdd add constraint CC check(A is not null);
+
+Succeed.
+
+SQL> alter table upper_name_false_2_jdd add constraint DD check(B is not null);
+
+CT-00601, [1:60]Sql syntax error: invalid column name 'B'
+SQL> alter table upper_name_false_2_jdd add constraint DD check(b is not null);
+
+Succeed.
+
+SQL> 
+SQL> alter table upper_name_false_2_jdd drop constraint cc;
+
+Succeed.
+
+SQL> alter table upper_name_false_2_jdd drop constraint CC;
+
+Succeed.
+
+SQL> alter table upper_name_false_2_jdd drop constraint DD;
+
+Succeed.
+
+SQL> alter system set upper_case_table_names = true;
+
+Succeed.
+
+SQL> drop table if exists upper_name_false_2_jdd;
+
+Succeed.
+
+SQL> 
+SQL> alter system SET UPPER_CASE_TABLE_NAMES = false;
+
+Succeed.
+
+SQL> drop function if exists test_f1;
+
+Succeed.
+
+SQL> create function test_f1(a int) return int
+  2 IS
+  3 Begin
+  4 return a*-1;
+  5 End;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> drop function if exists TEST_F1;
+
+Succeed.
+
+SQL> create function TEST_F1(a int) return int
+  2 IS
+  3 Begin
+  4 return a*6;
+  5 End;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists upper_name_false_2_jdd;
+
+Succeed.
+
+SQL> create table upper_name_false_2_jdd (id int, a int default 123,A INT default TEST_F1(2), b int default test_f1(2));
+
+Succeed.
+
+SQL> insert into upper_name_false_2_jdd(id) values (1);
+
+1 rows affected.
+
+SQL> select * from upper_name_false_2_jdd;
+
+id           a            A            b           
+------------ ------------ ------------ ------------
+1            123          12           -2          
+
+1 rows fetched.
+
+SQL> alter system set upper_case_table_names = true;
+
+Succeed.
+
+SQL> drop table if exists upper_name_false_2_jdd;
+
+Succeed.
+
+SQL> drop function if exists test_f1;
+
+Succeed.
+
+SQL> drop function if exists TEST_F1;
+
+Succeed.
+
+SQL> 
+SQL> alter system SET UPPER_CASE_TABLE_NAMES = false;
+
+Succeed.
+
+SQL> DROP TABLE if exists returning_clasu_in_func_test;
+
+Succeed.
+
+SQL> CREATE TABLE returning_clasu_in_func_test(id int NOT NULL, a varchar(100) default '111', A varchar(100) default '222');
+
+Succeed.
+
+SQL> 
+SQL> drop index if exists xxx_json_test_idx on returning_clasu_in_func_test;
+
+Succeed.
+
+SQL> drop index if exists xxx_json_test_idx_1 on returning_clasu_in_func_test;
+
+Succeed.
+
+SQL> truncate table returning_clasu_in_func_test;
+
+Succeed.
+
+SQL> 
+SQL> create unique index xxx_json_test_idx on returning_clasu_in_func_test(UPPER(a));
+
+Succeed.
+
+SQL> create unique index xxx_json_test_idx_1 on returning_clasu_in_func_test(upper(A));
+
+Succeed.
+
+SQL> 
+SQL> insert into returning_clasu_in_func_test(id) values(1);
+
+1 rows affected.
+
+SQL> insert into returning_clasu_in_func_test(id, a) values(1, 'dfs');
+
+CT-00729, Unique constraint violated, index xxx_json_test_idx_1, duplicate key 222
+SQL> insert into returning_clasu_in_func_test(id, A) values(1, 'dsdsd');
+
+CT-00729, Unique constraint violated, index xxx_json_test_idx, duplicate key 111
+SQL> select * from returning_clasu_in_func_test;
+
+id           a                                                                A                                                               
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            111                                                              222                                                             
+
+1 rows fetched.
+
+SQL> alter system SET UPPER_CASE_TABLE_NAMES = true;
+
+Succeed.
+
+SQL> drop index if exists xxx_json_test_idx on returning_clasu_in_func_test;
+
+Succeed.
+
+SQL> drop index if exists xxx_json_test_idx_1 on returning_clasu_in_func_test;
+
+Succeed.
+
+SQL> DROP TABLE if exists returning_clasu_in_func_test;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019080210078
+SQL> create or replace package pack1 is
+  2 function f2 return number;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> create or replace package body pack1 is
+  2 function f2 return number 
+  3 as
+  4 a number;
+  5 begin
+  6 a:= 1;
+  7 return(a);
+  8 end f2;
+  9 end pack1;
+ 10 /
+
+Succeed.
+
+SQL> select object_name,object_type from all_procedures where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE 
+---------------------------------------------------------------- ------------
+PACK1                                                            PACKAGE SPEC
+PACK1                                                            PACKAGE BODY
+
+2 rows fetched.
+
+SQL> select object_name,object_type from dba_procedures where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE 
+---------------------------------------------------------------- ------------
+PACK1                                                            PACKAGE SPEC
+PACK1                                                            PACKAGE BODY
+
+2 rows fetched.
+
+SQL> select object_name,object_type from user_procedures where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE 
+---------------------------------------------------------------- ------------
+PACK1                                                            PACKAGE SPEC
+PACK1                                                            PACKAGE BODY
+
+2 rows fetched.
+
+SQL> select object_name,object_type from adm_procedures where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE 
+---------------------------------------------------------------- ------------
+PACK1                                                            PACKAGE SPEC
+PACK1                                                            PACKAGE BODY
+
+2 rows fetched.
+
+SQL> select object_name,object_type from db_procedures where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE 
+---------------------------------------------------------------- ------------
+PACK1                                                            PACKAGE SPEC
+PACK1                                                            PACKAGE BODY
+
+2 rows fetched.
+
+SQL> select object_name,object_type from my_procedures where object_name='PACK1';
+
+OBJECT_NAME                                                      OBJECT_TYPE 
+---------------------------------------------------------------- ------------
+PACK1                                                            PACKAGE SPEC
+PACK1                                                            PACKAGE BODY
+
+2 rows fetched.
+
+SQL> drop package if exists pack1;
+Succeed.
+
+
+
+

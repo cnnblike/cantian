@@ -1,0 +1,740 @@
+
+
+SQL> CREATE TABLE T_FORUPDATE_1 (F_INT1 INT, F_INT2 INT, F_CHAR CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM (SELECT * FROM T_FORUPDATE_1 FOR UPDATE) TT;
+
+CT-01361, [1:44]FOR UPDATE is not allowed in this query expression
+SQL> SELECT * FROM T_FORUPDATE_1 WHERE F_INT1 IN (SELECT F_INT1 FROM T_FORUPDATE_1 FOR UPDATE);
+
+CT-01361, [1:79]FOR UPDATE is not allowed in this query expression
+SQL> SELECT * FROM T_FORUPDATE_1 WHERE F_INT1 = (SELECT F_INT1 FROM T_FORUPDATE_1 FOR UPDATE);
+
+CT-01361, [1:78]FOR UPDATE is not allowed in this query expression
+SQL> SELECT F_INT1 FROM T_FORUPDATE_1 FOR UPDATE UNION ALL SELECT F_INT1 FROM T_FORUPDATE_1;
+
+CT-00601, [1:45]Sql syntax error: [wait] | [nowait] | [skip locked] expected
+SQL> SELECT F_INT1 FROM T_FORUPDATE_1 FOR UPDATE LIMIT 1;
+
+CT-00601, [1:45]Sql syntax error: [wait] | [nowait] | [skip locked] expected
+SQL> 
+SQL> INSERT INTO T_FORUPDATE_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_FORUPDATE_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> 
+SQL> SELECT F_INT1 FROM T_FORUPDATE_1 UNION ALL SELECT F_INT1 FROM T_FORUPDATE_1 ORDER BY F_INT1 DESC FOR UPDATE;
+
+F_INT1      
+------------
+3           
+3           
+1           
+1           
+
+4 rows fetched.
+
+SQL> SELECT F_INT1 FROM T_FORUPDATE_1 ORDER BY F_INT1 DESC FOR UPDATE;
+
+F_INT1      
+------------
+3           
+1           
+
+2 rows fetched.
+
+SQL> SELECT F_INT1 FROM T_FORUPDATE_1 GROUP BY F_INT1 ORDER BY F_INT1 FOR UPDATE;
+
+F_INT1
+------------
+1
+3
+
+2 rows fetched.
+
+SQL> SELECT F_INT1 FROM T_FORUPDATE_1 GROUP BY F_INT1 ORDER BY F_INT1 DESC LIMIT 1 FOR UPDATE;
+
+F_INT1
+------------
+3
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE T_FORUPDATE_1;
+
+Succeed.
+
+SQL> 
+SQL> --for update sql stmt test in single session
+SQL> drop table if exists test_for_update_tb1;
+
+Succeed.
+
+SQL> drop table if exists test_for_update_tb2;
+
+Succeed.
+
+SQL> create table test_for_update_tb1 (id int);
+
+Succeed.
+
+SQL> create table test_for_update_tb2 (id int);
+
+Succeed.
+
+SQL> insert into test_for_update_tb1 values(2),(3),(4);
+
+3 rows affected.
+
+SQL> insert into test_for_update_tb2 values(2),(3),(4),(5);
+
+4 rows affected.
+
+SQL> 
+SQL> --test for update
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update nowait;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update wait 0;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update wait 666;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update wait 4294967295;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update skip locked;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> 
+SQL> --syntax error cases
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update nowait kk;
+
+CT-00601, [1:77]Sql syntax error: expected end but kk found
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update wait -1;
+
+CT-00601, [1:73]Sql syntax error: unsigned integer expected
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update wait 4294967296;
+
+CT-00601, [1:73]Sql syntax error: unsigned integer expected
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update wait gg;
+
+CT-00601, [1:73]Sql syntax error: unsigned integer expected
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update skip;
+
+CT-00601, [1:72]Sql syntax error: locked expected
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update skip fff;
+
+CT-00601, [1:73]Sql syntax error: locked expected
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update asdf;
+
+CT-00601, [1:68]Sql syntax error: [wait] | [nowait] | [skip locked] expected
+SQL> select id from test_for_update_tb1 where id > 0 limit 1 for update 123;
+
+CT-00601, [1:68]Sql syntax error: [wait] | [nowait] | [skip locked] expected
+SQL> 
+SQL> --test update
+SQL> update test_for_update_tb1 set id = 2 where id = 7;
+
+0 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> update test_for_update_tb1 set id = 7 where id = 2;
+
+1 rows affected.
+
+SQL> 
+SQL> select * from test_for_update_tb1 join test_for_update_tb2 on test_for_update_tb1.id = test_for_update_tb2.id limit 1 for update skip locked;
+
+ID           ID          
+------------ ------------
+3            3           
+
+1 rows fetched.
+
+SQL> 
+SQL> --test for update in procedure
+SQL> create or replace procedure test_for_update_proc1()
+  2 as
+  3   dynamic_atest_for_update_tb2_column_sql nvarchar(512);
+  4   cnt number;
+  5 begin
+  6   dynamic_atest_for_update_tb2_column_sql:= 'update test_for_update_tb1 set id = 2 where id = 7';
+  7   execute immediate dynamic_atest_for_update_tb2_column_sql;
+  8   dynamic_atest_for_update_tb2_column_sql:= 'commit';
+  9   execute immediate dynamic_atest_for_update_tb2_column_sql;
+ 10   dynamic_atest_for_update_tb2_column_sql:= 'update test_for_update_tb1 set id = 7 where id = 2';
+ 11   execute immediate dynamic_atest_for_update_tb2_column_sql;
+ 12   dynamic_atest_for_update_tb2_column_sql:= 'select * from test_for_update_tb1 join test_for_update_tb2 on test_for_update_tb1.id = test_for_update_tb2.id limit 1 for update skip locked';
+ 13   execute immediate dynamic_atest_for_update_tb2_column_sql;
+ 14   dynamic_atest_for_update_tb2_column_sql:= 'select * from test_for_update_tb1 join test_for_update_tb2 on test_for_update_tb1.id = test_for_update_tb2.id limit 1 for update nowait';
+ 15   execute immediate dynamic_atest_for_update_tb2_column_sql;
+ 16   dynamic_atest_for_update_tb2_column_sql:= 'select * from test_for_update_tb1 join test_for_update_tb2 on test_for_update_tb1.id = test_for_update_tb2.id limit 1 for update';
+ 17   execute immediate dynamic_atest_for_update_tb2_column_sql;
+ 18   dynamic_atest_for_update_tb2_column_sql:= 'select * from test_for_update_tb1 join test_for_update_tb2 on test_for_update_tb1.id = test_for_update_tb2.id limit 1 for update wait 2';
+ 19   execute immediate dynamic_atest_for_update_tb2_column_sql;
+ 20 end test_for_update_proc1;
+ 21 /
+
+Succeed.
+
+SQL> 
+SQL> call test_for_update_proc1();
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --end
+SQL> drop procedure if exists test_for_update_proc1;
+
+Succeed.
+
+SQL> drop table if exists test_for_update_tb1;
+
+Succeed.
+
+SQL> drop table if exists test_for_update_tb2;
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_for_update_t1;
+
+Succeed.
+
+SQL> drop table if exists test_for_update_t2;
+
+Succeed.
+
+SQL> drop table if exists test_for_update_t3;
+
+Succeed.
+
+SQL> 
+SQL> create table test_for_update_t1(f1 int, f2 int);
+
+Succeed.
+
+SQL> create table test_for_update_t2(f1 int, f2 int);
+
+Succeed.
+
+SQL> create table test_for_update_t3(f1 int, f2 int);
+
+Succeed.
+
+SQL> INSERT INTO test_for_update_t1 VALUES(1,11);
+
+1 rows affected.
+
+SQL> INSERT INTO test_for_update_t2 VALUES(1,11);
+
+1 rows affected.
+
+SQL> INSERT INTO test_for_update_t3 VALUES(1,11);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create view test_for_update_v1 as select * from test_for_update_t1;
+
+Succeed.
+
+SQL> 
+SQL> select * from test_for_update_t1 for update of f1;
+
+F1           F2          
+------------ ------------
+1            11          
+
+1 rows fetched.
+
+SQL> select * from test_for_update_v1 for update of f1 nowait;
+
+F1           F2
+------------ ------------
+1            11
+
+1 rows fetched.
+
+SQL> select * from test_for_update_t1 for update of f1+1 nowait;
+
+CT-01358, [1:48]Expect user.table.column, table.column, or column specification here
+SQL> select * from test_for_update_t1 for update of f3 nowait;
+
+CT-00601, [1:48]Sql syntax error: invalid column name 'F3'
+SQL> select * from test_for_update_t1 union (select * from test_for_update_t2) for update;
+
+F1           F2
+------------ ------------
+1            11
+
+1 rows fetched.
+
+SQL> select * from (select distinct f1,f2 from test_for_update_t2) t2 for update of t2.f1;
+
+CT-01359, Cannot select FOR UPDATE from view or sub-select with AGGREGATION, UNION, ROWNUM etc
+SQL> select * from (select 1 f1 from test_for_update_t2) t2 for update;
+
+F1
+------------
+1
+
+1 rows fetched.
+
+SQL> select * from (select 1 f1 from test_for_update_t2) t2 for update of t2.f1;
+
+CT-01360, [1:23]Computable column is not allowed here
+SQL> select * from (select f1+f2 AS F1 from test_for_update_t2) t2 for update of t2.f1;
+
+CT-01360, [1:23]Computable column is not allowed here
+SQL> select * from (select f1, sum(f2) from test_for_update_t2 group by f1) t2 for update of t2.f1;
+
+CT-01359, Cannot select FOR UPDATE from view or sub-select with AGGREGATION, UNION, ROWNUM etc
+SQL> select * from (select count(f1) F1 from test_for_update_t2) t2 for update of t2.f1;
+
+CT-01359, Cannot select FOR UPDATE from view or sub-select with AGGREGATION, UNION, ROWNUM etc
+SQL> select * from (select F1,F2 from test_for_update_t2 WHERE ROWNUM < 10) t2 for update of t2.f1;
+
+CT-01359, Cannot select FOR UPDATE from view or sub-select with AGGREGATION, UNION, ROWNUM etc
+SQL> select * from (select F1,F2 from test_for_update_t2 LIMIT 10) t2 for update of t2.f1;
+
+CT-01359, Cannot select FOR UPDATE from view or sub-select with AGGREGATION, UNION, ROWNUM etc
+SQL> select * from (select F1,F2 from (SELECT t1.f1,t2.f2 FROM test_for_update_t1 t1, test_for_update_t2 t2)) t2 for update of t2.f1;
+
+F1           F2
+------------ ------------
+1            11
+
+1 rows fetched.
+
+SQL> SELECT t1.f1,t2.f2 FROM test_for_update_t1 t1, test_for_update_t2 t2 for update of t2.f1;
+
+F1           F2
+------------ ------------
+1            11
+
+1 rows fetched.
+
+SQL>
+SQL> drop view test_for_update_v1;
+
+Succeed.
+
+SQL> drop table test_for_update_t1;
+
+Succeed.
+
+SQL> drop table test_for_update_t2;
+
+Succeed.
+
+SQL> drop table test_for_update_t3;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists t_siblings_base;
+
+Succeed.
+
+SQL> create table t_siblings_base(EMPNO NUMBER(4),ENAME VARCHAR2(10),MGR NUMBER(4));
+
+Succeed.
+
+SQL>
+SQL> insert into t_siblings_base values (1,'M',NULL);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (2,'N',NULL);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (3,'A',NULL);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (4,'C',3);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (null,'C',3);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (5,'B',3);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (6,'F',4);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (7,'E',4);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (8,'D',5);
+
+1 rows affected.
+
+SQL> insert into t_siblings_base values (9,'G',5);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select /*+ FULL +*/ level,case when ENAME='E' then null else ename end c ,PRIOR ENAME PRIORENAME,EMPNO,PRIOR EMPNO PRIOREMPNO,MGR from t_siblings_base as of timestamp current_timestamp start with MGR is null connect by PRIOR empno = mgr order siblings by c nulls last limit 5 offset 2 for update;
+
+LEVEL        C          PRIORENAME EMPNO                                    PRIOREMPNO                               MGR
+------------ ---------- ---------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+3            D          B          8                                        5                                        5
+3            G          B          9                                        5                                        5
+2            C          A          4                                        3                                        3
+3            F          C          6                                        4                                        4
+3                       C          7                                        4                                        4
+
+5 rows fetched.
+
+SQL> drop table t_siblings_base;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019121913100
+SQL> drop table if exists t_left_join_base_001;
+
+Succeed.
+
+SQL> drop table if exists t_left_join_base_002;
+
+Succeed.
+
+SQL> create table t_left_join_base_001(i int not null,j int,k varchar(15));
+
+Succeed.
+
+SQL> create table t_left_join_base_002(i int,j int,k varchar(15)) ;
+
+Succeed.
+
+SQL> 
+SQL> insert into t_left_join_base_001 values(1,1,'abc');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(1,1,'abc');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(1,1,'abc');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(1,1,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(1,1,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(1,1,'abcdefg lmn');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(1,1,'abcdefg lmn');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(10,16,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(11,17,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_001 values(12,18,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(1,1,'abc');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(1,1,'abc');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(1,1,'abc');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(1,1,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(1,1,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(1,1,'abcdefg hijk');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(1,1,'abcdefg hijk');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(8,14,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into t_left_join_base_002 values(9,15,'abc23');
+
+1 rows affected.
+
+SQL> select * from t_left_join_base_001 a left join t_left_join_base_002 b on a.i=b.i and a.i in(1,10,100) order by 1,2,3,4 offset 49;
+
+I            J            K               I            J            K              
+------------ ------------ --------------- ------------ ------------ ---------------
+10           16           abcdefg                                                  
+11           17           abcdefg                                                  
+12           18           abcdefg                                                  
+
+3 rows fetched.
+
+SQL> select * from t_left_join_base_001 a left join t_left_join_base_002 b on a.i=b.i and a.i in(1,10,100) order by 1,2,3,4 offset 49 for update;
+I            J            K               I            J            K              
+------------ ------------ --------------- ------------ ------------ ---------------
+10           16           abcdefg                                                  
+11           17           abcdefg                                                  
+12           18           abcdefg                                                  
+
+3 rows fetched.
+
+SQL>
+SQL> --DTS2020011402670
+SQL> drop table if exists  t_all_base_001;
+
+Succeed.
+
+SQL> --大表
+SQL> create table t_all_base_001(id int,c_int int not null,c_vchar varchar(100) not null,c_clob clob not null,c_blob blob not null,c_date date);
+
+Succeed.
+
+SQL> drop index if exists idx_join_base_001_1 on t_all_base_001;
+
+Succeed.
+
+SQL> drop index if exists idx_join_base_001_2 on t_all_base_001;
+
+Succeed.
+
+SQL> drop index if exists idx_join_base_001_3 on t_all_base_001;
+
+Succeed.
+
+SQL> create index idx_join_base_001_1 on t_all_base_001(c_int);
+
+Succeed.
+
+SQL> create index idx_join_base_001_2 on t_all_base_001(c_int,c_vchar);
+
+Succeed.
+
+SQL> create index idx_join_base_001_3 on t_all_base_001(c_int,c_vchar,c_date);
+
+Succeed.
+
+SQL> insert into t_all_base_001 values(1,1000,'abc123',lpad('123abc',50,'abc'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> CREATE or replace procedure proc_insert(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5                 sqlst := 'insert into ' || tname ||' select id+'||i||',c_int+'||i||',c_vchar||'||i||',c_clob||'||i||',c_blob'||',c_date from '||tname|| ' where id=1';
+  6         execute immediate sqlst;
+  7   END LOOP;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> exec proc_insert('t_all_base_001',1,20);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select count(*) from t_all_base_001 t11 left join t_all_base_001 t12 on 1=1
+  2 where t11.c_int = any(
+  3   with tmp as(select id+c_int as c from t_all_base_001 where id<21)
+  4 select case when c>0 then c end from tmp connect by c=0) for update;
+
+COUNT(*)
+--------------------
+210
+
+1 rows fetched.
+
+SQL>
+SQL> drop table t_all_base_001;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists  for_update_table_002;
+
+Succeed.
+
+SQL> create table for_update_table_002(i int,j int,k varchar(15)) ;
+
+Succeed.
+
+SQL> insert into for_update_table_002 values(1,1,'abc');
+
+1 rows affected.
+
+SQL> insert into for_update_table_002 values(2,1,'abc');
+
+1 rows affected.
+
+SQL> insert into for_update_table_002 values(3,1,'abc');
+
+1 rows affected.
+
+SQL> insert into for_update_table_002 values(4,1,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into for_update_table_002 values(5,1,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into for_update_table_002 values(1,1,'abcdefg hijk');
+
+1 rows affected.
+
+SQL> insert into for_update_table_002 values(1,1,'abcdefg hijk');
+
+1 rows affected.
+
+SQL> insert into for_update_table_002 values(8,14,'abcdefg');
+
+1 rows affected.
+
+SQL> insert into for_update_table_002 values(9,15,'abc23');
+
+1 rows affected.
+
+SQL> select rownum,t1.i from (select * from for_update_table_002) t1 join for_update_table_002 t2 on rownum <=1 for update;
+
+ROWNUM       I           
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> drop table if exists  for_update_table_002;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_null_select_001;
+
+Succeed.
+
+SQL> create table t_null_select_001(
+  2 id int,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,
+  4 c_long varchar(200),c_blob blob,c_raw raw(100),c_date date,c_timestamp timestamp);
+
+Succeed.
+
+SQL> insert into t_null_select_001 values(1,1000,100.123,100.456,100.789,100.123,'abc123','abcdefg',lpad('123abc',50,'abc'),lpad('123abc',50,'abc'),lpad('11100000',50,'1100'),lpad('11100001',50,'1100'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),to_timestamp(to_char('1800-03-05 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into t_null_select_001 values(-1,null,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> SELECT MIN(t2.c_int) AS c_int FROM t_null_select_001 t1, t_null_select_001 t2 order by 1 for update of t2.c_number;
+
+C_INT
+------------
+1000
+
+1 rows fetched.
+
+SQL> drop table t_null_select_001;
+
+Succeed.
+

@@ -1,0 +1,348 @@
+
+
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> ALTER SYSTEM SET LOCAL_TEMPORARY_TABLE_ENABLED=TRUE;
+
+Succeed.
+
+SQL> 
+SQL> DROP USER IF EXISTS USER_CACHE_TEST CASCADE;
+
+Succeed.
+
+SQL> CREATE USER USER_CACHE_TEST IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> GRANT DBA TO USER_CACHE_TEST;
+
+Succeed.
+
+SQL> 
+SQL> CONN USER_CACHE_TEST/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE TEMPORARY TABLE #USER_CACHE_TEST_T1(C1 INT);
+
+Succeed.
+
+SQL> CREATE TABLE USER_CACHE_TEST_T1(C1 INT);
+
+Succeed.
+
+SQL> INSERT INTO #USER_CACHE_TEST_T1 VALUES(1);
+
+1 rows affected.
+
+SQL> INSERT INTO USER_CACHE_TEST_T1 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> SELECT SQL_TEXT, EXECUTIONS, REF_COUNT FROM DV_SQLS WHERE SQL_TEXT LIKE '%USER_CACHE_TEST_T1%' ORDER BY SQL_TEXT;
+
+SQL_TEXT                                                         EXECUTIONS           REF_COUNT   
+---------------------------------------------------------------- -------------------- ------------
+INSERT INTO USER_CACHE_TEST_T1 VALUES(1)                         1                    0           
+SELECT SQL_TEXT, EXECUTIONS, REF_COUNT FROM DV_SQLS WHERE SQL_TEXT LIKE '%USER_CACHE_TEST_T1%' ORDER BY SQL_TEXT 0                    1           
+
+2 rows fetched.
+
+SQL> 
+SQL> BEGIN
+  2  INSERT INTO #USER_CACHE_TEST_T1 VALUES(2);
+  3  COMMIT;
+  4 END;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  INSERT INTO USER_CACHE_TEST_T1 VALUES(2);
+  3  COMMIT;
+  4 END;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> SELECT SQL_TEXT, EXECUTIONS, REF_COUNT FROM dv_anonymous WHERE SQL_TEXT LIKE '%USER_CACHE_TEST_T1%' ORDER BY SQL_TEXT;
+
+SQL_TEXT                                                         EXECUTIONS           REF_COUNT   
+---------------------------------------------------------------- -------------------- ------------
+BEGIN
+ INSERT INTO #USER_CACHE_TEST_T1 VALUES(2);
+ COMMIT;
+END;
+/
+ 1                    0           
+BEGIN
+ INSERT INTO USER_CACHE_TEST_T1 VALUES(2);
+ COMMIT;
+END;
+/
+ 1                    0           
+
+2 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE USER_CACHE_TEST_P1(C1 INT) IS
+  2 BEGIN
+  3  INSERT INTO #USER_CACHE_TEST_T1 VALUES(C1);
+  4  COMMIT;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE USER_CACHE_TEST_P2(C1 INT) IS
+  2 BEGIN
+  3  INSERT INTO USER_CACHE_TEST_T1 VALUES(C1);
+  4  COMMIT;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE USER_CACHE_TEST_P3(C1 INT) IS
+  2 BEGIN
+  3  FOR ITEM IN (SELECT * FROM #USER_CACHE_TEST_T1) LOOP
+  4    NULL;
+  5  END LOOP;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE USER_CACHE_TEST_P4(C1 INT) IS
+  2 BEGIN
+  3   FOR ITEM IN (SELECT * FROM USER_CACHE_TEST_T1) LOOP
+  4    NULL;
+  5  END LOOP;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CALL USER_CACHE_TEST_P1(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL USER_CACHE_TEST_P2(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL USER_CACHE_TEST_P3(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL USER_CACHE_TEST_P4(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> SELECT NAME FROM DV_PL_ENTITY WHERE USER_NAME='USER_CACHE_TEST' ORDER BY NAME;
+
+NAME                                                            
+----------------------------------------------------------------
+USER_CACHE_TEST_P1                                              
+USER_CACHE_TEST_P2                                              
+USER_CACHE_TEST_P4                                              
+
+3 rows fetched.
+
+SQL> SELECT SQL_TEXT, EXECUTIONS, REF_COUNT FROM dv_anonymous WHERE SQL_TEXT LIKE '%USER_CACHE_TEST_P%' ORDER BY SQL_TEXT;
+
+SQL_TEXT                                                         EXECUTIONS           REF_COUNT   
+---------------------------------------------------------------- -------------------- ------------
+begin
+ USER_CACHE_TEST_P1(3);
+end;
+/                             1                    0           
+begin
+ USER_CACHE_TEST_P2(3);
+end;
+/                             1                    0           
+begin
+ USER_CACHE_TEST_P4(3);
+end;
+/                             1                    0           
+
+3 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION USER_CACHE_TEST_F1(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  INSERT INTO #USER_CACHE_TEST_T1 VALUES(C1);
+  4  RETURN 1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION USER_CACHE_TEST_F2(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  INSERT INTO USER_CACHE_TEST_T1 VALUES(C1);
+  4  RETURN 1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION USER_CACHE_TEST_F3(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  FOR ITEM IN (SELECT * FROM #USER_CACHE_TEST_T1) LOOP
+  4    NULL;
+  5  END LOOP;
+  6  RETURN 1;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION USER_CACHE_TEST_F4(C1 INT) RETURN INT IS
+  2 BEGIN
+  3   FOR ITEM IN (SELECT * FROM USER_CACHE_TEST_T1) LOOP
+  4    NULL;
+  5  END LOOP;
+  6  RETURN 1;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CALL USER_CACHE_TEST_P1(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL USER_CACHE_TEST_P2(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL USER_CACHE_TEST_P3(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL USER_CACHE_TEST_P4(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> SELECT USER_CACHE_TEST_F1(1);
+
+USER_CACHE_TEST_F1(1)
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> SELECT USER_CACHE_TEST_F2(1);
+
+USER_CACHE_TEST_F2(1)
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> SELECT USER_CACHE_TEST_F3(1);
+
+USER_CACHE_TEST_F3(1)
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> SELECT USER_CACHE_TEST_F4(1);
+
+USER_CACHE_TEST_F4(1)
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT NAME FROM DV_PL_ENTITY WHERE USER_NAME='USER_CACHE_TEST' ORDER BY NAME;
+
+NAME                                                            
+----------------------------------------------------------------
+USER_CACHE_TEST_F1                                              
+USER_CACHE_TEST_F2                                              
+USER_CACHE_TEST_F4                                              
+USER_CACHE_TEST_P1                                              
+USER_CACHE_TEST_P2                                              
+USER_CACHE_TEST_P4                                              
+
+6 rows fetched.
+
+SQL> SELECT SQL_TEXT, EXECUTIONS, REF_COUNT FROM DV_SQLS WHERE SQL_TEXT LIKE '%USER_CACHE_TEST_F%' ORDER BY SQL_TEXT;
+
+SQL_TEXT                                                         EXECUTIONS           REF_COUNT   
+---------------------------------------------------------------- -------------------- ------------
+SELECT SQL_TEXT, EXECUTIONS, REF_COUNT FROM DV_SQLS WHERE SQL_TEXT LIKE '%USER_CACHE_TEST_F%' ORDER BY SQL_TEXT 0                    1           
+SELECT USER_CACHE_TEST_F1(1)                                     1                    0           
+SELECT USER_CACHE_TEST_F2(1)                                     1                    0           
+SELECT USER_CACHE_TEST_F4(1)                                     1                    0           
+
+4 rows fetched.
+
+SQL> 
+SQL> SELECT USER_CACHE_TEST_F1(1);
+
+USER_CACHE_TEST_F1(1)
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> SELECT USER_CACHE_TEST_F2(1);
+
+USER_CACHE_TEST_F2(1)
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> SELECT USER_CACHE_TEST_F3(1);
+
+USER_CACHE_TEST_F3(1)
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> SELECT USER_CACHE_TEST_F4(1);
+
+USER_CACHE_TEST_F4(1)
+---------------------
+1                    
+
+1 rows fetched.
+
+SQL> 
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS USER_CACHE_TEST CASCADE;
+
+Succeed.
+
+SQL> 
+
+

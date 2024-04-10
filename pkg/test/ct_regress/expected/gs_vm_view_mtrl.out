@@ -1,0 +1,899 @@
+
+
+SQL> drop table if exists cart_t1;
+
+Succeed.
+
+SQL> drop table if exists cart_t2;
+
+Succeed.
+
+SQL> drop table if exists cart_t3;
+
+Succeed.
+
+SQL> create table cart_t1(a int, b int);
+
+Succeed.
+
+SQL> create table cart_t2(a int, b int);
+
+Succeed.
+
+SQL> create table cart_t3(a int, b int);
+
+Succeed.
+
+SQL> 
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select  distinct a from cart_t2) ta2;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                |       | TA2     |      |      |       |        |
+| 5   |         HASH DISTINCT        |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain  select count(*) from  cart_t3  where   cart_t3.a  in ( select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ cart_t1.a from cart_t1 join (select  distinct a from cart_t2 ) ta2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name    | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |         |      |      |       |        |
+| 1   |   AGGR                           |       |         |      |      |       |        |
+| 2   |     HASH JOIN SEMI(L)            |       |         |      |      |       |        |
+| 3   |       SUBSELECT                  |       |         |      |      |       |        |
+| 4   |         NESTED LOOPS             |       |         |      |      |       |        |
+| 5   |           TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 6   |           VM VIEW                |       | TA2     |      |      |       |        |
+| 7   |             HASH DISTINCT        |       |         |      |      |       |        |
+| 8   |               TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 9   |       TABLE ACCESS FULL          | SYS   | CART_T3 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: CART_T1.A = CART_T3.A                            
+
+17 rows fetched.
+
+SQL> 
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select a from cart_t2 group by a) ta2; 
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                |       | TA2     |      |      |       |        |
+| 5   |         HASH GROUP BY        |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+
+11 rows fetched.
+
+SQL> explain select /*+ leading(cart_t3,tmp)  */ count(*) from cart_t3 join (select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ * from cart_t1 join (select  a from cart_t2 group by a) ta2) tmp;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name    | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |         |      |      |       |        |
+| 1   |   AGGR                           |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS                 |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL          | SYS   | CART_T3 |      |      |       |        |
+| 4   |       SUBSELECT                  |       | TMP     |      |      |       |        |
+| 5   |         NESTED LOOPS             |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 7   |           VM VIEW                |       | TA2     |      |      |       |        |
+| 8   |             HASH GROUP BY        |       |         |      |      |       |        |
+| 9   |               TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+14 rows fetched.
+
+SQL> 
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select /*+ USE_HASH(cart_t2,cart_t3) */ cart_t2.a from cart_t2 join cart_t3 on cart_t2.a = cart_t3.a) ta2;   
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                |       | TA2     |      |      |       |        |
+| 5   |         HASH JOIN(L)         |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 7   |           TABLE ACCESS FULL  | SYS   | CART_T3 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - access: CART_T2.A = CART_T3.A                            
+
+15 rows fetched.
+
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select /*+ USE_HASH(cart_t2,cart_t3) */ cart_t2.a from cart_t2 left join cart_t3 on cart_t2.a = cart_t3.a) ta2;   
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                |       | TA2     |      |      |       |        |
+| 5   |         HASH JOIN OUTER(R)   |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 7   |           TABLE ACCESS FULL  | SYS   | CART_T3 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - access: CART_T2.A = CART_T3.A                            
+
+15 rows fetched.
+
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select /*+ USE_HASH(cart_t2,cart_t3) */ cart_t2.a from cart_t2 full join cart_t3 on cart_t2.a = cart_t3.a) ta2;   
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                |       | TA2     |      |      |       |        |
+| 5   |         HASH JOIN FULL(L)    |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 7   |           TABLE ACCESS FULL  | SYS   | CART_T3 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - access: CART_T2.A = CART_T3.A                            
+
+15 rows fetched.
+
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select a from cart_t2 where  exists (select a from cart_t3 where cart_t2.a = cart_t3.a)) ta2;   
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name    | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |         |      |      |       |        |
+| 1   |   AGGR                         |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS               |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL        | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                  |       | TA2     |      |      |       |        |
+| 5   |         HASH JOIN SEMI(L)      |       |         |      |      |       |        |
+| 6   |           SUBSELECT            |       |         |      |      |       |        |
+| 7   |             TABLE ACCESS FULL  | SYS   | CART_T3 |      |      |       |        |
+| 8   |           TABLE ACCESS FULL    | SYS   | CART_T2 |      |      |       |        |
+-----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - access: CART_T3.A = CART_T2.A                            
+
+16 rows fetched.
+
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select a from cart_t2 where  cart_t2.a not in (select a from cart_t3 )) ta2;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name    | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |         |      |      |       |        |
+| 1   |   AGGR                         |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS               |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL        | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                  |       | TA2     |      |      |       |        |
+| 5   |         HASH JOIN ANTI NA(R)   |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL    | SYS   | CART_T2 |      |      |       |        |
+| 7   |           SUBSELECT            |       |         |      |      |       |        |
+| 8   |             TABLE ACCESS FULL  | SYS   | CART_T3 |      |      |       |        |
+-----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - access: CART_T2.A = A                                    
+
+16 rows fetched.
+
+SQL> 
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select  distinct a from cart_t2) ta2 where cart_t1.a = ta2.a;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       SUBSELECT              |       | TA2     |      |      |       |        |
+| 5   |         HASH DISTINCT        |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   4 - filter: CART_T1.A = TA2.A                                
+   6 - filter: CART_T2.A = CART_T1.A                            
+
+15 rows fetched.
+
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select  distinct a from cart_t2) ta2 where ta2.a =  cart_t1.a or cart_t1.a > 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       SUBSELECT              |       | TA2     |      |      |       |        |
+| 5   |         HASH DISTINCT        |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   4 - filter: TA2.A = CART_T1.A OR CART_T1.A > 1               
+
+14 rows fetched.
+
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select  distinct a from cart_t2) ta2 where ta2.a =  ? or cart_t1.a > ? or ? = ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                |       | TA2     |      |      |       |        |
+| 5   |         HASH DISTINCT        |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   4 - filter: TA2.A = ? OR CART_T1.A > ? OR ? = ?              
+
+14 rows fetched.
+
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select  distinct a from cart_t2) ta2 where ta2.a =  1 or  cart_t1.a > 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 4   |       VM VIEW                |       | TA2     |      |      |       |        |
+| 5   |         HASH DISTINCT        |       |         |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   4 - filter: TA2.A = 1 OR CART_T1.A > 1                       
+
+14 rows fetched.
+
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ * from cart_t1 join (select  distinct a from cart_t2) ta2 where log(abs(cart_t1.a + 2) + 1)= ta2.a or ta2.a > 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name    | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |         |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |         |      |      |       |        |
+| 2   |     TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 3   |     SUBSELECT              |       | TA2     |      |      |       |        |
+| 4   |       HASH DISTINCT        |       |         |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+-------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: LOG(ABS(CART_T1.A + 2) + 1) = TA2.A OR TA2.A > 1 
+   5 - filter: LOG(ABS(CART_T1.A + 2) + 1) = CART_T2.A OR CART_T2.A > 1
+
+14 rows fetched.
+
+SQL> explain select /*+ leading(cart_t3)  */ count(*) from cart_t3 join (select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ distinct cart_t1.a from cart_t1 join 
+  2 (select  /*+ USE_NL(cart_t2,Ta3)   leading(cart_t2)  */ cart_t2.a from cart_t2 join (select cart_t2.a from cart_t2 join cart_t3 on cart_t2.a = cart_t3.a) ta3 group by cart_t2.a) ta2  where cart_t1.a = ta2.a ) tmp;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+| Id  | Description                              | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                         |       |         |      |      |       |        |
+| 1   |   AGGR                                   |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS                         |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL                  | SYS   | CART_T3 |      |      |       |        |
+| 4   |       VM VIEW                            |       | TMP     |      |      |       |        |
+| 5   |         HASH DISTINCT                    |       |         |      |      |       |        |
+| 6   |           NESTED LOOPS                   |       |         |      |      |       |        |
+| 7   |             TABLE ACCESS FULL            | SYS   | CART_T1 |      |      |       |        |
+| 8   |             SUBSELECT                    |       | TA2     |      |      |       |        |
+| 9   |               HASH GROUP BY              |       |         |      |      |       |        |
+| 10  |                 NESTED LOOPS             |       |         |      |      |       |        |
+| 11  |                   TABLE ACCESS FULL      | SYS   | CART_T2 |      |      |       |        |
+| 12  |                   VM VIEW                |       | TA3     |      |      |       |        |
+| 13  |                     HASH JOIN(L)         |       |         |      |      |       |        |
+| 14  |                       TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 15  |                       TABLE ACCESS FULL  | SYS   | CART_T3 |      |      |       |        |
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   8 - filter: CART_T1.A = TA2.A                                
+   11 - filter: CART_T2.A = CART_T1.A                           
+   13 - access: CART_T2.A = CART_T3.A                           
+
+25 rows fetched.
+
+SQL> 
+SQL> explain  select count(*) from  cart_t3  where   cart_t3.a  in ( select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ cart_t1.a from cart_t1 join (select  distinct a from cart_t2 where cart_t3.a = cart_t2.a ) ta2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |         |      |      |       |        |
+| 1   |   AGGR                       |       |         |      |      |       |        |
+| 2   |     KERNEL FILTER            |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T3 |      |      |       |        |
+| 4   |       NESTED LOOPS           |       |         |      |      |       |        |
+| 5   |         TABLE ACCESS FULL    | SYS   | CART_T1 |      |      |       |        |
+| 6   |         SUBSELECT            |       | TA2     |      |      |       |        |
+| 7   |           TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: EXISTS(SELECT 1 FROM CART_T1 INNER JOIN (SELECT NULL FROM CART_T2 WHERE CART_T2.A = CART_T3.A) TA2 WHERE CART_T3.A = CART_T1.A)
+   5 - filter: CART_T3.A = CART_T1.A                            
+   7 - filter: CART_T2.A = CART_T3.A                            
+
+17 rows fetched.
+
+SQL> explain  select count(*) from  cart_t3  where   cart_t3.a  in ( select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ cart_t1.a  from cart_t1 join (select  distinct a from cart_t2) ta2 where cart_t3.a = ta2.a);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name    | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |         |      |      |       |        |
+| 1   |   AGGR                           |       |         |      |      |       |        |
+| 2   |     HASH JOIN SEMI(L)            |       |         |      |      |       |        |
+| 3   |       SUBSELECT                  |       |         |      |      |       |        |
+| 4   |         NESTED LOOPS             |       |         |      |      |       |        |
+| 5   |           TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 6   |           VM VIEW                |       | TA2     |      |      |       |        |
+| 7   |             HASH DISTINCT        |       |         |      |      |       |        |
+| 8   |               TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 9   |       TABLE ACCESS FULL          | SYS   | CART_T3 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: CART_T1.A = CART_T3.A AND TA2.A = CART_T3.A      
+
+17 rows fetched.
+
+SQL> explain select  count(*) from cart_t3 as test where test.a in (select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ distinct cart_t1.a from cart_t1 join 
+  2 (select  /*+ USE_NL(cart_t2,Ta3)   leading(cart_t2)  */ cart_t2.a from cart_t2 join (select /*+ USE_HASH(cart_t2) */ cart_t2.a  from cart_t2 join cart_t3 on cart_t2.a = cart_t3.a  where test.a = 1) ta3  group by cart_t2.a )  ta2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                            | Owner | Name         | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                       |       |              |      |      |       |        |
+| 1   |   AGGR                                 |       |              |      |      |       |        |
+| 2   |     KERNEL FILTER                      |       |              |      |      |       |        |
+| 3   |       TABLE ACCESS FULL                | SYS   | CART_T3 TEST |      |      |       |        |
+| 4   |       HASH DISTINCT                    |       |              |      |      |       |        |
+| 5   |         NESTED LOOPS                   |       |              |      |      |       |        |
+| 6   |           TABLE ACCESS FULL            | SYS   | CART_T1      |      |      |       |        |
+| 7   |           SUBSELECT                    |       | TA2          |      |      |       |        |
+| 8   |             HASH GROUP BY              |       |              |      |      |       |        |
+| 9   |               NESTED LOOPS             |       |              |      |      |       |        |
+| 10  |                 TABLE ACCESS FULL      | SYS   | CART_T2      |      |      |       |        |
+| 11  |                 SUBSELECT              |       | TA3          |      |      |       |        |
+| 12  |                   NESTED LOOPS         |       |              |      |      |       |        |
+| 13  |                     TABLE ACCESS FULL  | SYS   | CART_T2      |      |      |       |        |
+| 14  |                     TABLE ACCESS FULL  | SYS   | CART_T3      |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: TEST.A IN((SELECT DISTINCT A FROM CART_T1 INNER JOIN (SELECT CART_T2.A FROM CART_T2 INNER JOIN 
+               (SELECT NULL FROM CART_T2 INNER JOIN CART_T3 WHERE TEST.A = 1 AND CART_T2.A = CART_T3.A) TA3 GROUP BY 
+               CART_T2.A) TA2))                                 
+   13 - filter: TEST.A = 1                                      
+   14 - filter: CART_T2.A = CART_T3.A                           
+
+26 rows fetched.
+
+SQL> 
+SQL> explain select  count(*) from cart_t3 as test where test.a in (select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ distinct cart_t1.a from cart_t1 join 
+  2 (select  /*+ USE_NL(cart_t2,Ta3)   leading(cart_t2)  */ cart_t2.a from cart_t2 join (select /*+ USE_HASH(cart_t2) */ cart_t2.a  from cart_t2 join cart_t3 on cart_t2.a = cart_t3.a  where ? = ?) ta3  group by cart_t2.a )  ta2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+| Id  | Description                              | Owner | Name         | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                         |       |              |      |      |       |        |
+| 1   |   AGGR                                   |       |              |      |      |       |        |
+| 2   |     HASH JOIN SEMI(L)                    |       |              |      |      |       |        |
+| 3   |       SUBSELECT                          |       |              |      |      |       |        |
+| 4   |         HASH DISTINCT                    |       |              |      |      |       |        |
+| 5   |           NESTED LOOPS                   |       |              |      |      |       |        |
+| 6   |             TABLE ACCESS FULL            | SYS   | CART_T1      |      |      |       |        |
+| 7   |             VM VIEW                      |       | TA2          |      |      |       |        |
+| 8   |               HASH GROUP BY              |       |              |      |      |       |        |
+| 9   |                 NESTED LOOPS             |       |              |      |      |       |        |
+| 10  |                   TABLE ACCESS FULL      | SYS   | CART_T2      |      |      |       |        |
+| 11  |                   VM VIEW                |       | TA3          |      |      |       |        |
+| 12  |                     HASH JOIN(L)         |       |              |      |      |       |        |
+| 13  |                       TABLE ACCESS FULL  | SYS   | CART_T2      |      |      |       |        |
+| 14  |                       TABLE ACCESS FULL  | SYS   | CART_T3      |      |      |       |        |
+| 15  |       TABLE ACCESS FULL                  | SYS   | CART_T3 TEST |      |      |       |        |
+--------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: CART_T1.A = TEST.A                               
+   12 - access: CART_T2.A = CART_T3.A                           
+   13 - filter: ? = ?                                           
+
+25 rows fetched.
+
+SQL> 
+SQL> explain select  count(*) from cart_t3 as test where test.a in (select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ distinct cart_t1.a from cart_t1 join 
+  2 (select  /*+ USE_NL(cart_t2,Ta3)   leading(cart_t2)  */ cart_t2.a from cart_t2 join (select /*+ USE_HASH(cart_t2,cart_t3) */ cart_t2.a  from cart_t2 join cart_t3 on cart_t2.a = cart_t3.a) ta3  where test.a = 1 group by cart_t2.a )  ta2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                            | Owner | Name         | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                       |       |              |      |      |       |        |
+| 1   |   AGGR                                 |       |              |      |      |       |        |
+| 2   |     KERNEL FILTER                      |       |              |      |      |       |        |
+| 3   |       TABLE ACCESS FULL                | SYS   | CART_T3 TEST |      |      |       |        |
+| 4   |       HASH DISTINCT                    |       |              |      |      |       |        |
+| 5   |         NESTED LOOPS                   |       |              |      |      |       |        |
+| 6   |           TABLE ACCESS FULL            | SYS   | CART_T1      |      |      |       |        |
+| 7   |           SUBSELECT                    |       | TA2          |      |      |       |        |
+| 8   |             HASH GROUP BY              |       |              |      |      |       |        |
+| 9   |               NESTED LOOPS             |       |              |      |      |       |        |
+| 10  |                 TABLE ACCESS FULL      | SYS   | CART_T2      |      |      |       |        |
+| 11  |                 VM VIEW                |       | TA3          |      |      |       |        |
+| 12  |                   HASH JOIN(L)         |       |              |      |      |       |        |
+| 13  |                     TABLE ACCESS FULL  | SYS   | CART_T2      |      |      |       |        |
+| 14  |                     TABLE ACCESS FULL  | SYS   | CART_T3      |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: TEST.A IN((SELECT DISTINCT A FROM CART_T1 INNER JOIN (SELECT CART_T2.A FROM CART_T2 INNER JOIN 
+               (SELECT NULL FROM CART_T2 INNER JOIN CART_T3) TA3 WHERE TEST.A = 1 GROUP BY CART_T2.A) TA2))
+   10 - filter: TEST.A = 1                                      
+   12 - access: CART_T2.A = CART_T3.A                           
+
+25 rows fetched.
+
+SQL> 
+SQL> explain select /*+ leading(cart_t3)  */ count(*) from cart_t3 join (select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ distinct cart_t1.a from cart_t1 join (select  distinct a from cart_t2) ta2) tmp;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name    | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |         |      |      |       |        |
+| 1   |   AGGR                           |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS                 |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL          | SYS   | CART_T3 |      |      |       |        |
+| 4   |       VM VIEW                    |       | TMP     |      |      |       |        |
+| 5   |         HASH DISTINCT            |       |         |      |      |       |        |
+| 6   |           NESTED LOOPS           |       |         |      |      |       |        |
+| 7   |             TABLE ACCESS FULL    | SYS   | CART_T1 |      |      |       |        |
+| 8   |             SUBSELECT            |       | TA2     |      |      |       |        |
+| 9   |               TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+14 rows fetched.
+
+SQL> 
+SQL> explain select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select  distinct a from cart_t2) ta2 
+  2 union
+  3 select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ count(*) from cart_t1 join (select cart_t2.a from cart_t2 join cart_t3 on cart_t2.a = cart_t3.a) ta2;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name    | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |         |      |      |       |        |
+| 1   |   HASH UNION                   |       |         |      |      |       |        |
+| 2   |     AGGR                       |       |         |      |      |       |        |
+| 3   |       NESTED LOOPS             |       |         |      |      |       |        |
+| 4   |         TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 5   |         VM VIEW                |       | TA2     |      |      |       |        |
+| 6   |           HASH DISTINCT        |       |         |      |      |       |        |
+| 7   |             TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 8   |     AGGR                       |       |         |      |      |       |        |
+| 9   |       NESTED LOOPS             |       |         |      |      |       |        |
+| 10  |         TABLE ACCESS FULL      | SYS   | CART_T1 |      |      |       |        |
+| 11  |         VM VIEW                |       | TA2     |      |      |       |        |
+| 12  |           HASH JOIN(L)         |       |         |      |      |       |        |
+| 13  |             TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 14  |             TABLE ACCESS FULL  | SYS   | CART_T3 |      |      |       |        |
+-----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   12 - access: CART_T2.A = CART_T3.A                           
+
+22 rows fetched.
+
+SQL> explain select /*+ leading(cart_t3)  */   count(*) from cart_t3 ,(select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ distinct cart_t1.a from cart_t1 ,
+  2 (select  /*+ USE_NL(cart_t2,Ta3)   leading(cart_t2)  */ cart_t2.a from cart_t2 , (select cart_t2.a from cart_t2 join cart_t3 on cart_t2.a = cart_t3.a) ta3 where cart_t2.a = 3 group by cart_t2.a) ta2 where cart_t1.a = 1) tmp;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+| Id  | Description                              | Owner | Name    | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                         |       |         |      |      |       |        |
+| 1   |   AGGR                                   |       |         |      |      |       |        |
+| 2   |     NESTED LOOPS                         |       |         |      |      |       |        |
+| 3   |       TABLE ACCESS FULL                  | SYS   | CART_T3 |      |      |       |        |
+| 4   |       VM VIEW                            |       | TMP     |      |      |       |        |
+| 5   |         HASH DISTINCT                    |       |         |      |      |       |        |
+| 6   |           NESTED LOOPS                   |       |         |      |      |       |        |
+| 7   |             TABLE ACCESS FULL            | SYS   | CART_T1 |      |      |       |        |
+| 8   |             VM VIEW                      |       | TA2     |      |      |       |        |
+| 9   |               HASH GROUP BY              |       |         |      |      |       |        |
+| 10  |                 NESTED LOOPS             |       |         |      |      |       |        |
+| 11  |                   TABLE ACCESS FULL      | SYS   | CART_T2 |      |      |       |        |
+| 12  |                   VM VIEW                |       | TA3     |      |      |       |        |
+| 13  |                     HASH JOIN(L)         |       |         |      |      |       |        |
+| 14  |                       TABLE ACCESS FULL  | SYS   | CART_T2 |      |      |       |        |
+| 15  |                       TABLE ACCESS FULL  | SYS   | CART_T3 |      |      |       |        |
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   7 - filter: CART_T1.A = 1                                    
+   11 - filter: CART_T2.A = 3                                   
+   13 - access: CART_T2.A = CART_T3.A                           
+
+25 rows fetched.
+
+SQL> 
+SQL> explain  select count(*) from cart_t1 as test2 where test2.a in (
+  2 select count(*) from  cart_t3  where   cart_t3.a  in ( select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ cart_t1.a from cart_t1 join (select a from cart_t2  where test2.a = 1 group by a) ta2)
+  3 );
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |               |      |      |       |        |
+| 1   |   AGGR                             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER                  |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL            | SYS   | CART_T1 TEST2 |      |      |       |        |
+| 4   |       AGGR                         |       |               |      |      |       |        |
+| 5   |         KERNEL FILTER              |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL        | SYS   | CART_T3       |      |      |       |        |
+| 7   |           NESTED LOOPS             |       |               |      |      |       |        |
+| 8   |             TABLE ACCESS FULL      | SYS   | CART_T1       |      |      |       |        |
+| 9   |             SUBSELECT              |       | TA2           |      |      |       |        |
+| 10  |               HASH GROUP BY        |       |               |      |      |       |        |
+| 11  |                 TABLE ACCESS FULL  | SYS   | CART_T2       |      |      |       |        |
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: TEST2.A IN((SELECT COUNT(*) FROM CART_T3 WHERE EXISTS(SELECT 1 FROM CART_T1 INNER JOIN (SELECT 
+               A FROM CART_T2 WHERE TEST2.A = 1 GROUP BY A) TA2 WHERE CART_T3.A = CART_T1.A)))
+   6 - filter: EXISTS(SELECT 1 FROM CART_T1 INNER JOIN (SELECT A FROM CART_T2 WHERE TEST2.A = 1 GROUP BY 
+               A) TA2 WHERE CART_T3.A = CART_T1.A)              
+   8 - filter: CART_T3.A = CART_T1.A                            
+   11 - filter: TEST2.A = 1                                     
+
+24 rows fetched.
+
+SQL> 
+SQL> explain  select count(*) from cart_t1 as test2 where test2.a in (
+  2 select count(*) from  cart_t3  where   cart_t3.a  in ( select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ cart_t1.a from cart_t1 join (select a,test2.a from cart_t2  group by a,test2.a) ta2)
+  3 );
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |               |      |      |       |        |
+| 1   |   AGGR                             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER                  |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL            | SYS   | CART_T1 TEST2 |      |      |       |        |
+| 4   |       AGGR                         |       |               |      |      |       |        |
+| 5   |         KERNEL FILTER              |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL        | SYS   | CART_T3       |      |      |       |        |
+| 7   |           NESTED LOOPS             |       |               |      |      |       |        |
+| 8   |             TABLE ACCESS FULL      | SYS   | CART_T1       |      |      |       |        |
+| 9   |             SUBSELECT              |       | TA2           |      |      |       |        |
+| 10  |               HASH GROUP BY        |       |               |      |      |       |        |
+| 11  |                 TABLE ACCESS FULL  | SYS   | CART_T2       |      |      |       |        |
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: TEST2.A IN((SELECT COUNT(*) FROM CART_T3 WHERE EXISTS(SELECT 1 FROM CART_T1 INNER JOIN (SELECT 
+               A, TEST2.A FROM CART_T2 GROUP BY A,TEST2.A) TA2 WHERE CART_T3.A = CART_T1.A)))
+   6 - filter: EXISTS(SELECT 1 FROM CART_T1 INNER JOIN (SELECT A, TEST2.A FROM CART_T2 GROUP BY A,TEST2.A) TA2 WHERE CART_T3.A = CART_T1.A)
+   8 - filter: CART_T3.A = CART_T1.A                            
+
+22 rows fetched.
+
+SQL> 
+SQL> explain  select count(*) from  cart_t3  where   cart_t3.a  in ( select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ cart_t1.a from cart_t1 join (select  /*+ USE_HASH(cart_t2,tt) */ cart_t2.a, cart_t3.a from cart_t2 join cart_t1 as tt on cart_t2.a = tt.a ) ta2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name       | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |            |      |      |       |        |
+| 1   |   AGGR                         |       |            |      |      |       |        |
+| 2   |     KERNEL FILTER              |       |            |      |      |       |        |
+| 3   |       TABLE ACCESS FULL        | SYS   | CART_T3    |      |      |       |        |
+| 4   |       NESTED LOOPS             |       |            |      |      |       |        |
+| 5   |         TABLE ACCESS FULL      | SYS   | CART_T1    |      |      |       |        |
+| 6   |         SUBSELECT              |       | TA2        |      |      |       |        |
+| 7   |           HASH JOIN(L)         |       |            |      |      |       |        |
+| 8   |             TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+| 9   |             TABLE ACCESS FULL  | SYS   | CART_T1 TT |      |      |       |        |
+--------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: EXISTS(SELECT 1 FROM CART_T1 INNER JOIN (SELECT NULL, NULL FROM CART_T2 INNER JOIN CART_T1 TT) TA2 WHERE CART_T3.A = CART_T1.A)
+   5 - filter: CART_T3.A = CART_T1.A                            
+   7 - access: CART_T2.A = TT.A                                 
+
+19 rows fetched.
+
+SQL> 
+SQL> explain  select count(*) from  cart_t3  where   cart_t3.a  in ( select /*+ USE_NL(cart_t1,Ta2)   leading(cart_t1)  */ cart_t1.a from cart_t1 join (select  /*+ USE_HASH(cart_t2,tt) */ cart_t2.a, mod(cart_t3.a,1) from cart_t2 join cart_t1 as tt on cart_t2.a = tt.a ) ta2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name       | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |            |      |      |       |        |
+| 1   |   AGGR                         |       |            |      |      |       |        |
+| 2   |     KERNEL FILTER              |       |            |      |      |       |        |
+| 3   |       TABLE ACCESS FULL        | SYS   | CART_T3    |      |      |       |        |
+| 4   |       NESTED LOOPS             |       |            |      |      |       |        |
+| 5   |         TABLE ACCESS FULL      | SYS   | CART_T1    |      |      |       |        |
+| 6   |         SUBSELECT              |       | TA2        |      |      |       |        |
+| 7   |           HASH JOIN(L)         |       |            |      |      |       |        |
+| 8   |             TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+| 9   |             TABLE ACCESS FULL  | SYS   | CART_T1 TT |      |      |       |        |
+--------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: EXISTS(SELECT 1 FROM CART_T1 INNER JOIN (SELECT NULL, NULL FROM CART_T2 INNER JOIN CART_T1 TT) TA2 WHERE CART_T3.A = CART_T1.A)
+   5 - filter: CART_T3.A = CART_T1.A                            
+   7 - access: CART_T2.A = TT.A                                 
+
+19 rows fetched.
+
+SQL> 
+SQL> explain select /*+use_nl(t1,subq_0) leading(t1)*/ t1.a from cart_t1 t1 inner join (select max(a) c1, b from cart_t2 group by b) subq_0 on t1.a > any(subq_0.b);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name       | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |            |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |            |      |      |       |        |
+| 2   |     TABLE ACCESS FULL      | SYS   | CART_T1 T1 |      |      |       |        |
+| 3   |     SUBSELECT              |       | SUBQ_0     |      |      |       |        |
+| 4   |       HASH GROUP BY        |       |            |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: T1.A > ANY(SUBQ_0.B)                             
+   5 - filter: T1.A > ANY(B)                                    
+
+14 rows fetched.
+
+SQL> explain select /*+use_nl(t1,subq_0) leading(t1)*/ t1.a from cart_t1 t1 inner join (select max(a) c1, b from cart_t2 group by b) subq_0 on t1.a + subq_0.b = 10;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name       | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |            |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |            |      |      |       |        |
+| 2   |     TABLE ACCESS FULL      | SYS   | CART_T1 T1 |      |      |       |        |
+| 3   |     SUBSELECT              |       | SUBQ_0     |      |      |       |        |
+| 4   |       HASH GROUP BY        |       |            |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: T1.A + SUBQ_0.B = 10                             
+
+13 rows fetched.
+
+SQL> explain select /*+use_nl(t1,subq_0) leading(t1)*/ t1.a from cart_t1 t1 inner join (select max(a) c1, b from cart_t2 group by b) subq_0 on t1.a = 10 or t1.b = subq_0.b;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name       | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |            |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |            |      |      |       |        |
+| 2   |     TABLE ACCESS FULL      | SYS   | CART_T1 T1 |      |      |       |        |
+| 3   |     SUBSELECT              |       | SUBQ_0     |      |      |       |        |
+| 4   |       HASH GROUP BY        |       |            |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: T1.A = 10 OR T1.B = SUBQ_0.B                     
+
+13 rows fetched.
+
+SQL> explain select /*+use_nl(t1,subq_0) leading(t1)*/ t1.a from cart_t1 t1 inner join (select distinct a from cart_t2) subq_0 on t1.a in (select subq_0.a from cart_t3 where rownum=2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name       | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |            |      |      |       |        |
+| 1   |   NESTED LOOPS               |       |            |      |      |       |        |
+| 2   |     KERNEL FILTER            |       |            |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | CART_T1 T1 |      |      |       |        |
+| 4   |       ROWNUM FILTER          |       |            |      |      |       |        |
+| 5   |         TABLE ACCESS FULL    | SYS   | CART_T3    |      |      |       |        |
+| 6   |     KERNEL FILTER            |       |            |      |      |       |        |
+| 7   |       SUBSELECT              |       | SUBQ_0     |      |      |       |        |
+| 8   |         HASH DISTINCT        |       |            |      |      |       |        |
+| 9   |           TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+| 10  |       ROWNUM FILTER          |       |            |      |      |       |        |
+| 11  |         TABLE ACCESS FULL    | SYS   | CART_T3    |      |      |       |        |
+------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   4 - filter: ROWNUM = 2                                       
+   7 - filter: T1.A IN((SELECT SUBQ_0.A FROM CART_T3 WHERE ROWNUM = 2))
+   10 - filter: ROWNUM = 2                                      
+
+21 rows fetched.
+
+SQL> explain select /*+ordered*/ t1.a from cart_t1 t1 inner join cart_t1 t2 on t1.b=t2.b inner join (select max(a) c1, b from cart_t2 group by b) subq_0 on t2.a > t1.a;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name       | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |            |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |            |      |      |       |        |
+| 2   |     HASH JOIN(L)           |       |            |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | CART_T1 T1 |      |      |       |        |
+| 4   |       TABLE ACCESS FULL    | SYS   | CART_T1 T2 |      |      |       |        |
+| 5   |     VM VIEW                |       | SUBQ_0     |      |      |       |        |
+| 6   |       HASH GROUP BY        |       |            |      |      |       |        |
+| 7   |         TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: T1.B = T2.B                                      
+       filter: T2.A > T1.A                                      
+
+16 rows fetched.
+
+SQL> explain select /*+use_nl(t1,subq_0) leading(t1)*/ t1.a from cart_t1 t1 inner join (select max(a) c1, b from cart_t2 group by b) subq_0 start with t1.a + subq_0.c1 = 2 connect by t1.b + subq_0.b = 10;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name       | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |            |      |      |       |        |
+| 1   |   START WITH                 |       |            |      |      |       |        |
+| 2   |     NESTED LOOPS             |       |            |      |      |       |        |
+| 3   |       SUBSELECT              |       | SUBQ_0     |      |      |       |        |
+| 4   |         HASH GROUP BY        |       |            |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+| 6   |       TABLE ACCESS FULL      | SYS   | CART_T1 T1 |      |      |       |        |
+| 7   |   CONNECT BY                 |       |            |      |      |       |        |
+| 8   |     NESTED LOOPS             |       |            |      |      |       |        |
+| 9   |       TABLE ACCESS FULL      | SYS   | CART_T1 T1 |      |      |       |        |
+| 10  |       SUBSELECT              |       | SUBQ_0     |      |      |       |        |
+| 11  |         HASH GROUP BY        |       |            |      |      |       |        |
+| 12  |           TABLE ACCESS FULL  | SYS   | CART_T2    |      |      |       |        |
+------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   6 - filter: T1.A + SUBQ_0.C1 = 2                             
+   7 - filter: T1.B + SUBQ_0.B = 10                             
+
+21 rows fetched.
+
+SQL> explain select /*+use_nl(t1,subq_0) leading(t1)*/ t1.a from cart_t1 t1 inner join (select t2.rowid as c1 from cart_t2 t2 inner join cart_t3 t3 on t2.a = t3.a) subq_0 on t1.rowid = subq_0.c1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name       | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |            |      |      |       |        |
+| 1   |   NESTED LOOPS             |       |            |      |      |       |        |
+| 2   |     TABLE ACCESS FULL      | SYS   | CART_T1 T1 |      |      |       |        |
+| 3   |     SUBSELECT              |       | SUBQ_0     |      |      |       |        |
+| 4   |       HASH JOIN(L)         |       |            |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | CART_T2 T2 |      |      |       |        |
+| 6   |         TABLE ACCESS FULL  | SYS   | CART_T3 T3 |      |      |       |        |
+----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: ROWID = SUBQ_0.C1                                
+   4 - access: T2.A = T3.A                                      
+   5 - filter: ROWID = ROWID                                    
+
+16 rows fetched.
+
+SQL> 
+SQL> drop table cart_t1;
+
+Succeed.
+
+SQL> drop table cart_t2;
+
+Succeed.
+
+SQL> drop table cart_t3;
+Succeed.
+
+
+
+

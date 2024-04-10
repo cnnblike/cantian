@@ -1,0 +1,4498 @@
+
+
+SQL> --
+SQL> -- USER DEFINED PACKAGE
+SQL> --
+SQL> set serveroutput on;
+
+ON
+SQL> create table tt1_t(a int);
+
+Succeed.
+
+SQL> insert into tt1_t values(10);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> drop user if exists liu_test_compile_schema cascade;
+
+Succeed.
+
+SQL> create user liu_test_compile_schema identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to liu_test_compile_schema;
+
+Succeed.
+
+SQL> conn liu_test_compile_schema/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE PACKAGE DD
+  2 IS
+  3 FUNCTION MYF RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY DD
+  2 IS
+  3 FUNCTION MYF RETURN INT
+  4 IS
+  5 V1 INT := 10;
+  6 BEGIN
+  7 select a into v1 from sys.tt1_t;
+  8 RETURN V1;
+  9 END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> create or replace function myf1 return int
+  2 is
+  3 a1 int;
+  4 begin
+  5 a1 := dd.myf();
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop table tt1_t;
+
+Succeed.
+
+SQL> call dbe_util.compile_schema('liu_test_compile_schema',false);
+
+PL/SQL procedure successfully completed.
+
+SQL> drop user if exists liu_test_compile_schema cascade;
+
+Succeed.
+
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_plsql_pkg cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_pkg identified by Lh00420062;
+
+Succeed.
+
+SQL> grant all privileges to gs_plsql_pkg;
+
+Succeed.
+
+SQL> conn gs_plsql_pkg/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> create or replace package AAAA1 
+  2 AS 
+  3 FUNCTION max(ID INT,id2 out int ) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE package BODY AAAA1
+  2 AS 
+  3 FUNCTION max(ID INT,id2 out int) RETURN INT
+  4 AS 
+  5 A INT;
+  6 BEGIN
+  7 A := 1;
+  8 RETURN A;
+  9 END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> create or replace package AAAA2 
+  2 AS 
+  3 FUNCTION A2(ID INT) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> create or replace package BODY  AAAA2 
+  2 AS 
+  3 FUNCTION A2(ID INT) RETURN INT
+  4 AS
+  5 A INT;
+  6 b int;
+  7 BEGIN
+  8 A :=AAAA1.max(1,b);
+  9 RETURN A ;
+ 10 END;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> create or replace package AAAA1 
+  2 AS 
+  3 FUNCTION A1(ID INT) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE package BODY AAAA1
+  2 AS 
+  3 FUNCTION A1(ID INT) RETURN INT
+  4 AS
+  5 A INT;
+  6 BEGIN
+  7 A :=AAAA2.A2(1);
+  8 RETURN A;
+  9 END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> select AAAA1.A1(1) from dual;
+
+CT-00932, [6:1] PL/SQL(GS_PLSQL_PKG.AAAA1.A1) terminated with execute errors
+[6:5] CT-00944, PL/SQL(GS_PLSQL_PKG.AAAA2) terminated with compiling errors
+[2:28] PLC-00944 PL/SQL(GS_PLSQL_PKG.AAAA2.A2) terminated with compiling errors
+[7:5] PLC-00828 function AAAA1.MAX does not exist
+
+
+
+SQL> select AAAA2.A2(1) from dual;
+
+CT-00944, [1:8]PL/SQL(GS_PLSQL_PKG.AAAA2) terminated with compiling errors
+[2:28] PLC-00944 PL/SQL(GS_PLSQL_PKG.AAAA2.A2) terminated with compiling errors
+[7:5] PLC-00828 function AAAA1.MAX does not exist
+
+
+SQL> 
+SQL> create or replace package AAAA2 
+  2 AS 
+  3 FUNCTION A2(ID INT) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> create or replace package BODY AAAA2 
+  2 AS 
+  3 FUNCTION A2(ID INT) RETURN INT
+  4 AS
+  5 A INT;
+  6 BEGIN
+  7 A :=AAAA1.A1(1);
+  8 RETURN A ;
+  9 END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package AAAA1 
+  2 AS 
+  3 FUNCTION max(ID INT,id2 out int ) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE package BODY AAAA1
+  2 AS 
+  3 FUNCTION max(ID INT,id2 out int) RETURN INT
+  4 AS 
+  5 A INT;
+  6 BEGIN
+  7 A :=1;
+  8 RETURN A;
+  9 END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> create or replace package AAAA2 
+  2 AS 
+  3 FUNCTION A2(ID INT) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> create or replace package BODY  AAAA2 
+  2 AS 
+  3 FUNCTION A2(ID INT) RETURN INT
+  4 AS
+  5 A INT;
+  6 b int;
+  7 BEGIN
+  8 A :=AAAA1.max(1,b);
+  9 RETURN A ;
+ 10 END;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> create or replace package AAAA1 
+  2 AS 
+  3 FUNCTION A1(ID INT) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE package BODY AAAA1
+  2 AS 
+  3 A INT;
+  4 FUNCTION A1(ID INT) RETURN INT
+  5 AS
+  6 BEGIN
+  7 A :=AAAA2.A2(1);
+  8 RETURN A;
+  9 END;
+ 10 END;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_PKG.AAAA1) terminated with compiling errors
+[3:1] PLC-00916 PL/SQL:syntax error(can not recognize the symbol: A)
+
+
+SQL> create or replace package AAAA2 
+  2 AS 
+  3 FUNCTION A2(ID INT) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> create or replace package BODY AAAA2 
+  2 AS 
+  3 FUNCTION A2(ID INT) RETURN INT
+  4 AS
+  5 A INT;
+  6 BEGIN
+  7 A :=AAAA1.A1(1);
+  8 RETURN A ;
+  9 END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> select AAAA1.A1(1) from dual;
+
+CT-00944, [1:8]PL/SQL(GS_PLSQL_PKG.AAAA1) terminated with compiling errors
+[2:1] PLC-00916 PL/SQL:syntax error(can not recognize the symbol: A)
+
+SQL> select AAAA2.A2(1) from dual;
+
+CT-00932, [6:1] PL/SQL(GS_PLSQL_PKG.AAAA2.A2) terminated with execute errors
+[6:5] CT-00944, PL/SQL(GS_PLSQL_PKG.AAAA1) terminated with compiling errors
+[2:1] PLC-00916 PL/SQL:syntax error(can not recognize the symbol: A)
+
+
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop user gs_plsql_pkg cascade;
+
+Succeed.
+
+SQL> drop table if exists pkg_t1;
+
+Succeed.
+
+SQL> create table pkg_t1 (f1 int, f2 int);
+
+Succeed.
+
+SQL> insert into pkg_t1(f1, f2) values (1, 2);
+
+1 rows affected.
+
+SQL> insert into pkg_t1(f1, f2) values (2, 3);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop package if exists test_pkg1;
+
+Succeed.
+
+SQL> 
+SQL> --test case 1: create package without package body
+SQL> --expect success with warning
+SQL> CREATE PACKAGE test_pkg1
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char1)
+  6 RETURN NUMBER;
+  7 
+  8 procedure proc1(a in int);
+  9 
+ 10 END test_pkg1;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG1) terminated with compiling errors
+[5:10] PLC-00601 Sql syntax error: datatype expected, but got 'char1'
+
+
+SQL> 
+SQL> --expect success
+SQL> drop package if exists test_pkg1;
+
+Succeed.
+
+SQL> CREATE PACKAGE test_pkg1
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 END test_pkg1;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> --expect success with warning
+SQL> drop package if exists test_pkg1;
+
+Succeed.
+
+SQL> CREATE PACKAGE test_pkg1
+  2 IS
+  3 
+  4 FUNCTION fun1(cnum IN char)
+  5 RETURN NUMBER
+  6 
+  7 ;
+  8 
+  9 FUNCTION fun1
+ 10 (cnum IN int)
+ 11 RETURN NUMBER;
+ 12 
+ 13 END test_pkg1;
+ 14 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG1) terminated with compiling errors
+[9:10] PLC-00753 The object function or procedure FUN1 already exists.
+
+
+SQL> 
+SQL> --expect success with warning
+SQL> drop package if exists test_pkg1;
+
+Succeed.
+
+SQL> CREATE PACKAGE test_pkg1
+  2 IS
+  3 
+  4 FUNCTION fun1(cnum IN char)
+  5 RETURN NUMBER
+  6 
+  7 ;
+  8 
+  9 procedure fun1(a in int);
+ 10 
+ 11 END test_pkg1;
+ 12 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG1) terminated with compiling errors
+[9:11] PLC-00753 The object function or procedure FUN1 already exists.
+
+
+SQL> 
+SQL> 
+SQL> 
+SQL> --expect success  with warning
+SQL> drop package if exists test_pkg1;
+
+Succeed.
+
+SQL> CREATE PACKAGE test_pkg1
+  2 IS
+  3 
+  4 v_int int;
+  5 
+  6 FUNCTION fun1
+  7 (cnum IN char)
+  8 RETURN NUMBER;
+  9 
+ 10 END test_pkg1;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG1) terminated with compiling errors
+[4:1] PLC-00916 PL/SQL:syntax error(can not recognize the symbol: v_int)
+
+
+SQL> 
+SQL> --expect error
+SQL> CREATE PACKAGE test_pkg1
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 END test_pkg1;
+  9 /
+
+CT-00604, Duplicate object name TEST_PKG1
+SQL> 
+SQL> --test case2: create or replace package without package body
+SQL> --expect success with warning
+SQL> CREATE OR REPLACE PACKAGE test_pkg1
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun2
+  9 RETURN NUMBER
+ 10 IS;
+ 11 
+ 12 procedure proc1(a in int);
+ 13 
+ 14 END test_pkg1;
+ 15 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG1) terminated with compiling errors
+[10:1] PLC-00601 Sql syntax error: ; expected
+
+
+SQL> 
+SQL> --expect error:Package or function TEST_PKG1 is in an invalid state
+SQL> select test_pkg1.fun1('a') from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_PKG1) terminated with compiling errors
+[9:1] PLC-00601 Sql syntax error: ; expected
+
+SQL> --expect invalid
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_PKG1' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_PKG1                                                        PACKAGE SPEC       INVALID
+
+1 rows fetched.
+
+SQL> 
+SQL> --expect success without warning
+SQL> CREATE OR REPLACE PACKAGE test_pkg1
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 ;
+  8 
+  9 FUNCTION fun2
+ 10 RETURN NUMBER;
+ 11 
+ 12 procedure proc1(a in int)
+ 13 ;
+ 14 
+ 15 END test_pkg1;
+ 16 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> select test_pkg1.fun1('a') from dual;
+
+CT-00828, [1:8]package body SYS.TEST_PKG1 does not exist
+SQL> select test_pkg1.fun5('a') from dual;
+
+CT-00828, [1:8]function TEST_PKG1.FUN5 does not exist
+SQL> --expect valid
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_PKG1' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_PKG1                                                        PACKAGE SPEC       VALID  
+
+1 rows fetched.
+
+SQL> drop package test_pkg1;
+
+Succeed.
+
+SQL> 
+SQL> --Creating SERIALLY_REUSABLE Packages
+SQL> --expect success with warning
+SQL> CREATE OR REPLACE PACKAGE BODILESS_PKG IS
+  2   PRAGMA SERIALLY_REUSABLE;
+  3   n NUMBER := 5;
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.BODILESS_PKG) terminated with compiling errors
+[2:3] PLC-00916 PL/SQL:syntax error(can not recognize the symbol: PRAGMA)
+
+
+SQL> 
+SQL> --expect success with warning
+SQL> CREATE OR REPLACE PACKAGE BODILESS_PKG IS
+  2   n NUMBER := 5;
+  3 END;
+  4 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.BODILESS_PKG) terminated with compiling errors
+[2:3] PLC-00916 PL/SQL:syntax error(can not recognize the symbol: n)
+
+
+SQL> select object_name, object_type,status from my_objects where object_name='BODILESS_PKG' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+BODILESS_PKG                                                     PACKAGE SPEC       INVALID
+
+1 rows fetched.
+
+SQL> drop package BODILESS_PKG;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --test case 3: create package body without package
+SQL> drop package body if exists test_pkg2;
+
+Succeed.
+
+SQL> drop package if exists test_pkg2;
+
+Succeed.
+
+SQL> --expect success with warning
+SQL> CREATE PACKAGE BODY test_pkg2
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun2;
+ 13 
+ 14 procedure proc1(a in int)
+ 15 AS
+ 16 avger NUMBER;
+ 17 BEGIN
+ 18 update pkg_t1 set f2 = a;
+ 19 END proc1;
+ 20 
+ 21 END test_pkg2;
+ 22 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG2) terminated with compiling errors
+[1:21] PLC-00828 package SYS.TEST_PKG2 does not exist
+
+
+SQL> 
+SQL> --expect error
+SQL> CREATE PACKAGE BODY test_pkg2
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun2;
+ 13 
+ 14 END test_pkg2;
+ 15 /
+
+CT-00604, Duplicate object name TEST_PKG2
+SQL> 
+SQL> 
+SQL> --expect success with warning
+SQL> CREATE OR REPLACE PACKAGE BODY test_pkg2
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun2;
+ 13 
+ 14 END test_pkg2;
+ 15 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG2) terminated with compiling errors
+[1:32] PLC-00828 package SYS.TEST_PKG2 does not exist
+
+
+SQL> 
+SQL> --expect invalid
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_PKG2' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_PKG2                                                        PACKAGE BODY       INVALID
+
+1 rows fetched.
+
+SQL> 
+SQL> --expect error
+SQL> select test_pkg2.fun1('a') from dual; 
+
+CT-00828, [1:8]function TEST_PKG2.FUN1 does not exist
+SQL> 
+SQL> drop package body test_pkg2;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --test case4: create package body after specification with warning
+SQL> drop package TEST_EXAMPLE_PKG3;
+
+CT-00828, package spec SYS.TEST_EXAMPLE_PKG3 does not exist
+SQL> --step1:create package with warning
+SQL> CREATE OR REPLACE PACKAGE TEST_EXAMPLE_PKG3
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun2
+  9 RETURN NUMBER
+ 10 IS;
+ 11 
+ 12 procedure proc1(a in int1);
+ 13 
+ 14 END test_example_pkg3;
+ 15 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_EXAMPLE_PKG3) terminated with compiling errors
+[10:1] PLC-00601 Sql syntax error: ; expected
+
+
+SQL> 
+SQL> --step2: create package body
+SQL> CREATE PACKAGE BODY TEST_EXAMPLE_PKG3
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 procedure proc1(a in int)
+ 15 AS
+ 16 avger NUMBER;
+ 17 BEGIN
+ 18 update pkg_t1 set f2 = a;
+ 19 END proc1;
+ 20 
+ 21 FUNCTION fun2
+ 22 RETURN NUMBER
+ 23 AS
+ 24 avger NUMBER;
+ 25 BEGIN
+ 26 avger := 3;
+ 27 return avger;
+ 28 END fun2;
+ 29 
+ 30 END TEST_EXAMPLE_PKG3;
+ 31 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_EXAMPLE_PKG3) terminated with compiling errors
+[1:21] PLC-00887 The package specification SYS.TEST_EXAMPLE_PKG3 is invalid
+
+
+SQL> 
+SQL> --step3: invoke
+SQL> select TEST_EXAMPLE_PKG3.fun1('a') from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG3) terminated with compiling errors
+[9:1] PLC-00601 Sql syntax error: ; expected
+
+SQL> select TEST_EXAMPLE_PKG3.fun2() from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG3) terminated with compiling errors
+[9:1] PLC-00601 Sql syntax error: ; expected
+
+SQL> select TEST_EXAMPLE_PKG3.fun2 from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG3) terminated with compiling errors
+[9:1] PLC-00601 Sql syntax error: ; expected
+
+SQL> exec TEST_EXAMPLE_PKG3.proc1(1);
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00944 PL/SQL(SYS.TEST_EXAMPLE_PKG3) terminated with compiling errors
+[9:1] PLC-00601 Sql syntax error: ; expected
+
+
+SQL> select TEST_EXAMPLE_PKG3.fun3() from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG3) terminated with compiling errors
+[9:1] PLC-00601 Sql syntax error: ; expected
+
+SQL> 
+SQL> --expect invalid
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG3' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_EXAMPLE_PKG3                                                PACKAGE BODY       INVALID
+TEST_EXAMPLE_PKG3                                                PACKAGE SPEC       INVALID
+
+2 rows fetched.
+
+SQL> drop package body TEST_EXAMPLE_PKG3;
+
+Succeed.
+
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG3' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_EXAMPLE_PKG3                                                PACKAGE SPEC       INVALID
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE PACKAGE BODY TEST_EXAMPLE_PKG3
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 END TEST_EXAMPLE_PKG3;
+ 15 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_EXAMPLE_PKG3) terminated with compiling errors
+[1:21] PLC-00887 The package specification SYS.TEST_EXAMPLE_PKG3 is invalid
+
+
+SQL> 
+SQL> drop package TEST_EXAMPLE_PKG3;
+
+Succeed.
+
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG3' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+
+0 rows fetched.
+
+SQL> 
+SQL> --test case5: create package body after specification without warning
+SQL> drop package BODY if exists TEST_EXAMPLE_PKG4;
+
+Succeed.
+
+SQL> drop package if exists TEST_EXAMPLE_PKG4;
+
+Succeed.
+
+SQL> --step1:create package without warning
+SQL> CREATE OR REPLACE PACKAGE TEST_EXAMPLE_PKG4
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc1(a in int default 3);
+ 12 
+ 13 END;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> --step2: create package body with warning
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_EXAMPLE_PKG4
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 procedure proc1(a in int default 3)
+ 15 AS
+ 16 avger NUMBER;
+ 17 BEGIN
+ 18 update pkg_t1 set f21 = a;
+ 19 END proc1;
+ 20 
+ 21 FUNCTION fun2
+ 22 RETURN NUMBER
+ 23 AS
+ 24 avger NUMBER;
+ 25 BEGIN
+ 26 avger := 3;
+ 27 return avger;
+ 28 END fun2;
+ 29 
+ 30 END;
+ 31 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_EXAMPLE_PKG4) terminated with compiling errors
+[14:35] PLC-00944 PL/SQL(SYS.TEST_EXAMPLE_PKG4.PROC1) terminated with compiling errors
+[18:19] PLC-00618 The column 'F21' was invalid
+
+
+
+SQL> 
+SQL> --create package body with warning
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_EXAMPLE_PKG4
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 procedure proc1(a in int default 3)
+ 15 AS
+ 16 avger NUMBER;
+ 17 BEGIN
+ 18 update pkg_t1 set f2 = a;
+ 19 END;
+ 20 
+ 21 FUNCTION fun2
+ 22 RETURN NUMBER
+ 23 AS
+ 24 avger NUMBER;
+ 25 BEGIN
+ 26 avger := 3;
+ 27 return avger;
+ 28 END fun3;
+ 29 
+ 30 END;
+ 31 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_EXAMPLE_PKG4) terminated with compiling errors
+[22:8] PLC-00944 PL/SQL(SYS.TEST_EXAMPLE_PKG4.FUN2) terminated with compiling errors
+[28:5] PLC-00920 Undefined symbol FUN3
+
+
+
+SQL> 
+SQL> --step3: invoke
+SQL> --ORA-04063: package body "C##XIEYUBO.TEST_EXAMPLE_PKG4" has error
+SQL> select TEST_EXAMPLE_PKG4.fun1('a') from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG4) terminated with compiling errors
+[21:8] PLC-00944 PL/SQL(SYS.TEST_EXAMPLE_PKG4.FUN2) terminated with compiling errors
+[27:5] PLC-00920 Undefined symbol FUN3
+
+
+SQL> select TEST_EXAMPLE_PKG4.fun2() from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG4) terminated with compiling errors
+[21:8] PLC-00944 PL/SQL(SYS.TEST_EXAMPLE_PKG4.FUN2) terminated with compiling errors
+[27:5] PLC-00920 Undefined symbol FUN3
+
+
+SQL> select TEST_EXAMPLE_PKG4.fun2 from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG4) terminated with compiling errors
+[21:8] PLC-00944 PL/SQL(SYS.TEST_EXAMPLE_PKG4.FUN2) terminated with compiling errors
+[27:5] PLC-00920 Undefined symbol FUN3
+
+
+SQL> exec TEST_EXAMPLE_PKG4.proc1(1);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] CT-00944, PL/SQL(SYS.TEST_EXAMPLE_PKG4) terminated with compiling errors
+[21:8] PLC-00944 PL/SQL(SYS.TEST_EXAMPLE_PKG4.FUN2) terminated with compiling errors
+[27:5] PLC-00920 Undefined symbol FUN3
+
+
+
+SQL> select TEST_EXAMPLE_PKG4.fun3() from dual;
+
+CT-00828, [1:8]function TEST_EXAMPLE_PKG4.FUN3 does not exist
+SQL> 
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG4' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_EXAMPLE_PKG4                                                PACKAGE BODY       INVALID
+TEST_EXAMPLE_PKG4                                                PACKAGE SPEC       VALID  
+
+2 rows fetched.
+
+SQL> drop package BODY TEST_EXAMPLE_PKG4;
+
+Succeed.
+
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG4' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_EXAMPLE_PKG4                                                PACKAGE SPEC       VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> --step4: create package body with warning (default value not the same with specification)
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_EXAMPLE_PKG4
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 procedure proc1(a in int default 2)
+ 15 AS
+ 16 avger NUMBER;
+ 17 BEGIN
+ 18 update pkg_t1 set f2 = a;
+ 19 END;
+ 20 
+ 21 FUNCTION fun2
+ 22 RETURN NUMBER
+ 23 AS
+ 24 avger NUMBER;
+ 25 BEGIN
+ 26 avger := 3;
+ 27 return avger;
+ 28 END;
+ 29 
+ 30 FUNCTION fun3
+ 31 RETURN NUMBER
+ 32 AS
+ 33 avger NUMBER;
+ 34 BEGIN
+ 35 avger := 3;
+ 36 return avger;
+ 37 END fun3;
+ 38 
+ 39 END;
+ 40 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_EXAMPLE_PKG4) terminated with compiling errors
+[14:17] PLC-00967 Subprogram or variant 'PROC1' has defined in package body, but not matched with package specification
+
+
+SQL> 
+SQL> --step5: create package body without warning
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_EXAMPLE_PKG4
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 procedure proc1(a in int default 3)
+ 15 AS
+ 16 avger NUMBER;
+ 17 BEGIN
+ 18 update pkg_t1 set f2 = a;
+ 19 END;
+ 20 
+ 21 FUNCTION fun2
+ 22 RETURN NUMBER
+ 23 AS
+ 24 avger NUMBER;
+ 25 BEGIN
+ 26 avger := 3;
+ 27 return avger;
+ 28 END;
+ 29 
+ 30 --FUNCTION fun3
+ 31 --RETURN NUMBER
+ 32 --AS
+ 33 --avger NUMBER;
+ 34 --BEGIN
+ 35 --avger := 3;
+ 36 --return avger;
+ 37 --END fun3;
+ 38 
+ 39 END;
+ 40 /
+
+Succeed.
+
+SQL> 
+SQL> --check arguments
+SQL> SELECT * FROM SYS_PROC_ARGS WHERE PACKAGE='TEST_EXAMPLE_PKG4' ORDER BY OBJECT_NAME,PROC_SEQ, SEQUENCE;
+
+USER#        OBJECT_NAME                                                      ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE    DEFAULTED    DEFAULT_VALUE                                                    DEFAULT_LENGTH                                                   IN_OUT       DATA_LENGTH  DATA_PRECISION DATA_SCALE   TYPE#                RESERVERD                                                        PACKAGE                                                          PROC_SEQ     OVERLOAD     RESERVERD1   RESERVERD2   RESERVERD3                                                       RESERVERD4                                                       RESERVERD5                                                      
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ -------------- ------------ -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+0            FUN1                                                                                                                              0            1            0            20004        0                                                                                                                                              2            24                                                                                                                             TEST_EXAMPLE_PKG4                                                1            0                                                                                                                                                                                                                                        
+0            FUN1                                                             CNUM                                                             1            2            0            20008        0                                                                                                                                              1            8000                                                                                                                           TEST_EXAMPLE_PKG4                                                1            0                                                                                                                                                                                                                                        
+0            FUN2                                                                                                                              0            1            0            20004        0                                                                                                                                              2            24                                                                                                                             TEST_EXAMPLE_PKG4                                                2            0                                                                                                                                                                                                                                        
+0            PROC1                                                            A                                                                0            1            0            20001        1                                                                                                                                              1            4            0                                                                                                                 TEST_EXAMPLE_PKG4                                                3            0                                                                                                                                                                                                                                        
+
+4 rows fetched.
+
+SQL> SELECT * FROM DB_ARGUMENTS WHERE PACKAGE_NAME='TEST_EXAMPLE_PKG4' ORDER BY OBJECT_NAME,SUBPROGRAM_ID,SEQUENCE;
+
+OWNER                                                            OBJECT_NAME                                                      PACKAGE_NAME                                                     OVERLOAD    SUBPROGRAM_ID ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE                                                        DEFAULTED DEFAULT_VALUE                                                    IN_OUT DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------ ------------ -------------- ------------
+SYS                                                              FUN1                                                             TEST_EXAMPLE_PKG4                                                            1                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+SYS                                                              FUN1                                                             TEST_EXAMPLE_PKG4                                                            1             CNUM                                                             1            2            0            CHAR                                                             N                                                                          IN     8000                                    
+SYS                                                              FUN2                                                             TEST_EXAMPLE_PKG4                                                            2                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+SYS                                                              PROC1                                                            TEST_EXAMPLE_PKG4                                                            3             A                                                                0            1            0            BINARY_INTEGER                                                   Y                                                                          IN     4            0                          
+
+4 rows fetched.
+
+SQL> SELECT * FROM ADM_ARGUMENTS WHERE PACKAGE_NAME='TEST_EXAMPLE_PKG4' ORDER BY OBJECT_NAME,SUBPROGRAM_ID,SEQUENCE;
+
+OWNER                                                            OBJECT_NAME                                                      PACKAGE_NAME                                                     OVERLOAD    SUBPROGRAM_ID ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE                                                        DEFAULTED DEFAULT_VALUE                                                    IN_OUT DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------ ------------ -------------- ------------
+SYS                                                              FUN1                                                             TEST_EXAMPLE_PKG4                                                            1                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+SYS                                                              FUN1                                                             TEST_EXAMPLE_PKG4                                                            1             CNUM                                                             1            2            0            CHAR                                                             N                                                                          IN     8000                                    
+SYS                                                              FUN2                                                             TEST_EXAMPLE_PKG4                                                            2                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+SYS                                                              PROC1                                                            TEST_EXAMPLE_PKG4                                                            3             A                                                                0            1            0            BINARY_INTEGER                                                   Y                                                                          IN     4            0                          
+
+4 rows fetched.
+
+SQL> SELECT * FROM MY_ARGUMENTS WHERE PACKAGE_NAME='TEST_EXAMPLE_PKG4' ORDER BY OBJECT_NAME,SUBPROGRAM_ID,SEQUENCE;
+
+OBJECT_NAME                                                      PACKAGE_NAME                                                     OVERLOAD    SUBPROGRAM_ID ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE                                                        DEFAULTED DEFAULT_VALUE                                                    IN_OUT DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------ ------------ -------------- ------------
+FUN1                                                             TEST_EXAMPLE_PKG4                                                            1                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+FUN1                                                             TEST_EXAMPLE_PKG4                                                            1             CNUM                                                             1            2            0            CHAR                                                             N                                                                          IN     8000                                    
+FUN2                                                             TEST_EXAMPLE_PKG4                                                            2                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+PROC1                                                            TEST_EXAMPLE_PKG4                                                            3             A                                                                0            1            0            BINARY_INTEGER                                                   Y                                                                          IN     4            0                          
+
+4 rows fetched.
+
+SQL> 
+SQL> --step5: invoke
+SQL> select TEST_EXAMPLE_PKG4.fun1('a') from dual;
+
+TEST_EXAMPLE_PKG4.FUN1('A')             
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select TEST_EXAMPLE_PKG4.fun2() from dual;
+
+TEST_EXAMPLE_PKG4.FUN2()                
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> select TEST_EXAMPLE_PKG4.fun2 from dual;
+
+FUN2                                    
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> exec TEST_EXAMPLE_PKG4.proc1(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> --expect error
+SQL> select TEST_EXAMPLE_PKG4.fun3() from dual;
+
+CT-00828, [1:8]function TEST_EXAMPLE_PKG4.FUN3 does not exist
+SQL> 
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG4' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_EXAMPLE_PKG4                                                PACKAGE BODY       VALID  
+TEST_EXAMPLE_PKG4                                                PACKAGE SPEC       VALID  
+
+2 rows fetched.
+
+SQL> drop package TEST_EXAMPLE_PKG4;
+
+Succeed.
+
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG4' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+
+0 rows fetched.
+
+SQL> 
+SQL> --test case6: create package after package body
+SQL> --step1: create package body with warning
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_EXAMPLE_PKG5
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 procedure proc1(a in int)
+ 15 AS
+ 16 avger NUMBER;
+ 17 BEGIN
+ 18 update pkg_t1 set f2 = a;
+ 19 END;
+ 20 
+ 21 FUNCTION fun2
+ 22 RETURN NUMBER
+ 23 AS
+ 24 avger NUMBER;
+ 25 BEGIN
+ 26 avger := 3;
+ 27 return avger;
+ 28 END;
+ 29 
+ 30 FUNCTION fun3
+ 31 RETURN NUMBER
+ 32 AS
+ 33 avger NUMBER;
+ 34 BEGIN
+ 35 avger := 3;
+ 36 return avger;
+ 37 END fun3;
+ 38 
+ 39 END TEST_EXAMPLE_PKG5;
+ 40 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_EXAMPLE_PKG5) terminated with compiling errors
+[1:32] PLC-00828 package SYS.TEST_EXAMPLE_PKG5 does not exist
+
+
+SQL> 
+SQL> --step2:create package with warning
+SQL> CREATE OR REPLACE PACKAGE TEST_EXAMPLE_PKG5
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc1(a in int1);
+ 12 
+ 13 END TEST_EXAMPLE_PKG5;
+ 14 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_EXAMPLE_PKG5) terminated with compiling errors
+[11:22] PLC-00601 Sql syntax error: datatype expected, but got 'int1'
+
+
+SQL> 
+SQL> --step3: invoke
+SQL> --expect error
+SQL> select TEST_EXAMPLE_PKG5.fun1('a') from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG5) terminated with compiling errors
+[10:22] PLC-00601 Sql syntax error: datatype expected, but got 'int1'
+
+SQL> select TEST_EXAMPLE_PKG5.fun2() from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG5) terminated with compiling errors
+[10:22] PLC-00601 Sql syntax error: datatype expected, but got 'int1'
+
+SQL> select TEST_EXAMPLE_PKG5.fun2 from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG5) terminated with compiling errors
+[10:22] PLC-00601 Sql syntax error: datatype expected, but got 'int1'
+
+SQL> exec TEST_EXAMPLE_PKG5.proc1(1);
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00944 PL/SQL(SYS.TEST_EXAMPLE_PKG5) terminated with compiling errors
+[10:22] PLC-00601 Sql syntax error: datatype expected, but got 'int1'
+
+
+SQL> select TEST_EXAMPLE_PKG5.fun3() from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.TEST_EXAMPLE_PKG5) terminated with compiling errors
+[10:22] PLC-00601 Sql syntax error: datatype expected, but got 'int1'
+
+SQL> 
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG5' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_EXAMPLE_PKG5                                                PACKAGE BODY       INVALID
+TEST_EXAMPLE_PKG5                                                PACKAGE SPEC       INVALID
+
+2 rows fetched.
+
+SQL> 
+SQL> --step4:create package without warning
+SQL> CREATE OR REPLACE PACKAGE TEST_EXAMPLE_PKG5
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc1(a in int);
+ 12 
+ 13 END TEST_EXAMPLE_PKG5;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG5' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_EXAMPLE_PKG5                                                PACKAGE BODY       INVALID
+TEST_EXAMPLE_PKG5                                                PACKAGE SPEC       VALID  
+
+2 rows fetched.
+
+SQL> 
+SQL> --step5: invoke
+SQL> --expect success
+SQL> select TEST_EXAMPLE_PKG5.fun1('a') from dual;
+
+TEST_EXAMPLE_PKG5.FUN1('A')             
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select TEST_EXAMPLE_PKG5.fun2() from dual;
+
+TEST_EXAMPLE_PKG5.FUN2()                
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> select TEST_EXAMPLE_PKG5.fun2 from dual;
+
+FUN2                                    
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> exec TEST_EXAMPLE_PKG5.proc1(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> --expect error
+SQL> select TEST_EXAMPLE_PKG5.fun3() from dual;
+
+CT-00828, [1:8]function TEST_EXAMPLE_PKG5.FUN3 does not exist
+SQL> 
+SQL> --expect valid
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_EXAMPLE_PKG5' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_EXAMPLE_PKG5                                                PACKAGE BODY       VALID  
+TEST_EXAMPLE_PKG5                                                PACKAGE SPEC       VALID  
+
+2 rows fetched.
+
+SQL> drop package TEST_EXAMPLE_PKG5;
+
+Succeed.
+
+SQL> 
+SQL> --test case7: package name cannot the same with func/proc1 name
+SQL> drop package body if exists TEST_SAME_NAME_FUN;
+
+Succeed.
+
+SQL> drop package if exists TEST_SAME_NAME_FUN;
+
+Succeed.
+
+SQL> drop function if exists TEST_SAME_NAME_FUN;
+
+Succeed.
+
+SQL> 
+SQL> create or replace FUNCTION TEST_SAME_NAME_FUN
+  2 RETURN NUMBER
+  3 AS
+  4 avger NUMBER;
+  5 BEGIN
+  6 avger := 3;
+  7 return avger;
+  8 END TEST_SAME_NAME_FUN;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE PACKAGE TEST_SAME_NAME_FUN
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc1(a in int);
+ 12 
+ 13 END TEST_SAME_NAME_FUN;
+ 14 /
+
+CT-00604, Duplicate object name TEST_SAME_NAME_FUN
+SQL> 
+SQL> 
+SQL> --test case8: package body name can the same with func/proc1 name
+SQL> --create package body with warning
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_SAME_NAME_FUN
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 END TEST_SAME_NAME_FUN;
+ 15 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_SAME_NAME_FUN) terminated with compiling errors
+[1:32] PLC-00828 package SYS.TEST_SAME_NAME_FUN does not exist
+
+
+SQL> 
+SQL> drop package body if exists TEST_SAME_NAME_FUN;
+
+Succeed.
+
+SQL> drop function if exists TEST_SAME_NAME_FUN;
+
+Succeed.
+
+SQL> 
+SQL> --test case9: pacakge name is the same with username
+SQL> --step1:
+SQL> drop user if exists TEST_SAME_NAME_FUN cascade;
+
+Succeed.
+
+SQL> drop PACKAGE if exists TEST_SAME_NAME_FUN;
+
+Succeed.
+
+SQL> create user TEST_SAME_NAME_FUN identified by root_1234;
+
+Succeed.
+
+SQL> grant dba to TEST_SAME_NAME_FUN;
+
+Succeed.
+
+SQL> 
+SQL> create or replace FUNCTION TEST_SAME_NAME_FUN.fun2
+  2 RETURN NUMBER
+  3 AS
+  4 avger NUMBER;
+  5 BEGIN
+  6 avger := 5;
+  7 return avger;
+  8 END fun2;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> select TEST_SAME_NAME_FUN.fun2 from dual;
+
+FUN2                                    
+----------------------------------------
+5                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> --step2:
+SQL> CREATE OR REPLACE PACKAGE TEST_SAME_NAME_FUN
+  2 IS
+  3 
+  4 FUNCTION fun2
+  5 RETURN NUMBER;
+  6 
+  7 
+  8 END TEST_SAME_NAME_FUN;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_SAME_NAME_FUN
+  2 IS
+  3 
+  4 FUNCTION fun2
+  5 RETURN NUMBER
+  6 AS
+  7 avger NUMBER;
+  8 BEGIN
+  9 avger := 3;
+ 10 return avger;
+ 11 END;
+ 12 
+ 13 END TEST_SAME_NAME_FUN;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> select TEST_SAME_NAME_FUN.fun2() from dual;
+
+TEST_SAME_NAME_FUN.FUN2()               
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> select TEST_SAME_NAME_FUN.fun2 from dual;
+
+FUN2                                    
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> drop function if exists TEST_SAME_NAME_FUN.fun2;
+
+Succeed.
+
+SQL> drop PACKAGE if exists TEST_SAME_NAME_FUN;
+
+Succeed.
+
+SQL> 
+SQL> --test case10: package name cannot be the same with built-in package name
+SQL> --expect error
+SQL> CREATE OR REPLACE PACKAGE DBE_STATS
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc1(a in int);
+ 12 
+ 13 END DBE_STATS;
+ 14 /
+
+CT-00604, Duplicate object name DBE_STATS
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE PACKAGE BODY DBE_STATS
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 END DBE_STATS;
+ 15 /
+
+CT-00753, The object built-in package DBE_STATS already exists.
+SQL> 
+SQL> --test case11: creating a package with the same name under the user is not supported
+SQL> --expect error
+SQL> CREATE OR REPLACE PACKAGE SYS
+  2 IS
+  3 procedure proc1(a in int);
+  4 
+  5 END SYS;
+  6 /
+
+CT-00753, The object creating a package with the same name under the user is not supported, user SYS already exists.
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE PACKAGE BODY SYS
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 END SYS;
+ 15 /
+
+CT-00753, The object creating a package with the same name under the user is not supported, user SYS already exists.
+SQL> 
+SQL> --test case12: test recompile
+SQL> 
+SQL> drop package if exists TEST_PACKAGE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY test_package
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 RETURN(avger);
+ 12 END fun1;
+ 13 
+ 14 procedure proc1(a in int)
+ 15 AS
+ 16 avger NUMBER;
+ 17 BEGIN
+ 18 update pkg_t1 set f2 = a;
+ 19 END proc1;
+ 20 
+ 21 FUNCTION fun2
+ 22 RETURN NUMBER
+ 23 AS
+ 24 avger NUMBER;
+ 25 BEGIN
+ 26 avger := 3;
+ 27 return avger;
+ 28 END fun2;
+ 29 
+ 30 END test_package;
+ 31 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PACKAGE) terminated with compiling errors
+[1:32] PLC-00828 package SYS.TEST_PACKAGE does not exist
+
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE test_package
+  2 IS
+  3 
+  4 FUNCTION fun1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc1(a in int);
+ 12 
+ 13 END test_package;
+ 14 /
+
+Succeed.
+
+SQL> --unsupport
+SQL> alter package test_package compile body;
+
+CT-00601, Sql syntax error: object type expected but package found
+SQL> 
+SQL> select object_name, object_type,status from my_objects where object_name='TEST_PACKAGE' order by object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_PACKAGE                                                     PACKAGE BODY       INVALID
+TEST_PACKAGE                                                     PACKAGE SPEC       VALID  
+
+2 rows fetched.
+
+SQL> 
+SQL> drop package if exists test_package;
+
+Succeed.
+
+SQL> 
+SQL> --test case13: name incasensetive
+SQL> --step1: test pacakge and pacakge body name
+SQL> CREATE OR REPLACE PACKAGE "pl_pkg13"
+  2 IS
+  3 procedure proc1(a in int);
+  4 
+  5 FUNCTION fun1
+  6 (cnum IN char)
+  7 RETURN NUMBER;
+  8 
+  9 END "pl_pkg13";
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE `ds_test` AS
+  2   procedure proc1;
+  3 END `ds_test`;
+  4 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE 'pkg_test' AS
+  2   procedure proc1;
+  3 END 'pkg_test';
+  4 /
+
+CT-00601, [1:27]Sql syntax error: invalid variant/object name was found
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY "pl_pkg13"
+  2 IS
+  3 FUNCTION fun1
+  4 (cnum IN char)
+  5 RETURN NUMBER
+  6 AS
+  7 avger NUMBER;
+  8 BEGIN
+  9 SELECT count(*) INTO avger FROM dual;
+ 10 RETURN(avger);
+ 11 END fun1;
+ 12 
+ 13 procedure proc1(a in int)
+ 14 AS
+ 15 avger NUMBER;
+ 16 BEGIN
+ 17 avger :=1;
+ 18 END proc1;
+ 19 
+ 20 END "pl_pkg13";
+ 21 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY `ds_test` AS
+  2 FUNCTION fun1
+  3 (cnum IN char)
+  4 RETURN NUMBER
+  5 AS
+  6 avger NUMBER;
+  7 BEGIN
+  8 SELECT count(*) INTO avger FROM dual;
+  9 RETURN(avger);
+ 10 END fun1;
+ 11 
+ 12 procedure proc1
+ 13 AS
+ 14 avger NUMBER;
+ 15 BEGIN
+ 16 avger :=1;
+ 17 END proc1;
+ 18 END `ds_test`;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY 'pkg_test' AS
+  2   FUNCTION fun1
+  3 (cnum IN char)
+  4 RETURN NUMBER
+  5 AS
+  6 avger NUMBER;
+  7 BEGIN
+  8 SELECT count(*) INTO avger FROM dual;
+  9 RETURN(avger);
+ 10 END fun1;
+ 11 
+ 12 END 'pkg_test';
+ 13 /
+
+CT-00601, [1:32]Sql syntax error: invalid variant/object name was found
+SQL> 
+SQL> select object_name, object_type,status from my_objects where object_name in ('pl_pkg13','ds_test', 'pkg_test') order by object_name,object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+ds_test                                                          PACKAGE BODY       VALID  
+ds_test                                                          PACKAGE SPEC       VALID  
+pl_pkg13                                                         PACKAGE BODY       VALID  
+pl_pkg13                                                         PACKAGE SPEC       VALID  
+
+4 rows fetched.
+
+SQL> 
+SQL> --step 2: test replace 
+SQL> --expect success
+SQL> CREATE OR REPLACE PACKAGE "pl_pkg13"
+  2 IS
+  3 procedure proc1(a in int);
+  4 
+  5 FUNCTION fun2
+  6 RETURN NUMBER;
+  7 
+  8 END "pl_pkg13";
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY "pl_pkg13"
+  2 IS
+  3 FUNCTION fun2
+  4 RETURN NUMBER
+  5 AS
+  6 avger NUMBER;
+  7 BEGIN
+  8 SELECT count(*) INTO avger FROM dual;
+  9 avger := avger + 100;
+ 10 RETURN(avger);
+ 11 END fun2;
+ 12 
+ 13 procedure proc1(a in int)
+ 14 AS
+ 15 avger NUMBER;
+ 16 BEGIN
+ 17 avger :=1;
+ 18 	dbe_output.print_line('PROC1');
+ 19 END proc1;
+ 20 
+ 21 END "pl_pkg13";
+ 22 /
+
+Succeed.
+
+SQL> select object_name, object_type,status from my_objects where object_name in ('pl_pkg13','ds_test', 'pkg_test') order by object_name,object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+ds_test                                                          PACKAGE BODY       VALID  
+ds_test                                                          PACKAGE SPEC       VALID  
+pl_pkg13                                                         PACKAGE BODY       VALID  
+pl_pkg13                                                         PACKAGE SPEC       VALID  
+
+4 rows fetched.
+
+SQL> 
+SQL> --step3: test call
+SQL> select "pl_pkg13".fun2() from dual;
+
+"PL_PKG13".FUN2()                       
+----------------------------------------
+101                                     
+
+1 rows fetched.
+
+SQL> select "pl_pkg13".fun2 from dual;
+
+FUN2                                    
+----------------------------------------
+101                                     
+
+1 rows fetched.
+
+SQL> select pl_pkg13.fun2 from dual;
+
+CT-00601, [1:8]Sql syntax error: invalid table alias 'PL_PKG13'
+SQL> select "pl_pkg13".fun1('a') from dual;
+
+CT-00828, [1:8]function pl_pkg13.FUN1 does not exist
+SQL> select sys."pl_pkg13".fun2() from dual;
+
+SYS."PL_PKG13".FUN2()                   
+----------------------------------------
+101                                     
+
+1 rows fetched.
+
+SQL> 
+SQL> begin
+  2 	"pl_pkg13".proc1(1);
+  3 end;	
+  4 /
+
+PROC1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> begin
+  2 	pl_pkg13.proc1(1);
+  3 end;	
+  4 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:2] PLC-00828 procedure PL_PKG13.PROC1 does not exist
+
+SQL> 
+SQL> begin
+  2 	`pl_pkg13`.proc1(1);
+  3 end;	
+  4 /
+
+PROC1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop package "pl_pkg13";
+
+Succeed.
+
+SQL> 
+SQL> --step4: test pacakge and pacakge body name, and test call
+SQL> CREATE OR REPLACE PACKAGE `ds_test` AS
+  2 FUNCTION `fun13_1`
+  3 RETURN NUMBER;
+  4 
+  5 procedure `proc13`(a in int);
+  6 END `ds_test`;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY `ds_test` AS
+  2 FUNCTION `fun13_1`
+  3 RETURN NUMBER
+  4 AS
+  5 avger NUMBER;
+  6 BEGIN
+  7 SELECT count(*) INTO avger FROM dual;
+  8 RETURN(avger);
+  9 END;
+ 10 
+ 11 procedure `proc13`(a in int)
+ 12 AS
+ 13 avger NUMBER;
+ 14 BEGIN
+ 15 SELECT count(*) INTO avger FROM dual;
+ 16 END;
+ 17 
+ 18 END `ds_test`;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> select object_name, object_type,status from my_objects where object_name in ('pl_pkg13','ds_test', 'pkg_test') order by object_name,object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+ds_test                                                          PACKAGE BODY       VALID  
+ds_test                                                          PACKAGE SPEC       VALID  
+
+2 rows fetched.
+
+SQL> 
+SQL> select `ds_test`.`fun13_1`() from dual;
+
+`DS_TEST`.`FUN13_1`()                   
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select `ds_test`.`fun13_1` from dual;
+
+fun13_1                                 
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select ds_test.`fun13_1` from dual;
+
+CT-00601, [1:8]Sql syntax error: invalid table alias 'DS_TEST'
+SQL> select ds_test.fun13_1 from dual;
+
+CT-00601, [1:8]Sql syntax error: invalid table alias 'DS_TEST'
+SQL> select ds_test.fun13_1() from dual;
+
+CT-00828, [1:8]function DS_TEST.FUN13_1 does not exist
+SQL> 
+SQL> begin
+  2 `ds_test`.`proc13`(1);
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> begin
+  2 ds_test.`proc13`(1);
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:1] PLC-00828 procedure DS_TEST.proc13 does not exist
+
+SQL> 
+SQL> begin
+  2 ds_test.proc13(1);
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:1] PLC-00828 procedure DS_TEST.PROC13 does not exist
+
+SQL> 
+SQL> drop PACKAGE `ds_test`;
+
+Succeed.
+
+SQL> 
+SQL> --step5: test procedure and function name, and test call
+SQL> CREATE OR REPLACE PACKAGE test_PKG_1 AS
+  2 FUNCTION `fun13_1`
+  3 RETURN NUMBER;
+  4 
+  5 procedure `proc13`(a in int);
+  6 END test_PKG_1;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY test_PKG_1 AS
+  2 FUNCTION `fun13_1`
+  3 RETURN NUMBER
+  4 AS
+  5 avger NUMBER;
+  6 BEGIN
+  7 SELECT count(*) INTO avger FROM dual;
+  8 RETURN(avger);
+  9 END;
+ 10 
+ 11 procedure `proc13`(a in int)
+ 12 AS
+ 13 avger NUMBER;
+ 14 BEGIN
+ 15 SELECT count(*) INTO avger FROM dual;
+ 16 END;
+ 17 
+ 18 END test_PKG_1;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> select object_name, object_type,status from my_objects where object_name in ('TEST_PKG_1') order by object_name,object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+TEST_PKG_1                                                       PACKAGE BODY       VALID  
+TEST_PKG_1                                                       PACKAGE SPEC       VALID  
+
+2 rows fetched.
+
+SQL> 
+SQL> select test_PKG_1.`fun13_1`() from dual;
+
+TEST_PKG_1.`FUN13_1`()                  
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select test_PKG_1.`fun13_1` from dual;
+
+fun13_1                                 
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select test_PKG_1.`FUN13_1` from dual;
+
+CT-00828, [1:8]function TEST_PKG_1.FUN13_1 does not exist
+SQL> select test_PKG_1.fun13_1 from dual;
+
+CT-00828, [1:8]function TEST_PKG_1.FUN13_1 does not exist
+SQL> select test_PKG_1.fun13_1() from dual;
+
+CT-00828, [1:8]function TEST_PKG_1.FUN13_1 does not exist
+SQL> 
+SQL> begin
+  2 test_PKG_1.`proc13`(1);
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> begin
+  2 test_PKG_1.proc13(1);
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:1] PLC-00828 procedure TEST_PKG_1.PROC13 does not exist
+
+SQL> 
+SQL> drop PACKAGE if exists test_PKG_1;
+
+Succeed.
+
+SQL> 
+SQL> --test case14: test dependencies(1)
+SQL> DROP TABLE IF EXISTS T_PKG_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_PKG_T2;
+
+Succeed.
+
+SQL> CREATE TABLE T_PKG_T1(F1 INT, F2 VARCHAR2(20));
+
+Succeed.
+
+SQL> CREATE TABLE T_PKG_T2(F1 INT, F2 VARCHAR2(20));
+
+Succeed.
+
+SQL> create or replace view PKG_V13 as select * from T_PKG_T2;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure T_PKG_P1(a int, b varchar2)
+  2 as
+  3 c int := 1;
+  4 d int := 2;
+  5 begin
+  6   insert into T_PKG_T1 values(a,b);
+  7   commit;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function TEST_FUN13
+  2 RETURN NUMBER
+  3 AS
+  4 avger NUMBER;
+  5 BEGIN
+  6 avger := 3;
+  7 select count(*) into avger from PKG_V13;
+  8 return avger;
+  9 END TEST_FUN13;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG13
+  2 IS
+  3 
+  4 procedure proc13(a in int);
+  5 
+  6 END TEST_PKG13;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_PKG13
+  2 IS
+  3 
+  4 procedure proc13(a in int)
+  5 AS
+  6 avger NUMBER;
+  7 BEGIN
+  8 avger := TEST_FUN13;
+  9 T_PKG_P1(1, 'a');
+ 10 update T_PKG_T1 set f2 = 1;
+ 11 END;
+ 12 
+ 13 END TEST_PKG13;
+ 14 /
+
+Succeed.
+
+SQL> --expect 3 rows
+SQL> SELECT * FROM MY_DEPENDENCIES WHERE NAME='TEST_PKG13' ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              TEST_FUN13                                                       FUNCTION       
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              TEST_PKG13                                                       PACKAGE        
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              T_PKG_P1                                                         PROCEDURE      
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              T_PKG_T1                                                         TABLE          
+
+4 rows fetched.
+
+SQL> drop package if exists TEST_PKG13;
+
+Succeed.
+
+SQL> --expect 0 rows
+SQL> SELECT * FROM MY_DEPENDENCIES WHERE NAME='TEST_PKG13' ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+
+0 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG13
+  2 IS
+  3 
+  4 FUNCTION fun13_1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun13_2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc13(a in int);
+ 12 
+ 13 END TEST_PKG13;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_PKG13
+  2 IS
+  3 
+  4 procedure proc13(a in int)
+  5 AS
+  6 avger NUMBER;
+  7 BEGIN
+  8 avger := TEST_FUN13;
+  9 T_PKG_P1(1, 'a');
+ 10 update T_PKG_T1 set f2 = 1;
+ 11 END;
+ 12 
+ 13 END TEST_PKG13;
+ 14 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG13) terminated with compiling errors
+PLC-00966 Subprogram or variant 'FUN13_1' has declared in package, but not defined in package body
+
+
+SQL> 
+SQL> --expect 3 rows
+SQL> SELECT * FROM MY_DEPENDENCIES WHERE NAME='TEST_PKG13' ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+
+0 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_PKG13
+  2 IS
+  3 
+  4 FUNCTION fun13_1
+  5 (cnum IN char)
+  6 RETURN NUMBER
+  7 AS
+  8 avger NUMBER;
+  9 BEGIN
+ 10 SELECT count(*) INTO avger FROM dual;
+ 11 SELECT count(*) INTO avger FROM PKG_V13;
+ 12 RETURN(avger);
+ 13 END fun13_1;
+ 14 
+ 15 procedure proc13(a in int)
+ 16 AS
+ 17 avger NUMBER;
+ 18 BEGIN
+ 19 avger := TEST_FUN13;
+ 20 T_PKG_P1(1, 'a');
+ 21 update T_PKG_T1 set f2 = 1;
+ 22 END;
+ 23 
+ 24 FUNCTION fun13_2
+ 25 RETURN NUMBER
+ 26 AS
+ 27 avger NUMBER;
+ 28 BEGIN
+ 29 avger := 3;
+ 30 return avger;
+ 31 END;
+ 32 
+ 33 FUNCTION fun13_3
+ 34 RETURN NUMBER
+ 35 AS
+ 36 avger NUMBER;
+ 37 BEGIN
+ 38 avger := 3;
+ 39 update T_PKG_T2 set f2 = 1;
+ 40 return avger;
+ 41 END fun13_3;
+ 42 
+ 43 END TEST_PKG13;
+ 44 /
+
+Succeed.
+
+SQL> 
+SQL> select TEST_PKG13.FUN13_3() from T_PKG_T1;
+
+CT-00828, [1:8]function TEST_PKG13.FUN13_3 does not exist
+SQL> select TEST_PKG13.FUN13_2() from T_PKG_T1;
+
+TEST_PKG13.FUN13_2()                    
+----------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --expect 6 rows
+SQL> SELECT * FROM MY_DEPENDENCIES WHERE NAME='TEST_PKG13' ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              PKG_V13                                                          VIEW           
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              TEST_FUN13                                                       FUNCTION       
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              TEST_PKG13                                                       PACKAGE        
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              T_PKG_P1                                                         PROCEDURE      
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              T_PKG_T1                                                         TABLE          
+SYS                                                              TEST_PKG13                                                       PACKAGE BODY SYS                                                              T_PKG_T2                                                         TABLE          
+
+7 rows fetched.
+
+SQL> 
+SQL> --expect success
+SQL> select TEST_PKG13.FUN13_1('a') from T_PKG_T1;
+
+TEST_PKG13.FUN13_1('A')                 
+----------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --expect success
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG13
+  2 IS
+  3 
+  4 FUNCTION fun13_1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun13_2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc13(a in int);
+ 12 
+ 13 FUNCTION fun13_4
+ 14 RETURN NUMBER;
+ 15 
+ 16 END TEST_PKG13;
+ 17 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> select TEST_PKG13.FUN13_1('a') from T_PKG_T1;
+
+TEST_PKG13.FUN13_1('A')                 
+----------------------------------------
+
+0 rows fetched.
+
+SQL> select TEST_PKG13.FUN13_4('a') from T_PKG_T1;
+
+CT-00916, [1:8]PL/SQL:syntax error(unexpected more arguments for current procedure/function)
+SQL> --test case15: test dependencies(2)
+SQL> --expect success
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG13
+  2 IS
+  3 
+  4 FUNCTION fun13_1
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 FUNCTION fun13_2
+  9 RETURN NUMBER;
+ 10 
+ 11 procedure proc13(a in int);
+ 12 
+ 13 END TEST_PKG13;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace view T_PKG_V15_1 as select TEST_PKG13.FUN13_1('a') from T_PKG_T1;
+
+Succeed.
+
+SQL> create or replace view T_PKG_V15_2 as select TEST_PKG13.fun13_2 from dual;
+
+Succeed.
+
+SQL> create or replace view T_PKG_V15_3 as select TEST_PKG13.fun13_2() from dual;
+
+Succeed.
+
+SQL> 
+SQL> --expect 6 row
+SQL> SELECT * FROM MY_DEPENDENCIES WHERE NAME like 'T_PKG_V15%' ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              T_PKG_V15_1                                                      VIEW         SYS                                                              TEST_PKG13                                                       PACKAGE        
+SYS                                                              T_PKG_V15_1                                                      VIEW         SYS                                                              T_PKG_T1                                                         TABLE          
+SYS                                                              T_PKG_V15_2                                                      VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              T_PKG_V15_2                                                      VIEW         SYS                                                              TEST_PKG13                                                       PACKAGE        
+SYS                                                              T_PKG_V15_3                                                      VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              T_PKG_V15_3                                                      VIEW         SYS                                                              TEST_PKG13                                                       PACKAGE        
+
+6 rows fetched.
+
+SQL> 
+SQL> create or replace procedure T_PKG_P15(a int, b varchar2)
+  2 as
+  3 c int := 1;
+  4 d int := 2;
+  5 begin
+  6   insert into T_PKG_T1 values(TEST_PKG13.FUN13_1('a'),TEST_PKG13.fun13_2);
+  7   commit;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function T_PKG_F15
+  2 RETURN NUMBER
+  3 AS
+  4 avger NUMBER;
+  5 BEGIN
+  6 avger := 3;
+  7 select TEST_PKG13.fun13_2() into avger from PKG_V13;
+  8 return avger;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM MY_DEPENDENCIES WHERE NAME like 'T_PKG_%15' ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              T_PKG_F15                                                        FUNCTION     SYS                                                              PKG_V13                                                          VIEW           
+SYS                                                              T_PKG_F15                                                        FUNCTION     SYS                                                              TEST_PKG13                                                       PACKAGE        
+SYS                                                              T_PKG_P15                                                        PROCEDURE    SYS                                                              TEST_PKG13                                                       PACKAGE        
+SYS                                                              T_PKG_P15                                                        PROCEDURE    SYS                                                              T_PKG_T1                                                         TABLE          
+
+4 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from my_objects where object_name in ('T_PKG_F15','T_PKG_P15','TEST_PKG13', 'PKG_V13') order by object_name, object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+PKG_V13                                                          VIEW               VALID  
+TEST_PKG13                                                       PACKAGE BODY       UNKNOWN
+TEST_PKG13                                                       PACKAGE SPEC       VALID  
+T_PKG_F15                                                        FUNCTION           VALID  
+T_PKG_P15                                                        PROCEDURE          VALID  
+
+5 rows fetched.
+
+SQL> 
+SQL> drop table if exists T_PKG_T1;
+
+Succeed.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from my_objects where object_name in ('T_PKG_F15','T_PKG_P15','TEST_PKG13', 'PKG_V13') order by object_name, object_type;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+PKG_V13                                                          VIEW               VALID  
+TEST_PKG13                                                       PACKAGE BODY       UNKNOWN
+TEST_PKG13                                                       PACKAGE SPEC       VALID  
+T_PKG_F15                                                        FUNCTION           VALID  
+T_PKG_P15                                                        PROCEDURE          UNKNOWN
+
+5 rows fetched.
+
+SQL> 
+SQL> drop table if exists T_PKG_T2;
+
+Succeed.
+
+SQL> drop view if exists PKG_V13;
+
+Succeed.
+
+SQL> drop package if exists TEST_PKG13;
+
+Succeed.
+
+SQL> drop procedure if exists T_PKG_P15;
+
+Succeed.
+
+SQL> drop function if exists T_PKG_F15;
+
+Succeed.
+
+SQL> drop user if exists TEST_SAME_NAME_FUN cascade;
+
+Succeed.
+
+SQL> 
+SQL> ---------------------------------------------------------------
+SQL> --test case 16: test privilage
+SQL> drop user if exists TEST_PKG_USER1 cascade;
+
+Succeed.
+
+SQL> create user TEST_PKG_USER1 identified by root_1234;
+
+Succeed.
+
+SQL> grant create session, create table to TEST_PKG_USER1;
+
+Succeed.
+
+SQL> 
+SQL> --CREATE SYS  package ,expect success
+SQL> CREATE OR REPLACE PACKAGE SYS_PKG_1
+  2 IS
+  3 
+  4 FUNCTION fun_1
+  5 RETURN NUMBER;
+  6 
+  7 END SYS_PKG_1;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY SYS_PKG_1
+  2 IS
+  3 
+  4 FUNCTION fun_1
+  5 RETURN NUMBER
+  6 AS
+  7 avger NUMBER;
+  8 BEGIN
+  9 avger := 3;
+ 10 return avger;
+ 11 END;
+ 12 
+ 13 END SYS_PKG_1;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> --(0) create procedure privilage can create package
+SQL> conn TEST_PKG_USER1/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG_USER1.TEST_PKG_16_1
+  2 IS
+  3 
+  4 FUNCTION fun_2
+  5 RETURN NUMBER;
+  6 
+  7 END TEST_PKG_16_1;
+  8 /
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> grant create procedure to TEST_PKG_USER1;
+
+Succeed.
+
+SQL> conn TEST_PKG_USER1/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --expect success
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG_USER1.TEST_PKG_16_1
+  2 IS
+  3 
+  4 FUNCTION fun_2
+  5 RETURN NUMBER;
+  6 
+  7 END TEST_PKG_16_1;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_PKG_USER1.TEST_PKG_16_1
+  2 IS
+  3 
+  4 FUNCTION fun_2
+  5 RETURN NUMBER
+  6 AS
+  7 avger NUMBER;
+  8 BEGIN
+  9 avger := 3;
+ 10 return avger;
+ 11 END;
+ 12 
+ 13 END TEST_PKG_16_1;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> select TEST_PKG_USER1.TEST_PKG_16_1.fun_2() from dual;
+
+TEST_PKG_USER1.TEST_PKG_16_1.FUN_2()    
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> select TEST_PKG_16_1.fun_2() from dual;
+
+TEST_PKG_16_1.FUN_2()                   
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> --(1)sys can modify and execute the package of other user
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> select TEST_PKG_USER1.TEST_PKG_16_1.fun_2() from dual;
+
+TEST_PKG_USER1.TEST_PKG_16_1.FUN_2()    
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> drop package TEST_PKG_USER1.TEST_PKG_16_1;
+
+Succeed.
+
+SQL> 
+SQL> --(2)user can call the grant pacakge of other user
+SQL> --expect success
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG_USER1.TEST_PKG_16_1
+  2 IS
+  3 
+  4 FUNCTION fun_2
+  5 RETURN NUMBER;
+  6 
+  7 END TEST_PKG_16_1;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY TEST_PKG_USER1.TEST_PKG_16_1
+  2 IS
+  3 
+  4 FUNCTION fun_2
+  5 RETURN NUMBER
+  6 AS
+  7 avger NUMBER;
+  8 BEGIN
+  9 avger := 3;
+ 10 return avger;
+ 11 END;
+ 12 
+ 13 END TEST_PKG_16_1;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists TEST_PKG_USER2 cascade;
+
+Succeed.
+
+SQL> create user TEST_PKG_USER2 identified by root_1234;
+
+Succeed.
+
+SQL> grant create session, create table to TEST_PKG_USER2;
+
+Succeed.
+
+SQL> conn TEST_PKG_USER2/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> --expect error
+SQL> select TEST_PKG_USER1.TEST_PKG_16_1.fun_2() from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> 
+SQL> conn TEST_PKG_USER1/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> grant execute on TEST_PKG_16_1 to TEST_PKG_USER2;
+
+Succeed.
+
+SQL> 
+SQL> conn TEST_PKG_USER2/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> --expect success
+SQL> select TEST_PKG_USER1.TEST_PKG_16_1.fun_2() from dual;
+
+TEST_PKG_USER1.TEST_PKG_16_1.FUN_2()    
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> --(3)user with sys privilage (execute any procedure) can call the package of other user, excepte sys
+SQL> conn TEST_PKG_USER1/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> revoke execute on TEST_PKG_16_1 from TEST_PKG_USER2;
+
+Succeed.
+
+SQL> 
+SQL> conn TEST_PKG_USER2/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> --expect error
+SQL> select TEST_PKG_USER1.TEST_PKG_16_1.fun_2() from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> grant execute any procedure to TEST_PKG_USER2;
+
+Succeed.
+
+SQL> 
+SQL> conn TEST_PKG_USER2/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> --expect success
+SQL> select TEST_PKG_USER1.TEST_PKG_16_1.fun_2() from dual;
+
+TEST_PKG_USER1.TEST_PKG_16_1.FUN_2()    
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> --expect error(the privilage of execute any procedure cannot call the package of sys.)
+SQL> select sys.SYS_PKG_1.fun_1() from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> 
+SQL> --(4)dba can call all package, excepte sys
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> revoke execute any procedure from TEST_PKG_USER2;
+
+Succeed.
+
+SQL> conn TEST_PKG_USER2/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> --expect error
+SQL> select TEST_PKG_USER1.TEST_PKG_16_1.fun_2() from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> --expect error
+SQL> select sys.SYS_PKG_1.fun_1() from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> grant dba to TEST_PKG_USER2;
+
+Succeed.
+
+SQL> conn TEST_PKG_USER2/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> --expect success
+SQL> select TEST_PKG_USER1.TEST_PKG_16_1.fun_2() from dual;
+
+TEST_PKG_USER1.TEST_PKG_16_1.FUN_2()    
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> --expect error
+SQL> select sys.SYS_PKG_1.fun_1() from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> 
+SQL> --(5)any user cannot drop the package of sys
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> grant execute on SYS_PKG_1 to TEST_PKG_USER1;
+
+Succeed.
+
+SQL> grant execute on SYS_PKG_1 to TEST_PKG_USER2;
+
+Succeed.
+
+SQL> 
+SQL> --expect select success,drop error
+SQL> conn TEST_PKG_USER1/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> select sys.SYS_PKG_1.fun_1() from dual;
+
+SYS.SYS_PKG_1.FUN_1()                   
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> drop package sys.SYS_PKG_1;
+
+CT-01001, Permissions were insufficient
+SQL> conn TEST_PKG_USER2/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> select sys.SYS_PKG_1.fun_1() from dual;
+
+SYS.SYS_PKG_1.FUN_1()                   
+----------------------------------------
+3                                       
+
+1 rows fetched.
+
+SQL> drop package sys.SYS_PKG_1;
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> grant drop any procedure to TEST_PKG_USER1;
+
+Succeed.
+
+SQL> grant drop any procedure to TEST_PKG_USER2;
+
+Succeed.
+
+SQL> --expect drop error(drop any procedure privilage cannot drop sys's pacakge)
+SQL> conn TEST_PKG_USER1/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> drop package sys.SYS_PKG_1;
+
+CT-01001, Permissions were insufficient
+SQL> conn TEST_PKG_USER2/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> drop package sys.SYS_PKG_1;
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> --(6) package without body can grant to other user
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE PACKAGE SYS_PKG_2
+  2 IS
+  3 
+  4 FUNCTION fun_1
+  5 RETURN NUMBER;
+  6 
+  7 END SYS_PKG_2;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> --expect success
+SQL> grant execute on SYS_PKG_2 to TEST_PKG_USER1;
+
+Succeed.
+
+SQL> 
+SQL> --(7)package body without specification can not grant to other user
+SQL> CREATE OR REPLACE PACKAGE BODY SYS_PKG_3
+  2 IS
+  3 
+  4 FUNCTION fun_1
+  5 RETURN NUMBER
+  6 AS
+  7 avger NUMBER;
+  8 BEGIN
+  9 avger := 3;
+ 10 return avger;
+ 11 END;
+ 12 
+ 13 END SYS_PKG_3;
+ 14 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.SYS_PKG_3) terminated with compiling errors
+[1:32] PLC-00828 package SYS.SYS_PKG_3 does not exist
+
+
+SQL> 
+SQL> --expect error
+SQL> grant execute on SYS_PKG_3 to TEST_PKG_USER1;
+
+CT-00828, object SYS.SYS_PKG_3 does not exist
+SQL> --(8)package specification with error can  grant to other user
+SQL> CREATE OR REPLACE PACKAGE SYS_PKG_4
+  2 IS
+  3 
+  4 FUNCTION fun_1
+  5 RETURN NUMBER IS;
+  6 
+  7 END SYS_PKG_4;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.SYS_PKG_4) terminated with compiling errors
+[5:15] PLC-00601 Sql syntax error: ; expected
+
+
+SQL> 
+SQL> --expect success
+SQL> grant execute on SYS_PKG_4 to TEST_PKG_USER1;
+
+Succeed.
+
+SQL> 
+SQL> conn TEST_PKG_USER1/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> select sys.SYS_PKG_4.fun_1() from dual;
+
+CT-00944, [1:8]PL/SQL(SYS.SYS_PKG_4) terminated with compiling errors
+[4:15] PLC-00601 Sql syntax error: ; expected
+
+SQL> 
+SQL> --clean
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop package if exists SYS_PKG_1;
+
+Succeed.
+
+SQL> drop package if exists SYS_PKG_2;
+
+Succeed.
+
+SQL> drop package if exists SYS_PKG_3;
+
+Succeed.
+
+SQL> drop package if exists SYS_PKG_4;
+
+Succeed.
+
+SQL> 
+SQL> --TEST default valued
+SQL> --step1.expect success
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG_DEF
+  2 IS
+  3 
+  4 FUNCTION TEST_PKG_DEF_Fun
+  5 (cnum IN char default 'aaaa')
+  6 RETURN NUMBER;
+  7 
+  8 procedure TEST_PKG_DEF_Proc(a in int default 3);
+  9 
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> --step2.expect error
+SQL> Create Or Replace Package Body TEST_PKG_DEF
+  2 Is
+  3 
+  4 Function TEST_PKG_DEF_Fun
+  5 (Cnum In Char default 'aaaabb')
+  6 Return Number
+  7 As
+  8 Avger Number;
+  9 Begin
+ 10 Select Count(*) Into Avger From Dual;
+ 11 Return(Avger);
+ 12 End;
+ 13 
+ 14 Procedure TEST_PKG_DEF_Proc(A In Int default 3)
+ 15 As
+ 16 Avger Number;
+ 17 Begin
+ 18 Avger := 3;
+ 19 End;
+ 20 
+ 21 End;
+ 22 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG_DEF) terminated with compiling errors
+[5:2] PLC-00967 Subprogram or variant 'TEST_PKG_DEF_FUN' has defined in package body, but not matched with package specification
+
+
+SQL> 
+SQL> --step3.expect error
+SQL> Create Or Replace Package Body TEST_PKG_DEF
+  2 Is
+  3 
+  4 Function TEST_PKG_DEF_Fun
+  5 (Cnum In Char default 'aaaa')
+  6 Return Number
+  7 As
+  8 Avger Number;
+  9 Begin
+ 10 Select Count(*) Into Avger From Dual;
+ 11 Return(Avger);
+ 12 End;
+ 13 
+ 14 Procedure TEST_PKG_DEF_Proc(A In Int default 4)
+ 15 As
+ 16 Avger Number;
+ 17 Begin
+ 18 Avger := 3;
+ 19 End;
+ 20 
+ 21 End;
+ 22 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG_DEF) terminated with compiling errors
+[14:29] PLC-00967 Subprogram or variant 'TEST_PKG_DEF_PROC' has defined in package body, but not matched with package specification
+
+
+SQL> 
+SQL> --step4.expect success
+SQL> Create Or Replace Package Body TEST_PKG_DEF
+  2 Is
+  3 
+  4 Function TEST_PKG_DEF_Fun
+  5 (Cnum In Char default 'aaaa')
+  6 Return Number
+  7 As
+  8 Avger Number;
+  9 Begin
+ 10 Select Count(*) Into Avger From Dual;
+ 11 Return(Avger);
+ 12 End;
+ 13 
+ 14 Procedure TEST_PKG_DEF_Proc(A In Int default 3)
+ 15 As
+ 16 Avger Number;
+ 17 Begin
+ 18 Avger := 3;
+ 19 End;
+ 20 
+ 21 End;
+ 22 /
+
+Succeed.
+
+SQL> 
+SQL> --check arguments
+SQL> SELECT * FROM SYS_PROC_ARGS WHERE PACKAGE='TEST_PKG_DEF' ORDER BY OBJECT_NAME,PROC_SEQ, SEQUENCE;
+
+USER#        OBJECT_NAME                                                      ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE    DEFAULTED    DEFAULT_VALUE                                                    DEFAULT_LENGTH                                                   IN_OUT       DATA_LENGTH  DATA_PRECISION DATA_SCALE   TYPE#                RESERVERD                                                        PACKAGE                                                          PROC_SEQ     OVERLOAD     RESERVERD1   RESERVERD2   RESERVERD3                                                       RESERVERD4                                                       RESERVERD5                                                      
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ -------------- ------------ -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+0            TEST_PKG_DEF_FUN                                                                                                                  0            1            0            20004        0                                                                                                                                              2            24                                                                                                                             TEST_PKG_DEF                                                     1            0                                                                                                                                                                                                                                        
+0            TEST_PKG_DEF_FUN                                                 CNUM                                                             1            2            0            20008        1                                                                                                                                              1            8000                                                                                                                           TEST_PKG_DEF                                                     1            0                                                                                                                                                                                                                                        
+0            TEST_PKG_DEF_PROC                                                A                                                                0            1            0            20001        1                                                                                                                                              1            4            0                                                                                                                 TEST_PKG_DEF                                                     2            0                                                                                                                                                                                                                                        
+
+3 rows fetched.
+
+SQL> SELECT * FROM DB_ARGUMENTS WHERE PACKAGE_NAME='TEST_PKG_DEF' ORDER BY OBJECT_NAME,SUBPROGRAM_ID,SEQUENCE;
+
+OWNER                                                            OBJECT_NAME                                                      PACKAGE_NAME                                                     OVERLOAD    SUBPROGRAM_ID ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE                                                        DEFAULTED DEFAULT_VALUE                                                    IN_OUT DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------ ------------ -------------- ------------
+SYS                                                              TEST_PKG_DEF_FUN                                                 TEST_PKG_DEF                                                                 1                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+SYS                                                              TEST_PKG_DEF_FUN                                                 TEST_PKG_DEF                                                                 1             CNUM                                                             1            2            0            CHAR                                                             Y                                                                          IN     8000                                    
+SYS                                                              TEST_PKG_DEF_PROC                                                TEST_PKG_DEF                                                                 2             A                                                                0            1            0            BINARY_INTEGER                                                   Y                                                                          IN     4            0                          
+
+3 rows fetched.
+
+SQL> SELECT * FROM ADM_ARGUMENTS WHERE PACKAGE_NAME='TEST_PKG_DEF' ORDER BY OBJECT_NAME,SUBPROGRAM_ID,SEQUENCE;
+
+OWNER                                                            OBJECT_NAME                                                      PACKAGE_NAME                                                     OVERLOAD    SUBPROGRAM_ID ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE                                                        DEFAULTED DEFAULT_VALUE                                                    IN_OUT DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------ ------------ -------------- ------------
+SYS                                                              TEST_PKG_DEF_FUN                                                 TEST_PKG_DEF                                                                 1                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+SYS                                                              TEST_PKG_DEF_FUN                                                 TEST_PKG_DEF                                                                 1             CNUM                                                             1            2            0            CHAR                                                             Y                                                                          IN     8000                                    
+SYS                                                              TEST_PKG_DEF_PROC                                                TEST_PKG_DEF                                                                 2             A                                                                0            1            0            BINARY_INTEGER                                                   Y                                                                          IN     4            0                          
+
+3 rows fetched.
+
+SQL> SELECT * FROM MY_ARGUMENTS WHERE PACKAGE_NAME='TEST_PKG_DEF' ORDER BY OBJECT_NAME,SUBPROGRAM_ID,SEQUENCE;
+
+OBJECT_NAME                                                      PACKAGE_NAME                                                     OVERLOAD    SUBPROGRAM_ID ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE                                                        DEFAULTED DEFAULT_VALUE                                                    IN_OUT DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------ ------------ -------------- ------------
+TEST_PKG_DEF_FUN                                                 TEST_PKG_DEF                                                                 1                                                                              0            1            0            NUMBER                                                           N                                                                          OUT    24                                      
+TEST_PKG_DEF_FUN                                                 TEST_PKG_DEF                                                                 1             CNUM                                                             1            2            0            CHAR                                                             Y                                                                          IN     8000                                    
+TEST_PKG_DEF_PROC                                                TEST_PKG_DEF                                                                 2             A                                                                0            1            0            BINARY_INTEGER                                                   Y                                                                          IN     4            0                          
+
+3 rows fetched.
+
+SQL> 
+SQL> drop package if exists TEST_PKG_DEF;
+
+Succeed.
+
+SQL> 
+SQL> --TEST ARGUMENT NAME
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG_INNER_PROC
+  2 IS
+  3 
+  4 FUNCTION abs
+  5 (cnum IN number)
+  6 RETURN NUMBER;
+  7 
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> Create Or Replace Package Body TEST_PKG_INNER_PROC
+  2 Is
+  3 
+  4 Function abs(A In number) Return Number
+  5 As
+  6 Avger Number;
+  7 Begin
+  8 Avger := 3;
+  9 return Avger;
+ 10 End;
+ 11 
+ 12 End;
+ 13 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_PKG_INNER_PROC) terminated with compiling errors
+[4:14] PLC-00967 Subprogram or variant 'ABS' has defined in package body, but not matched with package specification
+
+
+SQL> 
+SQL> --TEST inner procedure
+SQL> CREATE OR REPLACE PACKAGE TEST_PKG_INNER_PROC
+  2 IS
+  3 
+  4 FUNCTION TEST_PKG_Fun
+  5 (cnum IN char)
+  6 RETURN NUMBER;
+  7 
+  8 procedure TEST_PKG_Proc(a in int);
+  9 
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> Create Or Replace Package Body TEST_PKG_INNER_PROC
+  2 Is
+  3 
+  4 Function abs(A In Int) Return Number
+  5 As
+  6 Avger Number;
+  7 Begin
+  8 Avger := 3;
+  9 return Avger;
+ 10 End;
+ 11 
+ 12 Function TEST_PKG_Fun
+ 13 (Cnum In Char)
+ 14 Return Number
+ 15 As
+ 16 Avger Number;
+ 17 Begin
+ 18 Select Count(*) Into Avger From Dual;
+ 19 Avger := abs(-1);
+ 20 Return(Avger);
+ 21 End;
+ 22 
+ 23 
+ 24 Procedure TEST_PKG_Proc(A In Int)
+ 25 As
+ 26 Avger Number;
+ 27 Begin
+ 28 Avger := 5;
+ 29 End;
+ 30 
+ 31 End;
+ 32 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 3
+SQL> select TEST_PKG_INNER_PROC.TEST_PKG_Fun('a') from dual;
+
+TEST_PKG_INNER_PROC.TEST_PKG_FUN('A')   
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> Create Or Replace Package Body TEST_PKG_INNER_PROC
+  2 Is
+  3 
+  4 Function TEST_PKG_Fun
+  5 (Cnum In Char)
+  6 Return Number
+  7 As
+  8 Avger Number;
+  9 Begin
+ 10 Select Count(*) Into Avger From Dual;
+ 11 Avger := abs(-1);
+ 12 Return(Avger);
+ 13 End;
+ 14 
+ 15 
+ 16 Procedure TEST_PKG_Proc(A In Int)
+ 17 As
+ 18 Avger Number;
+ 19 Begin
+ 20 Avger := 5;
+ 21 End;
+ 22 
+ 23 End;
+ 24 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 1
+SQL> select TEST_PKG_INNER_PROC.TEST_PKG_Fun('a') from dual;
+
+TEST_PKG_INNER_PROC.TEST_PKG_FUN('A')   
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --test case:inner proc calls inner proc
+SQL> --begin
+SQL> CREATE OR REPLACE PACKAGE PKG_INNER_PROC_1
+  2 IS
+  3 
+  4 FUNCTION PKG_Fun (cnum IN int) RETURN NUMBER;
+  5 
+  6 procedure PKG_Proc(a in int);
+  7 
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> --expect success
+SQL> Create Or Replace Package Body PKG_INNER_PROC_1
+  2 Is
+  3 
+  4 Function PKG_Fun
+  5 (Cnum In int)
+  6 Return Number
+  7 As
+  8 Avger Number;
+  9 Begin
+ 10 Select Count(*) Into Avger From Dual;
+ 11 Avger := abs(-1);
+ 12 Return(Avger);
+ 13 End;
+ 14 
+ 15 Procedure PKG_Proc(A In Int)
+ 16 As
+ 17 	Avger Number;
+ 18 Begin
+ 19 	Avger := PKG_INNER_PROC_1.PKG_Fun(A);
+ 20 	dbe_output.print_line(Avger);
+ 21 End;
+ 22 
+ 23 End;
+ 24 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 1
+SQL> exec PKG_INNER_PROC_1.PKG_Proc(1);
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect success
+SQL> Create Or Replace Package Body PKG_INNER_PROC_1
+  2 Is
+  3 
+  4 Function PKG_Fun
+  5 (Cnum In int)
+  6 Return Number
+  7 As
+  8 Avger Number;
+  9 Begin
+ 10 Select Count(*) Into Avger From Dual;
+ 11 Avger := abs(-1);
+ 12 Return(Avger);
+ 13 End;
+ 14 
+ 15 Procedure PKG_Proc(A In Int)
+ 16 As
+ 17 	Avger Number;
+ 18 Begin
+ 19 	Avger := PKG_Fun(A);
+ 20 	dbe_output.print_line(Avger);
+ 21 End;
+ 22 
+ 23 End;
+ 24 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM MY_DEPENDENCIES WHERE NAME = 'PKG_INNER_PROC_1' ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              PKG_INNER_PROC_1                                                 PACKAGE BODY SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              PKG_INNER_PROC_1                                                 PACKAGE BODY SYS                                                              PKG_INNER_PROC_1                                                 PACKAGE        
+
+2 rows fetched.
+
+SQL> 
+SQL> --expect 1
+SQL> exec PKG_INNER_PROC_1.PKG_Proc(1);
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect success
+SQL> Create Or Replace Package Body PKG_INNER_PROC_1
+  2 Is
+  3 
+  4 Procedure PKG_Proc(A In Int)
+  5 As
+  6 	Avger Number;
+  7 Begin
+  8 	Avger := PKG_INNER_PROC_1.PKG_Fun(A);
+  9 	dbe_output.print_line(Avger);
+ 10 End;
+ 11 
+ 12 Function PKG_Fun
+ 13 (Cnum In int)
+ 14 Return Number
+ 15 As
+ 16 Avger Number;
+ 17 Begin
+ 18 Select Count(*) Into Avger From Dual;
+ 19 Avger := abs(-1);
+ 20 Return(Avger);
+ 21 End;
+ 22 
+ 23 End;
+ 24 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 1
+SQL> exec PKG_INNER_PROC_1.PKG_Proc(1);
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop package PKG_INNER_PROC_1;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> -------------------------------------------------------------
+SQL> --test case : test soft parse
+SQL> --begin
+SQL> drop table if exists pkg_inner_t1;
+
+Succeed.
+
+SQL> create table pkg_inner_t1 (f1 int);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE PKG_INNER_PROC_2
+  2 IS
+  3 
+  4 FUNCTION PKG_Fun (cnum IN int) RETURN NUMBER;
+  5 FUNCTION PKG_Fun1 (cnum IN int) RETURN NUMBER;
+  6 
+  7 procedure PKG_Proc(a in int);
+  8 
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> --expect success
+SQL> Create Or Replace Package Body PKG_INNER_PROC_2
+  2 Is
+  3 
+  4 Function PKG_Fun
+  5 (Cnum In int)
+  6 Return Number
+  7 As
+  8 Avger Number;
+  9 Begin
+ 10 Select Count(*) Into Avger From dual;
+ 11 Avger := abs(-1);
+ 12 Return(Avger);
+ 13 End;
+ 14 
+ 15 Function PKG_Fun1
+ 16 (Cnum In int)
+ 17 Return Number
+ 18 As
+ 19 Avger Number;
+ 20 Begin
+ 21 Select Count(*) Into Avger From pkg_inner_t1;
+ 22 Avger := abs(-1);
+ 23 Return(Avger);
+ 24 End;
+ 25 
+ 26 Procedure PKG_Proc(A In Int)
+ 27 As
+ 28 	Avger Number;
+ 29 Begin
+ 30 	Avger := PKG_Fun(A);
+ 31 	dbe_output.print_line(Avger);
+ 32 	--sleep(20);
+ 33 	Avger := PKG_Fun(A)+1;
+ 34 	dbe_output.print_line(Avger);
+ 35 End;
+ 36 
+ 37 End;
+ 38 /
+
+Succeed.
+
+SQL> SELECT * FROM MY_DEPENDENCIES WHERE NAME = 'PKG_INNER_PROC_2' ORDER BY NAME, REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              PKG_INNER_PROC_2                                                 PACKAGE BODY SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              PKG_INNER_PROC_2                                                 PACKAGE BODY SYS                                                              PKG_INNER_PROC_2                                                 PACKAGE        
+SYS                                                              PKG_INNER_PROC_2                                                 PACKAGE BODY SYS                                                              PKG_INNER_T1                                                     TABLE          
+
+3 rows fetched.
+
+SQL> 
+SQL> --expect 1 2
+SQL> exec PKG_INNER_PROC_2.PKG_Proc(1);
+
+1
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table pkg_inner_t1;
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> exec PKG_INNER_PROC_2.PKG_Proc(1);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] CT-00944, PL/SQL(SYS.PKG_INNER_PROC_2) terminated with compiling errors
+[16:8] PLC-00944 PL/SQL(SYS.PKG_INNER_PROC_2.PKG_FUN1) terminated with compiling errors
+[20:22] PLC-00843 The table or view SYS.PKG_INNER_T1 does not exist.
+
+
+
+SQL> --end
+SQL> 
+SQL> --test case: test recursive call DTS2019072409072
+SQL> drop user if exists user_pkg cascade;
+
+Succeed.
+
+SQL> create user user_pkg identified by Cantian_234;
+
+Succeed.
+
+SQL> grant all privileges to user_pkg;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create or replace package user_pkg.pack_yf_11 is
+  2 procedure proc_yf_11;
+  3 procedure proc_yf_011;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> --expect success
+SQL> create or replace package body user_pkg.pack_yf_11 is 
+  2 
+  3 procedure proc_yf_11 is 
+  4 a number;
+  5 begin
+  6 a:=1;
+  7 dbe_output.print_line(a); 
+  8 user_pkg.pack_yf_11.proc_yf_11();
+  9 end proc_yf_11;
+ 10 
+ 11 procedure proc_yf_011 is
+ 12 b number;
+ 13 begin 
+ 14 b:=1;
+ 15 dbe_output.print_line(b);
+ 16 
+ 17 end proc_yf_011;
+ 18 end user_pkg.pack_yf_11;
+ 19 /
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> --teset case: test load entity modify dependencies
+SQL> create or replace package pack_yf_17 is
+  2 function func_yf_17_1 return number;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> create or replace package body pack_yf_17 is
+  2 function func_yf_17_1 return number is 
+  3 a number;
+  4 begin
+  5 a:=4;
+  6 return a;
+  7 end func_yf_17_1;
+  8 end pack_yf_17;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package pack_yf_017 is 
+  2 function func_yf_17_2 return varchar2;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> create or replace package body pack_yf_017 is
+  2 function func_yf_17_2 return varchar2 is
+  3 b varchar2(20);
+  4 c number;
+  5 begin
+  6 b:='ss';
+  7 select pack_yf_17.func_yf_17_1 into c from dual;
+  8 return b;
+  9 end func_yf_17_2;
+ 10 end pack_yf_017;
+ 11 /
+
+Succeed.
+
+SQL> select owner,status,object_type from all_objects where OBJECT_NAME=upper('pack_yf_017') order by object_type;
+
+OWNER                                                            STATUS  OBJECT_TYPE    
+---------------------------------------------------------------- ------- ---------------
+SYS                                                              VALID   PACKAGE BODY   
+SYS                                                              VALID   PACKAGE SPEC   
+
+2 rows fetched.
+
+SQL> 
+SQL> drop package pack_yf_17;
+
+Succeed.
+
+SQL> create or replace package pack_yf_17 is
+  2 function func_yf_17_1 return number;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> create or replace package body pack_yf_17 is
+  2 function func_yf_17_1 return number is 
+  3 a number;
+  4 begin
+  5 a:=4;
+  6 return a;
+  7 end func_yf_17_1;
+  8 end pack_yf_17;
+  9 /
+
+Succeed.
+
+SQL> select owner,status,object_type from all_objects where OBJECT_NAME=upper('pack_yf_017') order by object_type;
+
+OWNER                                                            STATUS  OBJECT_TYPE    
+---------------------------------------------------------------- ------- ---------------
+SYS                                                              UNKNOWN PACKAGE BODY   
+SYS                                                              VALID   PACKAGE SPEC   
+
+2 rows fetched.
+
+SQL> 
+SQL> select pack_yf_017.func_yf_17_2 from dual;
+
+FUNC_YF_17_2                                                    
+----------------------------------------------------------------
+ss                                                              
+
+1 rows fetched.
+
+SQL> select owner,status,object_type from all_objects where OBJECT_NAME=upper('pack_yf_017') order by object_type;
+
+OWNER                                                            STATUS  OBJECT_TYPE    
+---------------------------------------------------------------- ------- ---------------
+SYS                                                              VALID   PACKAGE BODY   
+SYS                                                              VALID   PACKAGE SPEC   
+
+2 rows fetched.
+
+SQL> drop package pack_yf_17;
+
+Succeed.
+
+SQL> 
+SQL> select owner,status,object_type from all_objects where OBJECT_NAME=upper('pack_yf_017') order by object_type;
+
+OWNER                                                            STATUS  OBJECT_TYPE    
+---------------------------------------------------------------- ------- ---------------
+SYS                                                              UNKNOWN PACKAGE BODY   
+SYS                                                              VALID   PACKAGE SPEC   
+
+2 rows fetched.
+
+SQL> drop package pack_yf_017;
+
+Succeed.
+
+SQL> --end
+SQL> --test case:
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> DROP USER IF EXISTS PACKAGE_001 CASCADE;
+
+Succeed.
+
+SQL> create user PACKAGE_001 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant all  PRIVILEGES to PACKAGE_001;
+
+Succeed.
+
+SQL> conn PACKAGE_001/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace package dd
+  2 as 
+  3 function dd(id int) return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package body dd
+  2 as 
+  3 function dd(id int) return int
+  4 as 
+  5 a int;
+  6 begin
+  7 a :=1;
+  8 return a ;
+  9 end;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> DROP USER IF EXISTS PACKAGE_002 CASCADE;
+
+Succeed.
+
+SQL> create user PACKAGE_002 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant all  PRIVILEGES to PACKAGE_002;
+
+Succeed.
+
+SQL> conn PACKAGE_002/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace package dd
+  2 as 
+  3 function dd(id int) return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package body dd
+  2 as 
+  3 function dd(id int) return int
+  4 as 
+  5 a int;
+  6 begin
+  7 a :=PACKAGE_001.dd.dd(1);
+  8 return a ;
+  9 end;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 1
+SQL> select dd.dd(1) from dual;
+
+DD.DD(1)    
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> conn PACKAGE_001/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace package body dd
+  2 as 
+  3 function dd(id int) return int
+  4 as 
+  5 a int;
+  6 begin
+  7 a :=2;
+  8 return a ;
+  9 end;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> conn PACKAGE_002/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --expect 2
+SQL> select dd.dd(1) from dual;
+
+DD.DD(1)    
+------------
+2           
+
+1 rows fetched.
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> DROP USER IF EXISTS PACKAGE_001 CASCADE;
+
+Succeed.
+
+SQL> create user PACKAGE_001 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant all  PRIVILEGES to PACKAGE_001;
+
+Succeed.
+
+SQL> conn PACKAGE_001/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace package dd
+  2 as 
+  3 function dd(id int) return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package body dd
+  2 as 
+  3 function dd(id int) return int
+  4 as 
+  5 a int;
+  6 begin
+  7 a :=1;
+  8 return a ;
+  9 end;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> DROP USER IF EXISTS PACKAGE_002 CASCADE;
+
+Succeed.
+
+SQL> create user PACKAGE_002 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant all  PRIVILEGES to PACKAGE_002;
+
+Succeed.
+
+SQL> conn PACKAGE_002/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace package dd
+  2 as 
+  3 function dd(id int) return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package body dd
+  2 as 
+  3 function dd(id int) return int
+  4 as 
+  5 a int;
+  6 begin
+  7 a :=PACKAGE_001.dd.dd(1);
+  8 return a ;
+  9 end;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 1
+SQL> select dd.dd(1) from dual;
+
+DD.DD(1)    
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> conn PACKAGE_001/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> create or replace package body dd
+  2 as 
+  3 function dd(id int) return int
+  4 as 
+  5 a int;
+  6 begin
+  7 a :=2;
+  8 return a ;
+  9 end;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> conn PACKAGE_002/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --expect 2
+SQL> select dd.dd(1) from dual;
+
+DD.DD(1)    
+------------
+2           
+
+1 rows fetched.
+
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> --end
+SQL> 
+SQL> --DTS2019080206592
+SQL> create or replace package pack1 is
+  2 function f2 return number;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> create or replace package body pack1 is
+  2 function f2 return number 
+  3 as
+  4 a number;
+  5 begin
+  6 a:= 1;
+  7 return(a);
+  8 end f2;
+  9 end pack1;
+ 10 /
+
+Succeed.
+
+SQL> select dv_pl_manager.name,dv_pl_manager.type from dv_pl_manager where name='PACK1' order by dv_pl_manager.type;
+
+NAME                                                             TYPE                          
+---------------------------------------------------------------- ------------------------------
+PACK1                                                            PL_PACKAGE_BODY               
+PACK1                                                            PL_PACKAGE_SPEC               
+
+2 rows fetched.
+
+SQL> drop package pack1;
+
+Succeed.
+
+SQL> 
+SQL> -- package test1
+SQL> create or replace type varray01 force is varray(4) of int;
+  2 /
+
+Succeed.
+
+SQL> create or replace type obj01 force is object(a varray01, b int);
+  2 /
+
+Succeed.
+
+SQL> DROP PACKAGE if exists PAK1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PAK1
+  2 IS
+  3  FUNCTION fun1 RETURN int;
+  4  PROCEDURE pro1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK1
+  2 IS
+  3  FUNCTION fun1 RETURN int
+  4 IS
+  5  var1 int;
+  6  a varray01:=varray01(1,2,3);
+  7  BEGIN
+  8   var1 :=a(3);
+  9   return var1;
+ 10  END;
+ 11 PROCEDURE pro1 IS
+ 12  V1 INT;
+ 13  BEGIN
+ 14   V1:= fun1;
+ 15   dbe_output.print_line(V1);
+ 16  END;
+ 17 END;
+ 18 /
+
+Succeed.
+
+SQL> CALL PAK1.pro1;
+
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> -- package test2
+SQL> DROP PACKAGE PAK1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PAK1
+  2 IS
+  3  FUNCTION fun1 RETURN varray01;
+  4  PROCEDURE pro1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK1
+  2 IS
+  3  FUNCTION fun1 RETURN varray01
+  4 IS
+  5  var1 varray01:=varray01(1,2,3);
+  6  BEGIN
+  7   return var1;
+  8  END;
+  9 PROCEDURE pro1 IS
+ 10  V1 varray01;
+ 11  BEGIN
+ 12   V1:= fun1;
+ 13   dbe_output.print_line('count'||V1.count);
+ 14   for i in 1..V1.count loop
+ 15   dbe_output.print_line(V1(i));
+ 16   end loop;
+ 17  END;
+ 18 END;
+ 19 /
+
+Succeed.
+
+SQL> CALL PAK1.pro1;
+
+count3
+1
+2
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> -- package test3
+SQL> DROP PACKAGE PAK1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PAK1
+  2 IS
+  3  FUNCTION fun1 RETURN obj01;
+  4  PROCEDURE pro1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK1
+  2 IS
+  3  FUNCTION fun1 RETURN obj01
+  4 IS
+  5  var1 obj01;
+  6  BEGIN
+  7  var1:=obj01(varray01('',null,null),null);
+  8   return var1;
+  9  END;
+ 10 PROCEDURE pro1 IS
+ 11  V1 obj01;
+ 12  BEGIN
+ 13   V1:= fun1;
+ 14   for i in 1..V1.a.count loop
+ 15   dbe_output.print_line(V1.a(i));
+ 16   end loop;
+ 17  END;
+ 18 END;
+ 19 /
+
+Succeed.
+
+SQL> exec PAK1.pro1;
+
+
+
+
+
+PL/SQL procedure successfully completed.
+
+SQL> -- package test4
+SQL> DROP PACKAGE PAK1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PAK1
+  2 IS
+  3  FUNCTION fun1(a varray01) RETURN int;
+  4  PROCEDURE pro1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK1
+  2 IS
+  3  FUNCTION fun1(a varray01) RETURN int
+  4 IS
+  5  var1 int;
+  6  BEGIN
+  7   var1 :=a.count;
+  8   return var1;
+  9  END;
+ 10 PROCEDURE pro1 IS
+ 11  V1 INT;
+ 12  V2 varray01:=varray01(null,'',null);
+ 13  BEGIN
+ 14   V1:= fun1(V2);
+ 15   dbe_output.print_line(V1);
+ 16  END;
+ 17 END;
+ 18 /
+
+Succeed.
+
+SQL> exec PAK1.pro1;
+
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> -- package test5
+SQL> DROP PACKAGE PAK1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PAK1
+  2 IS
+  3  FUNCTION fun1(a varray01) RETURN obj01;
+  4  PROCEDURE pro1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK1
+  2 IS
+  3  FUNCTION fun1(a varray01) RETURN obj01
+  4 IS
+  5   var3 obj01:=obj01(a,1);
+  6  BEGIN
+  7   return var3;
+  8  END;
+  9 PROCEDURE pro1 IS
+ 10  V1 obj01;
+ 11  V2 varray01:=varray01(1,'',null);
+ 12  BEGIN
+ 13   V1:= fun1(V2);
+ 14   dbe_output.print_line(V1.a(1));
+ 15  END;
+ 16 END;
+ 17 /
+
+Succeed.
+
+SQL> exec PAK1.pro1;
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> -- package test6  expect error
+SQL> DROP PACKAGE PAK1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PAK1
+  2 IS
+  3  FUNCTION fun1(a varray01) RETURN varray01;
+  4  PROCEDURE pro1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK1
+  2 IS
+  3  FUNCTION fun1(a varray01) RETURN varray01
+  4 IS
+  5  V3 varray01;
+  6  BEGIN
+  7   V3 :=a;
+  8   return V3;
+  9  END;
+ 10 PROCEDURE pro1 IS
+ 11  V2 varray01;
+ 12  BEGIN
+ 13    V2:=fun1(V2);
+ 14   dbe_output.print_line(V2.count);
+ 15  END;
+ 16 END;
+ 17 /
+
+Succeed.
+
+SQL> exec PAK1.pro1;
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[13:3] PL/SQL(SYS.PAK1.PRO1) terminated with execute errors
+[13:3] PL/SQL(DBE_OUTPUT.PRINT_LINE) terminated with execute errors
+[13:25] CT-00901, The referenced object type was not initialized.
+
+SQL> -- package test7
+SQL> DROP PACKAGE PAK1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PAK1
+  2 IS
+  3  FUNCTION fun1(a obj01) RETURN obj01;
+  4  PROCEDURE pro1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAK1
+  2 IS
+  3  FUNCTION fun1(a obj01) RETURN obj01
+  4 IS
+  5   var3 obj01;
+  6  BEGIN
+  7   var3 :=a;
+  8   return var3;
+  9  END;
+ 10 PROCEDURE pro1 IS
+ 11  V1 varray01:=varray01(1,'',null);
+ 12  V2 obj01:=obj01(V1,null);
+ 13  V3 obj01;
+ 14  BEGIN
+ 15   V3:= fun1(V2);
+ 16   dbe_output.print_line(V3.a(1));
+ 17  END;
+ 18 END;
+ 19 /
+
+Succeed.
+
+SQL> exec PAK1.pro1;
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop type if exists nest_table;
+
+Succeed.
+
+SQL> drop package if exists test_package;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE nest_table IS TABLE OF Integer;
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE test_package
+  2 IS
+  3 PROCEDURE print_nest (nest nest_table);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY test_package
+  2 IS
+  3 PROCEDURE print_nest (nest nest_table) IS
+  4   i NUMBER;
+  5 BEGIN
+  6   i := nest.FIRST();
+  7   IF i IS NULL THEN
+  8     dbe_output.print_line('nest is empty');
+  9   ELSE
+ 10     WHILE i IS NOT NULL LOOP
+ 11       dbe_output.print_line('nest(' || i || ') = ' || nest(i));
+ 12       i := nest.NEXT(i);
+ 13     END LOOP;
+ 14   END IF;
+ 15     dbe_output.print_line('---');
+ 16 END print_nest;
+ 17 END;
+ 18 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TYPE nest_table IS TABLE OF Integer;
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2   nest nest_table := nest_table(11, 22, 33, 44, 55, 66);
+  3 BEGIN
+  4   test_package.print_nest(nest);
+  5   nest.TRIM; -- Trim last element
+  6   test_package.print_nest(nest);
+  7   nest.DELETE(4); -- Delete fourth element
+  8   test_package.print_nest(nest);
+  9   nest.TRIM(2); -- Trim last two elements
+ 10   test_package.print_nest(nest);
+ 11 END;
+ 12 /
+
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(4) = 44
+nest(5) = 55
+nest(6) = 66
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(4) = 44
+nest(5) = 55
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+nest(5) = 55
+---
+nest(1) = 11
+nest(2) = 22
+nest(3) = 33
+---
+
+PL/SQL procedure successfully completed.
+
+SQL> drop type if exists nest_table;
+
+Succeed.
+
+SQL> drop package if exists test_package;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

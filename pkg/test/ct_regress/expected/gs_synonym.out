@@ -1,0 +1,2156 @@
+
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_uu cascade;
+
+Succeed.
+
+SQL> create user test_uu identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to test_uu;
+
+Succeed.
+
+SQL> conn test_uu/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS USER_FUNC_TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE USER_FUNC_TEMP(ID INT);
+
+Succeed.
+
+SQL> INSERT INTO USER_FUNC_TEMP VALUES(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> CREATE OR REPLACE FUNCTION USER_FUNC_QUERY_TEMP(a INT) RETURN INT
+  2   AS
+  3     c INT;
+  4     d INT;
+  5   BEGIN
+  6     c := a;
+  7     SELECT ID INTO d FROM USER_FUNC_TEMP WHERE ROWNUM = c;
+  8     RETURN d;
+  9 END USER_FUNC_QUERY_TEMP;
+ 10 /
+
+Succeed.
+
+SQL> create synonym fff for USER_FUNC_QUERY_TEMP;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_uu cascade;
+
+Succeed.
+
+SQL> create user test_uu identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to test_uu;
+
+Succeed.
+
+SQL> conn test_uu/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS USER_FUNC_TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE USER_FUNC_TEMP(ID INT);
+
+Succeed.
+
+SQL> INSERT INTO USER_FUNC_TEMP VALUES(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> CREATE OR REPLACE FUNCTION USER_FUNC_QUERY_TEMP(a INT) RETURN INT
+  2   AS
+  3     c INT;
+  4     d INT;
+  5   BEGIN
+  6     c := a;
+  7     SELECT ID INTO d FROM USER_FUNC_TEMP WHERE ROWNUM = c;
+  8     RETURN d;
+  9 END USER_FUNC_QUERY_TEMP;
+ 10 /
+
+Succeed.
+
+SQL> create synonym fff for USER_FUNC_QUERY_TEMP;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_uu cascade;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create user test identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to test;
+
+Succeed.
+
+SQL> alter session set current_schema = test;
+
+Succeed.
+
+SQL> drop user test;
+
+Succeed.
+
+SQL> select SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA');
+
+CT-00613, Invalid operation, please check user or schema
+SQL> alter session set current_schema = sys;
+
+Succeed.
+
+SQL> --TEST SYNONYM
+SQL> create table t1 (fd int);
+
+Succeed.
+
+SQL> create view v1 as select 1 from dual;
+
+Succeed.
+
+SQL> create public synonym s_t1 for test.t1;
+
+CT-00781, The user TEST does not exist.
+SQL> create public synonym s_t1 for t1; 
+
+Succeed.
+
+SQL> create public synonym s_t1 for v1;
+
+CT-00753, The object PUBLIC S_T1 already exists.
+SQL> create or replace public synonym s_t1 for v1;
+
+Succeed.
+
+SQL> create or replace public synonym s_t1 for t1;
+
+Succeed.
+
+SQL> 
+SQL> create user dw_12334 identified by 'a2345678#$_';
+
+Succeed.
+
+SQL> create public synonym dw_12334.s_v1 for v1;
+
+CT-00601, [1:23]Sql syntax error: owner of object should be public, but is dw_12334
+SQL> create public synonym s_v1 for v1;
+
+Succeed.
+
+SQL> create public synonym s_s1 for s_v1;
+
+CT-00828, The object SYS.S_V1 does not exist
+SQL>
+SQL> select * from dba_synonyms where SYNONYM_NAME in ('S_T1', 'S_V1');
+
+OWNER                                                            SYNONYM_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                      
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PUBLIC                                                           S_T1                                                             SYS                                                              T1
+PUBLIC                                                           S_V1                                                             SYS                                                              V1
+
+2 rows fetched.
+
+SQL> 
+SQL> select * from s_t1;
+
+FD          
+------------
+
+0 rows fetched.
+
+SQL> select * from s_v1;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> select * from s_t1;
+
+CT-00843, [1:15]The table or view SYS.S_T1 does not exist.
+SQL> 
+SQL> drop view v1;
+
+Succeed.
+
+SQL> select * from s_v1;
+
+CT-00843, [1:15]The table or view SYS.S_V1 does not exist.
+SQL> 
+SQL> create table t1 (fd int);
+
+Succeed.
+
+SQL> create view v1 as select * from t1;
+
+Succeed.
+
+SQL> select * from s_t1;
+
+FD          
+------------
+
+0 rows fetched.
+
+SQL> select * from s_v1;
+
+FD          
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> alter table t1 add fd2 varchar(20);
+
+Succeed.
+
+SQL> select * from s_t1;
+
+FD           FD2                 
+------------ --------------------
+
+0 rows fetched.
+
+SQL> select * from s_v1;
+
+FD          
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop public SYNONYM if exists s_tt2 FORCE;
+
+Succeed.
+
+SQL> drop public SYNONYM if exists s_v1 FORCE;
+
+Succeed.
+
+SQL> drop public SYNONYM s_v1 FORCE;
+
+CT-00724, Synonym PUBLIC.S_V1 does not exist
+SQL> drop public SYNONYM if exists s_t1 FORCE;
+
+Succeed.
+
+SQL> drop public SYNONYM s_t1 FORCE;
+
+CT-00724, Synonym PUBLIC.S_T1 does not exist
+SQL>
+SQL> select * from dba_synonyms where SYNONYM_NAME in ('S_T1', 'S_V1');
+
+OWNER                                                            SYNONYM_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                      
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> create table t2 (fd int, fd2 VARCHAR(20));
+
+Succeed.
+
+SQL> create view v2 as select * from t2, s_t1 where t2.fd = s_t1.fd;
+
+CT-00843, [1:35]The table or view SYS.S_T1 does not exist.
+SQL> create public synonym s_t1 for t1;
+
+Succeed.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> create view v2 as select * from t2, s_t1 where t2.fd = s_t1.fd;
+
+CT-00843, [1:35]The table or view SYS.S_T1 does not exist.
+SQL> create table t1 (fd int);
+
+Succeed.
+
+SQL> create view v2 as select t2.fd as t2_fd, t2.fd2, s_t1.fd as t1_fd from t2, s_t1 where t2.fd = s_t1.fd;
+
+Succeed.
+
+SQL> 
+SQL> insert into t2 values(1, 't2_1');
+
+1 rows affected.
+
+SQL> insert into t2 values(2, 't2_2');
+
+1 rows affected.
+
+SQL> insert into t1 values(1, 't1');
+
+CT-00601, Sql syntax error: too many value expressions
+SQL> select * from v2;
+
+T2_FD        FD2                  T1_FD       
+------------ -------------------- ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> select * from v2;
+
+CT-00843, [1:72]The table or view SYS.S_T1 does not exist.
+SQL> 
+SQL> create table t1 (fd int);
+
+Succeed.
+
+SQL> insert into t1 values(1);
+
+1 rows affected.
+
+SQL> select * from v2;
+
+T2_FD        FD2                  T1_FD       
+------------ -------------------- ------------
+1            t2_1                 1           
+
+1 rows fetched.
+
+SQL> select * from v2;
+
+T2_FD        FD2                  T1_FD       
+------------ -------------------- ------------
+1            t2_1                 1           
+
+1 rows fetched.
+
+SQL> 
+SQL> drop public SYNONYM if exists s_t1 FORCE;
+
+Succeed.
+
+SQL> select * from v2;
+
+CT-00843, [1:72]The table or view SYS.S_T1 does not exist.
+SQL> 
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> drop view if exists v1;
+
+Succeed.
+
+SQL> drop view if exists v2;
+
+Succeed.
+
+SQL> drop public SYNONYM if exists s_t1 FORCE;
+
+Succeed.
+
+SQL> drop public SYNONYM if exists s_v1 FORCE;
+
+Succeed.
+
+SQL> drop user dw_12334 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists test_synonym_1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_synonym_2 cascade;
+
+Succeed.
+
+SQL> create user test_synonym_1 identified by Root1234;
+
+Succeed.
+
+SQL> create user test_synonym_2 identified by Root1234;
+
+Succeed.
+
+SQL> grant CREATE SESSION, CREATE ANY TABLE, DROP ANY TABLE to test_synonym_1;
+
+Succeed.
+
+SQL> CONNECT test_synonym_1/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE TABLE T1 (FD_INT INT);
+
+Succeed.
+
+SQL> CREATE SYNONYM S_T1 FOR T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> CREATE SYNONYM test_synonym_2.S_T1 FOR T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> CREATE PUBLIC SYNONYM S_T1 FOR T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant CREATE SYNONYM to test_synonym_1;
+
+Succeed.
+
+SQL> CONNECT test_synonym_1/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE SYNONYM S_T1 FOR T1;
+
+Succeed.
+
+SQL> SELECT * FROM T1;
+
+FD_INT      
+------------
+
+0 rows fetched.
+
+SQL> CREATE SYNONYM test_synonym_2.S_T1 FOR T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> CREATE PUBLIC SYNONYM S_T1 FOR T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant CREATE PUBLIC SYNONYM to test_synonym_1;
+
+Succeed.
+
+SQL> CONNECT test_synonym_1/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE SYNONYM S_T1 FOR T1;--FAILED
+
+CT-00753, The object TEST_SYNONYM_1 S_T1 already exists.
+SQL> CREATE SYNONYM test_synonym_2.S_T1 FOR T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> CREATE PUBLIC SYNONYM S_T1 FOR T1;
+
+Succeed.
+
+SQL> SELECT * FROM T1;
+
+FD_INT      
+------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM "PUBLIC".S_T1;
+
+FD_INT      
+------------
+
+0 rows fetched.
+
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant CREATE ANY SYNONYM to test_synonym_1;
+
+Succeed.
+
+SQL> CONNECT test_synonym_1/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE SYNONYM S_T1 FOR T1;--FAILED
+
+CT-00753, The object TEST_SYNONYM_1 S_T1 already exists.
+SQL> CREATE SYNONYM test_synonym_2.S_T1 FOR T1;
+
+Succeed.
+
+SQL> CREATE PUBLIC SYNONYM S_T1 FOR T1;--FAILED
+
+CT-00753, The object PUBLIC S_T1 already exists.
+SQL> SELECT * FROM T1;
+
+FD_INT      
+------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM "PUBLIC".S_T1;
+
+FD_INT      
+------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM test_synonym_2.S_T1;
+
+FD_INT      
+------------
+
+0 rows fetched.
+
+SQL> DROP public SYNONYM S_T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> DROP SYNONYM S_T1;--FAILED
+
+Succeed.
+
+SQL> DROP SYNONYM test_synonym_2.S_T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant DROP PUBLIC SYNONYM to test_synonym_1;
+
+Succeed.
+
+SQL> CONNECT test_synonym_1/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> DROP public SYNONYM S_T1;
+
+Succeed.
+
+SQL> DROP SYNONYM S_T1;--FAILED
+
+CT-00724, Synonym TEST_SYNONYM_1.S_T1 does not exist
+SQL> DROP SYNONYM test_synonym_2.S_T1;--FAILED
+
+CT-01001, Permissions were insufficient
+SQL> CREATE TABLE T2 (FD_INT INT, FD_VARCHAR VARCHAR(100));
+
+Succeed.
+
+SQL> CREATE PUBLIC SYNONYM S_T1 FOR T2;
+
+Succeed.
+
+SQL> SELECT * FROM T1;
+
+FD_INT      
+------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM "PUBLIC".S_T1;
+
+FD_INT       FD_VARCHAR                                                      
+------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM test_synonym_2.S_T1;
+
+FD_INT      
+------------
+
+0 rows fetched.
+
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant DROP ANY SYNONYM to test_synonym_1;
+
+Succeed.
+
+SQL> CONNECT test_synonym_1/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> DROP public SYNONYM S_T1;
+
+Succeed.
+
+SQL> DROP SYNONYM S_T1;
+
+CT-00724, Synonym TEST_SYNONYM_1.S_T1 does not exist
+SQL> DROP SYNONYM test_synonym_2.S_T1;
+
+Succeed.
+
+SQL> drop table t1;
+
+Succeed.
+
+SQL> drop table t2;
+
+Succeed.
+
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_synonym_1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_synonym_2 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018073105444
+SQL> drop table if exists sysview_all_trg_tbl_017;
+
+Succeed.
+
+SQL> create table sysview_all_trg_tbl_017(c_id int not null,c_first varchar2(40),c_since date,c_end timestamp,c_text clob,c_data blob);
+
+Succeed.
+
+SQL> insert into sysview_all_trg_tbl_017 values(1,'c_fisrtaaa',to_date('2018-07-28 14:22:59','yyyy-mm-dd hh24:mi:ss'),to_timestamp('2018-07-28 14:22:59.012345','yyyy-mm-dd hh24:mi:ss.ff6'),'abcdefghijklmnABCDEFGHIGKLMN','12345678900abcdef9087654321fedcba');
+
+1 rows affected.
+
+SQL> insert into sysview_all_trg_tbl_017 values(2,'c_fisrtbbb',to_date('2018-07-28 14:22:59','yyyy-mm-dd hh24:mi:ss'),to_timestamp('2018-07-28 14:22:59.012345','yyyy-mm-dd hh24:mi:ss.ff6'),'abcdefghijklmnABCDEFGHIGKLMN','12345678900abcdef9087654321fedcba');
+
+1 rows affected.
+
+SQL> insert into sysview_all_trg_tbl_017 values(3,'c_fisrtbbb',to_date('2018-07-28 14:22:59','yyyy-mm-dd hh24:mi:ss'),to_timestamp('2018-07-28 14:22:59.012345','yyyy-mm-dd hh24:mi:ss.ff6'),'abcdefghijklmnABCDEFGHIGKLMN','12345678900abcdef9087654321fedcba');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create user all_triggers_017 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to all_triggers_017;
+
+Succeed.
+
+SQL> grant select ,update,insert,delete on sysview_all_trg_tbl_017 to all_triggers_017 with grant option;
+
+Succeed.
+
+SQL> grant create any view to all_triggers_017 with admin option;
+
+Succeed.
+
+SQL> conn all_triggers_017/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace view all_triggers as select * from sys.sysview_all_trg_tbl_017;
+
+Succeed.
+
+SQL> select c_id,c_first from all_triggers order by 1,2;
+
+C_ID         C_FIRST                                 
+------------ ----------------------------------------
+1            c_fisrtaaa                              
+2            c_fisrtbbb                              
+3            c_fisrtbbb                              
+
+3 rows fetched.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> select count(*) from SYS_VIEWS where name=upper('all_triggers') order by 1;
+
+COUNT(*)            
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> drop user all_triggers_017 cascade;
+
+Succeed.
+
+SQL> drop table sysview_all_trg_tbl_017;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists USER_TEST cascade;
+
+Succeed.
+
+SQL> CREATE USER USER_TEST IDENTIFIED BY Root1234;
+
+Succeed.
+
+SQL> grant dba to USER_TEST;
+
+Succeed.
+
+SQL> connect USER_TEST/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS TEST;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEST_REF;
+
+Succeed.
+
+SQL> DROP VIEW IF EXISTS V_TEST;
+
+Succeed.
+
+SQL> create table TEST(FD_INT INT, FD_VARCHAR VARCHAR(100), FD_BIGINT BIGINT);
+
+Succeed.
+
+SQL> create table TEST_REF(FD_BIGINT BIGINT PRIMARY KEY);
+
+Succeed.
+
+SQL> create view  V_TEST AS SELECT * FROM TEST;
+
+Succeed.
+
+SQL> DROP SYNONYM IF EXISTS S_TEST;
+
+Succeed.
+
+SQL> DROP SYNONYM IF EXISTS S_V_TEST;
+
+Succeed.
+
+SQL> DROP SYNONYM IF EXISTS S_TEST_REF;
+
+Succeed.
+
+SQL> create SYNONYM S_TEST FOR TEST;
+
+Succeed.
+
+SQL> create SYNONYM S_V_TEST FOR V_TEST;
+
+Succeed.
+
+SQL> create SYNONYM S_TEST_REF FOR TEST_REF;
+
+Succeed.
+
+SQL> CREATE TABLE IF NOT EXISTS S_TEST (FD_CLOB CLOB, FD_DATE DATE);
+
+Succeed.
+
+SQL> CREATE INDEX I_S_TEST ON S_TEST (FD_INT);
+
+CT-00843, The table or view USER_TEST.S_TEST does not exist.
+SQL> ALTER TABLE S_TEST ADD COLUMN FD_CLOB CLOB;
+
+CT-00843, The table or view USER_TEST.S_TEST does not exist.
+SQL> ALTER TABLE S_TEST ADD constraint REF_FD  FOREIGN KEY (FD_BIGINT) REFERENCES S_TEST_REF (FD_BIGINT);
+
+CT-00843, The table or view USER_TEST.S_TEST does not exist.
+SQL> ALTER TABLE S_TEST RENAME TO S_TEST_REF;
+
+CT-00843, The table or view USER_TEST.S_TEST does not exist.
+SQL> DROP TABLE S_TEST;
+
+CT-00843, The table or view USER_TEST.S_TEST does not exist.
+SQL> TRUNCATE TABLE S_TEST;
+
+CT-00843, The table or view USER_TEST.S_TEST does not exist.
+SQL> FLASHBACK TABLE S_TEST TO BEFORE DROP;
+
+CT-00829, Recyclebin object USER_TEST.S_TEST does not exist
+SQL> LOCK TABLE S_TEST IN SHARE MODE NOWAIT;
+
+CT-00843, The table or view USER_TEST.S_TEST does not exist.
+SQL> DROP VIEW S_V_TEST;
+
+CT-00843, The table or view USER_TEST.S_V_TEST does not exist.
+SQL> CREATE OR REPLACE VIEW S_V_TEST AS SELECT * FROM DUAL;
+
+CT-01301, USER_TEST.S_V_TEST already exists
+SQL> ANALYZE TABLE S_V_TEST COMPUTE  STATISTICS;
+
+CT-00130, Operation analyze table is not supported on VIEW
+SQL> conn / as sysdba
+
+connected.
+
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> drop user USER_TEST cascade;
+
+Succeed.
+
+SQL> 
+SQL> --SYNONYM FOR FUNCTION
+SQL> drop user if exists SYN_TEST1 cascade;
+
+Succeed.
+
+SQL> CREATE USER SYN_TEST1 IDENTIFIED BY Root1234;
+
+Succeed.
+
+SQL> grant dba to SYN_TEST1;
+
+Succeed.
+
+SQL> connect SYN_TEST1/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> --FIRST ONLY HAS FUNCTION
+SQL> create or replace function obj_01( a int)
+  2 return int
+  3 as 
+  4 i int default 0;
+  5 begin
+  6    i := a * 10 + a;
+  7    return i;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> create or replace synonym syn_01 for obj_01;
+
+Succeed.
+
+SQL> select obj_01(1);
+
+OBJ_01(1)   
+------------
+11          
+
+1 rows fetched.
+
+SQL> select syn_01(1);
+
+SYN_01(1)   
+------------
+11          
+
+1 rows fetched.
+
+SQL> 
+SQL> --THEN CREATE TABLE
+SQL> CREATE TABLE IF NOT EXISTS  obj_01(id int);
+
+Succeed.
+
+SQL> insert into obj_01 values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select obj_01(1);
+
+OBJ_01(1)   
+------------
+11          
+
+1 rows fetched.
+
+SQL> select * from obj_01;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> select syn_01(1);
+
+SYN_01(1)   
+------------
+11          
+
+1 rows fetched.
+
+SQL> select * from syn_01;
+
+CT-00843, [1:15]The table or view SYN_TEST1.SYN_01 does not exist.
+SQL> 
+SQL> ---FIRST ONLY HAS TABLE
+SQL> CREATE TABLE IF NOT EXISTS  obj_02(id int);
+
+Succeed.
+
+SQL> insert into obj_02 values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create or replace synonym syn_02 for obj_02;
+
+Succeed.
+
+SQL> select * from obj_02;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from syn_02;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> --THEN CREATE TABLE
+SQL> create or replace function obj_02( a int)
+  2 return int
+  3 as 
+  4 i int default 0;
+  5 begin
+  6    i := a * 10 + a;
+  7    return i;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> select obj_02(1);
+
+OBJ_02(1)   
+------------
+11          
+
+1 rows fetched.
+
+SQL> select * from obj_02;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> select syn_02(1);
+
+CT-00828, [1:8]function SYN_TEST1.SYN_02 does not exist
+SQL> select * from syn_02;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> --BOTH HAVE FUNCTION AND TABLE
+SQL> create or replace function obj_03( a int)
+  2 return int
+  3 as 
+  4 i int default 0;
+  5 begin
+  6    i := a * 10 + a;
+  7    return i;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> CREATE TABLE IF NOT EXISTS  obj_03(id int);
+
+Succeed.
+
+SQL> insert into obj_03 values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create or replace synonym syn_03 for obj_03;
+
+Succeed.
+
+SQL> select obj_03(1);
+
+OBJ_03(1)   
+------------
+11          
+
+1 rows fetched.
+
+SQL> select * from obj_03;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> select syn_03(1);
+
+CT-00828, [1:8]function SYN_TEST1.SYN_03 does not exist
+SQL> select * from syn_03;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace function syn_dep_func_01 return int
+  2 is
+  3 A int;
+  4 begin
+  5 select id into A  from syn_03 limit 1;
+  6 return A;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> select OBJECT_TYPE, STATUS from user_objects where OBJECT_NAME='SYN_DEP_FUNC_01';
+
+OBJECT_TYPE     STATUS 
+--------------- -------
+FUNCTION        VALID  
+
+1 rows fetched.
+
+SQL> drop synonym syn_03;
+
+Succeed.
+
+SQL> select OBJECT_TYPE, STATUS from user_objects where OBJECT_NAME='SYN_DEP_FUNC_01';
+
+OBJECT_TYPE     STATUS 
+--------------- -------
+FUNCTION        UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace function func99(a int) return int
+  2 as
+  3 b int;
+  4 begin
+  5 	b:=a;
+  6 	return b;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> create or replace synonym syn_99 for func99;
+
+Succeed.
+
+SQL> create or replace procedure proc_99(c int)
+  2 as
+  3 d int;
+  4 begin
+  5 	d:=syn_99(c);
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> drop synonym syn_99;
+
+Succeed.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from user_objects where OBJECT_NAME='PROC_99';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+PROC_99                                                          PROCEDURE       UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace synonym syn_99 for func99;
+
+Succeed.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from user_objects where OBJECT_NAME='PROC_99';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+PROC_99                                                          PROCEDURE       UNKNOWN
+
+1 rows fetched.
+
+SQL> begin
+  2 	DBE_UTIL.COMPILE_SCHEMA('SYN_TEST1',false);
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from user_objects where OBJECT_NAME='PROC_99';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+PROC_99                                                          PROCEDURE       VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace synonym func99 for func99;
+
+CT-00604, Duplicate object name FUNC99
+SQL> conn / as sysdba
+
+connected.
+
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> drop user SYN_TEST1 cascade;
+
+Succeed.
+
+SQL> 
+SQL> DROP USER if exists C##USER1 CASCADE;
+
+Succeed.
+
+SQL> CREATE USER C##USER1 IDENTIFIED BY Zzw199209;
+
+Succeed.
+
+SQL> GRANT DBA TO C##USER1;
+
+Succeed.
+
+SQL> ALTER SESSION SET CURRENT_SCHEMA=C##USER1;
+
+Succeed.
+
+SQL> CREATE TABLE T1(C1 INT);
+
+Succeed.
+
+SQL> INSERT INTO T1 VALUES(12333);
+
+1 rows affected.
+
+SQL> CREATE VIEW V1 AS SELECT * FROM T1;
+
+Succeed.
+
+SQL> CREATE PUBLIC SYNONYM ST1 FOR T1;
+
+Succeed.
+
+SQL> CREATE PUBLIC SYNONYM SV1 FOR V1;
+
+Succeed.
+
+SQL> SELECT * FROM ST1;
+
+C1          
+------------
+12333       
+
+1 rows fetched.
+
+SQL> SELECT * FROM SV1;
+
+C1          
+------------
+12333       
+
+1 rows fetched.
+
+SQL> ALTER SESSION SET CURRENT_SCHEMA=SYS;
+
+Succeed.
+
+SQL> SELECT * FROM ST1;
+
+C1          
+------------
+12333       
+
+1 rows fetched.
+
+SQL> SELECT * FROM SV1;
+
+C1          
+------------
+12333       
+
+1 rows fetched.
+
+SQL> DROP USER C##USER1 CASCADE;
+
+Succeed.
+
+SQL> DROP PUBLIC SYNONYM ST1;
+
+Succeed.
+
+SQL> DROP PUBLIC SYNONYM SV1;
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_syn cascade;
+
+Succeed.
+
+SQL> create user test_syn identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to test_syn;
+
+Succeed.
+
+SQL> conn test_syn/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists SYN_TAB_001;
+
+Succeed.
+
+SQL> create table SYN_TAB_001 (a int,b clob);
+
+Succeed.
+
+SQL> --建表的同义词
+SQL> drop synonym if exists SYN_TAB_SYN_001;
+
+Succeed.
+
+SQL> create or replace synonym SYN_TAB_SYN_001 for SYN_TAB_001;
+
+Succeed.
+
+SQL> --建视图
+SQL> drop view if exists SYN_VIEW_001;
+
+Succeed.
+
+SQL> create or replace view SYN_VIEW_001 as select * from SYN_TAB_SYN_001;
+
+Succeed.
+
+SQL> --建视图的同义词
+SQL> create or replace synonym SYN_VIEW_SYN_001 for SYN_VIEW_001;
+
+Succeed.
+
+SQL> --建自定义函数
+SQL> create or replace function SYN_FUN_001(c int)return number
+  2 as
+  3         d int;
+  4 begin
+  5         select count(*) into d from SYN_VIEW_SYN_001 where a=c;
+  6         return d;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> --建自定义函数同义词
+SQL> drop synonym if exists SYN_FUN_SYN_001;
+
+Succeed.
+
+SQL> create or replace synonym SYN_FUN_SYN_001 for SYN_FUN_001;
+
+Succeed.
+
+SQL> --建存储过程
+SQL> create or replace procedure SYN_PROC_001(a int)
+  2 as
+  3 c number;
+  4 begin
+  5         c:=SYN_FUN_SYN_001(a);
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> -- 建立存储过程同名词
+SQL> drop synonym if exists SYN_PROC_SYN_001;
+
+Succeed.
+
+SQL> create or replace synonym SYN_PROC_SYN_001 for SYN_PROC_001;
+
+Succeed.
+
+SQL> 
+SQL> -- 建立自定义包
+SQL> CREATE OR REPLACE PACKAGE SYN_PAK_001
+  2 IS
+  3 FUNCTION fun_1(a int)RETURN NUMBER;
+  4 PROCEDURE proc1(a int);
+  5 END SYN_PAK_001;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY SYN_PAK_001
+  2 IS
+  3 
+  4 FUNCTION fun_1(a int) RETURN NUMBER
+  5 AS
+  6 avger NUMBER;
+  7 BEGIN
+  8     SYN_PROC_SYN_001(a);
+  9     avger := 3;
+ 10 return avger;
+ 11 END;
+ 12 
+ 13 PROCEDURE proc1(a int)
+ 14 AS
+ 15 res int;
+ 16 BEGIN
+ 17     res := fun_1(a);
+ 18 END;
+ 19 
+ 20 END SYN_PAK_001;
+ 21 /
+
+Succeed.
+
+SQL> 
+SQL> drop synonym if exists SYN_PAG_SYN_001;
+
+Succeed.
+
+SQL> create or replace synonym SYN_PAG_SYN_001 for SYN_PAK_001;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create or replace function SYN_FUN_002(c int)return number
+  2 as
+  3 begin
+  4     return SYN_PAG_SYN_001.fun_1(c);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create or replace procedure SYN_PROC_002(a int)
+  2 as
+  3 c number;
+  4 begin
+  5         c:=SYN_FUN_002(a);
+  6         SYN_PAG_SYN_001.proc1(a);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from MY_OBJECTS where OBJECT_NAME like 'SYN_%' order by OBJECT_NAME,OBJECT_TYPE;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+SYN_FUN_001                                                      FUNCTION           VALID  
+SYN_FUN_002                                                      FUNCTION           VALID  
+SYN_FUN_SYN_001                                                  SYNONYM            VALID  
+SYN_PAG_SYN_001                                                  SYNONYM            VALID  
+SYN_PAK_001                                                      PACKAGE BODY       VALID  
+SYN_PAK_001                                                      PACKAGE SPEC       VALID  
+SYN_PROC_001                                                     PROCEDURE          VALID  
+SYN_PROC_002                                                     PROCEDURE          VALID  
+SYN_PROC_SYN_001                                                 SYNONYM            VALID  
+SYN_TAB_001                                                      TABLE              VALID  
+SYN_TAB_SYN_001                                                  SYNONYM            VALID  
+SYN_VIEW_001                                                     VIEW               VALID  
+SYN_VIEW_SYN_001                                                 SYNONYM            VALID  
+
+13 rows fetched.
+
+SQL> select name, type, REFERENCED_NAME, REFERENCED_TYPE from MY_DEPENDENCIES order by name, type, REFERENCED_NAME;
+
+NAME                                                             TYPE         REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------
+SYN_FUN_001                                                      FUNCTION     SYN_VIEW_SYN_001                                                 SYNONYM        
+SYN_FUN_002                                                      FUNCTION     SYN_PAG_SYN_001                                                  SYNONYM        
+SYN_FUN_SYN_001                                                  SYNONYM      SYN_FUN_001                                                      FUNCTION       
+SYN_PAG_SYN_001                                                  SYNONYM      SYN_PAK_001                                                      PACKAGE        
+SYN_PAK_001                                                      PACKAGE BODY SYN_PAK_001                                                      PACKAGE        
+SYN_PAK_001                                                      PACKAGE BODY SYN_PROC_SYN_001                                                 SYNONYM        
+SYN_PROC_001                                                     PROCEDURE    SYN_FUN_SYN_001                                                  SYNONYM        
+SYN_PROC_002                                                     PROCEDURE    SYN_FUN_002                                                      FUNCTION       
+SYN_PROC_002                                                     PROCEDURE    SYN_PAG_SYN_001                                                  SYNONYM        
+SYN_PROC_SYN_001                                                 SYNONYM      SYN_PROC_001                                                     PROCEDURE      
+SYN_TAB_SYN_001                                                  SYNONYM      SYN_TAB_001                                                      TABLE          
+SYN_VIEW_001                                                     VIEW         SYN_TAB_SYN_001                                                  SYNONYM        
+SYN_VIEW_SYN_001                                                 SYNONYM      SYN_VIEW_001                                                     VIEW           
+
+13 rows fetched.
+
+SQL> drop table SYN_TAB_001;
+
+Succeed.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from MY_OBJECTS where OBJECT_NAME like 'SYN_%' order by OBJECT_NAME,OBJECT_TYPE;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+SYN_FUN_001                                                      FUNCTION           UNKNOWN
+SYN_FUN_002                                                      FUNCTION           VALID  
+SYN_FUN_SYN_001                                                  SYNONYM            UNKNOWN
+SYN_PAG_SYN_001                                                  SYNONYM            VALID  
+SYN_PAK_001                                                      PACKAGE BODY       UNKNOWN
+SYN_PAK_001                                                      PACKAGE SPEC       VALID  
+SYN_PROC_001                                                     PROCEDURE          UNKNOWN
+SYN_PROC_002                                                     PROCEDURE          VALID  
+SYN_PROC_SYN_001                                                 SYNONYM            UNKNOWN
+SYN_TAB_SYN_001                                                  SYNONYM            UNKNOWN
+SYN_VIEW_001                                                     VIEW               UNKNOWN
+SYN_VIEW_SYN_001                                                 SYNONYM            UNKNOWN
+
+12 rows fetched.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_syn cascade;
+
+Succeed.
+
+SQL> create user test_syn identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to test_syn;
+
+Succeed.
+
+SQL> 
+SQL> conn test_syn/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> -- 创建表
+SQL> drop table if exists SYN_TAB_001;
+
+Succeed.
+
+SQL> create table SYN_TAB_001 (a int, b varchar(10));
+
+Succeed.
+
+SQL> 
+SQL> -- 创建表的同义词
+SQL> drop synonym if exists SYN_TAB_SYN_001;
+
+Succeed.
+
+SQL> create or replace synonym SYN_TAB_SYN_001 for SYN_TAB_001;
+
+Succeed.
+
+SQL> 
+SQL> -- 创建自定义类型
+SQL> create or replace type SYN_TYPE_001 is table of SYN_TAB_SYN_001%rowtype;
+  2 /
+
+Succeed.
+
+SQL> -- 创建自定义类型同义词
+SQL> create or replace synonym SYN_TYPE_SYN_001 for SYN_TYPE_001;
+
+Succeed.
+
+SQL> 
+SQL> -- 创建存储过程
+SQL> create or replace procedure SYN_proc_001(a int, b varchar) as
+  2 var SYN_TAB_SYN_001%rowtype;
+  3 type_var SYN_TYPE_SYN_001;
+  4 begin
+  5     var.a := a;
+  6     var.b := b;
+  7     type_var := SYN_TYPE_SYN_001(var);
+  8     dbe_output.print_line(type_var(1).a);
+  9     dbe_output.print_line(type_var(1).b);
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> drop synonym if exists SYN_PROC_SYN_001;
+
+Succeed.
+
+SQL> -- 创建存储过程同名词
+SQL> create or replace synonym SYN_PROC_SYN_001 for SYN_proc_001;
+
+Succeed.
+
+SQL> 
+SQL> -- 创建自定义包
+SQL> CREATE OR REPLACE PACKAGE SYN_PAK_001
+  2 IS
+  3 PROCEDURE proc1(a int, b varchar);
+  4 END SYN_PAK_001;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY SYN_PAK_001
+  2 IS
+  3 
+  4 PROCEDURE proc1(a int, b varchar)
+  5 AS
+  6 BEGIN
+  7    SYN_PROC_SYN_001(a, b);
+  8 END;
+  9 
+ 10 END SYN_PAK_001;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> -- 创建自定义包同义词
+SQL> drop synonym if exists SYN_PAG_SYN_001;
+
+Succeed.
+
+SQL> create or replace synonym SYN_PAG_SYN_001 for SYN_PAK_001;
+
+Succeed.
+
+SQL> 
+SQL> call SYN_PAG_SYN_001.proc1(2, 'aab');
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from MY_OBJECTS where OBJECT_NAME like 'SYN_%' order by OBJECT_NAME,OBJECT_TYPE;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+SYN_PAG_SYN_001                                                  SYNONYM            VALID  
+SYN_PAK_001                                                      PACKAGE BODY       VALID  
+SYN_PAK_001                                                      PACKAGE SPEC       VALID  
+SYN_PROC_001                                                     PROCEDURE          VALID  
+SYN_PROC_SYN_001                                                 SYNONYM            VALID  
+SYN_TAB_001                                                      TABLE              VALID  
+SYN_TAB_SYN_001                                                  SYNONYM            VALID  
+SYN_TYPE_001                                                     TYPE SPEC          VALID  
+SYN_TYPE_SYN_001                                                 SYNONYM            VALID  
+
+9 rows fetched.
+
+SQL> select name, type, REFERENCED_NAME, REFERENCED_TYPE from MY_DEPENDENCIES order by name, type, REFERENCED_NAME;
+
+NAME                                                             TYPE         REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------
+SYN_PAG_SYN_001                                                  SYNONYM      SYN_PAK_001                                                      PACKAGE        
+SYN_PAK_001                                                      PACKAGE BODY SYN_PAK_001                                                      PACKAGE        
+SYN_PAK_001                                                      PACKAGE BODY SYN_PROC_SYN_001                                                 SYNONYM        
+SYN_PROC_001                                                     PROCEDURE    SYN_TAB_SYN_001                                                  SYNONYM        
+SYN_PROC_001                                                     PROCEDURE    SYN_TYPE_SYN_001                                                 SYNONYM        
+SYN_PROC_SYN_001                                                 SYNONYM      SYN_PROC_001                                                     PROCEDURE      
+SYN_TAB_SYN_001                                                  SYNONYM      SYN_TAB_001                                                      TABLE          
+SYN_TYPE_001                                                     TYPE         SYN_TAB_SYN_001                                                  SYNONYM        
+SYN_TYPE_SYN_001                                                 SYNONYM      SYN_TYPE_001                                                     TYPE           
+
+9 rows fetched.
+
+SQL> drop type SYN_TYPE_001;
+
+Succeed.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from MY_OBJECTS where OBJECT_NAME like 'SYN_%' order by OBJECT_NAME,OBJECT_TYPE;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+SYN_PAG_SYN_001                                                  SYNONYM            VALID  
+SYN_PAK_001                                                      PACKAGE BODY       UNKNOWN
+SYN_PAK_001                                                      PACKAGE SPEC       VALID  
+SYN_PROC_001                                                     PROCEDURE          UNKNOWN
+SYN_PROC_SYN_001                                                 SYNONYM            UNKNOWN
+SYN_TAB_001                                                      TABLE              VALID  
+SYN_TAB_SYN_001                                                  SYNONYM            VALID  
+SYN_TYPE_SYN_001                                                 SYNONYM            UNKNOWN
+
+8 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --- 同义词功能测试
+SQL> -- 存储过程同名词
+SQL> create or replace procedure proc_test_001(i int)
+  2 as
+  3 begin
+  4     dbe_output.print_line(i);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace synonym test_syn_proc for proc_test_001;
+
+Succeed.
+
+SQL> 
+SQL> call test_syn_proc(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure proc_test_001(i int)
+  2 as
+  3 begin
+  4     dbe_output.print_line(i * 2);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> call test_syn_proc(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure proc_test_002(i int)
+  2 as
+  3 begin
+  4     dbe_output.print_line(i * 3);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace synonym test_syn_proc for proc_test_002;
+
+Succeed.
+
+SQL> call test_syn_proc(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- 同名词和存储过程递归测试
+SQL> create or replace procedure proc_test_002(i int)
+  2 as
+  3 begin
+  4     dbe_output.print_line(i * 3);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace synonym test_syn_proc for proc_test_002;
+
+Succeed.
+
+SQL> call test_syn_proc(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> create or replace procedure proc_test_002(i int)
+  2 as
+  3 begin
+  4     dbe_output.print_line(i);
+  5     if (i > 0) then
+  6         test_syn_proc(i - 1);
+  7     end if;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> call test_syn_proc(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 包的同名词测试
+SQL> CREATE OR REPLACE PACKAGE SYN_PAK_001
+  2 IS
+  3 PROCEDURE proc1(a int, b varchar);
+  4 END SYN_PAK_001;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY SYN_PAK_001
+  2 IS
+  3 
+  4 PROCEDURE proc1(a int, b varchar)
+  5 AS
+  6 BEGIN
+  7    dbe_output.print_line(a);
+  8    dbe_output.print_line(b);
+  9 END;
+ 10 
+ 11 END SYN_PAK_001;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace synonym test_syn_pak for SYN_PAK_001;
+
+Succeed.
+
+SQL> 
+SQL> call test_syn_pak.proc1(2, 'a');
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY SYN_PAK_001
+  2 IS
+  3 
+  4 PROCEDURE proc1(a int)
+  5 AS
+  6 BEGIN
+  7    dbe_output.print_line(a);
+  8 END;
+  9 
+ 10 END SYN_PAK_001;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_SYN.SYN_PAK_001) terminated with compiling errors
+[4:11] PLC-00967 Subprogram or variant 'PROC1' has defined in package body, but not matched with package specification
+
+
+SQL> 
+SQL> call test_syn_pak.proc1(2, 'a');
+
+CT-00932, [1:2] PL/SQL(TEST_SYN.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] CT-00944, PL/SQL(TEST_SYN.SYN_PAK_001) terminated with compiling errors
+[3:11] PLC-00967 Subprogram or variant 'PROC1' has defined in package body, but not matched with package specification
+
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE SYN_PAK_001
+  2 IS
+  3 PROCEDURE proc1(a int);
+  4 END SYN_PAK_001;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> call test_syn_pak.proc1(2);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- 高级包测试
+SQL> create or replace synonym dbms_output for sys.dbe_output;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure proc_test_002(i int)
+  2 as
+  3 begin
+  4     dbms_output.print_line(i * 3);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> call proc_test_002(2);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- type 同名词测试
+SQL> 
+SQL> CREATE OR REPLACE TYPE TYPE_DAY FORCE AS OBJECT
+  2 ( day NUMBER
+  3 );
+  4 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace synonym syn_type_day for TYPE_DAY;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TYPE TYPE_MONTH FORCE AS OBJECT
+  2 ( month NUMBER,
+  3   day syn_type_day
+  4 );
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace synonym SYN_TYPE_MONTH for TYPE_MONTH;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TYPE TYPE_DAY FORCE AS OBJECT
+  2 ( year NUMBER,
+  3   month SYN_TYPE_MONTH
+  4 );
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> --DTS202104290KSRIEP1E00
+SQL> DROP PROCEDURE IF EXISTS proc_synonym_001;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE proc_synonym_001(param1 IN VARCHAR2,param2 IN VARCHAR2)
+  2 IS
+  3 BEGIN 
+  4 DBE_OUTPUT.PRINT_LINE('Hello Cantian100 OLTP:'||param1||','||param2);
+  5 END proc_synonym_001;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> --自定义函数
+SQL> DROP TABLE IF EXISTS func_synonym_002;
+
+Succeed.
+
+SQL> CREATE TABLE func_synonym_002(ID INT);
+
+Succeed.
+
+SQL> INSERT INTO func_synonym_002 VALUES(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> CREATE OR REPLACE FUNCTION func_synonym_003(a INT) RETURN INT
+  2 AS
+  3 c INT;
+  4 d INT;
+  5 BEGIN
+  6 c := a;
+  7 SELECT ID INTO d FROM func_synonym_002 WHERE ROWNUM = c;
+  8 RETURN d;
+  9 END func_synonym_003;
+ 10 /
+
+Succeed.
+
+SQL> SELECT * FROM func_synonym_002 WHERE func_synonym_003(1) = 1;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --创建自定义高级包proc_synonym_004的定义。
+SQL> DROP PACKAGE IF EXISTS pack_synonym_004;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE pack_synonym_004
+  2 IS
+  3 FUNCTION MYF RETURN INT;
+  4 PROCEDURE MYP;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY pack_synonym_004
+  2 IS
+  3 FUNCTION MYF RETURN INT
+  4 IS
+  5 V1 INT := 10;
+  6 BEGIN
+  7 NULL;
+  8 RETURN V1;
+  9 END;
+ 10 PROCEDURE MYP IS
+ 11 V1 INT;
+ 12 BEGIN
+ 13 SELECT MYF INTO V1 FROM SYS_DUMMY;
+ 14 DBE_OUTPUT.PRINT_LINE(V1);
+ 15 END;
+ 16 END;
+ 17 /
+
+Succeed.
+
+SQL> CALL pack_synonym_004.MYP;
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE OR REPLACE TYPE type_synonym_006 IS object(
+  2 name varchar(20),
+  3 city varchar(20)
+  4 );
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> --记录类型嵌套集合类型
+SQL> CREATE OR REPLACE TYPE type_synonym_009 IS VARRAY(20) OF varchar(10);
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> create OR REPLACE synonym SVP_PROC_SYNONYM_002 for proc_synonym_001;
+
+Succeed.
+
+SQL> create or replace public synonym svpps_proc_synonym_002 for proc_synonym_001;
+
+Succeed.
+
+SQL> create or replace synonym svp_func1_synonym_003 for func_synonym_003;
+
+Succeed.
+
+SQL> create or replace public synonym svpps_func_synonym_003 for func_synonym_003;
+
+Succeed.
+
+SQL> create or replace synonym svp_type1_synonym_006 for type_synonym_006;
+
+Succeed.
+
+SQL> create or replace public synonym svpps_type1_synonym_009 for type_synonym_009;
+
+Succeed.
+
+SQL> create or replace synonym svp_DBE_OUTPUT for SYS.DBE_OUTPUT;
+
+Succeed.
+
+SQL> create or replace public synonym svpps_DBE_OUTPUT for SYS.DBE_OUTPUT;
+
+Succeed.
+
+SQL> create or replace synonym svp_pack_synonym_004 for pack_synonym_004;
+
+Succeed.
+
+SQL> create or replace public synonym svpps_pack_synonym_004 for pack_synonym_004;
+
+Succeed.
+
+SQL> select * from DB_SYNONYMS where SYNONYM_NAME like 'SVP%' order by SYNONYM_NAME;
+
+OWNER                                                            SYNONYM_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                      
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PUBLIC                                                           SVPPS_DBE_OUTPUT                                                 SYS                                                              DBE_OUTPUT                                                      
+PUBLIC                                                           SVPPS_FUNC_SYNONYM_003                                           TEST_SYN                                                         FUNC_SYNONYM_003                                                
+PUBLIC                                                           SVPPS_PACK_SYNONYM_004                                           TEST_SYN                                                         PACK_SYNONYM_004                                                
+PUBLIC                                                           SVPPS_PROC_SYNONYM_002                                           TEST_SYN                                                         PROC_SYNONYM_001                                                
+PUBLIC                                                           SVPPS_TYPE1_SYNONYM_009                                          TEST_SYN                                                         TYPE_SYNONYM_009                                                
+TEST_SYN                                                         SVP_DBE_OUTPUT                                                   SYS                                                              DBE_OUTPUT                                                      
+TEST_SYN                                                         SVP_FUNC1_SYNONYM_003                                            TEST_SYN                                                         FUNC_SYNONYM_003                                                
+TEST_SYN                                                         SVP_PACK_SYNONYM_004                                             TEST_SYN                                                         PACK_SYNONYM_004                                                
+TEST_SYN                                                         SVP_PROC_SYNONYM_002                                             TEST_SYN                                                         PROC_SYNONYM_001                                                
+TEST_SYN                                                         SVP_TYPE1_SYNONYM_006                                            TEST_SYN                                                         TYPE_SYNONYM_006                                                
+
+10 rows fetched.
+
+SQL> DROP PROCEDURE IF EXISTS proc_synonym_001;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS func_synonym_002;
+
+Succeed.
+
+SQL> drop FUNCTION IF EXISTS func_synonym_003;
+
+Succeed.
+
+SQL> DROP PACKAGE IF EXISTS pack_synonym_004;
+
+Succeed.
+
+SQL> DROP TYPE IF EXISTS type_synonym_006;
+
+Succeed.
+
+SQL> DROP TYPE IF EXISTS type_synonym_009;
+
+Succeed.
+
+SQL> drop synonym IF EXISTS SVP_PROC_SYNONYM_002;
+
+Succeed.
+
+SQL> drop synonym IF EXISTS svp_func1_synonym_003;
+
+Succeed.
+
+SQL> drop synonym IF EXISTS svp_type1_synonym_006;
+
+Succeed.
+
+SQL> drop synonym IF EXISTS svp_DBE_OUTPUT;
+
+Succeed.
+
+SQL> drop synonym IF EXISTS svp_pack_synonym_004;
+
+Succeed.
+
+SQL> drop public synonym IF EXISTS svpps_proc_synonym_002;
+
+Succeed.
+
+SQL> drop public synonym IF EXISTS svpps_func_synonym_003;
+
+Succeed.
+
+SQL> drop public synonym IF EXISTS svpps_type1_synonym_009;
+
+Succeed.
+
+SQL> drop public synonym IF EXISTS svpps_DBE_OUTPUT;
+
+Succeed.
+
+SQL> drop public synonym IF EXISTS svpps_pack_synonym_004;
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test_syn cascade;
+Succeed.
+

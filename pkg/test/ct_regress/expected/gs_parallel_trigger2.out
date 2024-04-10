@@ -1,0 +1,243 @@
+
+
+SQL> --test dead lock
+SQL> set serveroutput on;
+
+ON
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_parallel_trigger2 cascade;
+
+Succeed.
+
+SQL> create user gs_parallel_trigger2 identified by Lh00420062;
+
+Succeed.
+
+SQL> grant all privileges to gs_parallel_trigger2;
+
+Succeed.
+
+SQL> conn gs_parallel_trigger2/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> SELECT GET_LOCK('t_parallel_trig_1');
+
+GET_LOCK('T_PARALLEL_TRIG_1')
+-----------------------------
+1                            
+
+1 rows fetched.
+
+SQL> create table if not exists t_parallel_trig_1(f1 int);
+
+Succeed.
+
+SQL> SELECT RELEASE_LOCK('t_parallel_trig_1');
+
+RELEASE_LOCK('T_PARALLEL_TRIG_1')
+---------------------------------
+1                                
+
+1 rows fetched.
+
+SQL> 
+SQL> declare
+  2 i int := 0;
+  3 sql1 varchar(512);
+  4 sql2 varchar(512);
+  5 begin
+  6 	sql1 := 'CREATE OR REPLACE TRIGGER trig_parallel BEFORE DELETE ON t_parallel_trig_1 BEGIN NULL;END;';
+  7 	sql2 := 'DROP TRIGGER trig_parallel';
+  8 	while i < 5000 LOOP
+  9 		execute immediate sql1;
+ 10 		execute immediate sql2;
+ 11 		i := i + 1;
+ 12 	end loop;
+ 13 end;
+ 14 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists FVT_PROC_ADDITIONAL_table_A2;
+
+Succeed.
+
+SQL> drop table if exists FVT_PROC_ADDITIONAL_table_B2;
+
+Succeed.
+
+SQL> drop table if exists FVT_PROC_ADDITIONAL_table_C2;
+
+Succeed.
+
+SQL> create table FVT_PROC_ADDITIONAL_table_A2 
+  2 (
+  3 c_int int not null,
+  4 c_number number,
+  5 c_varchar varchar(80),
+  6 c_date date
+  7 );
+
+Succeed.
+
+SQL> insert into FVT_PROC_ADDITIONAL_table_A2 values(1,1.111,'view structure',to_date('2019-01-01','yyyy-mm-dd'));	
+
+1 rows affected.
+
+SQL> insert into FVT_PROC_ADDITIONAL_table_A2 values(2,2.222,'123456',to_date('2019-02-02','yyyy-mm-dd'));	
+
+1 rows affected.
+
+SQL> insert into FVT_PROC_ADDITIONAL_table_A2 values(3,3.333,'AAAAA',to_date('2019-03-03','yyyy-mm-dd'));		
+
+1 rows affected.
+
+SQL> 
+SQL> create table FVT_PROC_ADDITIONAL_table_B2 as select * from FVT_PROC_ADDITIONAL_table_A2;
+
+Succeed.
+
+SQL> delete FVT_PROC_ADDITIONAL_table_B2 where c_int<=2;
+
+2 rows affected.
+
+SQL> insert into FVT_PROC_ADDITIONAL_table_B2 values(4,6.666,'physical',to_date('2019-04-04','yyyy-mm-dd'));	
+
+1 rows affected.
+
+SQL> insert into FVT_PROC_ADDITIONAL_table_B2 values(2,10.0,'peking university',to_date('2019-05-30','yyyy-mm-dd'));	
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE TABLE FVT_PROC_ADDITIONAL_table_C2(staff_id INT NOT NULL, higest_degree CHAR(8), graduate_school VARCHAR(64), graduate_date DATETIME, education_note VARCHAR(70))
+  2 partition BY LIST(higest_degree)
+  3 (
+  4 partition doctor values ('doctor'),
+  5 partition master values ('master'),
+  6 partition undergraduate values ('bachelor')
+  7 );
+
+Succeed.
+
+SQL> insert into FVT_PROC_ADDITIONAL_table_C2(staff_id,higest_degree,graduate_school,graduate_date,education_note) values(1,'doctor','XIDIAN UNIVERSITY','2017-07-06 12:00:00','211');
+
+1 rows affected.
+
+SQL> insert into FVT_PROC_ADDITIONAL_table_C2(staff_id,higest_degree,graduate_school,graduate_date,education_note) values(2,'master','Northwestern Polytechnical University','2017-07-06 12:00:00','211_985');
+
+1 rows affected.
+
+SQL> insert into FVT_PROC_ADDITIONAL_table_C2(staff_id,higest_degree,graduate_school,graduate_date,education_note) values(3,'bachelor','Beijing Normal University','2017-07-06 12:00:00','211_985');
+
+1 rows affected.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function FVT_PROC_ADDITIONAL_TRIG_FUN(i varchar) RETURN INT
+  2 AS
+  3 	a varchar(80);
+  4 	d int;
+  5 begin
+  6  a:=i;
+  7  select staff_id into d from FVT_PROC_ADDITIONAL_table_C2 where graduate_school =a;
+  8  return d;
+  9 end FVT_PROC_ADDITIONAL_TRIG_FUN;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create or replace trigger FVT_PROC_ADDITIONAL_trigger_1 before insert or delete on FVT_PROC_ADDITIONAL_table_A2
+  2 begin
+  3     declare
+  4     c1 sys_refcursor;
+  5     c_rows FVT_PROC_ADDITIONAL_table_B2%rowtype;
+  6     d_rows FVT_PROC_ADDITIONAL_table_B2%rowtype;
+  7     type tcur is ref cursor;
+  8     c2 tcur;
+  9     i int:=0;
+ 10     graduate_id int;
+ 11     begin
+ 12             open c1 for select * from FVT_PROC_ADDITIONAL_table_B2;
+ 13             fetch c1 into c_rows,d_rows;
+ 14     exception
+ 15     
+ 16     when ROWTYPE_MISMATCH then
+ 17         begin
+ 18             execute immediate 'create or replace trigger FVT_PROC_ADDITIONAL_trigger_2 before insert or delete on FVT_PROC_ADDITIONAL_table_A2
+ 19                 begin
+ 20 				declare
+ 21 				c2 sys_refcursor;
+ 22 				graduate_id int;
+ 23 				begin
+ 24                     open c2 for select graduate_school from FVT_PROC_ADDITIONAL_table_C2 where staff_id=3;
+ 25                     fetch c2 into graduate_id;
+ 26                     exception
+ 27                     when ROWTYPE_MISMATCH then
+ 28                         begin
+ 29                             sys.dbe_output.print_line(''jump to exception''||''ROWTYPE_MISMATCH'');
+ 30                             sys.dbe_output.print_line(''expeption code''||SQL_ERR_CODE||'',''||''error''||''exception message:''||SQL_ERR_MSG);
+ 31                         end;
+ 32 				end;
+ 33                 end';
+ 34         end;
+ 35         sys.dbe_output.print_line('jump to exception'||'ROWTYPE_MISMATCH');
+ 36         sys.dbe_output.print_line('exception code:'||SQL_ERR_CODE||','||'error'||'exception message:'||SQL_ERR_MSG);
+ 37         
+ 38     when others then sys.dbe_output.print_line('other error');
+ 39                     sys.dbe_output.print_line(SQL_ERR_CODE||'error'||SQL_ERR_MSG);
+ 40                     dbe_output.print_line(c_rows.c_varchar);
+ 41 
+ 42     end;
+ 43 end;
+ 44 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure FVT_PROC_ADDITIONAL_procedure_p2_2(a number)
+  2 is
+  3 b number:=a;
+  4 begin
+  5 	insert into FVT_PROC_ADDITIONAL_table_A2 values(FVT_PROC_ADDITIONAL_TRIG_FUN('XIDIAN UNIVERSITY'),b,'++++$%#@',to_date('2019-12-31','yyyy-mm-dd'));
+  6 	delete FVT_PROC_ADDITIONAL_table_A2 where c_int =1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> call FVT_PROC_ADDITIONAL_procedure_p2_2(8.88);
+
+CT-00932, [1:2] PL/SQL(GS_PARALLEL_TRIGGER2.ANONYMOUS BLOCK) terminated with execute errors
+[5:2] PL/SQL(GS_PARALLEL_TRIGGER2.FVT_PROC_ADDITIONAL_PROCEDURE_P2_2) terminated with execute errors
+[18:13] PL/SQL(GS_PARALLEL_TRIGGER2.FVT_PROC_ADDITIONAL_TRIGGER_1) terminated with execute errors
+[18:13] CT-00928, DDL or DCL is not allowed in a trigger
+
+SQL> 
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_parallel_trigger2 cascade;
+
+Succeed.
+
+SQL> set serveroutput off;
+OFF
+
+
+

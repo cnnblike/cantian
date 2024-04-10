@@ -1,0 +1,44 @@
+
+
+SQL> --test dead lock
+SQL> SELECT GET_LOCK('t_parallel_trig_1');
+
+GET_LOCK('T_PARALLEL_TRIG_1')
+-----------------------------
+1                            
+
+1 rows fetched.
+
+SQL> create table if not exists t_parallel_trig_1(f1 int);
+
+Succeed.
+
+SQL> SELECT RELEASE_LOCK('t_parallel_trig_1');
+
+RELEASE_LOCK('T_PARALLEL_TRIG_1')
+---------------------------------
+1                                
+
+1 rows fetched.
+
+SQL> 
+SQL> declare
+  2 i int := 0;
+  3 begin
+  4 	while i < 1000000 LOOP
+  5 		delete from t_parallel_trig_1;
+  6 		i := i + 1;
+  7 	end loop;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+
+

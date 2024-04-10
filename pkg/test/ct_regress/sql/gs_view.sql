@@ -1,0 +1,1242 @@
+conn / as  sysdba
+drop user if exists c##core_user2 cascade;
+create user c##core_user2 identified by Cantian_234;
+grant connect ,create table , create view, create trigger to c##core_user2;
+drop user if exists c##core_user cascade;
+create user c##core_user identified by Cantian_234;
+grant connect ,create table , create view, create trigger to c##core_user;
+conn  c##core_user/Cantian_234@127.0.0.1:1611
+create table pri_tab(pri_id int primary key );
+create table ref_tab(ref_id int REFERENCES pri_tab(pri_id)  );
+select   CHILD_OWNER,CHILD_TABLE,CHILD_COLS,PARENT_OWNER,PARENT_TABLE,PARENT_COLS from MY_FOREIGN_DEPENDENCY;
+create table pri_tab1(pri_id int primary key );
+grant REFERENCES on pri_tab1 to c##core_user2;
+conn  c##core_user2/Cantian_234@127.0.0.1:1611
+create table ref_tab1(ref_id int REFERENCES c##core_user.pri_tab1(pri_id)  );
+select   CHILD_OWNER,CHILD_TABLE,CHILD_COLS,PARENT_OWNER,PARENT_TABLE,PARENT_COLS from MY_FOREIGN_DEPENDENCY;
+conn / as sysdba 
+drop  table if exists table_pri1 cascade constraints;
+create table table_pri1(priid int, priid2 int, priid3 int, name char(10));
+alter table table_pri1 add constraint test_cons primary key(priid, priid2, priid3);
+grant REFERENCES on table_pri1 to c##core_user2;
+conn  c##core_user2/Cantian_234@127.0.0.1:1611
+drop  table if exists ref_tab1 cascade constraints;
+create table table_ref1(refid int, refid2 int, refid3 int, name char(10));
+alter table table_ref1 add constraint test_cons_ref foreign key (refid, refid2, refid3)  REFERENCES sys.table_pri1(priid, priid2, priid3);
+select   CHILD_OWNER,CHILD_TABLE,CHILD_COLS,PARENT_OWNER,PARENT_TABLE,PARENT_COLS from MY_FOREIGN_DEPENDENCY;
+conn / as sysdba 
+drop  table if exists table_pri1 cascade constraints;
+drop user if exists c##core_user2 cascade;
+drop user if exists c##core_user cascade;
+conn / as sysdba 
+drop user if exists test_column_user1 cascade;
+create user test_column_user1 identified by Cantian_234;
+grant connect, create table, create view to test_column_user1;
+conn test_column_user1/Cantian_234@127.0.0.1:1611
+create table test_column_type_tab(id int, name char(10));
+create view view_test_column_type_tab as  select * from test_column_type_tab;
+select table_name, column_name from USER_TAB_COLUMNS;
+select table_name, column_name from USER_TAB_COLUMNS;
+conn / as sysdba 
+drop user if exists test_column_user1 cascade;
+conn / as  sysdba
+drop user if exists c##core_user cascade;
+create user c##core_user identified by Cantian_234;
+grant connect ,create table , create view to c##core_user;
+conn c##core_user/Cantian_234@127.0.0.1:1611
+create table t1(id int,name VARCHAR2(10));
+create view core_user_view1 as select * from t1;
+select COLUMN_NAME,CHAR_LENGTH from DB_tab_columns where TABLE_NAME = 'CORE_USER_VIEW1';
+select COLUMN_NAME,CHAR_LENGTH from all_tab_columns where TABLE_NAME = 'CORE_USER_VIEW1';
+select COLUMN_NAME,CHAR_LENGTH from my_tab_columns where TABLE_NAME = 'CORE_USER_VIEW1';
+select COLUMN_NAME,CHAR_LENGTH from user_tab_columns where TABLE_NAME = 'CORE_USER_VIEW1';
+conn / as sysdba
+select COLUMN_NAME,CHAR_LENGTH from adm_tab_columns where TABLE_NAME = 'CORE_USER_VIEW1';
+select COLUMN_NAME,CHAR_LENGTH from dba_tab_columns where TABLE_NAME = 'CORE_USER_VIEW1';
+conn / as  sysdba
+drop user if exists c##core_user cascade;
+conn / as sysdba 
+drop user if exists dbtabcolsuser cascade;
+drop user if exists dbtabcolsuser3 cascade;
+create user dbtabcolsuser identified by pwd102_pwd; 
+create user dbtabcolsuser3 identified by pwd102_pwd; 
+grant connect , resource  to dbtabcolsuser;
+grant create table to dbtabcolsuser;
+grant execute on DBE_MASK_DATA to dbtabcolsuser;
+grant unlimited tablespace to dbtabcolsuser;
+grant connect , resource to dbtabcolsuser3;
+grant select any table  , create any table  to dbtabcolsuser3;
+grant execute on DBE_DIAGNOSE  to dbtabcolsuser3;
+conn dbtabcolsuser3/pwd102_pwd@127.0.0.1:1611
+create table dbtabcolsuser.TT3 (id DOUBLE, id2 DOUBLE, id3 DOUBLE, id4 DOUBLE, id5 DOUBLE, id6 DOUBLE);
+create table dbtabcolsuser.TT1 (id DOUBLE, id2 DOUBLE, id3 DOUBLE, id4 DOUBLE, id5 DOUBLE, id6 DOUBLE);
+select count(*) from db_tab_cols where owner = 'DBTABCOLSUSER';
+select count(*) from all_tab_cols where owner = 'DBTABCOLSUSER';
+select DBE_DIAGNOSE.has_obj_privs('dbtabcolsuser3', 'dbtabcolsuser', 'TT3', 'TABLE') has_privs from dual;
+select DBE_DIAGNOSE.has_obj_privs('dbtabcolsuser3', 'dbtabcolsuser', 'tt3', 'TABLE') has_privs from dual;
+select DBE_DIAGNOSE.has_obj_privs('dbtabcolsuser3', 'dbtabcolsuser', "tt3", 'TABLE') has_privs from dual;
+conn / as sysdba
+drop user if exists dbtabcolsuser cascade;
+drop user if exists dbtabcolsuser3 cascade;
+conn / as  sysdba 
+drop user if exists core_user cascade;
+create user core_user identified by Cantian_234;
+alter system set ENABLE_ACCESS_DC = FALSE;
+grant connect ,create table , create view to core_user;
+drop table if exists table_core1;
+drop table if exists table_core2;
+create table table_core1(id int);
+create table table_core2(id int);
+conn  core_user/Cantian_234@127.0.0.1:1611
+create view view_tab1 as select id from sys.table_core1 union select id from sys.table_core2;
+create table table_core1(id int);
+create table table_core2(id int);
+create view view_tab1 as select id from table_core1 union select id from table_core2;
+conn / as  sysdba 
+drop user if exists core_user cascade;
+alter system set ENABLE_ACCESS_DC = TRUE;
+drop table if exists table_core1;
+drop table if exists table_core2;
+-- object privs
+conn / as sysdba 
+drop user if exists all_obj_user cascade;
+drop user if exists all_obj_user1 cascade;
+drop user if exists all_obj_user2 cascade;
+create user all_obj_user identified by Cantian_234;
+grant connect,  create table to all_obj_user;
+create user all_obj_user1 identified by Cantian_234;
+grant connect,  create table to all_obj_user1;
+grant dba to all_obj_user1;
+create user all_obj_user2 identified by Cantian_234;
+grant connect,  create table to all_obj_user2;
+grant dba to all_obj_user2;
+conn all_obj_user1/Cantian_234@127.0.0.1:1611
+create table all_obj_user1_tt1 (id int);
+create table all_obj_user1_tt2 (id int);
+grant select on all_obj_user1_tt1 to all_obj_user;
+grant insert on all_obj_user1_tt2 to all_obj_user;
+conn all_obj_user2/Cantian_234@127.0.0.1:1611
+create table all_obj_user2_tt1 (id int);
+create table all_obj_user2_tt2 (id int);
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+create table all_obj_user_tt1 ( name int);
+conn / as sysdba
+alter system set ENABLE_ACCESS_DC=TRUE;
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+select owner,table_name  from DB_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT'  order by 1,2;
+select owner,table_name  from ALL_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+conn / as sysdba
+alter system set ENABLE_ACCESS_DC=FALSE;
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+select owner,table_name  from DB_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+select owner,table_name  from ALL_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+-- select any table
+conn / as sysdba 
+drop user if exists all_obj_user cascade;
+drop user if exists all_obj_user1 cascade;
+drop user if exists all_obj_user2 cascade;
+create user all_obj_user identified by Cantian_234;
+grant connect,  create table,select any table to all_obj_user;
+create user all_obj_user1 identified by Cantian_234;
+grant connect to all_obj_user1;
+grant dba to all_obj_user1;
+create user all_obj_user2 identified by Cantian_234;
+grant connect to all_obj_user2;
+grant dba to all_obj_user2;
+conn all_obj_user1/Cantian_234@127.0.0.1:1611
+create table all_obj_user1_tt1 (id int);
+create table all_obj_user1_tt2 (id int);
+conn all_obj_user2/Cantian_234@127.0.0.1:1611
+create table all_obj_user2_tt1 (id int);
+create table all_obj_user2_tt2 (id int);
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+create table all_obj_user_tt1 ( name int);
+conn / as sysdba
+drop table if exists sys_t1;
+create table sys_t1(id int);
+alter system set ENABLE_ACCESS_DC=TRUE;
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+select owner,table_name  from DB_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+select owner,table_name  from ALL_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+conn / as sysdba
+alter system set ENABLE_ACCESS_DC=FALSE;
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+select owner,table_name  from DB_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+select owner,table_name  from ALL_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+-- obj privs role
+conn / as sysdba 
+drop user if exists all_obj_user cascade;
+drop user if exists all_obj_user2 cascade;
+drop user if exists all_obj_user1 cascade;
+create user all_obj_user identified by Cantian_234;
+grant connect,  create table  to all_obj_user;
+create user all_obj_user1 identified by Cantian_234;
+grant connect,create role ,create table  to all_obj_user1;
+grant dba to all_obj_user1;
+create user all_obj_user2 identified by Cantian_234;
+grant connect ,create role ,create table to all_obj_user2;
+conn all_obj_user2/Cantian_234@127.0.0.1:1611
+create table tt1 (id int);
+create role all_obj_role2;
+grant select on tt1 to all_obj_role2;
+grant all_obj_role2 to all_obj_user;
+conn all_obj_user1/Cantian_234@127.0.0.1:1611
+create table tt1 (id int);
+create role all_obj_role1;
+grant select on tt1 to all_obj_role1;
+grant all_obj_role1 to all_obj_user;
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+create table tt1 ( name int);
+conn / as sysdba
+alter system set ENABLE_ACCESS_DC=FALSE;
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+select owner,table_name  from DB_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+select owner,table_name  from ALL_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+-- select any    role
+conn / as sysdba 
+drop role all_obj_role1;
+drop role all_obj_role2;
+drop user if exists all_obj_user cascade;
+drop user if exists all_obj_user1 cascade;
+drop user if exists all_obj_user2 cascade; 
+create role all_obj_role_sys ;
+grant select any table to all_obj_role_sys;
+create user all_obj_user identified by Cantian_234;
+grant connect,  create table to all_obj_user;
+grant all_obj_role_sys to all_obj_user;
+create user all_obj_user1 identified by Cantian_234;
+grant connect to all_obj_user1;
+grant dba to all_obj_user1;
+create user all_obj_user2 identified by Cantian_234;
+grant connect to all_obj_user2;
+grant dba to all_obj_user2;
+conn all_obj_user1/Cantian_234@127.0.0.1:1611
+create table all_obj_user1_tt1 (id int);
+create table all_obj_user1_tt2 (id int);
+conn all_obj_user2/Cantian_234@127.0.0.1:1611
+create table all_obj_user2_tt1 (id int);
+create table all_obj_user2_tt2 (id int);
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+create table all_obj_user_tt1 ( name int);
+conn / as sysdba
+alter system set ENABLE_ACCESS_DC=TRUE;
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+select owner,table_name  from DB_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+select owner,table_name  from ALL_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+conn / as sysdba
+alter system set ENABLE_ACCESS_DC=FALSE;
+conn all_obj_user/Cantian_234@127.0.0.1:1611
+select owner,table_name  from DB_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+select owner,table_name  from ALL_tables where owner like 'ALL_OBJ_USER%' or table_name = 'SYS_AUDIT' order by 1,2;
+conn / as sysdba
+drop role all_obj_role_sys;
+drop user if exists all_obj_user cascade;
+drop user if exists all_obj_user1 cascade;
+drop user if exists all_obj_user2 cascade;
+alter system set ENABLE_ACCESS_DC=TRUE;
+--TEST VIEW
+conn / as sysdba
+drop user if exists A cascade;
+create user A identified by Cantian_234;
+grant connect to A;
+drop user if exists B cascade;
+create user B identified by Cantian_234;
+grant all to B;
+conn B/Cantian_234@127.0.0.1:1611
+drop table if exists sections;
+CREATE TABLE B.sections
+(
+section_id NUMBER(4) not null,
+section_name VARCHAR2(30),
+manager_id NUMBER(6),
+place_id NUMBER(4)
+) ;
+insert into B.sections (section_id, section_name, manager_id, place_id) values (10, 'Administration', 200, 1700);
+commit;
+drop view if exists view1;
+CREATE VIEW view1(section_id, section_name) as select SECTION_ID,SECTION_NAME from sections;
+conn / as sysdba
+grant select on B.view1 to A;
+conn A/Cantian_234@127.0.0.1:1611
+select * from B.view1;
+conn B/Cantian_234@127.0.0.1:1611
+drop table if exists sections;
+select * from B.view1;
+conn A/Cantian_234@127.0.0.1:1611
+select * from B.view1;
+conn / as sysdba
+drop user if exists A cascade;
+drop user if exists B cascade;
+select NAME,VALUE from v$parameter where NAME in ('MAX_WORKER_THREADS','WORKER_THREADS');
+drop table if exists test_v_t1;
+drop view if exists test_v1;
+drop view if exists test_v2;
+drop view if exists test_v3;
+drop view if exists test_v4;
+drop view if exists test_v5;
+drop view if exists test_v6;
+
+create view test_v1 as select * from test_v_t1;
+
+create table test_v_t1(a int, b varchar(100), c float);
+create view test_v1 as select * from test_v_t1;
+select name from SYS_VIEWS where NAME='TEST_V1';
+select * from test_v1;
+
+drop table test_v_t1;
+select * from test_v1;
+
+create table test_v_t1(a int, b varchar(100), c float);
+insert into test_v_t1 values(1,'hello guass!', 10);
+insert into test_v_t1 values(2,'hello huawei!', 20);
+insert into test_v_t1 values(3,'hello china!', 30);
+insert into test_v_t1 values(4,'hello world!', 40);
+
+select * from test_v1;
+
+drop view test_v1;
+select * from test_v1;
+
+create view test_v1 as select * from test_v_t1;
+select * from test_v1;
+
+create view test_v2 as select b,c from test_v_t1;
+select name from SYS_VIEWS where NAME='TEST_V2';
+select * from test_v2;
+
+create view test_v3 as select b as bb, c as cc from test_v_t1;
+select name from SYS_VIEWS where NAME='TEST_V3';
+select * from test_v3;
+
+create view test_v4(f1,f2,f3) as select * from test_v_t1;
+select name from SYS_VIEWS where NAME='TEST_V4';
+select * from test_v4;
+
+create view test_v5(f1,f2) as select c,b from test_v_t1;
+select name from SYS_VIEWS where NAME='TEST_V5';
+select * from test_v5;
+
+create or replace view test_v6(ff1,ff2,ff3) as select b,c,a from test_v_t1;
+select name from SYS_VIEWS where NAME='TEST_V6';
+select * from test_v6;
+
+create or replace view test_v1(f1,f2,f3) as select a,b,c from test_v_t1;
+select name from SYS_VIEWS where NAME='TEST_V1';
+
+--SYSTEM VIEWS
+select TABLE_NAME,TABLE_ID,TABLESPACE_NAME,COLUMN_COUNT,INDEX_COUNT from user_tables where table_name='SYS_TABLES';
+select * from USER_TAB_COLS where table_name='SYS_TABLES' order by COLUMN_NAME;
+
+--FOR DTS ''
+CREATE VIEW '' AS SELECT 1 FROM DUAL;
+DROP VIEW '';
+
+drop view if exists test_v7;
+create view test_v7 as select 1 from dual where  
+'1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ = 
+'1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ and 
+'2aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ = 
+'2aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ and 
+'3aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ = 
+'3aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+and
+'4aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ = 
+'4aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ and 
+'5aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+ = 
+'5aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+select * from test_v7;
+
+drop table if exists PFATBL_180315;
+create table PFATBL_180315
+(id number(10),
+name varchar2(200),
+age number(3),
+c_time TIMESTAMP,
+constraint pk_PFATBL_180315 primary key(id,name,age,c_time)
+);
+
+create index pk_PFATBL_180315_1 on PFATBL_180315(age,c_time,id,name);
+
+select ID, NAME,DATATYPE,BYTES,PRECISION,SCALE,NULLABLE,FLAGS,DEFAULT_TEXT,DEFAULT_DATA,NUM_DISTINCT, LOW_VALUE,HIGH_VALUE , HISTOGRAM  from SYS_COLUMNS where  TABLE#=(select ID from SYS_TABLES where name='PFATBL_180315') ORDER BY SYS_COLUMNS.ID;
+
+-- test USER_CONSTRAINTS view
+DROP USER IF EXISTS USER_1 CASCADE;
+CREATE USER USER_1 IDENTIFIED BY Root1234;
+GRANT CREATE SESSION TO USER_1;
+
+-- USER CONSTRAINTS
+CREATE TABLE USER_1.USER_001_TAB001 (ID INT, NAME VARCHAR(30), F_ID INT, C_ID INT, CONSTRAINT P_CONS_001 PRIMARY KEY (ID), CONSTRAINT U_CONS_001 UNIQUE (NAME), CONSTRAINT C_CONS_001 CHECK (C_ID > 10));
+CREATE TABLE USER_1.USER_001_TAB002 (ID INT, CONSTRAINT P_CONS_002 PRIMARY KEY (ID));
+ALTER TABLE USER_1.USER_001_TAB001 ADD CONSTRAINT R_CONS_001 FOREIGN KEY (F_ID) REFERENCES USER_1.USER_001_TAB002 (ID);
+
+connect USER_1/Root1234@127.0.0.1:1611
+SELECT * FROM USER_CONSTRAINTS ORDER BY OWNER, CONSTRAINT_NAME, TABLE_NAME, INDEX_OWNER, INDEX_NAME;
+
+connect sys/Huawei@123@127.0.0.1:1611
+
+DROP USER IF EXISTS USER_1 CASCADE;
+
+--DTS2018062606533
+drop table if exists T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+drop view if exists T_VIEWAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+
+create table T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1(a int, comment varchar(100), c float);
+create view  T_VIEWAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1 as select * from T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+insert into T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1 values(1,'hello guass!', 10);
+insert into T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1 values(2,'hello huawei!', 20);
+
+drop table T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+create table T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1(comment int);
+select * from T_VIEWAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+
+insert into T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1 values(1);
+select * from T_VIEWAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+
+drop table T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+create table T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1(a varchar(32), comment int, c float);
+select * from T_VIEWAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+
+drop table if exists T_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+drop view if exists T_VIEWAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBB1;
+
+-- check drop view privilege for synonym
+drop user if exists view_test_user_01 cascade;
+create user view_test_user_01 identified by Root1234;
+grant create session, create table, create view  to view_test_user_01;
+grant EXECUTE on DBE_DIAGNOSE  to view_test_user_01;
+create table view_test_tab_01 (id int);
+create view view_test_view_01 as select * from view_test_tab_01;
+
+create or replace public synonym view_test_tab_01 for sys.view_test_tab_01;
+create or replace public synonym view_test_view_01 for sys.view_test_view_01;
+
+conn view_test_user_01/Root1234@127.0.0.1:1611
+create table view_test_tab_01 (id int);
+create view view_test_view_01 as select * from view_test_tab_01;
+
+drop view view_test_view_01;
+select view_name from user_views;
+drop view view_test_view_01;
+drop view view_not_exist;
+
+alter table view_test_tab_01 add constraint abc unique (id);
+select owner, constraint_name from user_constraints;
+drop table view_test_tab_01;
+drop table view_test_tab_01;
+drop table tab_not_exist;
+
+connect sys/Huawei@123@127.0.0.1:1611
+grant dba to view_test_user_01;
+select * from dba_ind_columns where table_name='SYS_PRIVS' order by COLUMN_POSITION;
+
+conn view_test_user_01/Root1234@127.0.0.1:1611
+
+drop table if exists test purge;
+create table test (f1 int not null, f2 int, f3 varchar(100));
+alter table test add constraint pk_f1 primary key (f1);
+create index test_index_001 on test (f1, f2, f3);
+create unique index test_index_002 on test (f2);
+
+select is_primary, is_unique, columns, column_count from all_indexes where table_name='TEST' and owner=upper('view_test_user_01') order by index_name;
+select column_name, column_position from dba_ind_columns where table_name='TEST' and table_owner=upper('view_test_user_01') order by index_name, column_name, column_position;
+
+drop table if exists test;
+create table test (f1 int not null, f2 int, f3 varchar(100));
+alter table test add constraint pk_f1 primary key (f1);
+create index test_index_001 on test (f1, f2, f3);
+create unique index test_index_002 on test (f2);
+
+select is_primary, is_unique, columns, column_count from all_indexes where table_name='TEST' and owner=upper('view_test_user_01') order by index_name;
+select column_name, column_position from dba_ind_columns where table_name='TEST' and table_owner=upper('view_test_user_01') order by index_name, column_name, column_position;
+
+-- select index_name, column_name, column_position from user_ind_columns where table_name='TEST' order by index_name, column_position;
+select substr(index_name, 0, 7), column_name, column_position from user_ind_columns where table_name='TEST' order by index_name, column_position; 
+
+drop table if exists index_cols_test;
+create table index_cols_test
+(
+f1 int,
+f2 int,
+f3 int,
+f4 int,
+f5 int,
+f6 int,
+f7 int,
+f8 int,
+f9 int,
+f10 int,
+f11 int,
+f12 int
+);
+
+create index ix_cols_test on index_cols_test(f12, f2);
+
+select index_name, column_name, column_position from user_ind_columns where table_name='INDEX_COLS_TEST' order by index_name, column_position;
+drop table index_cols_test purge;
+
+-- test DBE_DIAGNOSE.DBA_IND_POS function
+select DBE_DIAGNOSE.DBA_IND_POS('1', '1') from dual; -- 1
+select DBE_DIAGNOSE.DBA_IND_POS('1,2', '2') from dual; -- 2
+select DBE_DIAGNOSE.DBA_IND_POS('1,2', '1') from dual; -- 1
+select DBE_DIAGNOSE.DBA_IND_POS('2,1', '1') from dual; -- 2
+select DBE_DIAGNOSE.DBA_IND_POS('2,20', '2') from dual; -- 1
+select DBE_DIAGNOSE.DBA_IND_POS('20,2', '2') from dual; -- 2
+select DBE_DIAGNOSE.DBA_IND_POS('12,32,3323,5,32', '5') from dual; -- 4
+
+connect sys/Huawei@123@127.0.0.1:1611
+drop user view_test_user_01 cascade;
+
+--test view dba_objects,dba_tables,user_cons_columns
+select distinct a.object_name from dba_objects a where a.object_name = 'SYS_USERS';
+select distinct a.table_name from dba_tables a where a.table_name = 'SYS_USERS';
+connect sys/Huawei@123@127.0.0.1:1611
+drop table if exists sycg; 
+drop table if exists sycghjlb;
+create table sycg(
+    stuNo number(10), --0
+    cid number(4),
+    stuName varchar2(100) 
+		constraint wg_2_notnull not null, --2
+    stuCardId varchar2(20)  --3
+		constraint wg_3_check check(length(stuCardId)=18),
+    sex varchar2(8) default 'man'  --4     
+        constraint wg_4_check check( sex='man' or sex='women' ),
+    stuAge number(3)   --5
+        constraint wg_5_check check(stuAge between 12 and 30),
+    stuTel varchar2(15),  --6		
+    stuAddr varchar2(100),  --7
+	hjlbid varchar2(40),    --8
+        constraint wg_7_8_check check(stuTel is not null or stuAddr is not null) 
+); 
+create table sycghjlb(
+  hjlbid varchar2(40) primary key  
+); 
+alter table sycg add constraint wg_6_unique unique(stuTel);
+alter table sycg add constraint wg_0_pk primary key(stuNo);
+alter table sycg add constraint wg_9_foreignkey foreign key (hjlbid) references sycghjlb (hjlbid);
+select * from USER_CONS_COLUMNS where TABLE_NAME = 'SYCG' order by OWNER,CONSTRAINT_NAME,TABLE_NAME,COLUMN_NAME,POSITION;
+drop table if exists sycg; 
+drop table if exists sycghjlb;
+drop table if exists wg_commit_table;
+create table wg_commit_table(id int); 
+insert into wg_commit_table values(1);commit;select * from dual;
+select * from wg_commit_table;
+drop table if exists wg_commit_table;
+create table wg_commit_table(id int); 
+insert into wg_commit_table values(1);commit;
+select * from wg_commit_table;
+
+--test view dba_tables,all_tables,user_tables
+connect sys/Huawei@123@127.0.0.1:1611
+drop table if exists t1;
+create table t1  (id int ,a1 char(10),a2 char(10),a3 char(10));
+select TEMPORARY,TABLE_TYPE from all_tables where table_name = 'T1';
+select TEMPORARY,TABLE_TYPE from dba_tables where table_name = 'T1';
+select TEMPORARY,TABLE_TYPE from user_tables where table_name = 'T1';
+
+drop table if exists t1;
+CREATE GLOBAL TEMPORARY TABLE t1(A INT);
+select TEMPORARY,TABLE_TYPE from all_tables where table_name = 'T1';
+select TEMPORARY,TABLE_TYPE from dba_tables where table_name = 'T1';
+select TEMPORARY,TABLE_TYPE from user_tables where table_name = 'T1';
+
+drop table if exists t1;
+CREATE GLOBAL TEMPORARY TABLE t1(TBL_NAME VARCHAR(64)) ON COMMIT PRESERVE ROWS;
+select TEMPORARY,TABLE_TYPE from all_tables where table_name = 'T1';
+select TEMPORARY,TABLE_TYPE from dba_tables where table_name = 'T1';
+select TEMPORARY,TABLE_TYPE from user_tables where table_name = 'T1';
+
+--test view dba_free_space/user_free_space
+select distinct TABLESPACE_NAME FROM DBA_FREE_SPACE ORDER BY TABLESPACE_NAME;
+create tablespace tablespace_ts1 datafile 'tablespace_ts_001' size 32M;
+select tablespace_name,bytes,blocks from dba_free_space where tablespace_name = 'TABLESPACE_TS1';
+select tablespace_name,bytes,blocks from user_free_space where tablespace_name = 'TABLESPACE_TS1';
+drop tablespace tablespace_ts1 including contents and datafiles;
+
+--test view dba_tab_columns,dba_indexes
+DESC DBA_TAB_COLUMNS;
+DESC DBA_INDEXES;
+DROP TABLE IF EXISTS VIEW_TEST1;
+CREATE TABLE VIEW_TEST1(f1 int not null PRIMARY KEY, f2 int, f3 varchar(100));
+SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM DBA_TAB_COLUMNS WHERE TABLE_NAME = 'VIEW_TEST1' ORDER BY COLUMN_NAME;
+SELECT OWNER, INDEX_TYPE, TABLE_NAME FROM DBA_INDEXES WHERE TABLE_NAME = 'VIEW_TEST1';
+CREATE INDEX f2_index ON VIEW_TEST1 (f2);
+SELECT OWNER, INDEX_NAME, INDEX_TYPE, TABLE_NAME FROM DBA_INDEXES WHERE TABLE_NAME = 'VIEW_TEST1' AND INDEX_NAME = 'F2_INDEX';
+DROP TABLE IF EXISTS VIEW_TEST1;
+
+-- test view dba_views
+select VIEW_NAME,VIEW_TYPE from DBA_VIEWS where VIEW_NAME = 'DBA_VIEWS';
+
+drop view if exists v_C_NODEB2_C1;
+create view v_C_NODEB2_C1  as select 1 from dual;
+drop view  v_C_NODEB2_C1 cascade constraints;
+
+-- test : user who has been granted privileges can access dba_* views WITHOUT schema name 'SYS'.
+create user dba_view_test_user identified by Root1234;
+grant create session, create sequence, select any table to dba_view_test_user;
+grant dba to dba_view_test_user;
+
+conn dba_view_test_user/Root1234@127.0.0.1:1611
+declare -- succeed. 
+        -- WARNING: if you add a new system view start with DBA_,
+        -- then you should also add a synonym for the view in initdb.sql file.
+        -- and do NOT grant the select privilege to PUBLIC user.
+        -- e.g.  CREATE OR REPLACE PUBLIC SYNONYM DBA_XXX FOR SYS.DBA_XXX
+    sqlstr varchar(128);
+    cursor mycursor is select view_name from sys.dba_views where view_name like '%DBA_%';
+begin
+    for name in mycursor
+    loop
+        sqlstr := 'select distinct 1 from ' || name.view_name;
+        dbe_output.print_line(name.view_name);
+        execute immediate sqlstr;
+    end loop;
+end;
+/
+create sequence seq_test_001 start with 100;
+create sequence seq_test_002 start with 100;
+select object_name, object_type, status from user_objects where object_type = 'SEQUENCE' order by object_name;
+
+conn / as sysdba
+select object_name, object_type, status from dba_objects where object_type = 'SEQUENCE' order by object_name;
+drop user dba_view_test_user cascade;
+drop table if exists t1;
+drop table if exists t2;
+drop table if exists t3;
+drop table if exists t4;
+drop table if exists "test";
+drop view if exists v1;
+create table t1(a int, b int, c int);
+create table t2(f1 int, f2 int, f3 int);
+create table t3(aa int, bb int, cc int);
+create table t4(ff1 int, ff2 int, ff3 int);
+create table "test"(n int, m int, k int);
+create view v1 as select * from t1;
+select * from v1;
+drop view if exists v1;
+create view v1 as select "test".* from "test";
+select * from v1;
+drop view if exists v1;
+create view v1 as select sys."test".* from "test";
+select * from v1;
+drop view if exists v1;
+create view v1 as select "sys"."test".* from "test";
+select * from v1;
+drop view if exists v1;
+create view v1 as select * from (select a,b+c,c from t1) tt1;
+select * from v1;
+drop view if exists v1;
+create view v1 as select * from t1 where exists (select * from t2);
+select * from v1;
+drop view if exists v1;
+create view v1 as select * from t1 join t2 on t1.a=t2.f1;
+select * from v1;
+drop view if exists v1;
+create view v1 as select t1.*, t2.* from t1 join t2 on t1.a=t2.f1;
+select * from v1;
+drop view if exists v1;
+create view v1 as select * from (select a,b+c,c from t1) tt1  join t2 on tt1.a=t2.f1;
+select * from v1;
+drop view if exists v1;
+create view v1 as select tt1.*, t2.* from (select a,b+c,c from t1) tt1 join t2 on tt1.a=t2.f1;
+select * from v1;
+drop view if exists v1;
+create view v1 as select * from t1 union select * from t2 union select * from t3 union select * from t4;
+select * from v1;
+drop view if exists v1;
+create view v1 as (select * from (select a,b+c,c from t1) tt1 where tt1.a=10 order by tt1.a limit 10) union select * from t2 union select * from t3;
+select * from v1;
+drop view if exists v1;
+create view v1 as (select * from (select a,b+c,c from t1) tt1 where tt1.a=10 order by tt1.a limit 10) union select t2.* from t2 join t3 on t2.f1=t3.aa union select * from t4;
+select * from v1;
+drop view if exists v1;
+
+drop table if exists t1;
+drop table if exists t2;
+drop table if exists t3;
+drop table if exists t4;
+drop table if exists "test";
+
+create table t1 (a int);
+create view v1 as select * from t1;
+select * from v1;
+drop table t1;
+create table t1 (a int,b char);
+select * from v1;
+drop table if exists t1;
+drop view if exists v1;
+
+create table t2 (a int);
+create synonym t2_1 for t2;
+create view v2 as select * from t2_1;
+select * from v2;
+drop table t2;
+create table t2(b char(3));
+select * from v2;
+drop table if exists t2;
+create table t2(a char(3));
+select * from v2;
+drop table if exists t2;
+create table t2(b int, a char(3));
+insert into t2 values(10,'abc');
+select * from v2;
+drop table if exists t2;
+drop view if exists v2;
+drop synonym t2_1;
+
+-- query plan
+explain select * from dba_objects;
+explain select * from all_objects;
+explain select * from user_objects;
+explain select * from dba_indexes;
+explain select * from all_indexes;
+explain select * from user_indexes;
+
+drop table if exists Utils_TableDef;
+drop table if exists Utils_FieldDef;
+create table Utils_TableDef(                   
+     iTableId  number(10, 0) not null ,         
+     sVersion  varchar2(113) not null ,         
+     sTableName  varchar2(113) not null ,       
+     sShortTableName  varchar2(113) null,       
+     iLayer  number(10, 0) null,                
+     iShareMode  number(10, 0) null,            
+     iMode  number(3, 0) default 2 not null,    
+      primary key  ( sVersion, iMode, iTableId )
+ );  
+
+create table Utils_FieldDef(                             
+    iTableId  number(10, 0) not null ,                   
+    iFieldId  number(10, 0) not null ,                   
+    sVersion  varchar2(113) not null ,                   
+    sFieldName  varchar2(113) not null ,                 
+    sShortFieldName  varchar2(113) null,                 
+    sDspName  varchar2(575) null,                        
+    iFieldType  number(10, 0) default 0 not null,        
+    sDefValue  varchar2(113) null,                       
+    iEditType  number(10, 0) default 0 not null,         
+    iVisible  number(10, 0) default 1 not null,          
+    sTitle  varchar2(113) null,                          
+    iModFlagOnNew  number(10, 0) default 1 not null,     
+    iModFlagOnEdit  number(10, 0) default 1 not null,    
+    iSortField  number(10, 0) default 999 not null,      
+    ElementType  varchar2(113) null,                     
+    Bound  varchar2(113) null,                           
+    IsKey  number(10, 0) default 0 not null,             
+    BulkFlag  number(10, 0) default 0 not null,          
+    ModifyFlag  number(10, 0) default 1 not null,        
+    CanDownload  number(10, 0) default 1 not null,       
+    iMustGive  number(10, 0) default 0 null,             
+    iRootFlag  number(10, 0) default 1 not null,         
+    iSortIndex  number(10, 0) default  -1 not null,      
+    iMode  number(3, 0) default 2 not null,              
+     primary key  ( sVersion, iMode, iTableId, iFieldId )
+); 
+create or replace view view_FieldAllInfo as select a.sTableName, b.* from Utils_TableDef a, Utils_FieldDef b where a.sVersion = b.sVersion and a.iMode = b.iMode and a.iTableId = b.iTableId;    
+select * from view_FieldAllInfo;
+drop table if exists Utils_TableDef;
+drop table if exists Utils_FieldDef;
+drop view if exists view_FieldAllInfo;
+
+create user test_v identified by 'Huawei123';
+grant dba to test_v;
+create table test_v.Utils_TableDef(                   
+     iTableId  number(10, 0) not null ,         
+     sVersion  varchar2(113) not null ,         
+     sTableName  varchar2(113) not null ,       
+     sShortTableName  varchar2(113) null,       
+     iLayer  number(10, 0) null,                
+     iShareMode  number(10, 0) null,            
+     iMode  number(3, 0) default 2 not null,    
+      primary key  ( sVersion, iMode, iTableId )
+ );  
+
+
+create table test_v.Utils_FieldDef(                             
+    iTableId  number(10, 0) not null ,                   
+    iFieldId  number(10, 0) not null ,                   
+    sVersion  varchar2(113) not null ,                   
+    sFieldName  varchar2(113) not null ,                 
+    sShortFieldName  varchar2(113) null,                 
+    sDspName  varchar2(575) null,                        
+    iFieldType  number(10, 0) default 0 not null,        
+    sDefValue  varchar2(113) null,                       
+    iEditType  number(10, 0) default 0 not null,         
+    iVisible  number(10, 0) default 1 not null,          
+    sTitle  varchar2(113) null,                          
+    iModFlagOnNew  number(10, 0) default 1 not null,     
+    iModFlagOnEdit  number(10, 0) default 1 not null,    
+    iSortField  number(10, 0) default 999 not null,      
+    ElementType  varchar2(113) null,                     
+    Bound  varchar2(113) null,                           
+    IsKey  number(10, 0) default 0 not null,             
+    BulkFlag  number(10, 0) default 0 not null,          
+    ModifyFlag  number(10, 0) default 1 not null,        
+    CanDownload  number(10, 0) default 1 not null,       
+    iMustGive  number(10, 0) default 0 null,             
+    iRootFlag  number(10, 0) default 1 not null,         
+    iSortIndex  number(10, 0) default  -1 not null,      
+    iMode  number(3, 0) default 2 not null,              
+     primary key  ( sVersion, iMode, iTableId, iFieldId )
+); 
+create or replace view view_FieldAllInfo as select a.sTableName, test_v.b.* from test_v.Utils_TableDef a, test_v.Utils_FieldDef b where a.sVersion = b.sVersion and a.iMode = b.iMode and a.iTableId = b.iTableId;    
+select * from view_FieldAllInfo;
+drop user test_v cascade;
+
+create table cols_pre_test_tab (
+    f0 int,
+    f1 float,
+    f2 number,
+    f3 number(10, 0),
+    f4 timestamp(3),
+    f5 decimal,
+    f6 interval day(5) to second(1) not null,
+    f7 varchar(30)
+);
+
+select table_name, column_name, data_type, data_precision, data_scale from all_tab_columns where table_name=upper('cols_pre_test_tab') order by column_name;
+ 
+create or replace view cols_pre_test_view
+as
+ select * from cols_pre_test_tab;
+
+select view_name, column_name, data_type, data_precision, data_scale from all_view_columns where view_name=upper('cols_pre_test_view') order by column_name;
+
+drop table cols_pre_test_tab purge;
+drop view cols_pre_test_view;
+
+drop table if EXISTS RQG_ALL_TYPE_TABLE;
+CREATE TABLE RQG_ALL_TYPE_TABLE( c_primary CHAR(20) PRIMARY KEY);
+select OWNER,CONSTRAINT_TYPE,TABLE_NAME from SYS.USER_CONSTRAINTS where TABLE_NAME = 'RQG_ALL_TYPE_TABLE';
+
+drop table  RQG_ALL_TYPE_TABLE;
+CREATE TABLE RQG_ALL_TYPE_TABLE( c_unique int unique );
+select OWNER,CONSTRAINT_TYPE,TABLE_NAME from SYS.USER_CONSTRAINTS where TABLE_NAME = 'RQG_ALL_TYPE_TABLE';
+
+drop table  RQG_ALL_TYPE_TABLE purge;
+
+drop user if exists user_test_index;
+create user user_test_index identified by Root1234;
+create table user_test_index.user_test_index_tab (id int constraint pk_id primary key, name varchar(30));
+select OWNER, INDEX_NAME, INDEX_TYPE, TABLE_NAME, IS_PRIMARY from all_indexes where is_primary = 'Y' and table_name like upper('user_test_index_tab') and owner like '%';
+drop user user_test_index cascade;
+
+select object_name,object_type from all_objects where object_name='DBA_FREE_SPACE' order by object_type;
+select object_name,object_type from all_objects where object_name='NLS_SESSION_PARAMETERS' order by object_type;
+drop user if exists user_stats;
+create user user_stats identified by Root1234;
+create user user_stats2 identified by Root1234;
+create table user_stats.A (id1 int, id2 int) PARTITION BY RANGE(id2) (PARTITION P1 VALUES LESS THAN (10), PARTITION p2 VALUES LESS THAN (20),  PARTITION p3 VALUES LESS THAN (30));
+insert into user_stats.A values ( 9,9);
+commit;
+select * from user_stats.A;
+select * from V$segment_statistics where object_name = 'A' and owner = 'USER_STATS' and SUBOBJECT_NAME = 'P2';
+select * from V$segment_statistics where owner = 'USER_STATS2';
+drop user user_stats2 cascade;
+select NAME from V$latch;
+select CLASS from V$waitstat;
+drop user user_stats cascade;
+
+drop user "public";
+
+--TEST COLUMN AUTO_INCREMENT
+drop table if exists TEST_AUTO_INCREMENT;
+CREATE TABLE TEST_AUTO_INCREMENT(P_Id int NOT NULL AUTO_INCREMENT,City varchar(255),PRIMARY KEY (P_Id));
+select AUTO_INCREMENT from ALL_TAB_COLUMNS where table_name=upper('TEST_AUTO_INCREMENT') and COLUMN_NAME='P_ID';
+select AUTO_INCREMENT from DBA_TAB_COLUMNS where table_name=upper('TEST_AUTO_INCREMENT') and COLUMN_NAME='P_ID';
+select AUTO_INCREMENT from USER_TAB_COLUMNS where table_name=upper('TEST_AUTO_INCREMENT') and COLUMN_NAME='P_ID';
+drop table TEST_AUTO_INCREMENT;
+
+--test view user_tables
+connect sys/Huawei@123@127.0.0.1:1611
+drop table if exists test_view;
+create table test_view  (id int ,a1 char(10),a2 char(10),a3 char(10));
+select TABLE_TYPE,BLOCKS,EMPTY_BLOCKS from user_tables where table_name = 'test_view';
+select TABLE_NAME,TABLE_ID,BLOCKS,EMPTY_BLOCKS from user_tables where table_name='SYS_TABLES';
+select BLOCKS,EMPTY_BLOCKS from SYS_TABLES where 1 != 1;
+
+drop table if exists test;
+create table test (id int);
+insert into test values (1),(2),(3),(4),(5);
+commit;
+drop view if exists v_test;
+create view v_test as select * from test;
+select * from v_test where id in (1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,11,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,11,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,11,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,11,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+drop table test;
+drop view v_test;
+
+drop table if exists t_sqlarea;
+create table t_sqlarea(f1 int);
+commit;
+alter system set _prefetch_rows = 3;
+alter system set sql_stat = true;
+insert into t_sqlarea values(1),(2),(3),(4),(5);
+select * from t_sqlarea;
+select PROCESSED_ROWS from v$sqlarea where sql_text ='select * from t_sqlarea';
+insert into t_sqlarea values(6);
+select * from t_sqlarea;
+select PROCESSED_ROWS from v$sqlarea where sql_text ='select * from t_sqlarea';
+alter system set _prefetch_rows = 100;
+drop table t_sqlarea;
+
+select count(*) from v$dc_pool;
+
+alter system set LOCAL_TEMPORARY_TABLE_ENABLED=true;
+create temporary table #bms_30_401_2_76833(f1 int);
+insert into #bms_30_401_2_76833 values(1);
+select LMODE from v$locked_object where object_name = '#BMS_30_401_2_76833';
+alter system set LOCAL_TEMPORARY_TABLE_ENABLED=false;
+drop table #bms_30_401_2_76833;
+
+--test view USER_OBJECTS
+connect sys/Huawei@123@127.0.0.1:1611
+
+drop table if exists TEST0_USER_OBJECT$;
+CREATE GLOBAL TEMPORARY TABLE TEST0_USER_OBJECT$
+(
+  TEM0_NAME     VARCHAR(64),
+  TEM0_LEVEL    BINARY_INTEGER
+) ON COMMIT PRESERVE ROWS
+/
+
+drop table if exists TEST1_USER_OBJECT;
+create table TEST1_USER_OBJECT(f1 int);
+
+select OBJECT_NAME,OBJECT_TYPE,TEMPORARY from USER_OBJECTS where OBJECT_NAME='TEST0_USER_OBJECT$' or OBJECT_NAME='TEST1_USER_OBJECT' order by OBJECT_NAME;
+
+drop table TEST0_USER_OBJECT$;
+drop table TEST1_USER_OBJECT;
+
+select count(*) from dv_buffer_index_stats;
+desc dv_buffer_pool_stats;
+desc dv_buffer_page_stats;
+desc dv_buffer_index_stats;
+
+create user test_dc_rankings identified by Cantian_234;
+grant dba to test_dc_rankings;
+create or replace procedure test_dc_rankings() as 
+    i int;
+begin	
+	for i in 1001 ..2500
+	loop
+	execute immediate 'create table test_dc_rankings.table_xxxxxxxxxxxxxxxxx_dc_rankings_'||i||'(id int)';
+	execute immediate 'select * from test_dc_rankings.table_xxxxxxxxxxxxxxxxx_dc_rankings_'||i||'';
+	end loop;
+end;
+/
+call test_dc_rankings;
+select USER_NAME from DV_DC_RANKINGS where USER_NAME='TEST_DC_RANKINGS' limit 1;
+--select count(*) from DV_DC_RANKINGS where OBJ_NAME='DV_DC_RANKINGS';
+drop user test_dc_rankings cascade;
+
+alter system set LOCAL_TEMPORARY_TABLE_ENABLED = true;
+create temporary table #fvt_pragma_table_15(a int);
+create view v_on_temp as select * from #fvt_pragma_table_15;
+alter system set LOCAL_TEMPORARY_TABLE_ENABLED = false;
+
+drop user if exists cao1 cascade;
+drop user if exists cao2 cascade;
+create user cao1 identified by cao102_cao;
+create user cao2 identified by cao102_cao;
+grant connect to cao1;
+grant connect, create table ,create view  to cao2;
+conn cao2/cao102_cao@127.0.0.1:1611
+create table t1 ( id int);
+create table t2 ( name int);
+insert into t1 values(10);
+insert into t2 values(20);
+create view view_t1 as select * from t1;
+select * from cao2.view_t1;
+grant  select on view_t1 to cao1;
+conn cao1/cao102_cao@127.0.0.1:1611
+select * from cao2.view_t1;
+conn cao2/cao102_cao@127.0.0.1:1611
+create or replace view view_t1 as select * from t2;
+conn cao1/cao102_cao@127.0.0.1:1611
+select * from cao2.view_t1;
+
+
+--test view DV_WHITELIST
+connect sys/Huawei@123@127.0.0.1:1611
+alter system set TCP_INVITED_NODES = (127.0.0.1,192.168.1.1, 192.168.2.*, 192.168.40.*);
+alter system set TCP_EXCLUDED_NODES = (192.168.10.*, 192.168.2.225);
+alter system set TCP_VALID_NODE_CHECKING = TRUE;
+\! touch ${CTDB_DATA}/cfg/cthba.conf
+\! echo "" > ${CTDB_DATA}/cfg/cthba.conf
+\! echo -e "host user 127.0.0.1,192.168.3.222,20AB::9217:acff:feab:fcd0/64" > ${CTDB_DATA}/cfg/cthba.conf
+\! echo "hostssl user1 192.168.3.220,10df::9ffe:acff:feab:fcd0/64" >> ${CTDB_DATA}/cfg/cthba.conf
+alter system reload hba config;
+select * from dv_whitelist;
+alter system set TCP_VALID_NODE_CHECKING = FALSE;
+select * from dv_whitelist;
+\! echo "" > ${CTDB_DATA}/cfg/cthba.conf
+alter system reload hba config;
+select * from dv_whitelist;
+
+--test add hba 
+\! rm -rf ${CTDB_DATA}/cfg/cthba.conf
+\! echo "" > ${CTDB_DATA}/cfg/cthba.conf
+alter system add hba entry "host user3 127.0.0.1,192.168.3.222,20AB::9217:acff:feab:fcd0/64";
+alter system add hba entry (hostssl user4 192.168.3.19,10df::9ffe:acff::bbff/64);
+alter system add hba entry (host FVT_SECURITY_ADD_HBA_ENTRY_001 10.251.100.101,10.251.100.102,10.251.100.103,10.251.100.104,10.251.100.105,10.251.100.106);
+alter system add hba entry (host USER1 127.0.0.1);
+alter system add hba entry (host USER1 192.168.7.0);
+alter system add hba entry (host USER1 224.221.10.86,192.168.118.0,192.168.9.0);
+alter system add hba entry (host USER1 192.168.118.0,192.168.9.0,192.168.89.0);
+alter system add hba entry (host USER1 192.168.9.0);
+alter system add hba entry (host USER1 192.168.128.0);
+alter system add hba entry (host USER1 192.168.125.0/24);
+alter system add hba entry (host USER1 192.168.124.0/24);
+alter system add hba entry (host USER1 192.168.3.*);
+select * from dv_hba;
+alter system add hba entry 'hostssl user1 192.168.3.220,10df::9ffe:acff:feab:fcd0/64';
+select * from dv_hba;
+alter system add hba entry hostssl user1 19;
+alter system add hba entry 'hostssl user1 19';
+alter system add hba entry "host FVT_Security_Add_Hba_Entry_001 10.251.100.101,10.251.100.102,10.251.100.103,10.251.100.104,10.251.100.105,10.251.100.106";
+alter system add hba entry 'host FVT_Security_Add_Hba_Entry_001 10.251.100.101,10.251.100.102,10.251.100.103,10.251.100.104,10.251.100.105,10.251.100.106';
+
+--test delete hba 
+alter system delete hba entry (host USER2 192.168.118.0,192.168.9.0);
+select * from dv_hba;
+alter system delete hba entry (host user1 192.168.118.0,192.168.9.0);
+select * from dv_hba;
+alter system delete hba entry (host USER1 192.168.89.0);
+select * from dv_hba;
+alter system delete hba entry (host * 192.168.125.0/24); -- FAIL
+select * from dv_hba;
+alter system delete hba entry (host user1 192.168.125.0/24); -- OK
+select * from dv_hba;
+alter system delete hba entry (host USER1 192.168.124.0/28); -- FAIL
+select * from dv_hba;
+alter system delete hba entry (host USER1 192.168.0.0/16); -- FAIL
+select * from dv_hba;
+alter system delete hba entry (host USER1 192.168.3.2); -- FAIL
+select * from dv_hba;
+alter system delete hba entry (host USER1 192.168.3.*); -- OK
+select * from dv_hba;
+
+\! echo "" > ${CTDB_DATA}/cfg/cthba.conf
+alter system reload hba config;
+
+-- DTS2019100907860
+drop user if exists test_view_dual cascade;
+CREATE USER test_view_dual IDENTIFIED BY Root1234;
+grant connect to test_view_dual;
+grant create view to test_view_dual ;
+connect test_view_dual/Root1234@127.0.0.1:1611
+select * from dual;
+CREATE OR REPLACE VIEW S_V_TEST AS SELECT * FROM DUAL;
+connect sys/Huawei@123@127.0.0.1:1611
+drop user if exists test_view_dual cascade;
+
+-- have_ssl
+show parameter have_ssl;
+select NAME, VALUE, RUNTIME_VALUE, DEFAULT_VALUE from dv_parameters where name = 'HAVE_SSL';
+alter system set HAVE_SSL=FALSE;
+alter system set HAVE_SSL=TRUE;
+
+desc dv_archived_logs;
+
+-- test view DV_TEMPTABLES
+alter system set LOCAL_TEMPORARY_TABLE_ENABLED = true;
+create temporary table #c1 (EMPNO NUMBER(4) NOT NULL, ENAME VARCHAR2(10));
+create temporary table #c2(id int);
+INSERT INTO #c1 VALUES(1, 'SMITH');
+INSERT INTO #c2 VALUES(1);
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables order by TABLE_NAME;
+create index idx on #c1(EMPNO);
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables order by TABLE_NAME;
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables WHERE TABLE_NAME = '#C1';
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables WHERE TABLE_NAME = '#C2';
+drop table if exists #c1;
+create temporary table #c1(ID INT, ENAME VARCHAR2(10));
+INSERT INTO #c1 VALUES(1, 'SMITH');
+create index idx1 on #c1(ENAME);
+create index idx2 on #c1(ID);
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables order by TABLE_NAME;
+drop table #c1;
+drop table #c2;
+
+conn / as sysdba
+create temporary table #c1 (EMPNO NUMBER(4) NOT NULL, ENAME VARCHAR2(10));
+create temporary table #c2(id int);
+INSERT INTO #c1 VALUES(1, 'SMITH');
+INSERT INTO #c2 VALUES(1);
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables order by TABLE_NAME;
+create index idx on #c1(EMPNO);
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables order by TABLE_NAME;
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables WHERE TABLE_NAME = '#C1';
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables WHERE TABLE_NAME = '#C2';
+drop table if exists #c1;
+create temporary table #c1(ID INT, ENAME VARCHAR2(10));
+INSERT INTO #c1 VALUES(1, 'SMITH');
+create index idx1 on #c1(ENAME);
+create index idx2 on #c1(ID);
+select OWNER, TABLE_NAME, COLUMNT_COUNT, INDEX_COUNT, DATA_PAGES, INDEX_PAGES from dv_temptables order by TABLE_NAME;
+drop table #c1;
+drop table #c2;
+connect sys/Huawei@123@127.0.0.1:1611
+alter system set LOCAL_TEMPORARY_TABLE_ENABLED = false;
+
+----test for package view
+conn / as sysdba
+DROP USER IF EXISTS USER1 CASCADE;
+DROP USER IF EXISTS USER2 CASCADE;
+create user user1 identified by Cantian_234;
+grant dba to user1;
+create user user2 identified by Cantian_234;
+grant connect to user2;
+grant CREATE PROCEDURE to user2;
+
+----create package for sys
+DROP PACKAGE IF EXISTS sys.PAK1;
+CREATE OR REPLACE PACKAGE sys.PAK1
+IS
+ FUNCTION SYS_MYF RETURN INT;
+ PROCEDURE SYS_MYP;
+END;
+/
+
+CREATE OR REPLACE PACKAGE BODY sys.PAK1
+IS
+ FUNCTION SYS_MYF RETURN INT
+IS
+ V1 INT := 10;
+ BEGIN
+  NULL;
+  RETURN V1;
+ END;
+PROCEDURE SYS_MYP IS
+ V1 INT;
+ BEGIN
+  SELECT SYS_MYF INTO V1 FROM DUAL;
+  DBE_OUTPUT.PRINT_LINE(V1);
+ END;
+END;
+/
+
+----create package for user1
+DROP PACKAGE IF EXISTS user1.PAK2;
+CREATE OR REPLACE PACKAGE user1.PAK2
+IS
+ FUNCTION U1_MYF RETURN INT;
+ PROCEDURE U1_MYP;
+END;
+/
+
+CREATE OR REPLACE PACKAGE BODY user1.PAK2
+IS
+ FUNCTION U1_MYF RETURN INT
+IS
+ V1 INT := 10;
+ BEGIN
+  NULL;
+  RETURN V1;
+ END;
+PROCEDURE U1_MYP IS
+ V1 INT;
+ BEGIN
+  SELECT U1_MYF INTO V1 FROM DUAL;
+  DBE_OUTPUT.PRINT_LINE(V1);
+ END;
+END;
+/
+
+----create package for user2
+DROP PACKAGE IF EXISTS user2.PAK3;
+CREATE OR REPLACE PACKAGE user2.PAK3
+IS
+ FUNCTION U2_MYF RETURN INT;
+ PROCEDURE U2_MYP;
+END;
+/
+
+CREATE OR REPLACE PACKAGE BODY user2.PAK3
+IS
+ FUNCTION U2_MYF RETURN INT
+IS
+ V1 INT := 10;
+ BEGIN
+  NULL;
+  RETURN V1;
+ END;
+PROCEDURE U2_MYP IS
+ V1 INT;
+ BEGIN
+  SELECT U2_MYF INTO V1 FROM DUAL;
+  DBE_OUTPUT.PRINT_LINE(V1);
+ END;
+END;
+/
+
+conn / as sysdba
+select user_name, package_name, object_name, object_type from my_packages order by user_name, package_name, object_name;
+select user_name, package_name, object_name, object_type from db_packages order by user_name, package_name, object_name;
+select user_name, package_name, object_name, object_type from adm_packages order by user_name, package_name, object_name;
+
+conn user1/Cantian_234@127.0.0.1:1611
+select user_name, package_name, object_name, object_type from my_packages order by user_name, package_name, object_name;
+select user_name, package_name, object_name, object_type from db_packages order by user_name, package_name, object_name;
+select user_name, package_name, object_name, object_type from adm_packages order by user_name, package_name, object_name;
+
+conn user2/Cantian_234@127.0.0.1:1611
+select user_name, package_name, object_name, object_type from my_packages order by user_name, package_name, object_name;
+select user_name, package_name, object_name, object_type from db_packages order by user_name, package_name, object_name;
+select user_name, package_name, object_name, object_type from adm_packages order by user_name, package_name, object_name;
+
+conn / as sysdba
+drop user if exists user1 cascade;
+drop user if exists user2 cascade;
+drop package if exists pak1;
+
+--DTS202006120KGHJSP0K00 
+create table if not exists tb_DTS202006120KGHJSP0K00(f1 int);
+CREATE SYNONYM  sy_DTS202006120KGHJSP0K00 for tb_DTS202006120KGHJSP0K00;
+drop table if exists tb_DTS202006120KGHJSP0K00;
+select * from sy_DTS202006120KGHJSP0K00;
+drop SYNONYM sy_DTS202006120KGHJSP0K00;
+
+DROP TABLE IF EXISTS TEST_COMMENT_QUTOES_123;
+create table TEST_COMMENT_QUTOES_123(c1 int);
+comment on column TEST_COMMENT_QUTOES_123.c1 is 'ceshi''';
+select * from ADM_COL_COMMENTS where TABLE_NAME='TEST_COMMENT_QUTOES_123';
+DROP TABLE IF EXISTS TEST_COMMENT_QUTOES_123;
+
+conn / as sysdba
+drop user if exists test cascade;
+create user test identified by Cantian_234 password expire;
+alter user test identified by Cantian_234;
+select NAME, ASTATUS, EXPTIME from sys_users where name = 'TEST';
+create profile pro1_test limit password_life_time unlimited;
+alter user test profile pro1_test;
+select USERNAME, CRYPTOPERIOD from db_users where username = 'TEST';
+drop profile pro1_test cascade;
+drop user test cascade;
+
+--DTS20210427046LILP1K00 test if exists public synonym
+CONN / AS SYSDBA
+DROP USER IF EXISTS USER_DTS20210427046LILP1K00 CASCADE;
+CREATE USER USER_DTS20210427046LILP1K00 IDENTIFIED BY Cantian_234;
+GRANT DBA TO USER_DTS20210427046LILP1K00;
+CONN USER_DTS20210427046LILP1K00/Cantian_234@127.0.0.1:1611
+SELECT 1 FROM ADM_HIST_INSTANCE_SNAP WHERE 1=2;
+SELECT 1 FROM ADM_HIST_LOCK_OBJECT WHERE 1=2;
+SELECT 1 FROM ADM_HIST_SESSION_EVENTS WHERE 1=2;
+SELECT 1 FROM ADM_HIST_SESSION_SQL WHERE 1=2;
+SELECT 1 FROM ADM_HIST_SQLPLAN WHERE 1=2;
+SELECT 1 FROM ADM_HIST_SQLTEXT WHERE 1=2;
+SELECT 1 FROM ADM_HIST_TRANSACTION WHERE 1=2;
+SELECT 1 FROM ADM_HIST_TRANSACTION WHERE 1=2;
+SELECT 1 FROM ADM_PL_MANAGER WHERE 1=2;
+SELECT 1 FROM ADM_PACKAGES WHERE 1=2;
+CONN / AS SYSDBA
+DROP USER IF EXISTS USER_DTS20210427046LILP1K00 CASCADE;

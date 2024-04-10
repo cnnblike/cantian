@@ -1,0 +1,1623 @@
+
+
+SQL> DROP TABLE IF EXISTS T_MERGE_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_MERGE_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_MERGE_1 (F_INT1 INT, F_INT2 INT, F_INT3 INT);
+
+Succeed.
+
+SQL> CREATE TABLE T_MERGE_2 (F_INT1 INT, F_INT2 INT);
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_MERGE_2 VALUES(1,2);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(2,3);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(3,4);
+
+1 rows affected.
+
+SQL> 
+SQL> 
+SQL> --ERROR
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON 1=1 WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2);
+
+CT-00601, [1:36]Sql syntax error: (...) expected but 1 found
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (1=1) WHEN MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2);
+
+CT-00601, [1:60]Sql syntax error: UPDATE expected
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 2) WHEN NOT MATCHED THEN UPDATE SET F_INT1=11;
+
+CT-00601, [1:71]Sql syntax error: INSERT expected
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = 2) WHEN MATCHED THEN UPDATE SET F_INT2 = F_INT2 + 1;
+
+CT-00601, [1:102]Sql syntax error: column 'F_INT2' ambiguously defined
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 3 AND F_INT3 = 14 AND ROWNUM < 2) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2) WHEN MATCHED THEN UPDATE SET F_INT1 = 10;
+
+CT-00601, [1:68]Sql syntax error: unexpected rownum occurs
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 3 AND F_INT3 = 14) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2) WHERE ROWNUM < 2 WHEN MATCHED THEN UPDATE SET F_INT1 = 10;
+
+CT-00601, [1:128]Sql syntax error: unexpected rownum occurs
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 3 AND F_INT3 = 14) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2) WHEN MATCHED THEN UPDATE SET F_INT1 = 10 WHERE ROWNUM < 2;
+
+CT-00601, [1:169]Sql syntax error: unexpected rownum occurs
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) SELECT * FROM T_MERGE_2 WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+CT-00601, [1:124]Sql syntax error: VALUES expected but SELECT found
+SQL> 
+SQL> --TEST MERGE BASE
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (1=1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+
+1 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT1 = 2) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(2,3);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+2            3                        
+
+2 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT 1 FROM DUAL) ON (F_INT1 = 3) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(3,4);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+2            3                        
+3            4                        
+
+3 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 3) WHEN MATCHED THEN UPDATE SET F_INT1=11;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+3            4                        
+11           3                        
+
+3 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 3) WHEN MATCHED THEN UPDATE SET F_INT1=12 WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+3            4                        
+12           3                        
+
+3 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 3) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2) WHEN MATCHED THEN UPDATE SET F_INT1 = 13, F_INT3 = 14;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+3            4                        
+13           3            14          
+
+3 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 5) WHEN MATCHED THEN UPDATE SET F_INT1=12 WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(2,3);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+2            3                        
+3            4                        
+13           3            14          
+
+4 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 5) WHEN MATCHED THEN UPDATE SET F_INT1=12 WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2,F_INT3) VALUES(2,3,4);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+2            3            4           
+2            3                        
+3            4                        
+13           3            14          
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING DUAL ON (F_INT2 = 3 AND F_INT3 = 14) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2) WHEN MATCHED THEN UPDATE SET F_INT1 = 10;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+2            3            4           
+2            3                        
+3            4                        
+10           3            14          
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(1,2) WHEN MATCHED THEN UPDATE SET F_INT2 = 20;
+
+4 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            20                       
+2            20           4           
+2            20                       
+3            20                       
+10           3            14          
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_1.F_INT1 IN (SELECT F_INT2+10 FROM T_MERGE_2)) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(21,22) WHEN MATCHED THEN UPDATE SET F_INT2 = 20;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            20                       
+2            20           4           
+2            20                       
+3            20                       
+10           3            14          
+21           22                       
+21           22                       
+21           22                       
+
+8 rows fetched.
+
+SQL> 
+SQL> DELETE FROM T_MERGE_2;
+
+3 rows affected.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2,F_INT3) VALUES(21,22,23) WHEN MATCHED THEN UPDATE SET F_INT2 = 20;
+
+0 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            20                       
+2            20           4           
+2            20                       
+3            20                       
+10           3            14          
+21           22                       
+21           22                       
+21           22                       
+
+8 rows fetched.
+
+SQL> 
+SQL> INSERT INTO T_MERGE_2 VALUES(0,0);
+
+1 rows affected.
+
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2,F_INT3) VALUES(21,22,23) WHEN MATCHED THEN UPDATE SET F_INT2 = 20;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            20                       
+2            20           4           
+2            20                       
+3            20                       
+10           3            14          
+21           22           23          
+21           22                       
+21           22                       
+21           22                       
+
+9 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --TEST DOUBLE UPDATE THE SAME RECODE IN ONE MERGE SQL
+SQL> rollback;
+
+Succeed.
+
+SQL> SELECT * FROM T_MERGE_1;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> INSERT INTO T_MERGE_1 VALUES(1,2,NULL);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,2);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,3);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(3,4);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> --ERROR
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = 1;
+
+CT-00814, Row has been updated by current statement
+SQL> DELETE FROM T_MERGE_1;
+
+1 rows affected.
+
+SQL> DELETE FROM T_MERGE_2;
+
+3 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --TEST MERGE WHERE
+SQL> rollback;
+
+Succeed.
+
+SQL> INSERT INTO T_MERGE_1 VALUES(1,2,NULL);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,2);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(2,3);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(3,4);
+
+1 rows affected.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            3                        
+11           21                       
+11           21                       
+
+3 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            4                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+5 rows fetched.
+
+SQL> 
+SQL> --ERROR : INSERT VALUES MUST BE USING TABLE COLUMN OR CONST
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHERE T_MERGE_1.F_INT1 = 100 WHEN MATCHED THEN UPDATE SET F_INT2 = 1;
+
+CT-00601, [1:169]Sql syntax error: invalid column in the INSERT WHERE clause: F_INT1
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHERE F_INT1 = 100 WHEN MATCHED THEN UPDATE SET F_INT2 = 1;
+
+CT-00601, [1:169]Sql syntax error: column 'F_INT1' ambiguously defined
+SQL> 
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHERE T_MERGE_2.F_INT1 = 100 WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            5                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+5 rows fetched.
+
+SQL> 
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1 WHERE T_MERGE_1.F_INT2 = 2;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            5                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+7 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1 WHERE T_MERGE_2.F_INT2 = 2;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            6                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+9 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(T_MERGE_2.F_INT1,T_MERGE_2.F_INT2) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1 WHERE T_MERGE_2.F_INT2 = 2;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            7                        
+2            3                        
+3            4                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+11 rows fetched.
+
+SQL> 
+SQL> CREATE INDEX IND_MERGE_1 ON T_MERGE_1(F_INT1);
+
+Succeed.
+
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(T_MERGE_2.F_INT1,T_MERGE_2.F_INT2) WHERE  T_MERGE_2.F_INT1 = 100  WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1 WHERE T_MERGE_2.F_INT2 = 2;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            8                        
+2            3                        
+3            4                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+11 rows fetched.
+
+
+SQL> DROP INDEX IND_MERGE_1 ON T_MERGE_1;
+
+Succeed.
+
+SQL> 
+SQL> --TEST USING TABLE IS SUBSELECT
+SQL> DELETE FROM T_MERGE_1;
+
+11 rows affected.
+
+SQL> DELETE FROM T_MERGE_2;
+
+3 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO T_MERGE_1 VALUES(1,2,0);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,2);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(2,3);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(3,4);
+
+1 rows affected.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            3            1           
+11           21                       
+11           21                       
+
+3 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            4            2           
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHERE T_MERGE_2.F_INT1 = 100 WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            5            3           
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1 WHERE T_MERGE_1.F_INT2 = 2;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            5            3           
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+7 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1 WHERE T_MERGE_2.F_INT2 = 2;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            6            4           
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+9 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(T_MERGE_2.F_INT1,T_MERGE_2.F_INT2) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = T_MERGE_2.F_INT2 + 1 WHERE T_MERGE_2.F_INT2 = 2;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            7            3           
+2            3                        
+3            4                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+11 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --TEST USING TABLE IS VIEW
+SQL> rollback;
+
+Succeed.
+
+SQL> DROP VIEW IF EXISTS T_MERGE_VIEW;
+
+Succeed.
+
+SQL> CREATE VIEW T_MERGE_VIEW AS SELECT * FROM T_MERGE_2;
+
+Succeed.
+
+SQL> INSERT INTO T_MERGE_1 VALUES(1,2,0);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_1 VALUES(2,3,1);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,2);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(2,3);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(3,4);
+
+1 rows affected.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_VIEW T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            3            1           
+2            4            2           
+11           21                       
+
+3 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_VIEW T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            4            2           
+2            4            2           
+11           21                       
+11           21                       
+11           21                       
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_VIEW T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHERE T_MERGE_2.F_INT1 = 100 WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            5            3           
+2            4            2           
+11           21                       
+11           21                       
+11           21                       
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_VIEW T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1 WHERE T_MERGE_1.F_INT2 = 2;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            5            3           
+2            4            2           
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+7 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_VIEW ON (T_MERGE_1.F_INT1 = T_MERGE_VIEW.F_INT1 AND T_MERGE_VIEW.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1 WHERE T_MERGE_VIEW.F_INT2 = 2;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            6            4           
+2            4            2           
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+9 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_VIEW ON (T_MERGE_1.F_INT1 = T_MERGE_VIEW.F_INT1 AND T_MERGE_VIEW.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(T_MERGE_VIEW.F_INT1,T_MERGE_VIEW.F_INT2) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = T_MERGE_VIEW.F_INT2 + 1 WHERE T_MERGE_VIEW.F_INT2 = 2;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            7            3           
+2            3                        
+2            4            2           
+3            4                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+11 rows fetched.
+
+SQL> 
+SQL> --TSET USING TABLE INDEX
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> CREATE INDEX INDEX_INT_T_MERGE_2 ON T_MERGE_2(F_INT1);
+
+Succeed.
+
+SQL> INSERT INTO T_MERGE_1 VALUES(1,2,NULL);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,2);
+
+1 rows affected.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (2 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+11           21                       
+
+2 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_2.F_INT1 = 2) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            2                        
+11           21                       
+11           21                       
+
+3 rows fetched.
+
+SQL> 
+SQL>
+SQL> --TEST DON'T SUPPORT TMP TABLE
+SQL> DROP TABLE IF EXISTS T_MERGE_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_MERGE_2;
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE T_MERGE_1 (F_INT1 INT, F_INT2 INT, F_INT3 INT);
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE T_MERGE_2 (F_INT1 INT, F_INT2 INT);
+
+Succeed.
+
+SQL> INSERT INTO T_MERGE_1 VALUES(1,2,0);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_1 VALUES(2,3,1);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,2);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(2,3);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(3,4);
+
+1 rows affected.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            3            1           
+2            4            2           
+11           21                       
+
+3 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            4            2           
+2            4            2           
+11           21                       
+11           21                       
+11           21                       
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHERE T_MERGE_2.F_INT1 = 100 WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            5            3           
+2            4            2           
+11           21                       
+11           21                       
+11           21                       
+
+5 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1 WHERE T_MERGE_1.F_INT2 = 2;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            5            3           
+2            4            2           
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+7 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = F_INT3 + 1 WHERE T_MERGE_2.F_INT2 = 2;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            6            4           
+2            4            2           
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+9 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_MERGE_1 USING (SELECT * FROM T_MERGE_2) T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1 AND T_MERGE_2.F_INT1 = 1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(T_MERGE_2.F_INT1,T_MERGE_2.F_INT2) WHEN MATCHED THEN UPDATE SET F_INT2 = T_MERGE_1.F_INT2 + 1, F_INT3 = T_MERGE_2.F_INT2 + 1 WHERE T_MERGE_2.F_INT2 = 2;
+
+3 rows affected.
+
+SQL> SELECT * FROM T_MERGE_1 ORDER BY F_INT1,F_INT2,F_INT3;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+1            7            3           
+2            3                        
+2            4            2           
+3            4                        
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+11           21                       
+
+11 rows fetched.
+
+SQL> 
+SQL> --TEST DON'T SUPPORT TMP TABLE(IF SUPPORT, PLEASE TEST DOUBLE UPDATE THE SAME RECODE IN ONE MERGE SQL)
+SQL> rollback;
+
+Succeed.
+
+SQL> SELECT * FROM T_MERGE_1;
+
+F_INT1       F_INT2       F_INT3      
+------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> INSERT INTO T_MERGE_1 VALUES(1,2,NULL);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,2);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,3);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(3,4);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> --ERROR
+SQL> MERGE INTO T_MERGE_1 USING T_MERGE_2 ON (T_MERGE_1.F_INT1 = T_MERGE_2.F_INT1) WHEN NOT MATCHED THEN INSERT (F_INT1,F_INT2) VALUES(11,21) WHEN MATCHED THEN UPDATE SET F_INT2 = 1;
+
+0 rows affected.
+
+SQL> DELETE FROM T_MERGE_1;
+
+0 rows affected.
+
+SQL> DELETE FROM T_MERGE_2;
+
+0 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TEMP_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_MERGE_2;
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE TEMP_T1(A INT, B INT);
+
+Succeed.
+
+SQL> CREATE TABLE T_MERGE_2(A INT, B INT);
+
+Succeed.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,1);
+
+1 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO TEMP_T1 VALUES(1,1);
+
+1 rows affected.
+
+SQL> MERGE INTO TEMP_T1 USING T_MERGE_2 ON (TEMP_T1.A=T_MERGE_2.A) WHEN NOT MATCHED THEN INSERT (A,B) VALUES(11,21) WHEN MATCHED THEN UPDATE SET TEMP_T1.B = TEMP_T1.B+1;
+
+CT-00814, Row has been updated by current statement
+SQL> DELETE FROM TEMP_T1;
+
+1 rows affected.
+
+SQL> 
+SQL> DELETE FROM T_MERGE_2;
+
+2 rows affected.
+
+SQL> DELETE FROM TEMP_T1;
+
+0 rows affected.
+
+SQL> INSERT INTO T_MERGE_2 VALUES(1,1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO TEMP_T1 VALUES(1,1);
+
+1 rows affected.
+
+SQL> INSERT INTO TEMP_T1 VALUES(1,1);
+
+1 rows affected.
+
+SQL> MERGE INTO TEMP_T1 USING T_MERGE_2 ON (TEMP_T1.A=T_MERGE_2.A) WHEN NOT MATCHED THEN INSERT (A,B) VALUES(11,21) WHEN MATCHED THEN UPDATE SET TEMP_T1.B = TEMP_T1.B+1;
+
+2 rows affected.
+
+SQL> DELETE FROM TEMP_T1;
+
+2 rows affected.
+
+SQL> DROP TABLE IF EXISTS TEMP_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_MERGE_2;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> --TEST EXECUTE PLAN(HASH JOIN)
+SQL> DROP TABLE IF EXISTS T_MERGE_1;
+
+Succeed.
+
+SQL> CREATE TABLE  T_MERGE_1   
+  2 (id  bigint  NULL ,
+  3 name varchar(25) ,
+  4 parent_id  bigint,
+  5 native_id  varchar(255) ,
+  6 cluster_id  bigint,
+  7 pod_id  bigint,
+  8 azone_id  bigint,
+  9 region_id  bigint,
+ 10 collect_status  varchar(30) ,
+ 11 collect_time  bigint,
+ 12 refresh_time  varchar(25) ,
+ 13 azone_name  varchar(255) ,
+ 14 region_name  varchar(255) ,
+ 15 system_id  bigint,
+ 16 cluster_name  varchar(255) ,
+ 17 status  varchar(32) ,
+ 18 pod_name  varchar(255)  ,
+ 19 host_type  varchar(255)  ,
+ 20 cpu_over_subscription_ratio  varchar(255),
+ 21 memory_over_subscription_ratio  varchar(255));
+
+Succeed.
+
+SQL>
+SQL> 
+SQL> DROP TABLE IF EXISTS T_MERGE_1;
+
+Succeed.
+
+SQL> --TEST EXECUTE PLAN(HASH JOIN)
+SQL> 
+SQL> drop table if exists Z_SHARDING_LEFT_JOIN_001;
+
+Succeed.
+
+SQL> CREATE TABLE Z_SHARDING_LEFT_JOIN_001(C_INT INT ,C_INTEGER INTEGER  ,C_BIGINT BIGINT not null,C_NUMBER NUMBER DEFAULT 0.2332,C_NUMBER1 NUMBER(12,2),C_NUMBER2 NUMBER(12,6),C_DOUBLE DOUBLE,C_DECIMAL DECIMAL not null,C_DECIMAL1 DECIMAL(8,2),C_DECIMAL2 DECIMAL(8,4),C_REAL REAL,C_CHAR CHAR(2000),C_VARCHAR VARCHAR(400) not null,C_VARCHAR2 VARCHAR2(400),C_NUMERIC NUMERIC,C_DATETIME DATETIME,C_DATE DATE,C_TIMESTAMP TIMESTAMP,C_TIMESTAMP1 TIMESTAMP(4),C_CLOB  varchar2(8000),C_BOOL BOOL) partition by hash(C_DECIMAL)
+  2 (partition tbl_hash_001 ,
+  3  partition tbl_hash_002 ,
+  4  partition tbl_hash_003 ,
+  5  partition tbl_hash_004 
+  6 );
+
+Succeed.
+
+SQL> CREATE INDEX c_varcharx_001 on Z_SHARDING_LEFT_JOIN_001(C_BIGINT);
+
+Succeed.
+
+SQL> CREATE INDEX c_varcharx_002 on Z_SHARDING_LEFT_JOIN_001(C_BIGINT,C_NUMBER,C_VARCHAR);
+
+Succeed.
+
+SQL> CREATE INDEX c_varcharx_003 on Z_SHARDING_LEFT_JOIN_001(C_VARCHAR2,C_NUMERIC,C_DATETIME);
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists Z_SHARDING_LEFT_JOIN_002;
+
+Succeed.
+
+SQL> CREATE TABLE Z_SHARDING_LEFT_JOIN_002(C_INT INT ,C_INTEGER INTEGER  ,C_BIGINT BIGINT,C_NUMBER NUMBER DEFAULT 0.2332,C_NUMBER1 NUMBER(12,2),C_NUMBER2 NUMBER(12,6),C_DOUBLE DOUBLE,C_DECIMAL DECIMAL,C_DECIMAL1 DECIMAL(8,2),C_DECIMAL2 DECIMAL(8,4),C_REAL REAL,C_CHAR CHAR(2000),C_VARCHAR VARCHAR(400),C_VARCHAR2 VARCHAR2(400),C_NUMERIC NUMERIC,C_DATETIME DATETIME not null, C_DATE DATE,C_TIMESTAMP TIMESTAMP,C_TIMESTAMP1 TIMESTAMP(4),C_CLOB  varchar2(8000),C_BOOL BOOL) partition by range(c_datetime)
+  2 (
+  3 partition tbl_list_001 values less than('1885-08-08 08:08:08'), 
+  4 partition tbl_list_002 values less than('1990-08-08 08:08:08'), 
+  5 partition tbl_list_003 values less than('2010-08-08 08:08:08'),
+  6 partition tbl_list_004 values less than(maxvalue)
+  7 );
+
+Succeed.
+
+SQL> create index z_shard_ind_001 on Z_SHARDING_LEFT_JOIN_002(c_datetime);
+
+Succeed.
+
+SQL> create index z_shard_ind_002 on Z_SHARDING_LEFT_JOIN_002(c_datetime,c_varchar);
+
+Succeed.
+
+SQL> create index z_shard_ind_003 on Z_SHARDING_LEFT_JOIN_002(c_double,c_number,c_varchar);
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> truncate table Z_SHARDING_LEFT_JOIN_001;
+
+Succeed.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(0,0,0,67.7,45.8,3457.57678,45.8,2.54,3.45,3.45,34.56,'yxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdiv','nyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqyt','znyxo',34.6,'','1885-08-08 08:08:08','1995-08-08 08:08:08','2012-08-08 08:08:08','oznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrz','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(1,1,1,0.454,2.56,45.6788,23.56,67.45,45.67,3.45,2.123456,'boznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhd','lboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdj','flboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfz',12.54,'2011-08-08 08:08:08','1995-08-08 08:08:08','2018-08-08 08:08:08','2011-08-08 08:08:08','cbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgon','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(2,2,2,456464.324,12.4,45.6788,2.56,2.54,45.67,67.45,0.56,'cbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvoheso','hcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyas','jhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvk',67.7,'2018-11-10 08:08:08','2018-11-10 08:08:08','1995-08-08 08:08:08','2010-08-08 08:08:08','vzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzknd','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(3,3,3,234.45646,12.4,23.56,67.7,2.54,3.45,45.67,34.6,'vzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbf','yvzjhcbflboznyx','wyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxc',456464.324,'1990-08-08 08:08:08','1885-08-08 08:08:08','2010-08-08 08:08:08','1885-08-08 08:08:08','oewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnewyvzjhcbflboznyxowgqqxermmjk','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(4,4,4,34.6,34.45,2.123456,34.6,3.45,45.67,45.67,234.45646,'oewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqsc','bo','vboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmouppp',34.6,'1995-08-08 08:08:08','1885-08-08 08:08:08','2012-08-08 08:08:08','2012-08-08 08:08:08','jsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndooh','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(5,5,5,34.6,2.56,2.123456,3457.57678,3.544667,'',3.54,89.2,'jsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwq','ojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvk','nojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwq',456464.324,'2018-08-08 08:08:08','','2010-08-08 08:08:08','2011-08-08 08:08:08','wbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsm','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(6,6,6,234.45646,23.34,34.56,2.123456,2.34,'',2.34,23.56,'wbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnn','lwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynve','dlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokj',12.54,'','1995-08-08 08:08:08','1995-08-08 08:08:08','2018-11-10 08:08:08','ipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbuipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbupdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorf','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(7,7,7,456464.324,12.4,45.6788,67.7,2.54,3.54,2.34,2.123456,'ipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppj','dipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbk','zdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrb',12.54,'2012-08-08 08:08:08','2011-08-08 08:08:08','2011-08-08 08:08:08','1880-08-08 08:08:08','hszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapn','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(8,8,8,0.454,34.45,23.56,45.8,3.544667,2.34,3.54,34.45,'hszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofod','fhszdipdlwbnojsvboewyvzjhcbflboznyxow','sfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccf',234.45646,'2010-08-08 08:08:08','2010-08-08 08:08:08','2010-08-08 08:08:08','','axsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwsaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwsaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwsaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwsaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwsaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwsaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwsxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqk','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(9,9,9,234.45646,0.56,45.6788,89.2,2.54,3.54,'',89.2,'axsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkr','naxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmn','rnaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoks',456464.324,'2018-11-10 08:08:08','2010-08-08 08:08:08','2018-11-10 08:08:08','2010-08-08 08:08:08','ornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhix','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_001 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(10,10,10,89.2,2.56,2.123456,12.54,67.45,3.54,'',23.56,'kornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvk','tkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksl','ptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfn',12.54,'2018-08-08 08:08:08','2018-08-08 08:08:08','2018-11-10 08:08:08','2011-08-08 08:08:08','rbptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqrbptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqrbptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqrbptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqrbptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqrbptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqrbptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqbptkornaxsfhszdipdlwbnojsvboewyvzjhcbflboznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpu','false');
+
+1 rows affected.
+
+SQL> 
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> truncate table Z_SHARDING_LEFT_JOIN_002;
+
+Succeed.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(0,0,0,34.6,'','',6.78,'',3.45,3.45,'','yxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdiv','','nyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqyt','','1990-08-08 08:08:08','1990-08-08 08:08:08','2010-08-08 08:08:08','1990-08-08 08:08:08','oznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnb','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(1,1,1,'',2.56,45.6788,3457.57678,67.45,3.54,45.67,'','oznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihg','','',12.54,'2018-11-10 08:08:08','2012-08-08 08:08:08','1880-08-08 08:08:08','2018-08-08 08:08:08','lfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouffoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiaw','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(2,2,2,456464.324,23.34,3457.57678,3457.57678,'',45.67,45.67,45.32234,'lfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqb','ilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapkt','',234.45646,'2010-08-08 08:08:08','2018-08-08 08:08:08','1880-08-08 08:08:08','2018-08-08 08:08:08','','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(3,3,3,234.45646,12.4,23.56,34.45,3.45,45.67,'',23.56,'xilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckz','','gxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgpp',456464.324,'2010-08-08 08:08:08','1885-08-08 08:08:08','1885-08-08 08:08:08','2018-08-08 08:08:08','','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(4,4,4,12.54,'',45.32234,45.6788,89.5,67.45,2.34,234.45646,'mgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckd','pmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnngh','epmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqx',12.54,'1990-08-08 08:08:08','2012-08-08 08:08:08','1885-08-08 08:08:08','2012-08-08 08:08:08','','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(5,5,5,0.454,'',23.56,3457.57678,2.34,3.45,2.34,34.56,'','','tepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgv',234.45646,'2011-08-08 08:08:08','1995-08-08 08:08:08','1885-08-08 08:08:08','2018-11-10 08:08:08','','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(6,6,6,0.454,45.8,'',456464.324,89.5,45.67,3.54,'','stepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxe','','ostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccf',456464.324,'2010-08-08 08:08:08','2011-08-08 08:08:08','2012-08-08 08:08:08','2018-08-08 08:08:08','','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(7,7,7,234.45646,45.8,45.32234,'',67.45,3.54,'',0.56,'uostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveamb','','',456464.324,'2018-08-08 08:08:08','2012-08-08 08:08:08','2012-08-08 08:08:08','1995-08-08 08:08:08','','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(8,8,8,12.54,23.34,34.56,234.45646,67.45,45.67,3.54,12.4,'buostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwyt','','',456464.324,'1885-08-08 08:08:08','2018-11-10 08:08:08','2018-11-10 08:08:08','1885-08-08 08:08:08','mgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluuf','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(9,9,9,12.54,6.78,2.123456,2.56,'',67.45,2.34,2.56,'mgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzyt','hmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzde','hhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwf',67.7,'2010-08-08 08:08:08','2010-08-08 08:08:08','2011-08-08 08:08:08','2018-08-08 08:08:08','yvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvao','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(10,10,10,67.7,23.34,23.56,45.8,3.544667,3.54,3.45,67.7,'yvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxx','oyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxq','',234.45646,'1995-08-08 08:08:08','2012-08-08 08:08:08','1995-08-08 08:08:08','1880-08-08 08:08:08','jioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvjioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvjioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvjioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljsl','true');
+
+1 rows affected.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> merge into Z_SHARDING_LEFT_JOIN_001 t1 using Z_SHARDING_LEFT_JOIN_002 t2 on (t1.c_datetime+numtoyminterval(length(t1.c_datetime),'month')=t2.c_datetime+numtoyminterval(length(t2.c_datetime),'month')) when matched then update set t1.c_number=(row_number() over(partition by t2.c_datetime+t2.c_int order by t2.c_datetime desc)) when not matched then insert (C_BIGINT,C_DECIMAL,C_VARCHAR,C_DATETIME) values(t2.c_bigint,t2.c_decimal,t2.c_varchar,t2.c_datetime);
+
+CT-01316, [1:256]Unexpected windows sort analytic function
+SQL> 
+SQL> drop table if exists Z_SHARDING_LEFT_JOIN_001;
+
+Succeed.
+
+SQL> drop table if exists Z_SHARDING_LEFT_JOIN_002;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019082014636
+SQL> DROP TABLE if exists T_LEAD_OVER_DATA;
+
+Succeed.
+
+SQL> CREATE TABLE T_LEAD_OVER_DATA(
+  2     ID INT,
+  3     NAME VARCHAR(20),
+  4     DEPT VARCHAR(20),
+  5     LEADER_ID INT,
+  6     SALARY INT,
+  7     CREATE_DATE DATE,
+  8     work_num decimal(10,2)
+  9 );
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE if exists T_LEAD_OVER_DATA2;
+
+Succeed.
+
+SQL> CREATE TABLE T_LEAD_OVER_DATA2(
+  2     ID INT,
+  3     LEADER_ID INT,
+  4     name varchar(10),
+  5     CREATE_DATE DATE
+  6 );
+
+Succeed.
+
+SQL> 
+SQL> merge into T_LEAD_OVER_DATA t1 using T_LEAD_OVER_DATA2 t2 on (t1.name=lead(t2.name||t2.name,1,'qewewqwqw') over(partition by t2.name order by t2.id))
+  2 when matched then update set t1.id=123
+  3 when not matched then insert(t1.name) values(2000);
+
+CT-01316, [1:108]Unexpected windows sort analytic function
+SQL> 
+SQL> drop table T_LEAD_OVER_DATA;
+
+Succeed.
+
+SQL> drop table T_LEAD_OVER_DATA2;
+Succeed.
+
+SQL> 
+SQL> -- DTS2020082105XQPTP0J00
+SQL> -- ERROR: USING must be followed by a table or subquery, not a join.
+SQL> drop table if exists merge_into_join_t1;
+
+Succeed.
+
+SQL> drop table if exists merge_into_join_t2;
+
+Succeed.
+
+SQL> 
+SQL> create table merge_into_join_t1
+  2 (
+  3   f1 number(10),
+  4   f2 number(10)
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> create table merge_into_join_t2
+  2 (
+  3   cfg_name varchar(30 byte) not null,
+  4   cfg_value varchar(50 byte)
+  5 );
+
+Succeed.
+
+SQL> insert into merge_into_join_t2 (cfg_name,cfg_value) values ('0',null);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> MERGE INTO merge_into_join_t2 as target_0
+  2 USING ((merge_into_join_t1 as ref_0)
+  3   right join (merge_into_join_t2 as ref_3)
+  4   on true)
+  5 ON (target_0.CFG_VALUE = ref_3.CFG_VALUE )
+  6 WHEN MATCHED THEN UPDATE 
+  7     set CFG_VALUE = target_0.CFG_VALUE WHERE (true > true)
+  8 WHEN NOT MATCHED THEN 
+  9     INSERT VALUES (cast(1 as VARCHAR(30)), cast(2 as VARCHAR(50)));
+
+CT-00601, [2:1]Sql syntax error: expect select query after 'USING'
+SQL> 
+SQL> drop table merge_into_join_t1;
+
+Succeed.
+
+SQL> drop table merge_into_join_t2;
+Succeed.
+
+SQL> --20201017
+SQL> DROP TABLE if exists "T_PROJECT_GROUP_REL" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP TABLE if exists "T_PROJECT_GROUP_INFO" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP TABLE if exists "T_SUBJECT_INFO_SX" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP TABLE if exists "T_TM_SUBJECT_INFO" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE "T_PROJECT_GROUP_REL"
+  2 (
+  3   "PROJECT_GRP_ID" VARCHAR(400 BYTE) NOT NULL,  "SUBJECT_ID" VARCHAR(400 BYTE) NOT NULL,  "SUBJECT_NAME_GRP" VARCHAR(1000 BYTE),  "START_FLG" NUMBER NOT NULL,  "BIDDING_TYPE" VARCHAR(10 BYTE) NOT NULL,
+  4   "CREATE_DATE" DATE NOT NULL,  "CREATE_USER" VARCHAR(100 BYTE) NOT NULL,  "UPDATE_DATE" DATE NOT NULL,  "UPDATE_USER" VARCHAR(100 BYTE) NOT NULL,  "PROJECT_SOURCE" NUMBER DEFAULT 1,
+  5   "ORDER_NUM" NUMBER
+  6 );
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_PROJECT_GROUP_REL_GRPID" ON "T_PROJECT_GROUP_REL"("PROJECT_GRP_ID");
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_PROJECT_GROUP_REL_SBJ_ID" ON "T_PROJECT_GROUP_REL"("SUBJECT_ID");
+
+Succeed.
+
+SQL> ALTER TABLE "T_PROJECT_GROUP_REL" ADD constraint pk_T_PROJECT_GROUP_REL PRIMARY KEY("PROJECT_GRP_ID", "SUBJECT_ID");
+
+Succeed.
+
+SQL>
+SQL> CREATE TABLE "T_PROJECT_GROUP_INFO"
+  2 (  "PROJECT_GRP_ID" VARCHAR(400 BYTE) NOT NULL,  "STATE" VARCHAR(10 BYTE) NOT NULL,  "PRODUCT_LINE" VARCHAR(100 BYTE),  "DU_ID" VARCHAR(100 BYTE),
+  3   "PROJECT_GRP_NAME" VARCHAR(1000 BYTE) NOT NULL,  "SUBJECT_NUM" NUMBER NOT NULL,  "CREATE_DATE" DATE NOT NULL,  "CREATE_USER" VARCHAR(100 BYTE) NOT NULL,  "UPDATE_DATE" DATE NOT NULL,
+  4   "UPDATE_USER" VARCHAR(100 BYTE) NOT NULL,  "PRANT_PRJGRP_ID" VARCHAR(400 BYTE),  "HW_VERSION" VARCHAR(400 BYTE),  "OWNER_UUID" VARCHAR(100 BYTE),  "OWNER_NAME" VARCHAR(100 BYTE),
+
+  5   "OWNER_W3" VARCHAR(100 BYTE),  "GPR_LEVEL" NUMBER NOT NULL,  "CP_OWNER_UUID" VARCHAR(2000 BYTE),  "VALID" NUMBER,  "HW_VERSION_NAME" VARCHAR(400 BYTE),  "GRP_APPLY_NO" VARCHAR(400 BYTE),
+  6   "GRP_EQUVAL_COEFF_AIM" NUMBER,  "YEAR" VARCHAR(50 BYTE),  "COMPARE_GRP_ID" VARCHAR(400 BYTE),  "VER_MARK_ID" VARCHAR(50 BYTE),  "MARKET_POSIT_AIMS" VARCHAR(4000 BYTE),
+  7   "INCENTIVE_AMOUNT" NUMBER(10, 2),  "PROJECT_GROUP_TYPE" VARCHAR(50 BYTE),  "IS_TR_GA" NUMBER,  "INCENTIVE_PROJECT_NUM" NUMBER,  "INCENTIVE_MARKS" VARCHAR(1000 BYTE)
+  8 );
+
+Succeed.
+
+SQL> CREATE INDEX "IDEX_T_GROUP_PRANT_ID" ON "T_PROJECT_GROUP_INFO"("PRANT_PRJGRP_ID");
+
+Succeed.
+
+SQL> ALTER TABLE "T_PROJECT_GROUP_INFO" ADD constraint pk_t_project_group_info PRIMARY KEY("PROJECT_GRP_ID");
+
+Succeed.
+
+SQL>
+SQL> CREATE TABLE "T_SUBJECT_INFO_SX"
+  2 (
+  3   "SUBJECT_ID" VARCHAR(400 BYTE) NOT NULL,  "PROPERTY" VARCHAR(10 BYTE) DEFAULT 1,  "REVIEW_LEVEL" VARCHAR(10 BYTE),  "STATE" VARCHAR(10 BYTE),  "IS_WORK_COUNTERSIGN" VARCHAR(10 BYTE),
+  4   "IS_INHERIT_COUNTERSIGN" VARCHAR(10 BYTE),  "IS_INHERIT" VARCHAR(10 BYTE),  "INHERIT_ID" VARCHAR(100 BYTE),  "INHERIT_NAME" VARCHAR(4000 BYTE),  "INHERIT_PR_ID" VARCHAR(100 BYTE),
+  5   "INHERIT_COMPANY" VARCHAR(4000 BYTE),  "INHERIT_REASON" VARCHAR(4000 BYTE),  "INHERIT_EVALUATION" VARCHAR(4000 BYTE),  "INHERIT_PROJECT_BACKBONE_NUM" VARCHAR(4000 BYTE),
+  6   "INHERIT_PROJECT_QUANTITY" VARCHAR(100 BYTE),  "INHERIT_QUANTITY" VARCHAR(100 BYTE),  "INHERIT_ESTIMATE_BACKBONE_NUM" VARCHAR(1000 BYTE),  "INHERIT_QUANTITY_RATE" VARCHAR(100 BYTE),
+  7   "INHERIT_DES" VARCHAR(1000 BYTE),  "IS_RESEMBLE_PROJECT" VARCHAR(10 BYTE),  "PROJECT_NAME" VARCHAR(4000 BYTE),  "PRODUCT_LINE" VARCHAR(100 BYTE),  "DU_ID" VARCHAR(100 BYTE),
+  8   "PDU_ID" VARCHAR(100 BYTE),  "ESTIMATE_START_DATE" DATE,  "ESTIMATE_END_DATE" DATE,  "REGION" VARCHAR(100 BYTE),  "COOPERATION_MODEL" VARCHAR(10 BYTE),  "OPERATE_MODEL" VARCHAR(100 BYTE),
+  9   "ONSHORE" VARCHAR(10 BYTE),  "OFFSHORE_RATE" NUMBER,  "PROPOSAL_COMPANY" VARCHAR(100 BYTE),  "PROPOSAL_REASON" VARCHAR(4000 BYTE),  "HW_PM" VARCHAR(100 BYTE),  "HW_PM_UUID" VARCHAR(100 BYTE),
+ 10   "DEVELOP_TYPE" VARCHAR(100 BYTE),  "IS_PROFIT" VARCHAR(10 BYTE),  "PROFIT_VERSION" VARCHAR(1000 BYTE),  "EQUIVALENT_RATE_AIM" NUMBER,  "INTELLIGENCE_TYPE" VARCHAR(10 BYTE),
+ 11   "PROJECT_SCOPE" VARCHAR(4000 BYTE),  "PROJECT_PURPOSE" VARCHAR(4000 BYTE),  "VERSION_POSITION" VARCHAR(4000 BYTE),  "OUT_PROJECT_PURPOSE" VARCHAR(4000 BYTE),  "PROJECT_ACCEPT_STANDARD" VARCHAR(4000 BYTE),
+ 12   "REMARKS" VARCHAR(4000 BYTE),  "PR_COMPANY" VARCHAR(100 BYTE),  "PR_AREA" VARCHAR(100 BYTE),  "PR_GOODS_TYPE" VARCHAR(100 BYTE),  "PR_CURRENCY" VARCHAR(100 BYTE),  "COST_BEGIN_TIME" DATE,
+ 13   "COST_END_TIME" DATE,  "REQUIREMENT" VARCHAR(100 BYTE),  "REQUIREMENT_UUID" VARCHAR(100 BYTE),  "DEMAND_ARRIVAL_TIME" DATE,  "PR_ADDRESS" VARCHAR(100 BYTE),  "PR_REVIEW" VARCHAR(100 BYTE),
+ 14   "PR_REVIEW_UUID" VARCHAR(100 BYTE),  "PR_POWER" VARCHAR(100 BYTE),  "PR_POWER_UUID" VARCHAR(100 BYTE),  "APPROVE_WAY" VARCHAR(1000 BYTE),  "IS_SIGNS" VARCHAR(10 BYTE),  "PR_REVIEW_SIGNS_UUID" VARCHAR(100 BYTE),
+ 15   "PR_REVIEW_SIGNS" VARCHAR(1000 BYTE),  "PR_POWER_SIGNS_UUID" VARCHAR(100 BYTE),  "PR_POWER_SIGNS" VARCHAR(1000 BYTE),  "TO_PR_REVIEW_DES" VARCHAR(4000 BYTE),  "TO_PR_COMPANY_DES" VARCHAR(4000 BYTE),
+ 16   "PR_COPY_TO_UUID" VARCHAR(1000 BYTE),  "IS_SELECT_BASE_OUT" VARCHAR(10 BYTE),  "SELECT_BASE_REASON" VARCHAR(4000 BYTE),  "NO_SELECT_BASE_REASON" VARCHAR(4000 BYTE),  "BUDGET_TYPE" VARCHAR(10 BYTE),
+ 17   "DEVELOP_PRODUCE_RATE" NUMBER,  "DATA_PRODUCE_RATE" NUMBER,  "TEST_PLAN" NUMBER,  "TEST_DESIGN" NUMBER,  "TEST_EXECUTE" NUMBER,  "E2E_PRODUCT_RATE" NUMBER,  "CODE_NUM" NUMBER,
+ 18   "CONVERT_CODE_NUM" NUMBER,  "TEST_TOTAL_PLAN" NUMBER,  "TEST_EXPAMLE" NUMBER,  "TEST_DATA" NUMBER,  "DEVELOP_TIME" NUMBER,  "TEST_SDV_TIME" NUMBER,  "ACCEPT_TIME" NUMBER,  "TOTAL_WORKLOAD" NUMBER,
+ 19   "DEVELOP_WORKLOAD" NUMBER,  "TEST_WORKLOAD" NUMBER,  "DATA_WORKLOAD" NUMBER,  "OTHER_WORKLOAD" NUMBER,  "BUDGET_UNIT_PRICE" NUMBER,  "FP_BUDGET_UNIT_PRICE" NUMBER,  "HW_PERSON_RATE" NUMBER,
+ 20   "ESTIMATE_PERSON_MONEY" NUMBER,  "ESTIMATE_TRAVEL_MONEY" NUMBER,  "ESTIMATE_OTHER_MONEY" NUMBER,  "ESTIMATE_TOTAL_MONEY" NUMBER,  "TAX" NUMBER,  "ESTIMATE_TOTAL_MONEY_TAX" NUMBER,
+ 21   "PROJECT_PERSON_AVG" NUMBER,  "IS_FP_EXCESS" VARCHAR(10 BYTE),  "IS_REPORT" VARCHAR(10 BYTE),  "BUDGET_REMARKS" VARCHAR(1000 BYTE),  "CREATE_DATE" DATE NOT NULL,  "CREATE_USER" VARCHAR(100 BYTE) NOT NULL,
+ 22   "UPDATE_DATE" DATE NOT NULL,  "UPDATE_USER" VARCHAR(100 BYTE),  "OMP_PROJECT_ID" VARCHAR(100 BYTE),  "IS_PDCP_UPLOAD" VARCHAR(100 BYTE) DEFAULT 0,  "INHERIT_PO_ID" VARCHAR(100 BYTE),
+ 23   "FOUR_PRODUCT" VARCHAR(200 BYTE),  "CONTRACT_MODE" VARCHAR(10 BYTE),  "IS_JOINED_PROJECT_GROUP" VARCHAR(100 BYTE) DEFAULT 0,  "APPLY_NO" VARCHAR(100 BYTE),  "WORK_CATEGORY" VARCHAR(100 BYTE),
+ 24   "DATA_SOURCE" NUMBER DEFAULT 1,  "EQU_COEFFICIENT_OBJECTIVE" VARCHAR(200 BYTE),  "BACKBONE_NUM" NUMBER,  "AVG_RANK" VARCHAR(100 BYTE),  "TOTAL_WORKLOAD_MONTH" NUMBER,  "OUTSC_STRATEGY_PROCESS" VARCHAR(4000 BYTE),
+ 25   "PCR_TYPE" VARCHAR(100 BYTE) DEFAULT '0',  "ORIGIN_PO" VARCHAR(100 BYTE),  "PCB_BASE_CODE" VARCHAR(100 BYTE),  "PCB_NAME" VARCHAR(200 BYTE),  "MEASUREMENT_UNIT" VARCHAR(50 BYTE),
+
+ 26   "PCB_VALUE" NUMBER,  "PROJECT_BEACON_TYPE" VARCHAR(10 BYTE),  "MEASURE_TYPE" VARCHAR(100 BYTE),  "LANGUAGE_TYPE" VARCHAR(100 BYTE),  "IS_GATHER" VARCHAR(10 BYTE),  "CAPACITY_PLANNING" VARCHAR(100 BYTE),
+ 27   "DEGREE_DIFFICULTY" VARCHAR(100 BYTE),  "BUDGET_DISCOUNT" NUMBER(10, 4),  "PROJECT_URL" VARCHAR(400 BYTE),  "SECRET_KEY" VARCHAR(400 BYTE),  "OMP_PRO_STATE" VARCHAR(400 BYTE),
+ 28   "ACTUAL_AVG_RANK" VARCHAR(400 BYTE),  "KEY_NUM" NUMBER,  "WORKLOAD_ASSESS_EXPERT" VARCHAR(4000 BYTE),  "MODIFIED_DATE" DATE,  "DEMAND_EV_NO" VARCHAR(400 BYTE),  "PROJECT_NO" VARCHAR(100 BYTE),
+ 29   "KEY_NUM_CHANGE_REASON" VARCHAR(1000 BYTE),  "ESTIMATE_TOTAL_MONEY_CHANGE" NUMBER,  "IS_TOTAL_MONEY_FIXED" NUMBER,  "PROJECT_SHORT_NAME" VARCHAR(500 BYTE),  "SHORT_NAME" VARCHAR(500 BYTE)
+ 30 );
+
+Succeed.
+
+SQL> CREATE INDEX "OMP_PROJECT_ID_IND" ON "T_SUBJECT_INFO_SX"("OMP_PROJECT_ID");
+
+Succeed.
+
+SQL> CREATE INDEX "OMP_SUBJECT_INFO_SX_REGION" ON "T_SUBJECT_INFO_SX"("REGION");
+
+Succeed.
+
+SQL> ALTER TABLE "T_SUBJECT_INFO_SX" ADD CONSTRAINT "PK_SUBJECT_INFO_SX" PRIMARY KEY("SUBJECT_ID");
+
+Succeed.
+
+SQL>
+SQL> CREATE TABLE "T_TM_SUBJECT_INFO"
+  2 (
+  3   "SUBJECT_ID" VARCHAR(100 BYTE) NOT NULL,  "REVIEW_LEVEL" VARCHAR(10 BYTE),  "STATE" VARCHAR(10 BYTE),  "APPLY_NO" VARCHAR(100 BYTE),  "IS_INHERIT" VARCHAR(10 BYTE),
+  4   "PROJECT_NAME" VARCHAR(500 BYTE),  "PRODUCT_LINE" VARCHAR(100 BYTE),  "DU_ID" VARCHAR(100 BYTE),  "PDU_ID" VARCHAR(100 BYTE),  "HW_PM" VARCHAR(100 BYTE),  "HW_PM_UUID" VARCHAR(100 BYTE),
+  5   "PROJECT_TYPE" VARCHAR(10 BYTE),  "REGION" VARCHAR(100 BYTE),  "ONSHORE" VARCHAR(10 BYTE),  "ILLUSTRATION" VARCHAR(3000 BYTE),  "INHERIT_PO" VARCHAR(100 BYTE),  "INHERIT_CUR_MANPOWER" NUMBER,
+  6   "INHERIT_FACT_MANPOWER" NUMBER,  "PROPOSAL_COMPANY" VARCHAR(100 BYTE),  "INHERIT_COMPANY" VARCHAR(100 BYTE),  "COMPANY_REASON" VARCHAR(4000 BYTE),  "APPLY_START_DATE" DATE,
+  7   "APPLY_END_DATE" DATE,  "INHERIT_POSITION_AVG" VARCHAR(100 BYTE),  "CURRENT_POSITION_AVG" VARCHAR(100 BYTE),  "CURRENT_MANPOWER_PLAN" NUMBER,  "CURRENT_MANPOWER_RATE" VARCHAR(100 BYTE),
+  8   "WORKLOADS" NUMBER,  "MANPOWER_MONEY_PLAN" NUMBER,  "CREATE_DATE" DATE NOT NULL,  "CREATE_USER" VARCHAR(100 BYTE) NOT NULL,  "LAST_UPDATE_DATE" DATE NOT NULL,  "LAST_UPDATE_USER" VARCHAR(100 BYTE) NOT NULL,
+  9   "PRI_PROFIT_END_DATE" DATE,  "IS_JOINED_PROJECT_GROUP" CHAR(1 BYTE) DEFAULT 0,  "OMP_PRO_STATE" VARCHAR(100 BYTE),  "PROJECT_URL" VARCHAR(2000 BYTE),  "OMP_PROJECT_ID" VARCHAR(100 BYTE),
+ 10   "PROJECT_NO" VARCHAR(50 BYTE),  "WORK_CATEGORY" VARCHAR(100 BYTE),  "PROJECT_SHORT_NAME" VARCHAR(500 BYTE),  "SHORT_NAME" VARCHAR(500 BYTE),  "EQUIVALENT_RATE_AIM" VARCHAR(3000 BYTE)
+ 11 );
+
+Succeed.
+
+SQL> DROP TABLE "T_PROJECT_GROUP_REL" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP TABLE "T_PROJECT_GROUP_INFO" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP TABLE "T_SUBJECT_INFO_SX" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP TABLE "T_TM_SUBJECT_INFO" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> 
+SQL> -- test merge hint
+SQL> drop table if exists merge_into_hint_t1;
+
+Succeed.
+
+SQL> drop table if exists merge_into_hint_t2;
+
+Succeed.
+
+SQL> create table merge_into_hint_t1(id int, c1 int, c2 int);
+
+Succeed.
+
+SQL> create table merge_into_hint_t2(id int, c1 int, c2 int);
+
+Succeed.
+
+SQL> create index merge_into_hint_t1_idx on merge_into_hint_t1(id);
+
+Succeed.
+
+SQL> create index merge_into_hint_t2_idx on merge_into_hint_t2(id);
+
+Succeed.
+
+SQL> drop table merge_into_hint_t1;
+
+Succeed.
+
+SQL> drop table merge_into_hint_t2;
+Succeed.
+
+
+
+

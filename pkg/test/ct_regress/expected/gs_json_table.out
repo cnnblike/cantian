@@ -1,0 +1,914 @@
+SQL> --oracle cat result cannot be too long
+SQL> declare
+  2   pad_str varchar(8000);
+  3 begin
+  4   pad_str := 'sdhsjhdjafndskdjskfjndmfdjfkdgnfdsldfkjdkfdsngfdksfjdsifnvdmfbdksfhjdksfghjsfndjdffsgsfdsfdvdfsdfvdccsdfgfhgfjyjggfdghhsfddsgfhfgdfgfdgsdferweytruyiuiuhtehgfdfsfdewrtweytjhfg';
+  5   pad_str := pad_str || pad_str || pad_str || pad_str;
+  6   pad_str := pad_str || pad_str || pad_str || pad_str;
+  7   execute immediate 'SELECT * FROM JSON_TABLE(''{"type" : "1", "number" : "2"}'', ''$'' default 1 on error COLUMNS (type varchar2 PATH ''$.' || pad_str || pad_str || pad_str || pad_str || pad_str || pad_str || '''))';
+  8 end;
+  9 /
+
+CT-00932, [7:3] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[7:3] CT-02503, JSON path expression syntax error, exceed max path length(maximum: 256)
+
+SQL> drop table if exists temp_json_table_long;
+
+Succeed.
+
+SQL> create table temp_json_table_long(f1 int, f2 clob);
+
+Succeed.
+
+SQL> insert into temp_json_table_long values(1, '''{"type" : "1' || lpad('100',16385,'a') || '", "number" : "2"}''');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2 PATH '$.type'));
+
+CT-02504, JSON syntax error, expect non-scalar
+SQL> delete from temp_json_table_long;
+
+1 rows affected.
+
+SQL> insert into temp_json_table_long values(1, '{"type" : "1' || lpad('100',16385,'a') || '", "number" : "2"}');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2 PATH '$.type'));
+
+CT-02502, Output value too large
+SQL> delete from temp_json_table_long;
+
+1 rows affected.
+
+SQL> insert into temp_json_table_long values(1, '{"type" : "1' || lpad('100',8000,'a') || lpad('100',8000,'a') || '", "number" : "2"}');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2 PATH '$.type'));
+
+CT-02502, Output value too large
+SQL> delete from temp_json_table_long;
+
+1 rows affected.
+
+SQL> insert into temp_json_table_long values(1, '{"type" : "1' || lpad('100',7000,'a') || '", "number" : "2"}');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2(8000) PATH '$.type')) b;
+
+F1           LENGTH(B.TYPE)
+------------ --------------------
+1            7001
+
+1 rows fetched.
+
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2 PATH '$.type')) b;
+
+CT-02502, Output value too large
+SQL> delete from temp_json_table_long;
+
+1 rows affected.
+
+SQL> insert into temp_json_table_long values(1, to_clob('{"type" : "1' || lpad('100',7000,'a') || lpad('100',7000,'a') || lpad('100',7000,'a')) || to_clob(lpad('100',7000,'a') || lpad('100',4751,'a') || '", "number" :  "2"}'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2 PATH '$.number')) b;
+
+F1           LENGTH(B.TYPE)
+------------ --------------------
+1            1
+
+1 rows fetched.
+
+SQL> delete from temp_json_table_long;
+
+1 rows affected.
+
+SQL> insert into temp_json_table_long values(1, to_clob('{"type" : "1' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') ) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')|| lpad('100',8000,'a')) || to_clob(lpad('100',7000,'a') || lpad('100',4751,'a') || '", "number" :  "2"}'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2 PATH '$.number')) b;
+
+F1           LENGTH(B.TYPE)
+------------ --------------------
+1            1
+
+1 rows fetched.
+
+SQL> delete from temp_json_table_long;
+
+1 rows affected.
+
+SQL> insert into temp_json_table_long values(1, to_clob('{"a": "' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || lpad('100',8000,'a')) || to_clob('", "b":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') ) || '"}');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2 PATH '$.b')) b;
+
+CT-02502, Output value too large
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type clob PATH '$.b')) b;
+
+F1           LENGTH(B.TYPE)
+------------ --------------------
+1            24000
+
+1 rows fetched.
+
+SQL> delete from temp_json_table_long;
+
+1 rows affected.
+
+SQL> insert into temp_json_table_long values(1, to_clob('{"a": "' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || lpad('100',8000,'a')) || to_clob('", "b":"' || lpad('100',8000,'a') || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "c":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "d":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "e":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "rf":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "f":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "j":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "u":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "j":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "m":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "i":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "l":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "g":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "n":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "g":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "q":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "t":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "o":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "v":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "p":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "w":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "r":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "af":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "s":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ae":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "z":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ad":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "y":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ah":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "x":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ag":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "aa":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ai":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ab":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ac":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || '}');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type varchar2 PATH '$.b')) b;
+
+CT-02502, Output value too large
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type clob PATH '$.b')) b;
+
+F1           LENGTH(B.TYPE)
+------------ --------------------
+1            32000
+
+1 rows fetched.
+
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type clob PATH '$.ai')) b;
+
+F1           LENGTH(B.TYPE)
+------------ --------------------
+1            24000
+
+1 rows fetched.
+
+SQL> delete from temp_json_table_long;
+
+1 rows affected.
+
+SQL> insert into temp_json_table_long values(1, to_clob('[{"a": "' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || lpad('100',8000,'a')) || to_clob('", "b":"' || lpad('100',8000,'a') || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "c":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "d":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "e":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "rf":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "f":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "j":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "u":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "j":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "m":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "i":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "l":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "g":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "n":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "g":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "q":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "t":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "o":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "v":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "p":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "w":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "r":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "af":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "s":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ae":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "z":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ad":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "y":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ah":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "x":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ag":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "aa":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ai":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ab":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || to_clob(', "ac":"' || lpad('100',8000,'a')  || lpad('100',8000,'a')  || lpad('100',8000,'a') || '"') || '}]');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into temp_json_table_long select * from temp_json_table_long;
+
+1 rows affected.
+
+SQL> select a.f1,length(b.type) from temp_json_table_long a, json_table (a.f2 , '$' error on error columns (type clob format json PATH '$')) b;
+
+F1           LENGTH(B.TYPE)
+------------ --------------------
+1            960265
+1            960265
+
+2 rows fetched.
+
+SQL> --not supported
+SQL> delete from JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$' COLUMNS (type varchar2(10) exists PATH '$.type' false on error));
+
+CT-00601, [1:13]Sql syntax error: invalid variant/object name was found
+SQL> drop table JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$' COLUMNS (type varchar2(10) exists PATH '$.type' false on error));
+
+CT-00843, The table or view SYS.JSON_TABLE does not exist.
+SQL> insert into JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$' COLUMNS (type varchar2(10) exists PATH '$.type' false on error)) values ('1');
+
+CT-00601, [1:24]Sql syntax error: invalid variant/object name was found
+SQL> update JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$' COLUMNS (type varchar2(10) exists PATH '$.type' false on error)) set type ='qqq';
+
+CT-00130, [1:8]Operation update is not supported on view, func, join table, json table, subqueries or system table
+SQL> create index temp001001 on JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$' COLUMNS (type varchar2(10) exists PATH '$.type' false on error))( type);
+
+CT-00843, The table or view SYS.JSON_TABLE does not exist.
+SQL> --(+)
+SQL> drop table if exists test_json_table;
+
+Succeed.
+
+SQL> create table test_json_table (f1 varchar(100), f2 varchar(200));
+
+Succeed.
+
+SQL> insert into test_json_table values(1, '[{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}]');
+
+1 rows affected.
+
+SQL> insert into test_json_table values(2, '[{"Phone" : [{"type" : "e", "number" : "909-555-7307"}, {"type" : "f", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "g", "number" : "909-555-7307"}, {"type" : "h", "number" : "415-555-1234"}]}]');
+
+1 rows affected.
+
+SQL> insert into test_json_table values(3, '[{"Phone" : [{"type" : "3", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "3", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}]');
+
+1 rows affected.
+
+SQL> insert into test_json_table values(4, '[{"Phone" : [{"type" : "4", "number" : "909-555-7307"}, {"type" : "4", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "g", "number" : "909-555-7307"}, {"type" : "h", "number" : "415-555-1234"}]}]');
+
+1 rows affected.
+
+SQL> drop table if exists test_json_table2;
+
+Succeed.
+
+SQL> create table test_json_table2 (f1 varchar(100), f2 varchar(200));
+
+Succeed.
+
+SQL> insert into test_json_table2 values(1, '[{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}]');
+
+1 rows affected.
+
+SQL> insert into test_json_table2 values(2, null);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select a.f1 a1,b.f1 a3,type a5 from test_json_table2 a right join test_json_table2 b on a.f1=b.f1-1 join json_table(case when a.f2 is null then b.f2 else a.f2 end,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type', num2 for ordinality )) c on b.f1(+)=c.num2;
+
+CT-00601, [1:266]Sql syntax error: invalid usage outer join symbol
+SQL> select a.f1 a1,b.f1 a3,type a5 from test_json_table2 a right join test_json_table2 b on a.f1=b.f1-1 join json_table(case when a.f2 is null then b.f2 else a.f2 end,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type', num2 for ordinality )) c on b.f1=c.num2(+);
+
+CT-00601, [1:271]Sql syntax error: invalid usage outer join symbol
+SQL> select a.f1 a1,b.f1 a3 from test_json_table2 a  join test_json_table2 b on a.f1(+)=b.f1;
+
+CT-00601, [1:76]Sql syntax error: invalid usage outer join symbol
+SQL> select a.f1 a1,b.f1 a3 from test_json_table2 a  join test_json_table2 b on a.f1=b.f1(+);
+
+CT-00601, [1:81]Sql syntax error: invalid usage outer join symbol
+SQL> select a.f1,b.* from test_json_table a, json_table(a.f2,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type' )) b where  a.f1(+) = b.type;
+
+F1                                                               TYPE
+---------------------------------------------------------------- ----------------------------------------------------------------
+3                                                                3
+3                                                                3
+4                                                                4
+4                                                                4
+
+4 rows fetched.
+
+SQL> select a.f1,b.* from test_json_table c left join test_json_table a on true, json_table(a.f2,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type' )) b where  a.f1(+) = b.type;
+
+CT-00601, Sql syntax error: the 'join' keyword is not allowed when exist '(+)'
+SQL> select a.f1,b.* from test_json_table c , test_json_table a , json_table(a.f2,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type' )) b where a.f1(+)=c.f1 and a.f1(+) = b.type;
+
+F1                                                               TYPE
+---------------------------------------------------------------- ----------------------------------------------------------------
+3                                                                3
+3                                                                3
+4                                                                4
+4                                                                4
+
+4 rows fetched.
+
+SQL> select a.f1,b.* from test_json_table c , test_json_table a , json_table(a.f2,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type' )) b where a.f1=c.f1(+) and a.f1(+) = b.type;
+
+F1                                                               TYPE
+---------------------------------------------------------------- ----------------------------------------------------------------
+3                                                                3
+3                                                                3
+4                                                                4
+4                                                                4
+
+4 rows fetched.
+
+SQL> --different with oracle
+SQL> SELECT * FROM JSON_TABLE('{"type" : "1", number : "2"}', '$' default '1' on error COLUMNS (type varchar2 PATH '$.type', number2 varchar2 PATH '$.number'));
+
+TYPE                                                             NUMBER2                                                         
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$.type[1]' error on error COLUMNS (type varchar2(10) PATH '$' ));
+
+CT-02506, JSON_VALUE evaluated to no value
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$.type[1]' null on error COLUMNS (type varchar2(10) PATH '$' ));
+
+CT-02506, JSON_VALUE evaluated to no value
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$[1].type[0]' error on error COLUMNS (type varchar2(10) PATH '$' ));
+
+CT-02506, JSON_VALUE evaluated to no value
+SQL> SELECT type,1 FROM JSON_TABLE('{"aaa" : {"type" : "Office", "type" : "aaa"}}', '$.aaa[0].type' error on error COLUMNS (type varchar2(10) PATH '$' ));
+
+CT-02506, JSON_VALUE evaluated to multiple value
+SQL> SELECT type,1 FROM JSON_TABLE('{"aaa" : {"type" : "Office", "type" : "aaa"}}', '$.aaa[0].type' COLUMNS (type varchar2(10) PATH '$' ));
+
+TYPE                                                         1
+------------------------------------------------------------ ------------
+                                                             1
+
+1 rows fetched.
+
+SQL> SELECT * FROM JSON_TABLE('{"aa" :  {"aaa" : 300, "aaa" : 400}}',  '$.aa.aaa' error on error COLUMNS (aaa varchar2(100) PATH '$' ));
+
+CT-02506, JSON_VALUE evaluated to multiple value
+SQL> select * from json_table('{"aa" : [{"aaa" : 300, "aaa" : 400}]}', '$.aa.aaa' error on error columns (aaa varchar2(100) path '$'));
+
+CT-02506, JSON_VALUE evaluated to multiple value
+SQL> --not supported yet
+SQL> SELECT * FROM JSON_TABLE('{"name"   : "Alexis Bull", "Phone"  : [{"type" : "Office", "number" : "909-555-7307"}, {"type" : "Mobile", "number" : "415-555-1234"}]}', '$' COLUMNS (name    varchar2(20) PATH '$.name', nested path '$.Phone[*]' columns (type     varchar2(20) path '$.type', number2  varchar2(20) path '$.number', rows2 for ordinality)));
+
+CT-00601, [1:202]Sql syntax error: json_table nested path column not supported
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$' COLUMNS (type varchar2(10) exists PATH '$.type' true on error,type varchar2(10) exists PATH '$.type' false on error));
+
+TYPE                                                         TYPE
+------------------------------------------------------------ ------------------------------------------------------------
+TRUE                                                         TRUE
+
+1 rows fetched.
+
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307"}', '$' COLUMNS (type varchar2(10) exists PATH '$.type' true on error,type varchar2(10) exists PATH '$.type' false on error));--select * from (select dummy a, dummy a from dual);
+
+TYPE                                                         TYPE
+------------------------------------------------------------ ------------------------------------------------------------
+TRUE                                                         TRUE
+
+1 rows fetched.
+
+SQL> select * from json_table('[{"a" : {"aa" : [{"aaa" : 100, "aaa" : 200}]}}, {"a" : {"aa" : [{"aaa" : 300, "aaa" : 400}]}}]', '$.a.aa.aaa' error on error columns (aaa varchar2(100) path '$'));
+
+CT-02506, JSON_VALUE evaluated to multiple value
+SQL> SELECT type,1 FROM JSON_TABLE('{"aaa" : [{"type" : "Office", "type" : "aaa"}]}', '$.aaa[0].type' COLUMNS (type varchar2(10) PATH '$' ));
+
+TYPE                                                         1
+------------------------------------------------------------ ------------
+                                                             1
+
+1 rows fetched.
+
+SQL> SELECT type,1 FROM JSON_TABLE('{"aaa" : [{"type" : "Office", "type" : "aaa"}]}', '$.aaa.type' COLUMNS (type varchar2(10) PATH '$' ));
+
+TYPE                                                         1
+------------------------------------------------------------ ------------
+                                                             1
+
+1 rows fetched.
+
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307", "type" : "aaa"}', '$[0]' COLUMNS (type varchar2(10) PATH '$.type' ));
+
+TYPE
+------------------------------------------------------------
+
+
+1 rows fetched.
+
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307", "type" : "aaa"}', '$.type' COLUMNS (type varchar2(10) PATH '$' ));
+
+TYPE
+------------------------------------------------------------
+
+
+1 rows fetched.
+
+SQL> SELECT * FROM JSON_TABLE('{"aaa" : {"type" : "Office", "number" : "909-555-7307", "type" : "aaa"}}', '$.aaa.type' COLUMNS (type varchar2(10) PATH '$' ));
+
+TYPE
+------------------------------------------------------------
+
+
+1 rows fetched.
+
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307", "type" : "aaa"}', '$[*]' error on error COLUMNS (type varchar2(10) PATH '$.type' ));
+
+CT-02506, JSON_VALUE evaluated to multiple value
+SQL> SELECT * FROM JSON_TABLE('{"type" : "Office", "number" : "909-555-7307", "type" : "aaa"}', '$[*]' COLUMNS (type varchar2(10) PATH '$.type' ));
+
+TYPE
+------------------------------------------------------------
+
+
+1 rows fetched.
+
+SQL> --jv_object same name
+SQL> select * from json_table('[{"a" : {"aa" : {"aaa" : 100, "aaa" : 200}}}, {"a" : {"aa" : [{"aaa" : 300, "aaa" : 400}]}}]', '$.a.aa.aaa' error on error columns (aaa varchar2(100) path '$'));
+
+CT-02506, JSON_VALUE evaluated to multiple value
+SQL> select * from json_table('[{"a" : {"aa" : {"aaa" : 100, "aaa" : 200}}}, {"a" : {"aa" : [{"aaa" : 300, "aaa" : 400}]}}]', '$.a.aa' error on error columns (aaa varchar2(100) path '$.aaa'));
+
+CT-02506, JSON_VALUE evaluated to multiple value
+SQL> select * from json_table('[{"a" : {"aa" : {"aaa" : 100, "aab" : 200}}}, {"a" : {"aa" : [{"aaa" : 300, "aaa" : 400}]}}]', '$.a.aa.aaa' error on error columns (aaa varchar2(100) path '$'));
+
+CT-02506, JSON_VALUE evaluated to multiple value
+SQL> --select
+SQL> select /*+rule*/ * from test_json_table a, json_table(a.f2,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type' )) b  pivot(count(b.type) for (f1) in (1,2,3,4));
+
+F2                                                               1                    2                    3                    4
+---------------------------------------------------------------- -------------------- -------------------- -------------------- --------------------
+[{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}] 4                    0                    0                    0
+[{"Phone" : [{"type" : "e", "number" : "909-555-7307"}, {"type" : "f", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "g", "number" : "909-555-7307"}, {"type" : "h", "number" : "415-555-1234"}]}] 0                    4                    0                    0
+[{"Phone" : [{"type" : "3", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "3", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}] 0                    0                    4                    0
+[{"Phone" : [{"type" : "4", "number" : "909-555-7307"}, {"type" : "4", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "g", "number" : "909-555-7307"}, {"type" : "h", "number" : "415-555-1234"}]}] 0                    0                    0                    4
+
+4 rows fetched.
+
+SQL> select  * from test_json_table a, json_table(a.f2,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type' )) b limit 2;
+
+F1                                                               F2                                                               TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1                                                                [{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}] a
+1                                                                [{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}] b
+
+2 rows fetched.
+
+SQL> select  * from test_json_table a, json_table(a.f2,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type' )) b limit 0,2;
+
+F1                                                               F2                                                               TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1                                                                [{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}] a
+1                                                                [{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}] b
+
+2 rows fetched.
+
+SQL> select  * from test_json_table a, json_table(a.f2,'$[*].Phone[*]' error on error COLUMNS (type VARChAR2(100) PATH '$.type' )) b limit 2 offset 2;
+
+F1                                                               F2                                                               TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1                                                                [{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}] c
+1                                                                [{"Phone" : [{"type" : "a", "number" : "909-555-7307"}, {"type" : "b", "number" : "415-555-1234"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}] d
+
+2 rows fetched.
+
+SQL> --transform
+SQL> drop view if exists t_subselect_rs_005;
+
+Succeed.
+
+SQL> drop view if exists t_subselect_rs_006;
+
+Succeed.
+
+SQL> create view t_subselect_rs_005 as select * from  json_table('[{"Phone" : [{"number" : "909-555-7307"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}]', '$[*].Phone[*]' null on error COLUMNS (t5_f1 varchar2(1000) PATH '$.type' ));
+
+Succeed.
+
+SQL> create view t_subselect_rs_006 as select * from  json_table('[{"Phone" : [{"number" : "909-555-7307"}]}, {"Phone" : [{"type" : "c", "number" : "909-555-7307"}, {"type" : "d", "number" : "415-555-1234"}]}]', '$[*].Phone[*]' null on error COLUMNS (t6_f1 varchar2(1000) PATH '$.type', t6_f2 varchar2(1000) PATH '$.number'));
+
+Succeed.
+
+SQL> select distinct t6_f1,aaa from (select distinct t6_f1, (select t5_f1 from t_subselect_rs_005 where t5_f1 > t6_f1 order by t5_f1 desc) aaa from t_subselect_rs_006 order by t6_f1 desc);
+
+T6_F1                                                            AAA
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+d
+c                                                                d
+
+3 rows fetched.
+
+SQL> select distinct t6_f1,aaa from (select distinct t6_f1, (select t5_f1 from t_subselect_rs_005 where t5_f1 > b.t6_f1 order by t5_f1 desc) aaa from t_subselect_rs_006 b order by t6_f1 desc);
+
+T6_F1                                                            AAA
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+d
+c                                                                d
+
+3 rows fetched.
+
+SQL> select distinct t6_f1,aaa,rownum from (select distinct t6_f1, (select t5_f1 from t_subselect_rs_005 where t5_f1 > t6_f1 ) aaa from t_subselect_rs_006 order by t6_f1%7 desc);
+
+CT-00636, [1:165]Invalid number -- unexpected character
+SQL> select (select t5_f1 from t_subselect_rs_005 where t5_f1 > t6_f1  limit 1) aaa from (select distinct t6_f1 from (select distinct t6_f1 from t_subselect_rs_006 )) t6 left join t_subselect_rs_005 t4 on t6.t6_f1 = t4.t5_f1  order by t6_f1%7 desc;
+
+CT-00636, [1:236]Invalid number -- unexpected character
+SQL> select (select t5_f1 from t_subselect_rs_005 where t5_f1 > t6_f1  limit 1) aaa from (select distinct t6_f1 from (select distinct t6_f1 from t_subselect_rs_006 )) t6 left join t_subselect_rs_005 t4 on t6.t6_f1 = t4.t5_f1;
+
+AAA
+----------------------------------------------------------------
+
+d
+
+
+3 rows fetched.
+
+SQL> select (select t5_f1 from t_subselect_rs_005 where t5_f1<t6_f1  and rownum=1) from t_subselect_rs_006 where t6_f1 in (select t5_f1 from t_subselect_rs_005) order by t6_f2 asc ;
+
+(SELECT T5_F1 FROM T_SUBSELECT_RS_005 WHERE T5_F1<T6_F1  AND ROW
+----------------------------------------------------------------
+c
+
+
+2 rows fetched.
+
+SQL> SELECT * FROM t_subselect_rs_005 T4 WHERE EXISTS( SELECT t6.t6_f1, t5.t5_f1 FROM t_subselect_rs_006 t6, t_subselect_rs_005 t5
+  2 WHERE t6.t6_f2 = t5.t5_f1 AND t5.t5_f1 = t4.t5_f1 AND t6.t6_f2 < (SELECT sum(t6.t6_f2) FROM t_subselect_rs_006 t6 WHERE to_char(t6.t6_f2) = t5.t5_f1)) ;
+
+T5_F1
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select (select t5_f1 from t_subselect_rs_005 where t5_f1 = t5.t5_f1) from (SELECT t6.t6_f1, t6.t6_f2,t5.t5_f1
+  2  FROM t_subselect_rs_006 t6, t_subselect_rs_005 t5
+  3 WHERE t6.t6_f1 = t5.t5_f1 AND t6.t6_f2 > (SELECT max(t6.t6_f2) FROM t_subselect_rs_006 t6 WHERE t6.t6_f1 = t5.t5_f1)) t5 inner join t_subselect_rs_005;
+
+(SELECT T5_F1 FROM T_SUBSELECT_RS_005 WHERE T5_F1 = T5.T5_F1)
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select (select t5_f1 from t_subselect_rs_005 where t5_f1 = t5.t5_f1) from (SELECT t6.t6_f1, t6.t6_f2,t5.t5_f1
+  2  FROM t_subselect_rs_006 t6, t_subselect_rs_005 t5
+  3 WHERE t6.t6_f1 = t5.t5_f1 AND t6.t6_f2 < (SELECT max(t6.t6_f2) FROM t_subselect_rs_006 t6 WHERE t6.t6_f1 = t5.t5_f1)) t5 inner join t_subselect_rs_005;
+
+(SELECT T5_F1 FROM T_SUBSELECT_RS_005 WHERE T5_F1 = T5.T5_F1)
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> --transform in to exist
+SQL> select (select t5_f1 from t_subselect_rs_005 where t5_f1<t6_f1  and rownum=1) from t_subselect_rs_006 where t6_f1 in (select t5_f1 from t_subselect_rs_005) order by t6_f2 asc ;
+
+(SELECT T5_F1 FROM T_SUBSELECT_RS_005 WHERE T5_F1<T6_F1  AND ROW
+----------------------------------------------------------------
+c
+
+
+2 rows fetched.
+
+SQL> select distinct t6_f1,aaa from (select distinct t6_f1, (select t5_f1 from t_subselect_rs_005 where t5_f1 = t6_f1) aaa from t_subselect_rs_006 order by 1);
+
+T6_F1                                                            AAA
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+c                                                                c
+d                                                                d
+
+3 rows fetched.
+
+SQL> select distinct t6_f1,aaa from (select distinct t6_f1, (select t5_f1 from t_subselect_rs_005 where t5_f1 > b.t6_f1) aaa from t_subselect_rs_006 b order by t6_f1 desc);
+
+T6_F1                                                            AAA
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+d
+c                                                                d
+
+3 rows fetched.
+
+SQL> select distinct t6_f1,aaa,rownum from (select distinct t6_f1, (select t5_f1 from t_subselect_rs_005 where t5_f1 > t6_f1 ) aaa from t_subselect_rs_006);
+
+T6_F1                                                            AAA                                                              ROWNUM
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+                                                                                                                                  1
+c                                                                d                                                                2
+d                                                                                                                                 3
+
+3 rows fetched.
+
+SQL> --pl
+SQL> create or replace procedure test_json_table_object(src_table_name in varchar)
+  2 as
+  3     table_id int;
+  4     sql_str varchar(2000);
+  5     mycursor1 sys_refcursor ;
+  6     col_name varchar(100);
+  7     col_type varchar(30);
+  8     datatype int;
+  9     type_str varchar(1000) := '';
+ 10     column_str varchar(1000) := '1';
+ 11     result_str varchar(2000) := '''{';
+ 12     dst_table_name varchar(100) := 'json_' || src_table_name;
+ 13     view_str varchar(8000) := 'create view ' || src_table_name || ' as select b.* from ' || dst_table_name || ' a,json_table(a.f1 ,''$'' columns (';
+ 14 begin
+ 15     --create new table
+ 16     sql_str := 'drop view if exists ' || src_table_name;
+ 17     execute immediate sql_str;
+ 18     sql_str := 'drop table if exists ' || dst_table_name;
+ 19     execute immediate sql_str;
+ 20     sql_str := 'create table ' || dst_table_name || '(f1 clob)';
+ 21     execute immediate sql_str;
+ 22     --get table id
+ 23     sql_str := 'select table_id from my_tables where table_name=upper(''' || src_table_name || ''')';
+ 24     execute immediate sql_str into table_id;
+ 25     --get column name and type
+ 26     sql_str := 'select decode(:1, 20001, ''int'', 20009, ''varchar2(8000)'', ''varchar2(8000)'') from sys_dummy';
+ 27     open mycursor1 for 'select name, datatype from sys.sys_columns where table# = :1 order by id' using table_id;
+ 28     loop
+ 29         fetch mycursor1 into col_name, datatype;
+ 30         if mycursor1%found
+ 31         then
+ 32             execute immediate sql_str into col_type using datatype;
+ 33                     type_str := type_str || col_name || ' ' || col_type || ';';
+ 34                     if column_str != '1'
+ 35                     then
+ 36                         column_str := column_str || ',';
+ 37                             result_str := result_str || ',';
+ 38                             view_str := view_str || ',';
+ 39                     else
+ 40                             column_str := '';
+ 41                     end if;
+ 42             column_str := column_str || col_name;
+ 43             result_str := result_str || '"' || col_name || '" : "' || ''' || ' ;
+ 44             result_str := result_str || col_name || ' || ''"';
+ 45                     view_str := view_str || col_name || ' varchar2(1000) path ''$.' || col_name || '''';
+ 46         else
+ 47             exit;
+ 48         end if;
+ 49     end loop;
+ 50     result_str := result_str || '}''';
+ 51     view_str := view_str || ')) b';
+ 52     sql_str := 'DECLARE
+ 53     mycursor2 sys_refcursor ;
+ 54     sql_str varchar(5000);
+ 55     ' || type_str || '
+ 56     BEGIN
+ 57     open mycursor2 for ''SELECT ' || column_str || ' FROM ' || src_table_name || ''';
+ 58     loop
+ 59         fetch mycursor2 into ' || column_str ||';
+ 60         if mycursor2%found
+ 61         then
+ 62                 sql_str := ''insert into ' || dst_table_name || ' values (''' || result_str || ''')'';
+ 63             execute immediate sql_str;
+ 64         else
+ 65             exit;
+ 66         end if;
+ 67     end loop;
+ 68     END;
+ 69     /';
+ 70     execute immediate sql_str;
+ 71     dbe_output.print_line(sql_str);
+ 72     sql_str := 'drop table ' || src_table_name;
+ 73     execute immediate sql_str;
+ 74     execute immediate view_str;
+ 75     dbe_output.print_line(view_str);
+ 76 end;
+ 77 /
+
+Succeed.
+
+SQL> drop table if exists temp2;
+
+Succeed.
+
+SQL> drop view if exists temp2;
+
+Succeed.
+
+SQL> create table temp2(aaa int, bbb varchar(20));
+
+Succeed.
+
+SQL> insert into temp2 values(1,'1');
+
+1 rows affected.
+
+SQL> call test_json_table_object('temp2');
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from temp2;
+
+AAA                                                              BBB
+---------------------------------------------------------------- ----------------------------------------------------------------
+1                                                                1
+
+1 rows fetched.
+
+SQL> drop view if exists temp2;
+
+Succeed.
+
+SQL> drop view t_subselect_rs_005;
+
+Succeed.
+
+SQL> drop view t_subselect_rs_006;
+
+Succeed.
+
+SQL> drop table temp_json_table_long;
+
+Succeed.
+
+SQL> drop table test_json_table2;
+
+Succeed.
+
+SQL> drop table test_json_table;
+
+Succeed.
+
+SQL> --20210218
+SQL> DROP TABLE if exists t_json_table_0218_2;
+
+Succeed.
+
+SQL> CREATE TABLE t_json_table_0218_2(id INT,c_js varchar(150),c_vchar varchar(10),c_int int,c_num number,c_date date,check(c_js is json));
+
+Succeed.
+
+SQL> insert into t_json_table_0218_2 values(1,'{"ctry":{"pro1":"a0001", "pro2":{"city1":"a0001","city2":"b0001"}, "pro3":["a0001","b0001","c0001"]}}','ctry1',1,1,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(1,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(2,'{"ctry":{"pro1":"a0002", "pro2":{"city1":"a0002","city2":"b0002"}, "pro3":["a0002","b0002","c0002"]}}','ctry2',2,2,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(2,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(3,'{"ctry":{"pro1":"a0003", "pro2":{"city1":"a0003","city2":"b0003"}, "pro3":["a0003","b0003","c0003"]}}','ctry3',3,3,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(3,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(4,'{"ctry":{"pro1":"a0004", "pro2":{"city1":"a0004","city2":"b0004"}, "pro3":["a0004","b0004","c0004"]}}','ctry4',4,4,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(4,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(5,'{"ctry":{"pro1":"a0005", "pro2":{"city1":"a0005","city2":"b0005"}, "pro3":["a0005","b0005","c0005"]}}','ctry5',5,5,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(5,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(6,'{"ctry":{"pro1":"a0006", "pro2":{"city1":"a0006","city2":"b0006"}, "pro3":["a0006","b0006","c0006"]}}','ctry6',6,6,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(6,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(7,'{"ctry":{"pro1":"a0007", "pro2":{"city1":"a0007","city2":"b0007"}, "pro3":["a0007","b0007","c0007"]}}','ctry7',7,7,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(7,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(8,'{"ctry":{"pro1":"a0008", "pro2":{"city1":"a0008","city2":"b0008"}, "pro3":["a0008","b0008","c0008"]}}','ctry8',8,8,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(8,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(9,'{"ctry":{"pro1":"a0009", "pro2":{"city1":"a0009","city2":"b0009"}, "pro3":["a0009","b0009","c0009"]}}','ctry9',9,9,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(9,10000)));
+
+1 rows affected.
+
+SQL> insert into t_json_table_0218_2 values(10,'{"ctry":{"pro1":"a00010", "pro2":{"city1":"a00010","city2":"b00010"}, "pro3":["a00010","b00010","c00010"]}}','ctry10',10,10,ADD_MONTHS(to_timestamp('1000-01-01 10:10:10','yyyy-mm-dd hh24:mi:ss'),MOD(10,10000)));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select count(*) from t_json_table_0218_2 t1, json_table(t1.c_js, '$[*]' default '1' on error columns (f1 varchar2(15) path '$.ctry.pro12', f4 for ordinality)) connect by prior t1.id >= t1.id;
+
+CT-00660, There was an infinite loop in CONNECT BY execution
+SQL> select distinct t1.f1 from (select distinct c_js from t_json_table_0218_2 where id=1) , json_table(c_js, '$[*]' error on error columns (f1 varchar2(15) path '$.ctry.pro1', f4 for ordinality)) t1;
+
+F1
+----------------------------------------------------------------
+a0001
+
+1 rows fetched.
+
+SQL> select * from (select * from t_json_table_0218_2 where id=1) t1 where exists(select * from json_table(c_js, '$[*]' error on error columns (f1 varchar2(15) path '$.ctry.pro1', f4 for ordinality)) t2 where t2.f4 = t1.id);
+
+ID           C_JS                                                             C_VCHAR    C_INT        C_NUM                                    C_DATE
+------------ ---------------------------------------------------------------- ---------- ------------ ---------------------------------------- ----------------------
+1            {"ctry":{"pro1":"a0001", "pro2":{"city1":"a0001","city2":"b0001"}, "pro3":["a0001","b0001","c0001"]}} ctry1      1            1                                        1000-02-01 10:10:10
+
+1 rows fetched.
+
+SQL> select count(*) from t_json_table_0218_2 t1, t_json_table_0218_2 t2 join json_table(t1.c_js, '$[*]' columns (f1 varchar2(15) path '$.ctry.pro1', f4 for ordinality));
+
+COUNT(*)
+--------------------
+100
+
+1 rows fetched.
+
+SQL> DROP TABLE t_json_table_0218_2;
+
+Succeed.
+
+SQL> select * from json_table('[{"a":"a1","b":{"bb":"ds"},"c":"c3"},{"a":"a2","b":{"bb":"ds"},"c":"c6"}]','$[*]' columns (f1 varchar2(15) path '$.a', f2 clob format json path '$.b', f4 for ordinality, f3 varchar2(10000) exists path '$.c')) t2;
+
+F1                                                               F2                                                               F4                   F3
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- ----------------------------------------------------------------
+a1                                                               {"bb":"ds"}                                                      1                    TRUE
+a2                                                               {"bb":"ds"}                                                      2                    TRUE
+
+2 rows fetched.
+
+SQL> drop table if exists t_json_table_200_0219_2;
+
+Succeed.
+
+SQL> create table t_json_table_200_0219_2 as select * from json_table('[{"a":"a1","b":{"bb":"ds"},"c":"c3"},{"a":"a2","b":{"bb":"ds"},"c":"c6"}]','$[*]' columns (f1 varchar2(15) path '$.a', f2 varchar2(3) format json path '$.b', f4 for ordinality, f3 varchar2(10000) exists path '$.c')) t1 union select * from json_table('[{"a":"a1","b":{"bb":"ds"},"c":"c3"},{"a":"a2","b":{"bb":"ds"},"c":"c6"}]','$[*]' columns (f1 varchar2(15) path '$.a', f2 clob format json path '$.b', f4 for ordinality, f3 varchar2(10000) exists path '$.c')) t2;
+
+CT-00601, [1:299]Sql syntax error: unexpected lob column occurs
+SQL> --20210401
+SQL> DROP TABLE if exists t_unnest2_0401;
+
+Succeed.
+
+SQL> CREATE TABLE t_unnest2_0401(id INT,c_js varchar(150),c_vchar varchar(10),c_int int,c_num number,c_date date);
+
+Succeed.
+
+SQL> insert into t_unnest2_0401 values(1,lpad('123abc',100,'abc'),'11',1,1.23,to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into t_unnest2_0401 values(2,'{"ctry":{"pro1":"a00010", "pro2":{"city1":"a00010","city2":"b00010"}, "pro3":["a00010","b00010","c00010"]}}','11',1,1.23,to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> CREATE or replace procedure proc_insert(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5             sqlst := 'insert into ' || tname ||' select id+'||i||',c_js||'||i||',c_vchar||'||i||',c_int+'||i||',c_num+'||i||',c_date from '||tname|| ' where id=1';
+  6         execute immediate sqlst;
+  7   END LOOP;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> call proc_insert('t_unnest2_0401',1,10);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select id from t_unnest2_0401 a,json_table(rowid,'$' columns (f4 for ordinality)) ;
+
+ID
+------------
+
+0 rows fetched.
+
+SQL> select id from t_unnest2_0401,json_table(prior c_js,'$' columns (f4 for ordinality)) connect by id + 1= prior id ;
+
+CT-00601, [1:42]Sql syntax error: 'prior' operator not allowed here
+SQL> select (select f1 from json_table(a.c_js,'$' columns (f1 for ordinality))) b from t_unnest2_0401 a order by 1;
+
+B
+--------------------
+1
+
+
+
+
+
+
+
+
+
+
+
+
+12 rows fetched.
+
+SQL> select id from t_unnest2_0401,json_table(CONNECT_BY_ROOT c_js,'$' columns (f4 for ordinality)) connect by id + 1= prior id ;
+
+CT-00601, [1:58]Sql syntax error: CONNECT BY ROOT operator is not supported in the START WITH or in the CONNECT BY condition
+SQL> select * from json_table(array[1,2],'$' columns (f4 for ordinality));
+
+CT-00601, [1:26]Sql syntax error: unexpected array expression
+SQL> select * from json_table(cast(rownodeid as varchar(100)),'$' columns (f4 for ordinality));
+
+CT-00606, [1:31]Inconsistent datatypes, expected VARCHAR - got UNKNOWN_TYPE
+SQL> DROP TABLE t_unnest2_0401;
+
+Succeed.
+
+SQL> SELECT * FROM JSON_TABLE('{"type" : ["Office", "Office2"], "number" : "909-555-7307", "type" : "Office2"}', '$.number[1]' error on error COLUMNS (type varchar2(10) PATH '$' ));
+
+CT-02506, JSON_VALUE evaluated to no value

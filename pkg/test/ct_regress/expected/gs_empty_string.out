@@ -1,0 +1,2569 @@
+
+
+SQL> --if there has err, make sure mofity synchronized with ctsql_test:sql_empty_string.sql
+SQL> --mysql empty string is not null;
+SQL> alter system set empty_string_as_null = false;
+
+Succeed.
+
+SQL> drop table if exists tbl_nelicTask;
+
+Succeed.
+
+SQL> CREATE TABLE tbl_nelicTask ( a VARCHAR(255) null, b CLOB NULL, c varchar(10) default 'abc');
+
+Succeed.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT IS NULL order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+
+0 rows fetched.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT = ''  order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+TBL_NELICTASK                                                    A                                                                VARCHAR                                                          255                                      Y        0                                                                                                                                                                                                                                                      255          B                                                                                                                                N             
+TBL_NELICTASK                                                    B                                                                CLOB                                                             8000                                     Y        1                                                                                                                                                                                                                                                      0                                                                                                                                             N             
+
+2 rows fetched.
+
+SQL> ALTER TABLE tbl_nelicTask ADD d varchar(10) default '';
+
+Succeed.
+
+SQL> alter table tbl_nelicTask modify c default 'aasdfasd';
+
+Succeed.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT IS NULL  order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+
+0 rows fetched.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT = ''''''  order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+TBL_NELICTASK                                                    D                                                                VARCHAR                                                          10                                       Y        3            ''                                                                                                                                                                                                                                        10           B                                                                                                                                N             
+
+1 rows fetched.
+
+SQL> drop table tbl_nelicTask;
+
+Succeed.
+
+SQL> --20200113
+SQL> select substr(dummy,null) from sys_dummy group by substr(dummy,'');
+
+CT-00609, [1:15]Expression not in group list
+SQL> select substr(dummy,lpad(null,1)) from sys_dummy group by substr(dummy,'');
+
+CT-00609, [1:15]Expression not in group list
+SQL> select substr(dummy,lpad(null,1)) from sys_dummy group by substr(dummy,lpad('a',1));
+
+CT-00609, [1:15]Expression not in group list
+SQL> -- insert select clob which is empty string
+SQL> drop table if exists t_empty_str_clob1;
+
+Succeed.
+
+SQL> drop table if exists t_empty_str_clob2;
+
+Succeed.
+
+SQL> create table t_empty_str_clob1(f1 clob);
+
+Succeed.
+
+SQL> insert into t_empty_str_clob1 values('');
+
+1 rows affected.
+
+SQL> select f1, lengthb(f1) from t_empty_str_clob1;
+
+F1                                                               LENGTHB(F1)         
+---------------------------------------------------------------- --------------------
+                                                                 0                   
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table t_empty_str_clob2 as select * from t_empty_str_clob1;
+
+Succeed.
+
+SQL> select f1, lengthb(f1) from t_empty_str_clob2;
+
+F1                                                               LENGTHB(F1)         
+---------------------------------------------------------------- --------------------
+                                                                 0                   
+
+1 rows fetched.
+
+SQL> drop table t_empty_str_clob1;
+
+Succeed.
+
+SQL> drop table t_empty_str_clob2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_empty_str_str1;
+
+Succeed.
+
+SQL> drop table if exists t_empty_str_str2;
+
+Succeed.
+
+SQL> drop table if exists t_empty_str_clob;
+
+Succeed.
+
+SQL> create table t_empty_str_str1(f1 varchar(10));
+
+Succeed.
+
+SQL> create table t_empty_str_str2(f1 varchar(10));
+
+Succeed.
+
+SQL> insert into t_empty_str_str2 values('');
+
+1 rows affected.
+
+SQL> create table t_empty_str_clob(f1 clob);
+
+Succeed.
+
+SQL> insert into t_empty_str_clob values('');
+
+1 rows affected.
+
+SQL> insert into t_empty_str_str1 select * from t_empty_str_str2;
+
+1 rows affected.
+
+SQL> insert into t_empty_str_str1 select * from t_empty_str_clob;
+
+1 rows affected.
+
+SQL> select f1, lengthb(f1) from t_empty_str_str1;
+
+F1         LENGTHB(F1)         
+---------- --------------------
+           0                   
+           0                   
+
+2 rows fetched.
+
+SQL> drop table t_empty_str_str1;
+
+Succeed.
+
+SQL> drop table t_empty_str_str2;
+
+Succeed.
+
+SQL> drop table t_empty_str_clob;
+
+Succeed.
+
+SQL> 
+SQL> select to_number(10.1234,   '') from dual;
+
+CT-00636, [1:8]Invalid number 
+SQL> 
+SQL> drop table if exists emptyStr;
+
+Succeed.
+
+SQL> --insert
+SQL> create table emptyStr(c varchar(5));
+
+Succeed.
+
+SQL> insert into emptyStr values(''),('');
+
+2 rows affected.
+
+SQL> insert into emptyStr values('abc');
+
+1 rows affected.
+
+SQL> select c,length(c) from emptyStr where c is null;
+
+C     LENGTH(C)           
+----- --------------------
+
+0 rows fetched.
+
+SQL> select c,length(c) from emptyStr where c = '';
+
+C     LENGTH(C)           
+----- --------------------
+      0                   
+      0                   
+
+2 rows fetched.
+
+SQL> select c,length(c),count(c) from emptyStr group by c order by c;
+
+C     LENGTH(C)            COUNT(C)            
+----- -------------------- --------------------
+      0                    2                   
+abc   3                    1                   
+
+2 rows fetched.
+
+SQL> 
+SQL> --like
+SQL> select * from emptyStr where c like '' order by c;
+
+C    
+-----
+     
+     
+
+2 rows fetched.
+
+SQL> select * from emptyStr where c like '%' order by c;
+
+C    
+-----
+     
+     
+abc  
+
+3 rows fetched.
+
+SQL> select * from emptyStr where c like 'a%' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> select * from emptyStr where c like '_%_' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> select * from emptyStr where c like '%c' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> select * from emptyStr where c like '_' order by c;
+
+C    
+-----
+
+0 rows fetched.
+
+SQL> 
+SQL> select * from emptyStr where c like '' escape '_' order by c;
+
+C    
+-----
+     
+     
+
+2 rows fetched.
+
+SQL> select * from emptyStr where c like '%' escape '_' order by c;
+
+C    
+-----
+     
+     
+abc  
+
+3 rows fetched.
+
+SQL> select * from emptyStr where c like 'a%' escape '_' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> select * from emptyStr where c like '_%_' escape '_' order by c;
+
+C    
+-----
+
+0 rows fetched.
+
+SQL> select * from emptyStr where c like '%c' escape '_' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> 
+SQL> select * from dual where '' like '%';
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from dual where '' like '';
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> 
+SQL> --function
+SQL> --substr
+SQL> select substr('123',1,3) from dual;
+
+SUBSTR('123',1,3)
+-----------------
+123              
+
+1 rows fetched.
+
+SQL> select c,length(c),substr(c,1,3) from emptyStr order by c;
+
+C     LENGTH(C)            SUBSTR(C,1,3)
+----- -------------------- -------------
+      0                                 
+      0                                 
+abc   3                    abc          
+
+3 rows fetched.
+
+SQL> select 1 from dual where substr('123',1,-10) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where substr('123',1,-10) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where substr('123',5,2) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where substr('123',5,2) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where substr('',1,2) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where substr('',1,2) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where substr(null,1,2) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where substr(null,1,2) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> --concat
+SQL> select concat('123','a') from dual;
+
+CONCAT('123','A')
+-----------------
+123a             
+
+1 rows fetched.
+
+SQL> select c,length(c),concat('123','a') from emptyStr order by c;
+
+C     LENGTH(C)            CONCAT('123','A')
+----- -------------------- -----------------
+      0                    123a             
+      0                    123a             
+abc   3                    123a             
+
+3 rows fetched.
+
+SQL> select 1 from dual where concat('123','') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat('123','') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat('','123') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat('','123') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat('','') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat('','') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat(null,'') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat(null,'') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat('',null) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat('',null) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat(null,null) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat(null,null) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> --concat_ws
+SQL> select concat_ws('123','a') from dual;
+
+CONCAT_WS('123','A')
+--------------------
+a                   
+
+1 rows fetched.
+
+SQL> select c,length(c),concat_ws('123','a') from emptyStr order by c;
+
+C     LENGTH(C)            CONCAT_WS('123','A')
+----- -------------------- --------------------
+      0                    a                   
+      0                    a                   
+abc   3                    a                   
+
+3 rows fetched.
+
+SQL> select 1 from dual where concat_ws('123','') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat_ws('123','') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat_ws('','123') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat_ws('','123') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat_ws('','') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat_ws('','') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat_ws(null,'') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat_ws(null,'') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat_ws('',null) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat_ws('',null) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where concat_ws(null,null) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where concat_ws(null,null) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> --left
+SQL> select left('123',1) from dual;
+
+LEFT('123',1)
+-------------
+1            
+
+1 rows fetched.
+
+SQL> select c,length(c),left(c,1) from emptyStr order by c;
+
+C     LENGTH(C)            LEFT(C,1)
+----- -------------------- ---------
+      0                             
+      0                             
+abc   3                    a        
+
+3 rows fetched.
+
+SQL> select 1 from dual where left('123',0) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where left('123',0) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where left('123',5) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where left('123',5) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where left('',1) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where left('',1) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where left(null,1) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where left(null,1) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> --right
+SQL> select right('123',1) from dual;
+
+RIGHT('123',1)
+--------------
+3             
+
+1 rows fetched.
+
+SQL> select c,length(c),right(c,1) from emptyStr order by c;
+
+C     LENGTH(C)            RIGHT(C,1)
+----- -------------------- ----------
+      0                              
+      0                              
+abc   3                    c         
+
+3 rows fetched.
+
+SQL> select 1 from dual where right('123',0) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where right('123',0) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where right('123',5) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where right('123',5) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where right('',1) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where right('',1) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where right(null,1) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where right(null,1) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> --lpad
+SQL> select lpad('123',4, '*') from dual;
+
+LPAD('123',4, '*')
+------------------
+*123              
+
+1 rows fetched.
+
+SQL> select c,length(c),lpad('123',4, '*') from emptyStr order by c;
+
+C     LENGTH(C)            LPAD('123',4, '*')
+----- -------------------- ------------------
+      0                    *123              
+      0                    *123              
+abc   3                    *123              
+
+3 rows fetched.
+
+SQL> select 1 from dual where lpad('', 4, '*') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where lpad('', 4, '*') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where lpad(null, 4, '*') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where lpad(null, 4, '*') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where lpad('123', 0, '*') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where lpad('123', 0, '*') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where lpad('123', -1, '*') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where lpad('123', -1, '*') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where lpad('123', 4, '') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where lpad('123', 4, '') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where lpad('123', 4, null) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where lpad('123', 4, null) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> --rpad
+SQL> select rpad('123',4, '*') from dual;
+
+RPAD('123',4, '*')
+------------------
+123*              
+
+1 rows fetched.
+
+SQL> select c,length(c),rpad('123',4, '*') from emptyStr order by c;
+
+C     LENGTH(C)            RPAD('123',4, '*')
+----- -------------------- ------------------
+      0                    123*              
+      0                    123*              
+abc   3                    123*              
+
+3 rows fetched.
+
+SQL> select 1 from dual where rpad('', 4, '*') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where rpad('', 4, '*') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where rpad(null, 4, '*') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where rpad(null, 4, '*') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where rpad('123', 0, '*') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where rpad('123', 0, '*') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where rpad('123', -1, '*') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where rpad('123', -1, '*') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where rpad('123', 4, '') = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where rpad('123', 4, '') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where rpad('123', 4, null) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where rpad('123', 4, null) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> --DBE_LOB.SUBSTR/DBE_LOB.get_length
+SQL> select DBE_LOB.get_length('123') from dual;
+
+DBE_LOB.GET_LENGTH('123')
+-------------------------
+3                        
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.get_length('') is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.get_length('') = 0;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.get_length(null) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.get_length(null) = 0;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('123',1,3) from dual;
+
+DBE_LOB.SUBSTR('123',1,3)
+-------------------------
+3                        
+
+1 rows fetched.
+
+SQL> select c,length(c),DBE_LOB.SUBSTR(c,1,3) from emptyStr order by c;
+
+C     LENGTH(C)            DBE_LOB.SUBSTR(C,1,3)
+----- -------------------- ---------------------
+      0                                         
+      0                                         
+abc   3                    c                    
+
+3 rows fetched.
+
+SQL> select 1 from sys_dummy where DBE_LOB.SUBSTR('123',-10,1) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where DBE_LOB.SUBSTR('123',-10,1) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from sys_dummy where DBE_LOB.SUBSTR('123',2,-1) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where DBE_LOB.SUBSTR('123',2,-1) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from sys_dummy where DBE_LOB.SUBSTR('',1,3) is null;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from sys_dummy where DBE_LOB.SUBSTR('',1,3) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where DBE_LOB.SUBSTR(null,1,3) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where DBE_LOB.SUBSTR(null,1,3) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> --replacefunc
+SQL> select 1 from dual where replace('abcc', 'abcc', '') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where replace('', 'abcc', 'xxx') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> --substring_index
+SQL> select 1 from dual where substring_index('','',0) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where substring_index('asdas','a',0) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where substring_index('asdasd','',1) ='';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where substring_index('','a',1) ='';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> --space
+SQL> select 1 from sys_dummy where space(0) = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> --translate
+SQL> select 1 from sys_dummy where translate('abc123','cba123','') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where translate('abc123','cba123',null) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where translate('abc123','','123') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where translate('abc123',null,'123') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where translate('','cba123','123') = '';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys_dummy where translate(null,'cba123','123') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> -- test export empty string/clob
+SQL> create user exp_empty_str identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to exp_empty_str;
+
+Succeed.
+
+SQL> create table exp_empty_str.exp_Haliluya(id int, c_lob clob, im image, bb blob, vchr varchar(200), ch char(30));
+
+Succeed.
+
+SQL> insert into exp_empty_str.exp_Haliluya values(1, null, null, null, null, null);
+
+1 rows affected.
+
+SQL> insert into exp_empty_str.exp_Haliluya values(2, '', '', '', '', '');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TBL_TASKRESULTINFO;
+
+Succeed.
+
+SQL> CREATE TABLE "TBL_TASKRESULTINFO"
+  2 (
+  3   "TASKID" BINARY_INTEGER NOT NULL,
+  4   "OPERATIONID" VARCHAR(255 BYTE) NOT NULL,
+  5   "DEVID" BINARY_INTEGER NOT NULL,
+  6   "FDN" VARCHAR(255 BYTE) NOT NULL DEFAULT '',
+  7   "FRAMEID" BINARY_INTEGER NOT NULL,
+  8   "SLOTID" BINARY_INTEGER NOT NULL,
+  9   "ISUBSLOTID" BINARY_INTEGER NOT NULL,
+ 10   "STARTTIME" VARCHAR(21 BYTE),
+ 11   "ENDTIME" VARCHAR(21 BYTE),
+ 12   "FAILUREINFO" CLOB,
+ 13   "ERRORCODE" BINARY_DOUBLE,
+ 14   "RESULT" BINARY_INTEGER,
+ 15   "STATUS" BINARY_INTEGER,
+ 16   "OPERATIONSEQUENCE" BINARY_INTEGER,
+ 17   "STACKID" BINARY_INTEGER NOT NULL,
+ 18   "ERRORDETAIL" CLOB,
+ 19   "COMPARERESULT" BINARY_INTEGER,
+ 20   "ERROREXTDETAILS" CLOB,
+ 21   "IDETAILTYPE" BINARY_INTEGER,
+ 22   PRIMARY KEY("DEVID", "FDN", "FRAMEID", "ISUBSLOTID", "OPERATIONID", "SLOTID", "STACKID", "TASKID")
+ 23 );
+
+Succeed.
+
+SQL> INSERT INTO "TBL_TASKRESULTINFO" ("TASKID","OPERATIONID","DEVID","FDN","FRAMEID","SLOTID","ISUBSLOTID","STARTTIME","ENDTIME","FAILUREINFO","ERRORCODE","RESULT","STATUS","OPERATIONSEQUENCE","STACKID","ERRORDETAIL","COMPARERESULT","ERROREXTDETAILS","IDETAILTYPE") VALUES
+  2   (1550723093,'INSPECTOPTICALMODULEINFO',167772252,'',-1,-1,-1,'','','',-1,3,0,1,-1,NULL,NULL,NULL,NULL);
+
+1 rows affected.
+
+SQL> INSERT INTO "TBL_TASKRESULTINFO" ("TASKID","OPERATIONID","DEVID","FDN","FRAMEID","SLOTID","ISUBSLOTID","STARTTIME","ENDTIME","FAILUREINFO","ERRORCODE","RESULT","STATUS","OPERATIONSEQUENCE","STACKID","ERRORDETAIL","COMPARERESULT","ERROREXTDETAILS","IDETAILTYPE") VALUES
+  2   (1550723093,'LOADOPTICALMODULESOFTWARE',167772252,'',-1,-1,-1,'','','',-1,3,0,2,-1,NULL,NULL,NULL,NULL);
+
+1 rows affected.
+
+SQL> INSERT INTO "TBL_TASKRESULTINFO" ("TASKID","OPERATIONID","DEVID","FDN","FRAMEID","SLOTID","ISUBSLOTID","STARTTIME","ENDTIME","FAILUREINFO","ERRORCODE","RESULT","STATUS","OPERATIONSEQUENCE","STACKID","ERRORDETAIL","COMPARERESULT","ERROREXTDETAILS","IDETAILTYPE") VALUES
+  2   (1550723093,'UPGRADEOPTICALMODULESOFTWARE',167772252,'',-1,-1,-1,'','','',-1,3,0,3,-1,NULL,NULL,NULL,NULL);
+
+1 rows affected.
+
+SQL> select taskid, devid, fdn from tbl_TaskresultInfo where taskid=1550723093 and devid=167772252 and fdn ='';
+
+TASKID       DEVID        FDN                                                             
+------------ ------------ ----------------------------------------------------------------
+1550723093   167772252                                                                    
+1550723093   167772252                                                                    
+1550723093   167772252                                                                    
+
+3 rows fetched.
+
+SQL> DROP TABLE IF EXISTS TBL_TASKRESULTINFO;
+
+Succeed.
+
+SQL> 
+SQL> -- export exp_Haliluya with empty_string_as_null = false;
+SQL> exp users=exp_empty_str file="stdout";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = EXP_EMPTY_STR
+-- FILE TYPE = TXT
+-- DUMP FILE = stdout
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema EXP_EMPTY_STR ...
+Exporting sequence of schema EXP_EMPTY_STR ...
+Exporting profile of schema EXP_EMPTY_STR ...
+Exporting type of schema EXP_EMPTY_STR ...
+Exporting tables of schema EXP_EMPTY_STR ...
+Reading table objects of EXP_EMPTY_STR
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+EXP_HALILUYA                                                     1         
+
+Exporting tables (scripts or data) of EXP_EMPTY_STR
+exporting table EXP_EMPTY_STR.EXP_HALILUYA ...
+  exporting DDL of EXP_EMPTY_STR.EXP_HALILUYA ...
+  exporting data of EXP_EMPTY_STR.EXP_HALILUYA ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on EXP_EMPTY_STR.EXP_HALILUYA ...
+  exporting constraints on EXP_EMPTY_STR.EXP_HALILUYA ...
+
+Exporting procedures/functions/triggers of schema EXP_EMPTY_STR ...
+Exporting views of schema EXP_EMPTY_STR ...
+Exporting synonyms of schema EXP_EMPTY_STR ...
+Exporting package of schema EXP_EMPTY_STR ...
+End of export schema EXP_EMPTY_STR ...
+
+--** The script is dumped by *CTSQL/EXP* tool, Zenith@Huawei Cantian Dept.
+
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = EXP_EMPTY_STR
+-- FILE TYPE = TXT
+-- DUMP FILE = stdout
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF';
+ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF TZH:TZM';
+ALTER SESSION SET NLS_TIME_FORMAT = 'HH:MI:SS.FF AM';
+ALTER SESSION SET NLS_TIME_TZ_FORMAT = 'HH:MI:SS.FF AM TZR';
+
+
+ALTER SESSION SET CURRENT_SCHEMA = EXP_EMPTY_STR;
+DROP TABLE IF EXISTS "EXP_HALILUYA" CASCADE CONSTRAINTS;
+CREATE TABLE "EXP_HALILUYA"
+(
+  "ID" BINARY_INTEGER,
+  "C_LOB" CLOB,
+  "IM" IMAGE,
+  "BB" BLOB,
+  "VCHR" VARCHAR(200 BYTE),
+  "CH" CHAR(30 BYTE)
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+INSERT INTO "EXP_HALILUYA" ("ID","C_LOB","IM","BB","VCHR","CH") values
+  (1,null,null,null,null,null);
+INSERT INTO "EXP_HALILUYA" ("ID","C_LOB","IM","BB","VCHR","CH") values
+  (2,'',X'','','','                              ');
+COMMIT;
+
+Logical export succeeded.
+
+SQL> 
+SQL> --DTS2019052504272
+SQL> drop table if exists t_inline_lob;
+
+Succeed.
+
+SQL> create table t_inline_lob(f1 int, f2 clob);
+
+Succeed.
+
+SQL> insert into t_inline_lob values(1, lpad('q',1976, 'q'));
+
+1 rows affected.
+
+SQL> insert into t_inline_lob values(2, lpad('q',1976, 'q'));
+
+1 rows affected.
+
+SQL> insert into t_inline_lob values(3, lpad('q',1976, 'q'));
+
+1 rows affected.
+
+SQL> insert into t_inline_lob values(4, lpad('q',1976, 'q'));
+
+1 rows affected.
+
+SQL> insert into t_inline_lob values(5, lpad('q',144, 'q'));
+
+1 rows affected.
+
+SQL> insert into t_inline_lob values(6, '');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select f2 from t_inline_lob order by f1;
+
+F2                                                              
+----------------------------------------------------------------
+qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+                                                                
+
+6 rows fetched.
+
+SQL> drop table t_inline_lob;
+
+Succeed.
+
+SQL> 
+SQL> --empty_string_as_null = false, test empty string in array
+SQL> drop table if exists t_empty_str_array;
+
+Succeed.
+
+SQL> create table t_empty_str_array(id int, name varchar(128)[]);
+
+Succeed.
+
+SQL> insert into t_empty_str_array values(1, array['', 'ss']);
+
+1 rows affected.
+
+SQL> insert into t_empty_str_array values(2, array[NULL, 'ss']);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from t_empty_str_array order by id;
+
+ID           NAME
+------------ ----------------------------------------------------------------
+1            {"",ss}
+2            {NULL,ss}
+
+2 rows fetched.
+
+SQL> drop table t_empty_str_array;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS202106070DRBROP0H00
+SQL> select ascii(empty_clob()) from dual;
+
+ASCII(EMPTY_CLOB()) 
+--------------------
+                    
+
+1 rows fetched.
+
+SQL> 
+SQL> --oracle empty string is null;
+SQL> alter system set empty_string_as_null = true;
+
+Succeed.
+
+SQL> 
+SQL> select to_number(10.12342311, '') from dual;
+
+TO_NUMBER(10.12342311, '')              
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> 
+SQL> -- export exp_Haliluya with empty_string_as_null = true;
+SQL> exp users=exp_empty_str file="stdout";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = EXP_EMPTY_STR
+-- FILE TYPE = TXT
+-- DUMP FILE = stdout
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema EXP_EMPTY_STR ...
+Exporting sequence of schema EXP_EMPTY_STR ...
+Exporting profile of schema EXP_EMPTY_STR ...
+Exporting type of schema EXP_EMPTY_STR ...
+Exporting tables of schema EXP_EMPTY_STR ...
+Reading table objects of EXP_EMPTY_STR
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+EXP_HALILUYA                                                     1         
+
+Exporting tables (scripts or data) of EXP_EMPTY_STR
+exporting table EXP_EMPTY_STR.EXP_HALILUYA ...
+  exporting DDL of EXP_EMPTY_STR.EXP_HALILUYA ...
+  exporting data of EXP_EMPTY_STR.EXP_HALILUYA ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on EXP_EMPTY_STR.EXP_HALILUYA ...
+  exporting constraints on EXP_EMPTY_STR.EXP_HALILUYA ...
+
+Exporting procedures/functions/triggers of schema EXP_EMPTY_STR ...
+Exporting views of schema EXP_EMPTY_STR ...
+Exporting synonyms of schema EXP_EMPTY_STR ...
+Exporting package of schema EXP_EMPTY_STR ...
+End of export schema EXP_EMPTY_STR ...
+
+--** The script is dumped by *CTSQL/EXP* tool, Zenith@Huawei Cantian Dept.
+
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = EXP_EMPTY_STR
+-- FILE TYPE = TXT
+-- DUMP FILE = stdout
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF';
+ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF TZH:TZM';
+ALTER SESSION SET NLS_TIME_FORMAT = 'HH:MI:SS.FF AM';
+ALTER SESSION SET NLS_TIME_TZ_FORMAT = 'HH:MI:SS.FF AM TZR';
+
+
+ALTER SESSION SET CURRENT_SCHEMA = EXP_EMPTY_STR;
+DROP TABLE IF EXISTS "EXP_HALILUYA" CASCADE CONSTRAINTS;
+CREATE TABLE "EXP_HALILUYA"
+(
+  "ID" BINARY_INTEGER,
+  "C_LOB" CLOB,
+  "IM" IMAGE,
+  "BB" BLOB,
+  "VCHR" VARCHAR(200 BYTE),
+  "CH" CHAR(30 BYTE)
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+INSERT INTO "EXP_HALILUYA" ("ID","C_LOB","IM","BB","VCHR","CH") values
+  (1,null,null,null,null,null);
+INSERT INTO "EXP_HALILUYA" ("ID","C_LOB","IM","BB","VCHR","CH") values
+  (2,'',X'','','','                              ');
+COMMIT;
+
+Logical export succeeded.
+
+SQL> drop user EXP_EMPTY_STR cascade;
+
+Succeed.
+
+SQL> 
+SQL> --ignore
+SQL> drop table if exists emptyStr;
+
+Succeed.
+
+SQL> --insert
+SQL> create table emptyStr(c varchar(5));
+
+Succeed.
+
+SQL> insert into emptyStr values('');
+
+1 rows affected.
+
+SQL> insert into emptyStr values('');
+
+1 rows affected.
+
+SQL> insert into emptyStr values('abc');
+
+1 rows affected.
+
+SQL> select c,length(c) from emptyStr where c is null;
+
+C     LENGTH(C)           
+----- --------------------
+                          
+                          
+
+2 rows fetched.
+
+SQL> select c,length(c) from emptyStr where c = '';
+
+C     LENGTH(C)           
+----- --------------------
+
+0 rows fetched.
+
+SQL> select c,length(c),count(c) from emptyStr group by c order by c;
+
+C     LENGTH(C)            COUNT(C)            
+----- -------------------- --------------------
+abc   3                    1                   
+                           0                   
+
+2 rows fetched.
+
+SQL> 
+SQL> --like
+SQL> select * from emptyStr where c LIKE '' order by c;
+
+C    
+-----
+
+0 rows fetched.
+
+SQL> select * from emptyStr where c LIKE '%' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> select * from emptyStr where c LIKE 'a%' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> select * from emptyStr where c LIKE '_%_' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> select * from emptyStr where c LIKE '%c' order by c;
+
+C    
+-----
+abc  
+
+1 rows fetched.
+
+SQL> select * from emptyStr where c LIKE '_' order by c;
+
+C    
+-----
+
+0 rows fetched.
+
+SQL> 
+SQL> select * from dual where '' LIKE '%';
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> select * from dual where '' LIKE '';
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> 
+SQL> --function
+SQL> --substr
+SQL> select substr('123',1,3) from dual;
+
+SUBSTR('123',1,3)
+-----------------
+123              
+
+1 rows fetched.
+
+SQL> select 2 from dual where substr('123',1,-10) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where substr('123',1,-10) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where substr('123',5,2) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where substr('123',5,2) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where substr('',1,2) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where substr('',1,2) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where substr(null,1,2) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where substr(null,1,2) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> --concat
+SQL> select concat('123','a') from dual;
+
+CONCAT('123','A')
+-----------------
+123a             
+
+1 rows fetched.
+
+SQL> select 2 from dual where concat('123','') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where concat('123','') is null;
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where concat('','123') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where concat('','123') is null;
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where concat('','') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where concat('','') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where concat(null,'') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where concat(null,'') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where concat('',null) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where concat('',null) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where concat(null,null) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where concat(null,null) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> --regexp_substr
+SQL> select regexp_substr('abc', '[^b]+', 1, 1) from dual;
+
+REGEXP_SUBSTR('ABC', '[^B]+', 1, 1)
+-----------------------------------
+a                                  
+
+1 rows fetched.
+
+SQL> select c,length(c),regexp_substr(c, '[^b]+', 1, 1) r from emptyStr order by c;
+
+C     LENGTH(C)            R    
+----- -------------------- -----
+abc   3                    a    
+                                
+                                
+
+3 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('', '[^b]+', 1, 1) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('', '[^b]+', 1, 1) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('abc', '', 1, 1) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('abc', '', 1, 1) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('abc', '[^b]+', 5, 1) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('abc', '[^b]+', 5, 1) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('abc', '[^b]+', 1, 5) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('abc', '[^b]+', 1, 5) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where regexp_substr(null, '[^b]+', 1, 1) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where regexp_substr(null, '[^b]+', 1, 1) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('abc', null, 1, 1) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where regexp_substr('abc', null, 1, 1) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --lpad
+SQL> select lpad('123',4, '*') from dual;
+
+LPAD('123',4, '*')
+------------------
+*123              
+
+1 rows fetched.
+
+SQL> select c,length(c),lpad('123',4, '*') from emptyStr order by c;
+
+C     LENGTH(C)            LPAD('123',4, '*')
+----- -------------------- ------------------
+abc   3                    *123              
+                           *123              
+                           *123              
+
+3 rows fetched.
+
+SQL> select 2 from dual where lpad('', 4, '*') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where lpad('', 4, '*') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where lpad(null, 4, '*') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where lpad(null, 4, '*') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where lpad('123', 0, '*') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where lpad('123', 0, '*') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where lpad('123', -1, '*') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where lpad('123', -1, '*') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where lpad('123', 4, '') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where lpad('123', 4, '') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where lpad('123', 4, null) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where lpad('123', 4, null) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> --rpad
+SQL> select rpad('123',4, '*') from dual;
+
+RPAD('123',4, '*')
+------------------
+123*              
+
+1 rows fetched.
+
+SQL> select c,length(c),rpad('123',4, '*') from emptyStr order by c;
+
+C     LENGTH(C)            RPAD('123',4, '*')
+----- -------------------- ------------------
+abc   3                    123*              
+                           123*              
+                           123*              
+
+3 rows fetched.
+
+SQL> select 2 from dual where rpad('', 4, '*') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where rpad('', 4, '*') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where rpad(null, 4, '*') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where rpad(null, 4, '*') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where rpad('123', 0, '*') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where rpad('123', 0, '*') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where rpad('123', -1, '*') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where rpad('123', -1, '*') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where rpad('123', 4, '') = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where rpad('123', 4, '') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where rpad('123', 4, null) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where rpad('123', 4, null) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> --DBE_LOB.SUBSTR/DBE_LOB.get_length
+SQL> select DBE_LOB.get_length('123') from dual;
+
+DBE_LOB.GET_LENGTH('123')
+-------------------------
+3                        
+
+1 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.get_length('') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.get_length('') = 0;
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.get_length(null) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.get_length(null) = 0;
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('123',1,3) from dual;
+
+DBE_LOB.SUBSTR('123',1,3)
+-------------------------
+3                        
+
+1 rows fetched.
+
+SQL> select c,length(c),DBE_LOB.SUBSTR(c,1,3) from emptyStr order by c;
+
+C     LENGTH(C)            DBE_LOB.SUBSTR(C,1,3)
+----- -------------------- ---------------------
+abc   3                    c                    
+                                                
+                                                
+
+3 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.SUBSTR('123',-10,1) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.SUBSTR('123',-10,1) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.SUBSTR('123',2,5) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.SUBSTR('123',2,5) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.SUBSTR('',1,3) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.SUBSTR('',1,3) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.SUBSTR(null,1,3) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where DBE_LOB.SUBSTR(null,1,3) = '';
+
+2           
+------------
+
+0 rows fetched.
+
+SQL> --replacefunc
+SQL> select 2 from dual where replace('abcc', 'abcc', '') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where replace('', 'abcc', 'xxx') is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> --substring_index
+SQL> select 2 from dual where substring_index('','',0) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where substring_index('asdas','a',0) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where substring_index('asdasd','',1) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 2 from dual where substring_index('','a',1) is null;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists tbl_nelicTask;
+
+Succeed.
+
+SQL> CREATE TABLE tbl_nelicTask ( a VARCHAR(255) null, b CLOB NULL, c varchar(10) default 'abc');
+
+Succeed.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT IS NULL order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+TBL_NELICTASK                                                    A                                                                VARCHAR                                                          255                                      Y        0                                                                                                                                                                                                                                                      255          B                                                                                                                                N             
+TBL_NELICTASK                                                    B                                                                CLOB                                                             8000                                     Y        1                                                                                                                                                                                                                                                      0                                                                                                                                             N             
+
+2 rows fetched.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT = ''''''  order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+
+0 rows fetched.
+
+SQL> ALTER TABLE tbl_nelicTask ADD d varchar(10) default '';
+
+Succeed.
+
+SQL> alter table tbl_nelicTask modify c default 'aasdfasd';
+
+Succeed.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT IS NULL  order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+TBL_NELICTASK                                                    A                                                                VARCHAR                                                          255                                      Y        0                                                                                                                                                                                                                                                      255          B                                                                                                                                N             
+TBL_NELICTASK                                                    B                                                                CLOB                                                             8000                                     Y        1                                                                                                                                                                                                                                                      0                                                                                                                                             N             
+
+2 rows fetched.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT = ''''''  order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+TBL_NELICTASK                                                    D                                                                VARCHAR                                                          10                                       Y        3            ''                                                                                                                                                                                                                                        10           B                                                                                                                                N             
+
+1 rows fetched.
+
+SQL> select * from USER_tab_columns where TABLE_NAME=upper('tbl_nelicTask') AND DATA_DEFAULT = '''aasdfasd'''  order by COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  DATA_PRECISION DATA_SCALE   NULLABLE COLUMN_ID    DATA_DEFAULT                                                     NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED SAMPLE_SIZE          LAST_ANALYZED                    HISTOGRAM                                                        AUTO_INCREMENT
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------- ------------ -------- ------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- -------------------- -------------------------------- ---------------------------------------------------------------- --------------
+TBL_NELICTASK                                                    C                                                                VARCHAR                                                          10                                       Y        2            'aasdfasd'                                                                                                                                                                                                                                10           B                                                                                                                                N             
+
+1 rows fetched.
+
+SQL> drop table tbl_nelicTask;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists CBB_GLOBAL_CFG;
+
+Succeed.
+
+SQL> CREATE TABLE CBB_GLOBAL_CFG (
+  2 NAME VARCHAR(255) NOT NULL  default '',
+  3 VALUE VARCHAR(255) NULL     default '',
+  4 DESCRIP VARCHAR(255) NULL   default '',PRIMARY KEY(NAME));
+
+Succeed.
+
+SQL> 
+SQL> insert into CBB_GLOBAL_CFG(NAME,VALUE) values('com.huawei.utraffic.plugins.tunnel.data.globalcfg.COMFIRM_MODE','Manual');
+
+1 rows affected.
+
+SQL> insert into CBB_GLOBAL_CFG(NAME,VALUE) values('com.huawei.utraffic.plugins.tunnel.data.globalcfg.AUTO_ADJUST_MODE','Manual');
+
+1 rows affected.
+
+SQL> select 'true' from CBB_GLOBAL_CFG where name = 'com.huawei.utraffic.plugins.tunnel.data.globalcfg.COMFIRM_MODE' and DESCRIP is null;
+
+'TRUE'
+------
+true  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE CBB_GLOBAL_CFG MODIFY (NAME VARCHAR(255) NOT NULL default '',VALUE VARCHAR(255) NULL     default '',DESCRIP VARCHAR(255) NULL     default '');
+
+Succeed.
+
+SQL> select 'true' from CBB_GLOBAL_CFG where name = 'com.huawei.utraffic.plugins.tunnel.data.globalcfg.COMFIRM_MODE' and DESCRIP is null;
+
+'TRUE'
+------
+true  
+
+1 rows fetched.
+
+SQL> drop table CBB_GLOBAL_CFG;
+Succeed.
+
+
+
+

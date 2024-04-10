@@ -1,0 +1,2653 @@
+
+
+SQL> -- begin exp imp compress
+SQL> -- create user & table
+SQL> drop user if exists exp_imp_compress cascade;
+
+Succeed.
+
+SQL> create user exp_imp_compress identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to exp_imp_compress;
+
+Succeed.
+
+SQL> conn exp_imp_compress/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table ts (c int primary key,c1 clob);
+
+Succeed.
+
+SQL> insert into ts values (1,'abcd123456');
+
+1 rows affected.
+
+SQL> insert into ts values (2,'abcd654321');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create or replace procedure gen_big_data(size in int )
+  2 as
+  3 begin 
+  4     for i in 1..size loop
+  5         update ts set c1=c1||c1;
+  6     end loop;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> call gen_big_data(20);
+
+PL/SQL procedure successfully completed.
+
+SQL> insert into ts values (3, 'abcd654321');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from ts where length(c1) < 8000;
+
+C            C1                                                              
+------------ ----------------------------------------------------------------
+3            abcd654321                                                      
+
+1 rows fetched.
+
+SQL> select c,length(c1) from ts where length(c1) > 8000;
+
+C            LENGTH(C1)          
+------------ --------------------
+1            10485760            
+2            10485760            
+
+2 rows fetched.
+
+SQL> 
+SQL> -- exp tables
+SQL> exp tables=ts file="./data/test_exp_compress.dmp" filetype=bin log="./data/test_exp_compress_exp.log" compress=9;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = TS
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_exp_compress.dmp
+-- LOG FILE = ./data/test_exp_compress_exp.log
+-- QUERY = ""
+-- COMPRESS = Y
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table EXP_IMP_COMPRESS.TS ...
+  exporting DDL of EXP_IMP_COMPRESS.TS ...
+  exporting data of EXP_IMP_COMPRESS.TS ...
+    data exporting success, 3 rows are dumped.
+
+  exporting indexes on EXP_IMP_COMPRESS.TS ...
+  exporting constraints on EXP_IMP_COMPRESS.TS ...
+
+Logical export succeeded.
+
+SQL> exp tables=ts file="./data/test_exp_compress_parallel.dmp" filetype=bin parallel=5 log="./data/test_exp_compress_exp_parallel.log" compress=9;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = TS
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_exp_compress_parallel.dmp
+-- LOG FILE = ./data/test_exp_compress_exp_parallel.log
+-- QUERY = ""
+-- COMPRESS = Y
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 5
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table EXP_IMP_COMPRESS.TS ...
+  exporting DDL of EXP_IMP_COMPRESS.TS ...
+    data exporting success! 3 rows are dumped.
+  exporting indexes on EXP_IMP_COMPRESS.TS ...
+  exporting constraints on EXP_IMP_COMPRESS.TS ...
+
+Logical export succeeded.
+
+SQL> 
+SQL> --imp tables
+SQL> drop table ts;
+
+Succeed.
+
+SQL> imp tables=% file="./data/test_exp_compress.dmp" filetype=bin log="./data/test_exp_compress_imp.log";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = ./data/test_exp_compress.dmp
+-- LOG FILE = ./data/test_exp_compress_imp.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema EXP_IMP_COMPRESS ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema EXP_IMP_COMPRESS ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema EXP_IMP_COMPRESS ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema EXP_IMP_COMPRESS ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TS                                                                   3         
+
+  Importing foreign key of schema EXP_IMP_COMPRESS ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema EXP_IMP_COMPRESS ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema EXP_IMP_COMPRESS ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema EXP_IMP_COMPRESS ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema EXP_IMP_COMPRESS ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 3 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from ts where length(c1) < 8000;
+
+C            C1                                                              
+------------ ----------------------------------------------------------------
+3            abcd654321                                                      
+
+1 rows fetched.
+
+SQL> select c,length(c1) from ts where length(c1) > 8000;
+
+C            LENGTH(C1)          
+------------ --------------------
+1            10485760            
+2            10485760            
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table ts;
+
+Succeed.
+
+SQL> imp tables=% file="./data/test_exp_compress_parallel.dmp" filetype=bin log="./data/test_exp_compress_imp_parallel.log";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = ./data/test_exp_compress_parallel.dmp
+-- LOG FILE = ./data/test_exp_compress_imp_parallel.log
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema EXP_IMP_COMPRESS ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema EXP_IMP_COMPRESS ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema EXP_IMP_COMPRESS ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema EXP_IMP_COMPRESS ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TS                                                                   3         
+
+  Importing foreign key of schema EXP_IMP_COMPRESS ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema EXP_IMP_COMPRESS ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema EXP_IMP_COMPRESS ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema EXP_IMP_COMPRESS ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema EXP_IMP_COMPRESS ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 3 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from ts where length(c1) < 8000;
+
+C            C1                                                              
+------------ ----------------------------------------------------------------
+3            abcd654321                                                      
+
+1 rows fetched.
+
+SQL> select c,length(c1) from ts where length(c1) > 8000;
+
+C            LENGTH(C1)          
+------------ --------------------
+1            10485760            
+2            10485760            
+
+2 rows fetched.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> -- end exp imp compress
+SQL> 
+SQL> -- support export and import compress attribution of table or partition table
+SQL> CREATE TABLESPACE TABLE_COMPRESS_ATTRIBUTE DATAFILE 'normal_object_no_compress' size 128M AUTOEXTEND on extent autoallocate; -- only support bitmap tablespace
+
+Succeed.
+
+SQL> alter tablespace TABLE_COMPRESS_ATTRIBUTE add datafile 'TABLE_COMPRESS_ATTRIBUTE' size 128M compress autoextend on next 1M;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists wanggang_compress;
+
+Succeed.
+
+SQL> create user wanggang_compress identified by Changeme_123;
+
+Succeed.
+
+SQL> grant dba to wanggang_compress;
+
+Succeed.
+
+SQL> conn wanggang_compress/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table  if exists t_parT_CSF_COMPRESS_N;
+
+Succeed.
+
+SQL> create table t_parT_CSF_COMPRESS_N(id int, name varchar2(100)) PARTITION BY list(id) 
+  2 (
+  3 partition p10 values (1) format csf compress,
+  4 partition p20 values (2),
+  5 partition p30 values (3) format csf compress
+  6 )format csf tablespace TABLE_COMPRESS_ATTRIBUTE;
+
+Succeed.
+
+SQL> alter table t_parT_CSF_COMPRESS_N add partition p40 values(4) format csf compress;
+
+Succeed.
+
+SQL> alter table t_parT_CSF_COMPRESS_N add partition p50 values(5);
+
+Succeed.
+
+SQL> 
+SQL> drop table  if exists t_parT_CSF_COMPRESS_Y;
+
+Succeed.
+
+SQL> create table t_parT_CSF_COMPRESS_Y(id int, name varchar2(100)) PARTITION BY list(id) 
+  2 (
+  3 partition p11 values (1),
+  4 partition p21 values (2),
+  5 partition p31 values (3) format csf compress
+  6 )format csf compress tablespace TABLE_COMPRESS_ATTRIBUTE;
+
+Succeed.
+
+SQL> alter table t_parT_CSF_COMPRESS_Y add partition p41 values(4) format csf compress;
+
+Succeed.
+
+SQL> alter table t_parT_CSF_COMPRESS_Y add partition p51 values(5);
+
+Succeed.
+
+SQL> 
+SQL> drop table  if exists t_parT_ASF_COMPRESS_N;
+
+Succeed.
+
+SQL> create table t_parT_ASF_COMPRESS_N(id int, name varchar2(100)) PARTITION BY list(id) 
+  2 (
+  3 partition p10 values (1) format csf compress,
+  4 partition p20 values (2),
+  5 partition p30 values (3) format csf compress
+  6 )tablespace TABLE_COMPRESS_ATTRIBUTE;
+
+Succeed.
+
+SQL> alter table t_parT_ASF_COMPRESS_N add partition p40 values(4) format csf compress;
+
+Succeed.
+
+SQL> alter table t_parT_ASF_COMPRESS_N add partition p50 values(5);
+
+Succeed.
+
+SQL> 
+SQL> drop table  if exists t_parT_ASF_COMPRESS_Y;
+
+Succeed.
+
+SQL> create table t_parT_ASF_COMPRESS_Y(id int, name varchar2(100)) PARTITION BY list(id) 
+  2 (
+  3 partition p11 values (1),
+  4 partition p21 values (2),
+  5 partition p31 values (3) compress
+  6 )compress tablespace TABLE_COMPRESS_ATTRIBUTE;
+
+Succeed.
+
+SQL> alter table t_parT_ASF_COMPRESS_Y add partition p41 values(4) format csf compress;
+
+Succeed.
+
+SQL> alter table t_parT_ASF_COMPRESS_Y add partition p51 values(5);
+
+Succeed.
+
+SQL> 
+SQL> drop table  if exists T_CSF_COMPRESS_Y;
+
+Succeed.
+
+SQL> create table T_CSF_COMPRESS_Y(f int) format csf compress tablespace TABLE_COMPRESS_ATTRIBUTE;
+
+Succeed.
+
+SQL> 
+SQL> drop table  if exists T_CSF_COMPRESS_N;
+
+Succeed.
+
+SQL> create table T_CSF_COMPRESS_N(f int) format csf tablespace TABLE_COMPRESS_ATTRIBUTE;
+
+Succeed.
+
+SQL> 
+SQL> drop table  if exists T_ASF_COMPRESS_Y;
+
+Succeed.
+
+SQL> create table T_ASF_COMPRESS_Y(f int) compress tablespace TABLE_COMPRESS_ATTRIBUTE;
+
+Succeed.
+
+SQL> 
+SQL> drop table  if exists T_ASF_COMPRESS_N;
+
+Succeed.
+
+SQL> create table T_ASF_COMPRESS_N(f int) tablespace TABLE_COMPRESS_ATTRIBUTE;
+
+Succeed.
+
+SQL> 
+SQL> select TABLE_NAME,COMPRESS_ALGO from db_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select TABLE_NAME,COMPRESS_ALGO from my_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select TABLE_NAME,COMPRESS_ALGO from adm_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from db_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from my_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from adm_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> show create table T_PART_CSF_COMPRESS_Y;
+
+CREATE TABLE "T_PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P41 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P51 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table T_PART_CSF_COMPRESS_N;
+
+CREATE TABLE "T_PART_CSF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P10 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P20 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF,
+    PARTITION P30 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P40 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P50 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF;
+
+
+
+SQL> show create table T_PART_ASF_COMPRESS_Y;
+
+CREATE TABLE "T_PART_ASF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P41 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P51 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table T_PART_ASF_COMPRESS_N;
+
+CREATE TABLE "T_PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P10 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P20 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P30 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P40 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P50 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table T_CSF_COMPRESS_Y;
+
+CREATE TABLE "T_CSF_COMPRESS_Y"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table T_CSF_COMPRESS_N;
+
+CREATE TABLE "T_CSF_COMPRESS_N"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF;
+
+
+
+SQL> show create table T_ASF_COMPRESS_Y;
+
+CREATE TABLE "T_ASF_COMPRESS_Y"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table T_ASF_COMPRESS_N;
+
+CREATE TABLE "T_ASF_COMPRESS_N"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=T_PART_CSF_COMPRESS_Y,T_PART_CSF_COMPRESS_N,T_PART_ASF_COMPRESS_Y,T_PART_ASF_COMPRESS_N,T_CSF_COMPRESS_Y,T_CSF_COMPRESS_N,T_ASF_COMPRESS_Y,T_ASF_COMPRESS_N filetype=txt file="txt";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_PART_CSF_COMPRESS_Y, T_PART_CSF_COMPRESS_N, T_PART_ASF_COMPRESS_Y, T_PART_ASF_COMPRESS_N, T_CSF_COMPRESS_Y, T_CSF_COMPRESS_N, T_ASF_COMPRESS_Y, T_ASF_COMPRESS_N
+-- FILE TYPE = TXT
+-- DUMP FILE = txt
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+  exporting DDL of WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+  exporting data of WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+  exporting constraints on WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+
+exporting table WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+  exporting DDL of WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+  exporting data of WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+  exporting constraints on WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+
+exporting table WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+  exporting DDL of WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+  exporting data of WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+  exporting constraints on WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+
+exporting table WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+  exporting DDL of WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+  exporting data of WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+  exporting constraints on WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+
+exporting table WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+  exporting DDL of WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+  exporting data of WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+  exporting constraints on WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+
+exporting table WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+  exporting DDL of WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+  exporting data of WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+  exporting constraints on WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+
+exporting table WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+  exporting DDL of WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+  exporting data of WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+  exporting constraints on WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+
+exporting table WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+  exporting DDL of WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+  exporting data of WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+  exporting constraints on WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+
+Logical export succeeded.
+
+SQL> imp tables=t_parT_CSF_COMPRESS_Y,t_parT_CSF_COMPRESS_N,t_parT_ASF_COMPRESS_Y,t_parT_ASF_COMPRESS_N,T_CSF_COMPRESS_Y,T_CSF_COMPRESS_N,T_ASF_COMPRESS_Y,T_ASF_COMPRESS_N filetype=txt file="txt";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_PART_CSF_COMPRESS_Y, T_PART_CSF_COMPRESS_N, T_PART_ASF_COMPRESS_Y, T_PART_ASF_COMPRESS_N, T_CSF_COMPRESS_Y, T_CSF_COMPRESS_N, T_ASF_COMPRESS_Y, T_ASF_COMPRESS_N
+-- DUMP FILE = txt
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select TABLE_NAME,COMPRESS_ALGO from db_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select TABLE_NAME,COMPRESS_ALGO from my_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select TABLE_NAME,COMPRESS_ALGO from adm_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from db_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from my_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from adm_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> show create table T_PART_CSF_COMPRESS_Y;
+
+CREATE TABLE "T_PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P41 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P51 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table T_PART_CSF_COMPRESS_N;
+
+CREATE TABLE "T_PART_CSF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P10 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P20 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF,
+    PARTITION P30 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P40 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P50 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF;
+
+
+
+SQL> show create table T_PART_ASF_COMPRESS_Y;
+
+CREATE TABLE "T_PART_ASF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P41 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P51 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table T_PART_ASF_COMPRESS_N;
+
+CREATE TABLE "T_PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P10 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P20 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P30 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P40 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P50 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table T_CSF_COMPRESS_Y;
+
+CREATE TABLE "T_CSF_COMPRESS_Y"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table T_CSF_COMPRESS_N;
+
+CREATE TABLE "T_CSF_COMPRESS_N"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF;
+
+
+
+SQL> show create table T_ASF_COMPRESS_Y;
+
+CREATE TABLE "T_ASF_COMPRESS_Y"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table T_ASF_COMPRESS_N;
+
+CREATE TABLE "T_ASF_COMPRESS_N"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=t_parT_CSF_COMPRESS_Y,t_parT_CSF_COMPRESS_N,t_parT_ASF_COMPRESS_Y,t_parT_ASF_COMPRESS_N,T_CSF_COMPRESS_Y,T_CSF_COMPRESS_N,T_ASF_COMPRESS_Y,T_ASF_COMPRESS_N filetype=bin file="bin";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_PART_CSF_COMPRESS_Y, T_PART_CSF_COMPRESS_N, T_PART_ASF_COMPRESS_Y, T_PART_ASF_COMPRESS_N, T_CSF_COMPRESS_Y, T_CSF_COMPRESS_N, T_ASF_COMPRESS_Y, T_ASF_COMPRESS_N
+-- FILE TYPE = BIN
+-- DUMP FILE = bin
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+  exporting DDL of WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+  exporting data of WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+  exporting constraints on WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_Y ...
+
+exporting table WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+  exporting DDL of WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+  exporting data of WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+  exporting constraints on WANGGANG_COMPRESS.T_PART_CSF_COMPRESS_N ...
+
+exporting table WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+  exporting DDL of WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+  exporting data of WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+  exporting constraints on WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_Y ...
+
+exporting table WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+  exporting DDL of WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+  exporting data of WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+  exporting constraints on WANGGANG_COMPRESS.T_PART_ASF_COMPRESS_N ...
+
+exporting table WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+  exporting DDL of WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+  exporting data of WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+  exporting constraints on WANGGANG_COMPRESS.T_CSF_COMPRESS_Y ...
+
+exporting table WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+  exporting DDL of WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+  exporting data of WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+  exporting constraints on WANGGANG_COMPRESS.T_CSF_COMPRESS_N ...
+
+exporting table WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+  exporting DDL of WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+  exporting data of WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+  exporting constraints on WANGGANG_COMPRESS.T_ASF_COMPRESS_Y ...
+
+exporting table WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+  exporting DDL of WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+  exporting data of WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+  exporting constraints on WANGGANG_COMPRESS.T_ASF_COMPRESS_N ...
+
+Logical export succeeded.
+
+SQL> imp tables=t_parT_CSF_COMPRESS_Y,t_parT_CSF_COMPRESS_N,t_parT_ASF_COMPRESS_Y,t_parT_ASF_COMPRESS_N,T_CSF_COMPRESS_Y,T_CSF_COMPRESS_N,T_ASF_COMPRESS_Y,T_ASF_COMPRESS_N filetype=bin file="bin";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_PART_CSF_COMPRESS_Y, T_PART_CSF_COMPRESS_N, T_PART_ASF_COMPRESS_Y, T_PART_ASF_COMPRESS_N, T_CSF_COMPRESS_Y, T_CSF_COMPRESS_N, T_ASF_COMPRESS_Y, T_ASF_COMPRESS_N
+-- DUMP FILE = bin
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema WANGGANG_COMPRESS ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema WANGGANG_COMPRESS ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema WANGGANG_COMPRESS ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema WANGGANG_COMPRESS ,total number : 8 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema WANGGANG_COMPRESS ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema WANGGANG_COMPRESS ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema WANGGANG_COMPRESS ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema WANGGANG_COMPRESS ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema WANGGANG_COMPRESS ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select TABLE_NAME,COMPRESS_ALGO from db_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select TABLE_NAME,COMPRESS_ALGO from my_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select TABLE_NAME,COMPRESS_ALGO from adm_tables where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name;
+
+TABLE_NAME                                                       COMPRESS_ALGO
+---------------------------------------------------------------- -------------
+T_ASF_COMPRESS_N                                                 NONE         
+T_ASF_COMPRESS_Y                                                 ZSTD         
+T_CSF_COMPRESS_N                                                 NONE         
+T_CSF_COMPRESS_Y                                                 ZSTD         
+T_PART_ASF_COMPRESS_N                                            NONE         
+T_PART_ASF_COMPRESS_Y                                            ZSTD         
+T_PART_CSF_COMPRESS_N                                            NONE         
+T_PART_CSF_COMPRESS_Y                                            ZSTD         
+
+8 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from db_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from my_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> select table_name,partition_name,compress_algo from adm_tab_partitions where table_name = 'T_PART_CSF_COMPRESS_Y' or table_name = 'T_PART_CSF_COMPRESS_N' or table_name = 'T_PART_ASF_COMPRESS_Y' or table_name = 'T_PART_ASF_COMPRESS_N' or table_name = 'T_CSF_COMPRESS_Y' or table_name = 'T_CSF_COMPRESS_N' or table_name = 'T_ASF_COMPRESS_Y' or table_name = 'T_ASF_COMPRESS_N' order by table_name,PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   COMPRESS_ALGO
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------
+T_PART_ASF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_ASF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_ASF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_ASF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_ASF_COMPRESS_Y                                            P51                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P10                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P20                                                              NONE         
+T_PART_CSF_COMPRESS_N                                            P30                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P40                                                              ZSTD         
+T_PART_CSF_COMPRESS_N                                            P50                                                              NONE         
+T_PART_CSF_COMPRESS_Y                                            P11                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P21                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P31                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P41                                                              ZSTD         
+T_PART_CSF_COMPRESS_Y                                            P51                                                              ZSTD         
+
+20 rows fetched.
+
+SQL> show create table T_PART_CSF_COMPRESS_Y;
+
+CREATE TABLE "T_PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P41 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P51 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table T_PART_CSF_COMPRESS_N;
+
+CREATE TABLE "T_PART_CSF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P10 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P20 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF,
+    PARTITION P30 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P40 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P50 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF;
+
+
+
+SQL> show create table T_PART_ASF_COMPRESS_Y;
+
+CREATE TABLE "T_PART_ASF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS,
+    PARTITION P41 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P51 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table T_PART_ASF_COMPRESS_N;
+
+CREATE TABLE "T_PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P10 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P20 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P30 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P40 VALUES(4) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT CSF COMPRESS,
+    PARTITION P50 VALUES(5) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 2 PCTFREE 8 FORMAT ASF
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> show create table T_CSF_COMPRESS_Y;
+
+CREATE TABLE "T_CSF_COMPRESS_Y"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table T_CSF_COMPRESS_N;
+
+CREATE TABLE "T_CSF_COMPRESS_N"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT CSF;
+
+
+
+SQL> show create table T_ASF_COMPRESS_Y;
+
+CREATE TABLE "T_ASF_COMPRESS_Y"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table T_ASF_COMPRESS_N;
+
+CREATE TABLE "T_ASF_COMPRESS_N"
+(
+  "F" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp -v;
+
+New functions or features for EXP and IMP in this version:
+---------------------------------------------------------------------------------------------------------------------------
+* support jsonb and support subpartion format csf for EXP and IMP
+* support export and import compress attribution of table or partition table
+* support binary format of array datatype
+* support subpartition
+* support create or replace force view
+
+SQL> 
+SQL> drop user if exists test_csf_compress cascade;
+
+Succeed.
+
+SQL> create user test_csf_compress identified by 'Changeme_123';
+
+Succeed.
+
+SQL> grant dba to test_csf_compress;
+
+Succeed.
+
+SQL> conn test_csf_compress/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> drop table  if exists t_csf_compress;
+
+Succeed.
+
+SQL> create table t_csf_compress(a int) format csf compress tablespace TABLE_COMPRESS_ATTRIBUTE INITRANS 3 PCTFREE 7;
+
+Succeed.
+
+SQL> drop table  if exists part_csf_compress_y;
+
+Succeed.
+
+SQL> create table part_csf_compress_y(id int, name varchar2(100)) PARTITION BY list(id) 
+  2 (
+  3 partition p11 values (1),
+  4 partition p21 values (2),
+  5 partition p31 values (3) format csf compress
+  6 )format csf compress tablespace TABLE_COMPRESS_ATTRIBUTE INITRANS 3 PCTFREE 7;
+
+Succeed.
+
+SQL> drop table  if exists part_asf_compress_n;
+
+Succeed.
+
+SQL> create table part_asf_compress_n(id int, name varchar2(100)) PARTITION BY list(id) 
+  2 (
+  3 partition p11 values (1),
+  4 partition p21 values (2),
+  5 partition p31 values (3) format csf compress tablespace TABLE_COMPRESS_ATTRIBUTE INITRANS 3 PCTFREE 7
+  6 );
+
+Succeed.
+
+SQL> show create table t_csf_compress;
+
+CREATE TABLE "T_CSF_COMPRESS"
+(
+  "A" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_csf_compress_y;
+
+CREATE TABLE "PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_asf_compress_n;
+
+CREATE TABLE "PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P21 VALUES(2) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=txt file="test_csf_compress.txt";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- FILE TYPE = TXT
+-- DUMP FILE = test_csf_compress.txt
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting DDL of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting data of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting constraints on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+
+exporting table TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting data of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+
+exporting table TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting data of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+
+Logical export succeeded.
+
+SQL> imp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=txt file="test_csf_compress.txt";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- DUMP FILE = test_csf_compress.txt
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> show create table t_csf_compress;
+
+CREATE TABLE "T_CSF_COMPRESS"
+(
+  "A" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_csf_compress_y;
+
+CREATE TABLE "PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_asf_compress_n;
+
+CREATE TABLE "PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P21 VALUES(2) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=bin file="test_csf_compress.bin";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- FILE TYPE = BIN
+-- DUMP FILE = test_csf_compress.bin
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting DDL of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting data of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting constraints on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+
+exporting table TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting data of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+
+exporting table TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting data of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+
+Logical export succeeded.
+
+SQL> imp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=bin file="test_csf_compress.bin";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- DUMP FILE = test_csf_compress.bin
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CSF_COMPRESS ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CSF_COMPRESS ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CSF_COMPRESS ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CSF_COMPRESS ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_CSF_COMPRESS ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CSF_COMPRESS ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CSF_COMPRESS ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CSF_COMPRESS ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CSF_COMPRESS ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> show create table t_csf_compress;
+
+CREATE TABLE "T_CSF_COMPRESS"
+(
+  "A" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_csf_compress_y;
+
+CREATE TABLE "PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_asf_compress_n;
+
+CREATE TABLE "PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P21 VALUES(2) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=txt file="test_csf_compress.txt" WITH_CR_MODE=Y;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- FILE TYPE = TXT
+-- DUMP FILE = test_csf_compress.txt
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = Y
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting DDL of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting data of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting constraints on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+
+exporting table TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting data of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+
+exporting table TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting data of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+
+Logical export succeeded.
+
+SQL> imp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=txt file="test_csf_compress.txt";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- DUMP FILE = test_csf_compress.txt
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> show create table t_csf_compress;
+
+CREATE TABLE "T_CSF_COMPRESS"
+(
+  "A" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_csf_compress_y;
+
+CREATE TABLE "PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_asf_compress_n;
+
+CREATE TABLE "PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P21 VALUES(2) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=bin file="test_csf_compress.bin" WITH_CR_MODE=Y;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- FILE TYPE = BIN
+-- DUMP FILE = test_csf_compress.bin
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = Y
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting DDL of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting data of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting constraints on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+
+exporting table TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting data of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+
+exporting table TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting data of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+
+Logical export succeeded.
+
+SQL> imp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=bin file="test_csf_compress.bin";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- DUMP FILE = test_csf_compress.bin
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CSF_COMPRESS ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CSF_COMPRESS ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CSF_COMPRESS ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CSF_COMPRESS ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_CSF_COMPRESS ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CSF_COMPRESS ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CSF_COMPRESS ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CSF_COMPRESS ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CSF_COMPRESS ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> show create table t_csf_compress;
+
+CREATE TABLE "T_CSF_COMPRESS"
+(
+  "A" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_csf_compress_y;
+
+CREATE TABLE "PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT CSF
+COMPRESS;
+
+
+
+SQL> show create table part_asf_compress_n;
+
+CREATE TABLE "PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P21 VALUES(2) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT CSF COMPRESS
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=txt file="test_csf_compress.txt" WITH_FORMAT_CSF=N;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- FILE TYPE = TXT
+-- DUMP FILE = test_csf_compress.txt
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = N
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting DDL of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting data of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting constraints on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+
+exporting table TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting data of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+
+exporting table TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting data of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+
+Logical export succeeded.
+
+SQL> imp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=txt file="test_csf_compress.txt";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- DUMP FILE = test_csf_compress.txt
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> show create table t_csf_compress;
+
+CREATE TABLE "T_CSF_COMPRESS"
+(
+  "A" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table part_csf_compress_y;
+
+CREATE TABLE "PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT ASF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT ASF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT ASF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table part_asf_compress_n;
+
+CREATE TABLE "PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P21 VALUES(2) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT ASF COMPRESS
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+SQL> 
+SQL> exp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=bin file="test_csf_compress.bin" WITH_FORMAT_CSF=N;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- FILE TYPE = BIN
+-- DUMP FILE = test_csf_compress.bin
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = N
+-- INDEX_PARTITIONS = N
+
+exporting table TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting DDL of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting data of TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+  exporting constraints on TEST_CSF_COMPRESS.T_CSF_COMPRESS ...
+
+exporting table TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting data of TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_CSF_COMPRESS_Y ...
+
+exporting table TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting DDL of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting data of TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+  exporting constraints on TEST_CSF_COMPRESS.PART_ASF_COMPRESS_N ...
+
+Logical export succeeded.
+
+SQL> imp tables=t_csf_compress,part_csf_compress_y,part_asf_compress_n filetype=bin file="test_csf_compress.bin";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = T_CSF_COMPRESS, PART_CSF_COMPRESS_Y, PART_ASF_COMPRESS_N
+-- DUMP FILE = test_csf_compress.bin
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema TEST_CSF_COMPRESS ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_CSF_COMPRESS ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_CSF_COMPRESS ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_CSF_COMPRESS ,total number : 3 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema TEST_CSF_COMPRESS ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_CSF_COMPRESS ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_CSF_COMPRESS ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_CSF_COMPRESS ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_CSF_COMPRESS ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> show create table t_csf_compress;
+
+CREATE TABLE "T_CSF_COMPRESS"
+(
+  "A" BINARY_INTEGER
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table part_csf_compress_y;
+
+CREATE TABLE "PART_CSF_COMPRESS_Y"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT ASF COMPRESS,
+    PARTITION P21 VALUES(2) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT ASF COMPRESS,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT ASF COMPRESS
+)
+TABLESPACE "TABLE_COMPRESS_ATTRIBUTE"
+INITRANS 3
+MAXTRANS 255
+PCTFREE 7
+FORMAT ASF
+COMPRESS;
+
+
+
+SQL> show create table part_asf_compress_n;
+
+CREATE TABLE "PART_ASF_COMPRESS_N"
+(
+  "ID" BINARY_INTEGER,
+  "NAME" VARCHAR(100 BYTE)
+)
+PARTITION BY LIST ("ID")
+(
+    PARTITION P11 VALUES(1) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P21 VALUES(2) TABLESPACE "USERS" INITRANS 2 PCTFREE 8 FORMAT ASF,
+    PARTITION P31 VALUES(3) TABLESPACE "TABLE_COMPRESS_ATTRIBUTE" INITRANS 3 PCTFREE 7 FORMAT ASF COMPRESS
+)
+TABLESPACE "USERS"
+INITRANS 2
+MAXTRANS 255
+PCTFREE 8
+FORMAT ASF;
+
+
+
+
+
+

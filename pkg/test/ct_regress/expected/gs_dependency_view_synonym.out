@@ -1,0 +1,494 @@
+
+
+SQL> drop table if exists wg.wg_table;
+
+Succeed.
+
+SQL> drop synonym if exists wg.wg_synonym;
+
+Succeed.
+
+SQL> drop user if exists wg CASCADE;
+
+Succeed.
+
+SQL> create user wg identified by 'test1234!T';
+
+Succeed.
+
+SQL> grant dba to wg;
+
+Succeed.
+
+SQL> create table wg.wg_table(f1 int);
+
+Succeed.
+
+SQL> create or replace synonym wg.wg_synonym for wg.wg_table;
+
+Succeed.
+
+SQL> select synonym_name,flags from sys.SYS_SYNONYMS where synonym_name = upper('wg_synonym') and TABLE_OWNER = 'WG';
+
+SYNONYM_NAME                                                     FLAGS       
+---------------------------------------------------------------- ------------
+WG_SYNONYM                                                       1           
+
+1 rows fetched.
+
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = upper('wg_synonym');
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+WG                                                               WG_SYNONYM                                                       SYNONYM      WG                                                               WG_TABLE                                                         TABLE          
+
+1 rows fetched.
+
+SQL> drop table if exists wg.wg_table;
+
+Succeed.
+
+SQL> drop synonym if exists wg.wg_synonym;
+
+Succeed.
+
+SQL> drop user if exists wg CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists wg_table;
+
+Succeed.
+
+SQL> drop synonym if exists wg_synonym;
+
+Succeed.
+
+SQL> create table wg_table(f1 int);
+
+Succeed.
+
+SQL> create or replace synonym wg_synonym for wg_table;
+
+Succeed.
+
+SQL> select synonym_name,flags from sys.SYS_SYNONYMS where synonym_name = upper('wg_synonym');
+
+SYNONYM_NAME                                                     FLAGS       
+---------------------------------------------------------------- ------------
+WG_SYNONYM                                                       1           
+
+1 rows fetched.
+
+SQL> 
+SQL> drop function if exists wg_func1;
+
+Succeed.
+
+SQL> drop function if exists wg_func2;
+
+Succeed.
+
+SQL> drop view if exists wg_dual_view;
+
+Succeed.
+
+SQL> drop view if exists wg_haha_view;
+
+Succeed.
+
+SQL> drop table if exists wg_tab1;
+
+Succeed.
+
+SQL> drop sequence if exists wg_seq1;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE function wg_func1 (
+  2 t_column in VARCHAR2,
+  3 t_name in VARCHAR2
+  4 )
+  5 return number
+  6 IS
+  7 temp VARCHAR2(30);
+  8 BEGIN
+  9 temp := t_column;
+ 10 return 1;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE function wg_func2 (
+  2 t_column in VARCHAR2,
+  3 t_name in VARCHAR2
+  4 )
+  5 return number
+  6 IS
+  7 temp VARCHAR2(30);
+  8 BEGIN
+  9 temp := t_column;
+ 10 return 1;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace view wg_dual_view
+  2 as
+  3 select sin(1) X from dual;
+
+Succeed.
+
+SQL> 
+SQL> create table wg_tab1(a int);
+
+Succeed.
+
+SQL> 
+SQL> create sequence wg_seq1 start with 1 increment by 1 nomaxvalue nocycle nocache;
+
+Succeed.
+
+SQL> 
+SQL> create or replace view wg_haha_view
+  2 as
+  3 select * from wg_dual_view
+  4 union
+  5 select wg_func1('a','a') from dual
+  6 union
+  7 select wg_func2('a','a') from dual
+  8 union
+  9 select * from wg_tab1;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> --1 test drop function reference
+SQL> drop function if exists wg_func1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE function wg_func1 (
+  2 t_column in VARCHAR2,
+  3 t_name in VARCHAR2
+  4 )
+  5 return number
+  6 IS
+  7 temp VARCHAR2(30);
+  8 BEGIN
+  9 temp := t_column;
+ 10 return 1;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace view wg_haha_view
+  2 as
+  3 select * from wg_dual_view
+  4 union
+  5 select wg_func1('a','a') from dual
+  6 union
+  7 select wg_func2('a','a') from dual
+  8 union
+  9 select * from wg_tab1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> --1 test drop view reference
+SQL> drop view if exists wg_dual_view;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace view wg_dual_view
+  2 as
+  3 select sin(1) X from dual;
+
+Succeed.
+
+SQL> 
+SQL> create or replace view wg_haha_view
+  2 as
+  3 select * from wg_dual_view
+  4 union
+  5 select wg_func1('a','a') from dual
+  6 union
+  7 select wg_func2('a','a') from dual
+  8 union
+  9 select * from wg_tab1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> --2 test drop table reference
+SQL> drop table if exists wg_tab1;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            UNKNOWN
+
+1 rows fetched.
+
+SQL> 
+SQL> create table wg_tab1(a int);
+
+Succeed.
+
+SQL> 
+SQL> create or replace view wg_haha_view
+  2 as
+  3 select * from wg_dual_view
+  4 union
+  5 select wg_func1('a','a') from dual
+  6 union
+  7 select wg_func2('a','a') from dual
+  8 union
+  9 select * from wg_tab1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> --3 test drop sequence reference
+SQL> drop sequence if exists wg_seq1;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> create sequence wg_seq1 start with 1 increment by 1 nomaxvalue nocycle nocache;
+
+Succeed.
+
+SQL> 
+SQL> create or replace view wg_haha_view
+  2 as
+  3 select * from wg_dual_view
+  4 union
+  5 select wg_func1('a','a') from dual
+  6 union
+  7 select wg_func2('a','a') from dual
+  8 union
+  9 select * from wg_tab1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ALL_DEPENDENCIES WHERE NAME = 'WG_HAHA_VIEW' order by referenced_name;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              DUAL                                                             SYNONYM        
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_DUAL_VIEW                                                     VIEW           
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC1                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_FUNC2                                                         FUNCTION       
+SYS                                                              WG_HAHA_VIEW                                                     VIEW         SYS                                                              WG_TAB1                                                          TABLE          
+
+5 rows fetched.
+
+SQL> select OBJECT_NAME,OBJECT_TYPE,STATUS from all_objects where object_name = 'WG_HAHA_VIEW';
+
+OBJECT_NAME                                                      OBJECT_TYPE     STATUS 
+---------------------------------------------------------------- --------------- -------
+WG_HAHA_VIEW                                                     VIEW            VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> drop function if exists wg_func1;
+
+Succeed.
+
+SQL> drop function if exists wg_func2;
+
+Succeed.
+
+SQL> drop view if exists wg_dual_view;
+
+Succeed.
+
+SQL> drop view if exists wg_haha_view;
+
+Succeed.
+
+SQL> drop table if exists wg_tab1;
+
+Succeed.
+
+SQL> drop sequence if exists wg_seq1;
+
+Succeed.
+
+SQL> 
+
+

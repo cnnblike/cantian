@@ -1,0 +1,112 @@
+-- DTS2018112307847: white list ip check
+-- CASE: VALID IPV4
+alter system set TCP_INVITED_NODES = '1';
+alter system set TCP_INVITED_NODES = '1.1';
+alter system set TCP_INVITED_NODES = '1.1.1';
+alter system set TCP_INVITED_NODES = '1.1.1.1';
+alter system set TCP_INVITED_NODES = '1.1.1.1 ';
+alter system set TCP_INVITED_NODES = '   1.1.1.1   ';
+
+alter system set TCP_INVITED_NODES = '1/1';
+alter system set TCP_INVITED_NODES = '1.1/1';
+alter system set TCP_INVITED_NODES = '1.1.1/1';
+alter system set TCP_INVITED_NODES = '1.1.1.1/1';
+
+alter system set TCP_INVITED_NODES = '*.*.*.*';
+alter system set TCP_INVITED_NODES = '1.*.*.*';
+alter system set TCP_INVITED_NODES = '1.1.*.*';
+alter system set TCP_INVITED_NODES = '1.1.1.*';
+
+-- CASE: INVALID IPV4
+alter system set TCP_INVITED_NODES = ' ';
+alter system set TCP_INVITED_NODES = 'x';
+alter system set TCP_INVITED_NODES = '1.x';
+alter system set TCP_INVITED_NODES = '1.1 1';
+alter system set TCP_INVITED_NODES = '1.1.1.1 1';
+alter system set TCP_INVITED_NODES = '1.1.1.-1';
+alter system set TCP_INVITED_NODES = '1.1.1.256';
+alter system set TCP_INVITED_NODES = '-1.1.1.0';
+alter system set TCP_INVITED_NODES = '256.1.1.0';
+alter system set TCP_INVITED_NODES = '*.*.*.*/1';
+alter system set TCP_INVITED_NODES = '1.*.*.*/1';
+alter system set TCP_INVITED_NODES = '1.1.*.*/1';
+alter system set TCP_INVITED_NODES = '1.1.1.*/1';
+
+-- CASE: VALID IPV6
+alter system set TCP_INVITED_NODES = '::';
+alter system set TCP_INVITED_NODES = '::1';
+alter system set TCP_INVITED_NODES = '1::1';
+alter system set TCP_INVITED_NODES = '::/0';
+alter system set TCP_INVITED_NODES = '::/64';
+alter system set TCP_INVITED_NODES = '::/128';
+alter system set TCP_INVITED_NODES = 'fe80::9217:acff:feab:fcd0';
+alter system set TCP_INVITED_NODES = 'fe80::9217:acff:feab:fcd0%eeeeeeeeeeth0';
+alter system set TCP_INVITED_NODES = 'fe80::9217:acff:feab:fcd0/0';
+alter system set TCP_INVITED_NODES = 'fe80::9217:acff:feab:fcd0/64';
+alter system set TCP_INVITED_NODES = 'fe80::9217:acff:feab:fcd0/128';
+alter system set TCP_INVITED_NODES = '  fe80::9217:acff:feab:fcd0/128  ';
+alter system set TCP_INVITED_NODES = '::%eeeeeeeeeeth0';
+alter system set TCP_INVITED_NODES = '::%eeeeeeeeeeth0/21';
+
+-- DTS2018112307847: white list ip check
+-- CASE: VALID IPV4
+alter system set TCP_EXCLUDED_NODES = '1';
+alter system set TCP_EXCLUDED_NODES = '1.1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1.1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1.1 ';
+alter system set TCP_EXCLUDED_NODES = '   1.1.1.1   ';
+
+alter system set TCP_EXCLUDED_NODES = '1/1';
+alter system set TCP_EXCLUDED_NODES = '1.1/1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1/1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1.1/1';
+
+alter system set TCP_EXCLUDED_NODES = '*.*.*.*';
+alter system set TCP_EXCLUDED_NODES = '1.*.*.*';
+alter system set TCP_EXCLUDED_NODES = '1.1.*.*';
+alter system set TCP_EXCLUDED_NODES = '1.1.1.*';
+
+-- CASE: INVALID IPV4
+alter system set TCP_EXCLUDED_NODES = ' ';
+alter system set TCP_EXCLUDED_NODES = 'x';
+alter system set TCP_EXCLUDED_NODES = '1.x';
+alter system set TCP_EXCLUDED_NODES = '1.1 1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1.1 1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1.-1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1.256';
+alter system set TCP_EXCLUDED_NODES = '-1.1.1.0';
+alter system set TCP_EXCLUDED_NODES = '256.1.1.0';
+alter system set TCP_EXCLUDED_NODES = '*.*.*.*/1';
+alter system set TCP_EXCLUDED_NODES = '1.*.*.*/1';
+alter system set TCP_EXCLUDED_NODES = '1.1.*.*/1';
+alter system set TCP_EXCLUDED_NODES = '1.1.1.*/1';
+
+-- CASE: VALID IPV6
+alter system set TCP_EXCLUDED_NODES = '::';
+alter system set TCP_EXCLUDED_NODES = '::1';
+alter system set TCP_EXCLUDED_NODES = '1::1';
+alter system set TCP_EXCLUDED_NODES = '::/0';
+alter system set TCP_EXCLUDED_NODES = '::/64';
+alter system set TCP_EXCLUDED_NODES = '::/128';
+alter system set TCP_EXCLUDED_NODES = 'fe80::9217:acff:feab:fcd0';
+alter system set TCP_EXCLUDED_NODES = 'fe80::9217:acff:feab:fcd0%eeeeeeeeeeth0';
+alter system set TCP_EXCLUDED_NODES = 'fe80::9217:acff:feab:fcd0/0';
+alter system set TCP_EXCLUDED_NODES = 'fe80::9217:acff:feab:fcd0/64';
+alter system set TCP_EXCLUDED_NODES = 'fe80::9217:acff:feab:fcd0/128';
+alter system set TCP_EXCLUDED_NODES = '  fe80::9217:acff:feab:fcd0/128  ';
+alter system set TCP_EXCLUDED_NODES = '::%eeeeeeeeeeth0';
+alter system set TCP_EXCLUDED_NODES = '::%eeeeeeeeeeth0/21';
+
+-- restore
+alter system set TCP_EXCLUDED_NODES = '';
+alter system set TCP_INVITED_NODES = '';
+
+
+-- DTS2018121504764
+alter system set TCP_INVITED_NODES ='2401:7400:0000:0001:0000:0000:0000:0005,2401:7400:0000:0001:0000:0000:0000:0006,2401:7400:0000:0001:0000:0000:0000:0007,2401:7400:0000:0001:0000:0000:0000:0008,2401:7400:0000:0001:0000:0000:0000:0009,2401:7400:0000:0001:0000:0000:0000:0010,2401:7400:0000:0001:0000:0000:0000:0011,2401:7400:0000:0001:0000:0000:0000:0012,2401:7400:0000:0001:0000:0000:0000:0013,2401:7400:0000:0001:0000:0000:0000:0014,2401:7400:0000:0001:0000:0000:0000:0015,2401:7400:0000:0001:0000:0000:0000:0016,2401:7400:0000:0001:0000:0000:0000:0017,2401:7400:0000:0001:0000:0000:0000:0018,2401:7400:0000:0001:0000:0000:0000:0019,2401:7400:0000:0001:0000:0000:0000:0020,2401:7400:0000:0001:0000:0000:0000:0021,2401:7400:0000:0001:0000:0000:0000:0022,2401:7400:0000:0001:0000:0000:0000:0023,2401:7400:0000:0001:0000:0000:0000:0024,2401:7400:0000:0001:0000:0000:0000:0025,2401:7400:0000:0001:0000:0000:0000:0026,2401:7400:0000:0001:0000:0000:0000:0027,2401:7400:0000:0001:0000:0000:0000:0028,2401:7400:0000:0001:0000:0000:0000:0029,2401:7400:0000:0001:0000:0000:0000:0030';
+alter system set TCP_EXCLUDED_NODES ='2401:7400:0000:0001:0000:0000:0000:0005,2401:7400:0000:0001:0000:0000:0000:0006,2401:7400:0000:0001:0000:0000:0000:0007,2401:7400:0000:0001:0000:0000:0000:0008,2401:7400:0000:0001:0000:0000:0000:0009,2401:7400:0000:0001:0000:0000:0000:0010,2401:7400:0000:0001:0000:0000:0000:0011,2401:7400:0000:0001:0000:0000:0000:0012,2401:7400:0000:0001:0000:0000:0000:0013,2401:7400:0000:0001:0000:0000:0000:0014,2401:7400:0000:0001:0000:0000:0000:0015,2401:7400:0000:0001:0000:0000:0000:0016,2401:7400:0000:0001:0000:0000:0000:0017,2401:7400:0000:0001:0000:0000:0000:0018,2401:7400:0000:0001:0000:0000:0000:0019,2401:7400:0000:0001:0000:0000:0000:0020,2401:7400:0000:0001:0000:0000:0000:0021,2401:7400:0000:0001:0000:0000:0000:0022,2401:7400:0000:0001:0000:0000:0000:0023,2401:7400:0000:0001:0000:0000:0000:0024,2401:7400:0000:0001:0000:0000:0000:0025,2401:7400:0000:0001:0000:0000:0000:0026,2401:7400:0000:0001:0000:0000:0000:0027,2401:7400:0000:0001:0000:0000:0000:0028,2401:7400:0000:0001:0000:0000:0000:0029,2401:7400:0000:0001:0000:0000:0000:0030';
+
+alter system set TCP_INVITED_NODES = 300;
+alter system set TCP_EXCLUDED_NODES = '(300)';
+

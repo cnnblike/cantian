@@ -1,0 +1,2200 @@
+
+
+SQL> SET SERVEROUTPUT ON;
+
+ON
+SQL> 
+SQL> --create tablespace
+SQL> create tablespace spc_test_1;                                                                                                   --error datafile expected 
+
+CT-00601, [1:29]Sql syntax error: DATAFILE expected
+SQL> create tablespace longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglongname  datafile 'spc_file_11' size 32M;    --error space name length excceed max
+
+CT-00601, Sql syntax error: object is too long or varaint name
+SQL> create tablespace spc_test_1 datafile 'spc_file_11';                                                                            --error datafile size expected 
+
+CT-00601, [1:52]Sql syntax error: SIZE expected
+SQL> create tablespace spc_test_1 datafile 'spc_file_11' size 32M, 'spc_file_12' size 1M, 'spc_file_13' size 31M;                   --succeed
+
+Succeed.
+
+SQL> create tablespace spc_test_1 datafile 'spc_file_14' size 32M, 'spc_file_15' size 1M, 'spc_file_16' size 31M;                   --error duplicate creation of space
+
+CT-00788, Tablespace SPC_TEST_1 already exists
+SQL> create tablespace spc_test_2 datafile 'spc_file_21' size 100B;                                                                   --error file size less than least
+
+CT-00601, [1:58]Sql syntax error: size value is smaller than minimum(1048576) required
+SQL> create tablespace spc_test_2 datafile 'spc_file_21' size 9T;                                                                    --error file size more than max
+
+CT-00601, [1:58]Sql syntax error: size value is bigger than maximum(8796093022208) required
+SQL> create tablespace spc_test_2 datafile 'spc_file_21' size 32M autoextend on next 16M maxsize 9T;                                 --error autoextend_maxsize more than max
+
+CT-00601, Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be greater than 8796093022208. "MAXSIZE": 9895604649984
+SQL> create tablespace spc_test_2 datafile 'spc_file_21' size 32M autoextend on next 128M maxsize 64M;                               --error autoextend_maxsize less than autoextend_size
+
+CT-00601, Sql syntax error: "NEXT" size specified in autoextend clause cannot be greater than the "MAX" size. "Next" size is 134217728, "MAX" size is 67108864
+SQL> create tablespace spc_test_2 datafile 'spc_file_21' size 32M autoextend off;                                                    --succeed
+
+Succeed.
+
+SQL> create tablespace spc_test_3 datafile 'spc_file_31' size 32M autoextend on maxsize 31G;                                         --succeed
+
+Succeed.
+
+SQL> create tablespace spc_test_4 datafile 'spc_file_41' size 32M autoextend on next 16M maxsize 31G;                                --succeed
+
+Succeed.
+
+SQL> create tablespace spc_test_5 datafile 'spc_file_51' size 32M autoextend off, 'spc_file_52' size 32M autoextend on next 16M maxsize 31G;  --succeed
+
+Succeed.
+
+SQL> create tablespace spc_test_6 datafile 'spc_file_61' size 32M all in memory;                                                     --error all in memory not support yet
+
+CT-00101, Capability: create space all in memory not supported
+SQL> create tablespace spc_test_6 datafile 'spc_file_61' size 100M reuse autoextend on next 20M maxsize 30G;                         --succeed
+
+Succeed.
+
+SQL> create tablespace spc_test_7 datafile 'spc_file_71' size 100M autoextend on next maxsize;                                       --autoextend synatx error
+
+CT-00601, [1:82]Sql syntax error: size must be a positive long integer
+SQL> create tablespace spc_test_7 datafile 'spc_file_71' size 100M autoextend off maxsize 30G;                                       --autoextend synatx error
+
+CT-00601, [1:78]Sql syntax error: expected end but "maxsize" found
+SQL> create tablespace spc_test_7 datafile 'spc_file_71' size 32M autoextend on next 20M maxsize 30G reuse;                          --autoextend synatx error
+
+CT-00601, [1:97]Sql syntax error: expected end but "reuse" found
+SQL> create tablespace spc_test_7 datafile 'spc_file_71' reuse size 32M autoextend on next 20M maxsize 30G;                          --autoextend synatx error
+
+CT-00601, [1:53]Sql syntax error: SIZE expected
+SQL> create tablespace spc_test_7 datafile 'spc_file_71' size 100M autoextend off maxsize 30G;                                       --autoextend synatx error
+
+CT-00601, [1:78]Sql syntax error: expected end but "maxsize" found
+SQL> create tablespace spc_test_7 datafile 'spc_file_71' size 32M autoextend on next maxsize 30G;                                    --autoextend synatx error
+
+CT-00601, [1:81]Sql syntax error: size must be a positive long integer
+SQL> select NAME, STATUS, AUTO_PURGE, EXTENT_SIZE, FILE_COUNT from v$tablespace where name like 'SPC_TEST%';
+
+NAME                                                             STATUS   AUTO_PURGE EXTENT_SIZE  FILE_COUNT  
+---------------------------------------------------------------- -------- ---------- ------------ ------------
+SPC_TEST_1                                                       ONLINE   TRUE       8            3           
+SPC_TEST_2                                                       ONLINE   TRUE       8            1           
+SPC_TEST_3                                                       ONLINE   TRUE       8            1           
+SPC_TEST_4                                                       ONLINE   TRUE       8            1           
+SPC_TEST_5                                                       ONLINE   TRUE       8            2           
+SPC_TEST_6                                                       ONLINE   TRUE       8            1           
+
+6 rows fetched.
+
+SQL> select substr(FILE_NAME,-11), BYTES, AUTO_EXTEND, AUTO_EXTEND_SIZE, MAX_SIZE from v$datafile where file_name like '%spc_file%';
+
+SUBSTR(FILE_NAME,-11)                                            BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE            
+---------------------------------------------------------------- -------------------- -------------------- -------------------- --------------------
+spc_file_11                                                      33554432             FALSE                0                    8796093022208       
+spc_file_12                                                      1048576              FALSE                0                    8796093022208       
+spc_file_13                                                      32505856             FALSE                0                    8796093022208       
+spc_file_21                                                      33554432             FALSE                0                    8796093022208       
+spc_file_31                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_41                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_51                                                      33554432             FALSE                0                    8796093022208       
+spc_file_52                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_61                                                      104857600            TRUE                 20971520             32212254720         
+
+9 rows fetched.
+
+SQL> 
+SQL> --use table on tablespace
+SQL> create table spc_test_table (id int) tablespace spc_test_1;                                                                     --succeed
+
+Succeed.
+
+SQL> insert into spc_test_table values(1);                                                                                           --succeed
+
+1 rows affected.
+
+SQL> insert into spc_test_table values(2);                                                                                           --succeed
+
+1 rows affected.
+
+SQL> select * from spc_test_table;                                                                                                   --tow rows    
+
+ID          
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> 
+SQL> --tablespace autopurge
+SQL> purge tablespace spc_test_1;                                                                                                    --succeed
+
+Succeed.
+
+SQL> alter tablespace spc_test_1 autopurge off;                                                                                      --succeed    
+
+Succeed.
+
+SQL> alter tablespace spc_test_1 autopurge on;                                                                                       --succeed
+
+Succeed.
+
+SQL> alter tablespace spc_test_1 autopurge abc;                                                                                      --synatx error
+
+CT-00601, Sql syntax error: ON or OFF expected but abc found
+SQL> alter tablespace spc_test_1 autopurge;                                                                                          --synatx error
+
+CT-00601, [1:38]Sql syntax error: more text expected but terminated
+SQL> select NAME, STATUS, AUTO_PURGE, EXTENT_SIZE, FILE_COUNT from v$tablespace where name like 'SPC_TEST%';
+
+NAME                                                             STATUS   AUTO_PURGE EXTENT_SIZE  FILE_COUNT  
+---------------------------------------------------------------- -------- ---------- ------------ ------------
+SPC_TEST_1                                                       ONLINE   TRUE       8            3           
+SPC_TEST_2                                                       ONLINE   TRUE       8            1           
+SPC_TEST_3                                                       ONLINE   TRUE       8            1           
+SPC_TEST_4                                                       ONLINE   TRUE       8            1           
+SPC_TEST_5                                                       ONLINE   TRUE       8            2           
+SPC_TEST_6                                                       ONLINE   TRUE       8            1           
+
+6 rows fetched.
+
+SQL> 
+SQL> --rename tablespace
+SQL> alter tablespace spc_test_0 rename to spc_test_7;                                                                              --error space not exists
+
+CT-00780, The tablespace SPC_TEST_0 does not exist.
+SQL> alter tablespace spc_test_1 rename to spc_test_2;                                                                              --error duplicate name
+
+CT-00788, Tablespace SPC_TEST_2 already exists
+SQL> alter tablespace spc_test_1 rename;                                                                                             --synatx error 
+
+CT-00601, [1:35]Sql syntax error: DATAFILE expected
+SQL> alter tablespace spc_test_1 rename to;                                                                                          --synatx error
+
+CT-00601, [1:38]Sql syntax error: more text expected but terminated
+SQL> alter tablespace spc_test_1 rename to longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglongname                  --error space name length excceed max
+  2 alter tablespace spc_test_1 rename to spc_test_20;                                                                              --succeed
+
+CT-00601, Sql syntax error: object is too long or varaint name
+SQL> select NAME, STATUS, AUTO_PURGE, EXTENT_SIZE, FILE_COUNT from v$tablespace where name like 'SPC_TEST%';
+
+NAME                                                             STATUS   AUTO_PURGE EXTENT_SIZE  FILE_COUNT  
+---------------------------------------------------------------- -------- ---------- ------------ ------------
+SPC_TEST_1                                                       ONLINE   TRUE       8            3           
+SPC_TEST_2                                                       ONLINE   TRUE       8            1           
+SPC_TEST_3                                                       ONLINE   TRUE       8            1           
+SPC_TEST_4                                                       ONLINE   TRUE       8            1           
+SPC_TEST_5                                                       ONLINE   TRUE       8            2           
+SPC_TEST_6                                                       ONLINE   TRUE       8            1           
+
+6 rows fetched.
+
+SQL> 
+SQL> --add datafile
+SQL> alter tablespace spc_test_8 add datafile 'spc_file_81' size 32M autoextend on next 16M;                                         --error space not exists 
+
+CT-00780, The tablespace SPC_TEST_8 does not exist.
+SQL> alter tablespace spc_test_2 add datafile 'spc_file_21' size 32M autoextend off, 'SPC_FILE_21' size 32M autoextend off;          --error duplicate datafile
+
+CT-00601, Sql syntax error: it is not allowed to specify duplicate datafile
+SQL> alter tablespace spc_test_2 add ;                                                                                               --synatx error
+
+CT-00601, [1:33]Sql syntax error: DATAFILE expected
+SQL> alter tablespace spc_test_2 add datafile;                                                                                       --synatx error
+
+CT-00601, [1:41]Sql syntax error: more text expected but terminated
+SQL> alter tablespace spc_test_2 add datafile 'spc_file_22';                                                                         --synatx error
+
+CT-00601, [1:55]Sql syntax error: SIZE expected
+SQL> alter tablespace spc_test_2 add datafile 'spc_file_22' size 32M autoextend on next 16M, 'spc_file_23' size 32M autoextend off;  --succedd
+
+Succeed.
+
+SQL> select substr(FILE_NAME,-11), BYTES, AUTO_EXTEND, AUTO_EXTEND_SIZE, MAX_SIZE from v$datafile where file_name like '%spc_file%';
+
+SUBSTR(FILE_NAME,-11)                                            BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE            
+---------------------------------------------------------------- -------------------- -------------------- -------------------- --------------------
+spc_file_11                                                      33554432             FALSE                0                    8796093022208       
+spc_file_12                                                      1048576              FALSE                0                    8796093022208       
+spc_file_13                                                      32505856             FALSE                0                    8796093022208       
+spc_file_21                                                      33554432             FALSE                0                    8796093022208       
+spc_file_31                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_41                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_51                                                      33554432             FALSE                0                    8796093022208       
+spc_file_52                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_61                                                      104857600            TRUE                 20971520             32212254720         
+spc_file_22                                                      33554432             TRUE                 16777216             8796093022208       
+spc_file_23                                                      33554432             FALSE                0                    8796093022208       
+
+11 rows fetched.
+
+SQL> 
+SQL> --drop datafile
+SQL> alter tablespace spc_test_7 drop datafile 'spc_file_11';                                                                        --error datafile has been used
+
+CT-00780, The tablespace SPC_TEST_7 does not exist.
+SQL> alter tablespace spc_test_2 drop datafile 'spc_file_22', 'spc_file_31', 'spc_file_41';                                          --synatx
+
+CT-00601, [1:56]Sql syntax error: expected end but , found
+SQL> alter tablespace spc_test_2 drop datafile 'spc_file_22';                                                                        --succeed
+
+Succeed.
+
+SQL> select substr(FILE_NAME,-11), BYTES, AUTO_EXTEND, AUTO_EXTEND_SIZE, MAX_SIZE from v$datafile where file_name like '%spc_file%';
+
+SUBSTR(FILE_NAME,-11)                                            BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE            
+---------------------------------------------------------------- -------------------- -------------------- -------------------- --------------------
+spc_file_11                                                      33554432             FALSE                0                    8796093022208       
+spc_file_12                                                      1048576              FALSE                0                    8796093022208       
+spc_file_13                                                      32505856             FALSE                0                    8796093022208       
+spc_file_21                                                      33554432             FALSE                0                    8796093022208       
+spc_file_31                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_41                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_51                                                      33554432             FALSE                0                    8796093022208       
+spc_file_52                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_61                                                      104857600            TRUE                 20971520             32212254720         
+spc_file_23                                                      33554432             FALSE                0                    8796093022208       
+
+10 rows fetched.
+
+SQL> 
+SQL> --rename or offline datafile
+SQL> alter tablespace spc_test_5 rename datafile 'spc_file_51' to 'spc_file_81';                                                     --error must be mounted EXCLUSIVE 
+
+CT-00768, Operation rename datafiles can only be executed in mount status
+SQL> alter tablespace spc_test_5 offline datafile 'spc_file_51';                                                                     --error must be mounted EXCLUSIVE
+
+CT-00768, Operation offline datafile can only be executed in mount status
+SQL> select substr(FILE_NAME,-11), BYTES, AUTO_EXTEND, AUTO_EXTEND_SIZE, MAX_SIZE from v$datafile where file_name like '%spc_file%';
+
+SUBSTR(FILE_NAME,-11)                                            BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE            
+---------------------------------------------------------------- -------------------- -------------------- -------------------- --------------------
+spc_file_11                                                      33554432             FALSE                0                    8796093022208       
+spc_file_12                                                      1048576              FALSE                0                    8796093022208       
+spc_file_13                                                      32505856             FALSE                0                    8796093022208       
+spc_file_21                                                      33554432             FALSE                0                    8796093022208       
+spc_file_31                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_41                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_51                                                      33554432             FALSE                0                    8796093022208       
+spc_file_52                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_61                                                      104857600            TRUE                 20971520             32212254720         
+spc_file_23                                                      33554432             FALSE                0                    8796093022208       
+
+10 rows fetched.
+
+SQL> 
+SQL> --tablespace autoextend
+SQL> alter tablespace spc_test_6 autoextend;                                                                                         --synatx error
+
+CT-00601, [1:39]Sql syntax error: more text expected but terminated
+SQL> alter tablespace spc_test_6 autoextend off;                                                                                     --succeed 
+
+Succeed.
+
+SQL> alter tablespace spc_test_6 autoextend on next 32M maxsize 16M;                                                                 --error next size more than maxsize
+
+CT-00601, Sql syntax error: "NEXT" size specified in autoextend clause cannot be greater than the "MAX" size. "Next" size is 33554432, "MAX" size is 16777216
+SQL> alter tablespace spc_test_6 autoextend on next 32M maxsize 9T;                                                                  --error maxsize excceed max
+
+CT-00601, Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be greater than 8796093022208. "MAXSIZE": 9895604649984
+SQL> 
+SQL> --alter database datafile
+SQL> alter database datafile;                                                                                                         --synatx error
+
+CT-00601, [1:24]Sql syntax error: more text expected but terminated
+SQL> alter database datafile abc;                                                                                                     --synatx error
+
+CT-00601, [1:25]Sql syntax error: file name or file number expected.
+SQL> alter database datafile 'spc_file_81' offline;                                                                                   --synatx error
+
+CT-00101, [1:39]Capability: end clause in the "ALTER DATABASE DATAFILE" statement  not supported
+SQL> alter database datafile 'spc_file_81' autoextend;                                                                                --error datafile not exists
+
+CT-00601, [1:49]Sql syntax error: more text expected but terminated
+SQL> alter database datafile 'spc_file_31' autoextend;                                                                                --synatx error
+
+CT-00601, [1:49]Sql syntax error: more text expected but terminated
+SQL> alter database datafile 'spc_file_31' autoextend off;                                                                            --succeed
+
+Succeed.
+
+SQL> alter database datafile 'spc_file_31' autoextend on next 32M maxsize 16M;                                                        --error next size more than maxsize
+
+CT-00601, Sql syntax error: "NEXT" size specified in autoextend clause cannot be greater than the "MAX" size. "Next" size is 33554432, "MAX" size is 16777216
+SQL> alter database datafile 'spc_file_31' autoextend on maxsize 9T;                                                                  --error maxsize excceed max
+
+CT-00601, Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be greater than 8796093022208. "MAXSIZE": 9895604649984
+SQL> alter database datafile 'spc_file_31' autoextend on next 9T maxsize 9T;                                                          --error next size excceed max
+
+CT-00601, Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be greater than 8796093022208. "MAXSIZE": 9895604649984
+SQL> alter database datafile 'spc_file_31' autoextend on;                                                                             --succeed
+
+Succeed.
+
+SQL> alter database datafile 'spc_file_31' autoextend on next 32M maxsize 32G;                                                        --succeed
+
+Succeed.
+
+SQL> select substr(FILE_NAME,-11), BYTES, AUTO_EXTEND, AUTO_EXTEND_SIZE, MAX_SIZE from v$datafile where file_name like '%spc_file%';
+
+SUBSTR(FILE_NAME,-11)                                            BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE            
+---------------------------------------------------------------- -------------------- -------------------- -------------------- --------------------
+spc_file_11                                                      33554432             FALSE                0                    8796093022208       
+spc_file_12                                                      1048576              FALSE                0                    8796093022208       
+spc_file_13                                                      32505856             FALSE                0                    8796093022208       
+spc_file_21                                                      33554432             FALSE                0                    8796093022208       
+spc_file_31                                                      33554432             TRUE                 33554432             34359738368         
+spc_file_41                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_51                                                      33554432             FALSE                0                    8796093022208       
+spc_file_52                                                      33554432             TRUE                 16777216             33285996544         
+spc_file_61                                                      104857600            FALSE                0                    32212254720         
+spc_file_23                                                      33554432             FALSE                0                    8796093022208       
+
+10 rows fetched.
+
+SQL> 
+SQL> --issue #24222
+SQL> create tablespace tablespace_test_01 datafile 'datafile_extend_01' size 32M autoextend on next 4M maxsize 100M;
+
+Succeed.
+
+SQL> create tablespace tablespace_test_02 datafile 'datafile_extend_02' size 32M autoextend on next 4M; 
+
+Succeed.
+
+SQL> alter database datafile 'datafile_extend_01' autoextend off;
+
+Succeed.
+
+SQL> alter tablespace tablespace_test_02 autoextend off;
+
+Succeed.
+
+SQL> select substr(FILE_NAME,-18), BYTES, AUTO_EXTEND, AUTO_EXTEND_SIZE, MAX_SIZE from v$datafile where file_name like '%datafile_extend%';
+
+SUBSTR(FILE_NAME,-18)                                            BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE            
+---------------------------------------------------------------- -------------------- -------------------- -------------------- --------------------
+datafile_extend_01                                               33554432             FALSE                0                    104857600           
+datafile_extend_02                                               33554432             FALSE                0                    8796093022208       
+
+2 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --online drop tablespace
+SQL> create tablespace tsp1 datafile  'tsp_11.dbf' size 32M autoextend on next 32M, 'tsp_12.dbf' size 32M autoextend on next 32M;
+
+Succeed.
+
+SQL> create tablespace tsp2 datafile  'tsp_21.dbf' size 32M autoextend on next 32M, 'tsp_22.dbf' size 32M autoextend on next 32M;
+
+Succeed.
+
+SQL> create tablespace tsp3 datafile  'tsp_31.dbf' size 32M autoextend on next 32M, 'tsp_32.dbf' size 32M autoextend on next 32M;
+
+Succeed.
+
+SQL> create table tbsp_t1(f1 int,f2 char(30))
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10) tablespace tsp1,
+  5  PARTITION p2 values less than(MAXVALUE) tablespace tsp2
+  6 ) tablespace tsp2;
+
+Succeed.
+
+SQL> insert into tbsp_t1 values (1,'aa');
+
+1 rows affected.
+
+SQL> insert into tbsp_t1 values (21,'bb');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table tbsp_t2(id int, name clob)  lob (name) store as( tablespace tsp1);
+
+Succeed.
+
+SQL> drop tablespace tsp1;
+
+CT-00742, Tablespace TSP1 is not empty, exists object
+SQL> --drop tablespace tsp1 including contents;
+SQL> drop tablespace tsp2;
+
+CT-00742, Tablespace TSP2 is not empty, exists object
+SQL> drop tablespace tsp2 including contents;
+
+Succeed.
+
+SQL> --drop tablespace tsp1 including contents;
+SQL> drop table tbsp_t2;
+
+Succeed.
+
+SQL> drop tablespace tsp1 including contents;
+
+Succeed.
+
+SQL> 
+SQL> --online drop tablepsace : check index
+SQL> create tablespace spc_test_10 datafile 'spc_10_file' size 32M;
+
+Succeed.
+
+SQL> create tablespace spc_test_11 datafile 'spc_11_file' size 32M;
+
+Succeed.
+
+SQL> create table spc_test_10_table (a int) tablespace spc_test_10;
+
+Succeed.
+
+SQL> create index spc_test_10_table_index on spc_test_10_table(a) tablespace spc_test_11;
+
+Succeed.
+
+SQL> drop tablespace spc_test_11 including contents; 
+
+CT-00790, Failed to drop tablespace SPC_TEST_11, because index of table in the space was created in other space
+SQL> 
+SQL> --online drop tablespace: check lob
+SQL> create table spc_test_11_table(id int, name clob)  lob (name) store as( tablespace spc_test_10) tablespace spc_test_11;
+
+Succeed.
+
+SQL> drop tablespace spc_test_10 including contents;
+
+CT-00790, Failed to drop tablespace SPC_TEST_10, because parent table of lob column is not in the same tablespace
+SQL> 
+SQL> --online drop tablespace: check table partition 
+SQL> create table spc_test_12_table(f1 int,f2 char(30), f3 clob)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10) tablespace spc_test_10,
+  5  PARTITION p2 values less than(MAXVALUE) tablespace spc_test_11
+  6 ) tablespace spc_test_11;
+
+Succeed.
+
+SQL> drop tablespace spc_test_10 including contents;
+
+CT-00790, Failed to drop tablespace SPC_TEST_10, because parent table of lob column is not in the same tablespace
+SQL> 
+SQL> --online drop tablespace: check index partition 
+SQL> create tablespace spc_test_13 datafile 'spc_13_file' size 32M;
+
+Succeed.
+
+SQL> create tablespace spc_test_14 datafile 'spc_14_file' size 32M;
+
+Succeed.
+
+SQL> create index spc_test_13_index on spc_test_12_table(f1) local
+  2 (
+  3 partition p3 tablespace spc_test_13, 
+  4 partition p4 tablespace spc_test_14
+  5 );
+
+Succeed.
+
+SQL> drop tablespace spc_test_13 including contents;
+
+CT-00790, Failed to drop tablespace SPC_TEST_13, because parent table of index (sub)partition is not in the same tablespace
+SQL> 
+SQL> --online drop tablespace: check index partition 
+SQL> create tablespace spc_test_15 datafile 'spc_15_file' size 32M;
+
+Succeed.
+
+SQL> create tablespace spc_test_16 datafile 'spc_16_file' size 32M;
+
+Succeed.
+
+SQL> create table spc_test_15_table(f1 int,f2 char(30), f3 CLOB)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10) tablespace spc_test_15,
+  5  PARTITION p2 values less than(MAXVALUE) tablespace spc_test_16
+  6 ) tablespace spc_test_15;
+
+Succeed.
+
+SQL> drop tablespace spc_test_16 including contents;
+
+CT-00790, Failed to drop tablespace SPC_TEST_16, because parent table of (sub)partition is not in the same tablespace
+SQL> 
+SQL> --online drop tablespace: check part store
+SQL> create tablespace spc_test_17 datafile 'spc_file_17' size 32M;
+
+Succeed.
+
+SQL> create tablespace spc_test_18 datafile 'spc_file_18' size 32M;
+
+Succeed.
+
+SQL> create table spc_test_17_table(f1 int, f2 int, f3 CLOB)
+  2 PARTITION BY RANGE(f2)
+  3 INTERVAL(10)
+  4 STORE IN(tablespace spc_test_17,tablespace spc_test_18)
+  5 (
+  6  PARTITION spc_test_17 values less than(10),
+  7  PARTITION spc_test_18 values less than(20),
+  8 );
+
+CT-00601, [8:1]Sql syntax error: PARTITION expected
+SQL> drop tablespace spc_test_17 including contents;
+
+Succeed.
+
+SQL> 
+SQL> create table tbsp_t3(id int, dep_id int, name varchar(32));
+
+Succeed.
+
+SQL> create table dep(id int primary key, dep_name varchar(32)) tablespace tsp3;
+
+Succeed.
+
+SQL> insert into dep values (1,'aa');
+
+1 rows affected.
+
+SQL> insert into dep values (2,'bb');
+
+1 rows affected.
+
+SQL> insert into dep values (3,'cc');
+
+1 rows affected.
+
+SQL> truncate table dep;
+
+Succeed.
+
+SQL> insert into dep values (4,'ee');
+
+1 rows affected.
+
+SQL> insert into dep values (5,'ff');
+
+1 rows affected.
+
+SQL> alter table tbsp_t3 add foreign key (dep_id) references dep(id) on delete cascade;
+
+Succeed.
+
+SQL> create user testwei identified by 'Cantian_234' default tablespace tsp3;
+
+Succeed.
+
+SQL> create table testwei.tbsp_t1(id int);
+
+Succeed.
+
+SQL> 
+SQL> create table tb1_tsp3(id int) tablespace tsp3;
+
+Succeed.
+
+SQL> create table tb2_tsp3(id int) tablespace tsp3;
+
+Succeed.
+
+SQL> insert into tb1_tsp3 values (1);
+
+1 rows affected.
+
+SQL> drop table tb1_tsp3;
+
+Succeed.
+
+SQL> drop table tb2_tsp3;
+
+Succeed.
+
+SQL> 
+SQL> drop tablespace tsp3;
+
+CT-00790, Failed to drop tablespace TSP3, because it's the default tablespace for user
+SQL> drop tablespace tsp3 including contents;
+
+CT-00790, Failed to drop tablespace TSP3, because it's the default tablespace for user
+SQL> drop table testwei.tbsp_t1 purge;
+
+Succeed.
+
+SQL> drop user testwei;
+
+Succeed.
+
+SQL> 
+SQL> drop tablespace tsp3 including contents;
+
+CT-00790, Failed to drop tablespace TSP3, because table in the space is referenced
+SQL> drop tablespace tsp3 including contents cascade constraints;
+
+Succeed.
+
+SQL> 
+SQL> --bitmap tablespace
+SQL> create tablespace normal_spc datafile 'normal_spc' size 1M;
+
+Succeed.
+
+SQL> create tablespace normal_spc_128 extents 128 datafile 'normal_spc_128' size 1M;
+
+Succeed.
+
+SQL> create tablespace bitmap_spc datafile 'bitmap_spc' size 1M extent autoallocate;
+
+Succeed.
+
+SQL> 
+SQL> drop tablespace normal_spc including contents and datafiles;
+
+Succeed.
+
+SQL> drop tablespace normal_spc_128 including contents and datafiles;
+
+Succeed.
+
+SQL> drop tablespace bitmap_spc including contents and datafiles;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018072411394
+SQL> alter tablespace omspm3 add datafile 'omspm3_2.dbf' size 32M autoextend on maxsize 64M, 'omspm4_2.dbf' size 32M autoextend on next 16M maxsize 31M;         --syntax error
+
+CT-00601, [1:147]Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be less than the value of "SIZE". "MAXSIZE": 32505856, "SIZE": 33554432
+SQL> SELECT COUNT(ID) FROM V$DATAFILE WHERE FILE_NAME LIKE '%omspm3_2%';                                                                                         --count: 0
+
+COUNT(ID)           
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> alter tablespace omspm3 add datafile 'omspm3_2.dbf' size 32M autoextend on next 16M;
+
+CT-00780, The tablespace OMSPM3 does not exist.
+SQL> SELECT COUNT(ID) FROM V$DATAFILE WHERE FILE_NAME LIKE '%omspm3_2%';                                                                                         --count: 1
+
+COUNT(ID)           
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> alter tablespace omspm3 add datafile 'omspm4_2.dbf' size 32M autoextend off, 'omspm4_3.dbf' size 32M autoextend off, 'OMspm4_2.dbf' size 32M autoextend off;--syntax error
+
+CT-00601, Sql syntax error: it is not allowed to specify duplicate datafile
+SQL> SELECT COUNT(ID) FROM V$DATAFILE WHERE FILE_NAME LIKE '%omspm4_2%';                                                                                         --count: 0
+
+COUNT(ID)           
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> alter tablespace omspm3 add datafile 'omspm4_2.dbf' size 32M autoextend off;
+
+CT-00780, The tablespace OMSPM3 does not exist.
+SQL> SELECT COUNT(ID) FROM V$DATAFILE WHERE FILE_NAME LIKE '%omspm4_2%';                                                                                         --count: 1
+
+COUNT(ID)           
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> alter tablespace omspm3 add datafile 'omspm4_2.dbf' size 32M autoextend on next 128M maxsize 64M;                                                           --syntax error
+
+CT-00601, Sql syntax error: "NEXT" size specified in autoextend clause cannot be greater than the "MAX" size. "Next" size is 134217728, "MAX" size is 67108864
+SQL> create tablespace omspm5 datafile 'omspm5.dbf' size 32M autoextend on maxsize 9T;                                                                           --syntax error (maxsize too large)
+
+CT-00601, Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be greater than 8796093022208. "MAXSIZE": 9895604649984
+SQL> create tablespace omspm5 datafile 'omspm5.dbf' size 32M autoextend on maxsize 32M, 'omspm6.dbf' size 32M autoextend on maxsize 31M;                         --syntax error
+
+CT-00601, [1:131]Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be less than the value of "SIZE". "MAXSIZE": 32505856, "SIZE": 33554432
+SQL> SELECT COUNT(ID) FROM V$DATAFILE WHERE FILE_NAME LIKE '%omspm5%';                                                                                           --count: 0
+
+COUNT(ID)           
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> create tablespace omspm5 datafile 'omspm5_1.dbf' size 32M autoextend on next 8M, 'omspm5_2.dbf' size 32M autoextend off;
+
+Succeed.
+
+SQL> SELECT COUNT(ID) FROM V$DATAFILE WHERE FILE_NAME LIKE '%omspm5%.dbf';                                                                                       --count: 2
+
+COUNT(ID)           
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> 
+SQL> alter tablespace omspm3 autoextend on maxsize 9T;                                                                                                           --syntax error (maxsize too large)
+
+CT-00601, Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be greater than 8796093022208. "MAXSIZE": 9895604649984
+SQL> alter tablespace omspm3 add datafile 'omspm3_2.dbf' size 32M autoextend on maxsize 9T, 'omspm4_2.dbf' size 32M autoextend on maxsize 8G;                    --syntax error (maxsize too large)
+
+CT-00601, Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be greater than 8796093022208. "MAXSIZE": 9895604649984
+SQL> alter tablespace undo add datafile 'undo2.dbf' size 128M autoextend on next 32M;
+
+Succeed.
+
+SQL> SELECT COUNT(ID) FROM V$DATAFILE WHERE FILE_NAME LIKE '%undo2.dbf%';    i                                                                                   -- count: 1
+
+COUNT(ID)           
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> alter tablespace TMP_TBLSPC_001 autoextend on next;
+
+CT-00601, [1:1]Sql syntax error: key word expected
+SQL> alter tablespace TMP_TBLSPC_001 autoextend on MAXSIZE;
+
+CT-00601, [1:54]Sql syntax error: size must be a positive long integer
+SQL> alter tablespace TMP_TBLSPC_001 autoextend on MAXSIZE 20G;
+
+CT-00780, The tablespace TMP_TBLSPC_001 does not exist.
+SQL> 
+SQL> create tablespace tablespace_maxsize_002 datafile 'tablespace_maxsize_002_1' size 32M autoextend on next 1 maxsize 31M;                                     --syntax error. maxsize less than size
+
+CT-00601, [1:119]Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be less than the value of "SIZE". "MAXSIZE": 32505856, "SIZE": 33554432
+SQL> alter tablespace tablespace_maxsize_002 add datafile 'tablespace_maxsize_002_2' size 32M autoextend on  maxsize 16M;                                        --syntax error. maxsize less than size
+
+CT-00601, [1:116]Sql syntax error: "MAXSIZE" specified in autoextend clause cannot be less than the value of "SIZE". "MAXSIZE": 16777216, "SIZE": 33554432
+SQL> create tablespace tablespace_maxsize_002 datafile 'tablespace_maxsize_002_1' size 40M autoextend on next 1 maxsize 80M;
+
+Succeed.
+
+SQL> alter tablespace tablespace_maxsize_002 add datafile 'tablespace_maxsize_002_2' size 50M autoextend on  maxsize 90M;
+
+Succeed.
+
+SQL> alter tablespace tablespace_maxsize_002 autoextend on maxsize 45M;                                                                           --syntax error. the new maxsize less than existing size
+
+CT-00767, MAXSIZE property for TABLESPACE_MAXSIZE_002 exceeds or smaller than size that system allowed
+SQL> DECLARE
+  2   undosql VARCHAR(256);
+  3   BEGIN
+  4   undosql := 'CREATE TABLESPACE tablespace_maxsize_003 DATAFILE ''tablespace_maxsize_003_1'' SIZE 40M AUTOEXTEND ON NEXT 1 MAXSIZE 80M';
+  5   EXECUTE IMMEDIATE undosql;
+  6   undosql := 'ALTER TABLESPACE tablespace_maxsize_003 ADD DATAFILE ''tablespace_maxsize_003_2'' SIZE 50M AUTOEXTEND ON MAXSIZE 90M';
+  7   EXECUTE IMMEDIATE undosql;
+  8   undosql := 'ALTER DATABASE DATAFILE ''tablespace_maxsize_003_1'', ''tablespace_maxsize_003_2'' AUTOEXTEND ON NEXT 40M MAXSIZE 45M';
+  9   EXECUTE IMMEDIATE undosql;
+ 10   EXCEPTION
+ 11   WHEN OTHERS THEN    
+ 12   dbe_output.print_line(undosql || ' FAILED, error code: ' || SQL_ERR_CODE );
+ 13   END;
+ 14 /
+
+ALTER DATABASE DATAFILE 'tablespace_maxsize_003_1', 'tablespace_maxsize_003_2' AUTOEXTEND ON NEXT 40M MAXSIZE 45M FAILED, error code: 767
+
+PL/SQL procedure successfully completed.
+
+SQL> --DTS2018072308772
+SQL> --use the procedure to test the error DDL so that the fullpath of the datafile would not be printed.
+SQL>   BEGIN
+  2   EXECUTE IMMEDIATE 'ALTER TABLESPACE undo ADD DATAFILE ''undo3.dbf'' SIZE 128M AUTOEXTEND ON MAXSIZE 36G';
+  3   EXCEPTION
+  4   WHEN OTHERS THEN
+  5   dbe_output.print_line('ALTER TABLESPACE failed, error code: ' || SQL_ERR_CODE );
+  6   END;
+  7   /
+
+ALTER TABLESPACE failed, error code: 767
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT COUNT(ID) FROM V$DATAFILE WHERE FILE_NAME LIKE '%undo3.dbf%';      -- count: 0
+
+COUNT(ID)           
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL>   BEGIN
+  2   EXECUTE IMMEDIATE 'ALTER DATABASE DATAFILE ''undo'' AUTOEXTEND ON MAXSIZE 36G';
+  3   EXCEPTION
+  4   WHEN OTHERS THEN
+  5   dbe_output.print_line('ALTER DATABASE DATAFILE failed, error code: ' || SQL_ERR_CODE );
+  6   END;
+  7 /
+
+ALTER DATABASE DATAFILE failed, error code: 767
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- test create/alter user's default table space & temporary table space
+SQL> create user user_test_space identified by Root1234 default tablespace temp; -- failed;
+
+CT-00792, Can not specify TEMP tablespace as user default tablespace.
+SQL> create user user_test_space identified by Root1234 temporary tablespace users; -- failed;
+
+CT-00795, The tablespace specified for the user to be created was not a temporary tablespace.
+SQL> 
+SQL> create user user_test_space identified by Root1234;
+
+Succeed.
+
+SQL> select username, default_tablespace, temporary_tablespace from dba_users where username=upper('user_test_space');
+
+USERNAME                                                         DEFAULT_TABLESPACE                                               TEMPORARY_TABLESPACE                                            
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_SPACE                                                  USERS                                                            TEMP                                                            
+
+1 rows fetched.
+
+SQL> 
+SQL> alter user user_test_space default tablespace system temporary tablespace TEMP;
+
+CT-00792, Can not specify SYSTEM tablespace as user default tablespace.
+SQL> -- test if the operation takes effect
+SQL> select username, default_tablespace, temporary_tablespace from dba_users where username=upper('user_test_space');
+
+USERNAME                                                         DEFAULT_TABLESPACE                                               TEMPORARY_TABLESPACE                                            
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_SPACE                                                  USERS                                                            TEMP                                                            
+
+1 rows fetched.
+
+SQL> 
+SQL> -- create objects in space
+SQL> create table user_test_space.tab_test_001 (f1 int);
+
+Succeed.
+
+SQL> create index user_test_space.ix_tab_test_001 on user_test_space.tab_test_001 (f1);
+
+Succeed.
+
+SQL> select owner, table_name, tablespace_name from dba_tables where owner=upper('user_test_space') and table_name=upper('tab_test_001');
+
+OWNER                                                            TABLE_NAME                                                       TABLESPACE_NAME                                                 
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_SPACE                                                  TAB_TEST_001                                                     USERS                                                           
+
+1 rows fetched.
+
+SQL> select owner, index_name, tablespace_name from dba_indexes where owner=upper('user_test_space') and index_name=upper('ix_tab_test_001');
+
+OWNER                                                            INDEX_NAME                                                       TABLESPACE_NAME                                                 
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_SPACE                                                  IX_TAB_TEST_001                                                  USERS                                                           
+
+1 rows fetched.
+
+SQL> 
+SQL> -- set error space
+SQL> alter user user_test_space default tablespace TEMP; -- failed
+
+CT-00792, Can not specify TEMP tablespace as user default tablespace.
+SQL> alter user user_test_space temporary tablespace SYSTEM; -- failed
+
+CT-00795, The tablespace specified for the user to be created was not a temporary tablespace.
+SQL> 
+SQL> drop user user_test_space cascade;
+
+Succeed.
+
+SQL> 
+SQL> -- try to permanent object in temporary space
+SQL> drop table if exists test_tb;
+
+Succeed.
+
+SQL> create table test_tb(id int) partition by range(id)
+  2 (
+  3 partition p1 values less than(50) tablespace system,
+  4 partition p2 values less than(100) tablespace temp
+  5 );
+
+CT-00853, Attempt to create permanent object in a temporary tablespace
+SQL> 
+SQL> drop table if exists test_tb;
+
+Succeed.
+
+SQL> create table test_tb(id int);
+
+Succeed.
+
+SQL> create index test_index on test_tb(id) tablespace temp;
+
+CT-00853, Attempt to create permanent object in a temporary tablespace
+SQL> 
+SQL> drop table if exists test_tb;
+
+Succeed.
+
+SQL> create table test_tb(id int, video clob) lob(video) store as lob_segment tablespace temp;
+
+CT-00853, Attempt to create permanent object in a temporary tablespace
+SQL> 
+SQL> drop table if exists test_tb;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2018120508581---
+SQL> 
+SQL> create tablespace space_free_size_test datafile 'space_free_size_test_file' size 32M;
+
+Succeed.
+
+SQL> CREATE TABLE ROW_CHAIN_TABLE_2(ID INT,A VARCHAR(8000),B VARCHAR(8000),C CLOB,D CLOB) tablespace space_free_size_test;
+
+Succeed.
+
+SQL> INSERT INTO ROW_CHAIN_TABLE_2 VALUES(0,LPAD('A',8000,'A'),LPAD('B',8000,'B'),LPAD('C',8000,'C'),'D');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> truncate table ROW_CHAIN_TABLE_2;
+
+Succeed.
+
+SQL> purge recyclebin;
+
+Succeed.
+
+SQL> select tablespace_name, sum(bytes) bytes from dba_free_space group by tablespace_name having tablespace_name='SPACE_FREE_SIZE_TEST';
+
+TABLESPACE_NAME                                                  BYTES                                   
+---------------------------------------------------------------- ----------------------------------------
+SPACE_FREE_SIZE_TEST                                             33538048                                
+
+1 rows fetched.
+
+SQL> select tablespace_name, total_size-used_size bytes from dba_tablespaces where tablespace_name='SPACE_FREE_SIZE_TEST';
+
+TABLESPACE_NAME                                                  BYTES               
+---------------------------------------------------------------- --------------------
+SPACE_FREE_SIZE_TEST                                             33538048            
+
+1 rows fetched.
+
+SQL> 
+SQL> -- extent 128
+SQL> create tablespace spc1 extents 128 datafile 'spc_1_file' size 32M;
+
+Succeed.
+
+SQL> select name, extent_size, SEGMENT_COUNT, FILE_COUNT from v$tablespace where name='SPC1';
+
+NAME                                                             EXTENT_SIZE  SEGMENT_COUNT FILE_COUNT  
+---------------------------------------------------------------- ------------ ------------- ------------
+SPC1                                                             128          0             1           
+
+1 rows fetched.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> create table t1(id int, name varchar(8000)) tablespace spc1;
+
+Succeed.
+
+SQL> select SEGMENT_NAME, TABLESPACE_NAME, BYTES, PAGES, EXTENTS from user_segments where segment_name='T1';
+
+SEGMENT_NAME                                                     TABLESPACE_NAME                                                  BYTES                PAGES                EXTENTS             
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- -------------------- --------------------
+T1                                                               SPC1                                                             0                    0                    0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE or replace function space_func1(startall int,endall int) RETURN boolean as
+  2 i INT;
+  3 BEGIN
+  4  if startall > endall then
+  5   return false;
+  6  else
+  7   FOR i IN startall..endall LOOP
+  8         insert into t1 values (i, lpad('0',8000,'0'));
+  9   END LOOP;
+ 10   return true;
+ 11  end if;
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> select space_func1(1,130);
+
+SPACE_FUNC1(1,130)
+------------------
+TRUE              
+
+1 rows fetched.
+
+SQL> select SEGMENT_NAME, TABLESPACE_NAME, BYTES, PAGES, EXTENTS from user_segments where segment_name='T1';
+
+SEGMENT_NAME                                                     TABLESPACE_NAME                                                  BYTES                PAGES                EXTENTS             
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- -------------------- --------------------
+T1                                                               SPC1                                                             2097152              256                  2                   
+
+1 rows fetched.
+
+SQL> drop  tablespace spc1 including contents;
+
+Succeed.
+
+SQL> create tablespace spc1  datafile 'spc_1_file' size 32M;
+
+Succeed.
+
+SQL> select name, extent_size, SEGMENT_COUNT, FILE_COUNT from v$tablespace where name='SPC1';
+
+NAME                                                             EXTENT_SIZE  SEGMENT_COUNT FILE_COUNT  
+---------------------------------------------------------------- ------------ ------------- ------------
+SPC1                                                             8            0             1           
+
+1 rows fetched.
+
+SQL> drop  tablespace spc1 including contents;
+
+Succeed.
+
+SQL> alter system set default_extents=64;
+
+Succeed.
+
+SQL> create tablespace spc1  datafile 'spc_1_file' size 32M;
+
+Succeed.
+
+SQL> select name, extent_size, SEGMENT_COUNT, FILE_COUNT from v$tablespace where name='SPC1';
+
+NAME                                                             EXTENT_SIZE  SEGMENT_COUNT FILE_COUNT  
+---------------------------------------------------------------- ------------ ------------- ------------
+SPC1                                                             64           0             1           
+
+1 rows fetched.
+
+SQL> drop  tablespace spc1 including contents;
+
+Succeed.
+
+SQL> alter system set default_extents=1;
+
+CT-00202, The parameter value "DEFAULT_EXTENTS" was invalid
+SQL> alter system set default_extents=30;
+
+CT-00202, The parameter value "DEFAULT_EXTENTS" was invalid
+SQL> alter system set default_extents=32;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019012504729 --
+SQL> drop table if exists false_2;
+
+Succeed.
+
+SQL> create table false_2(A int,b int,g int,h int,d date);
+
+Succeed.
+
+SQL> create index index_false_1 on false_2(b,g);
+
+Succeed.
+
+SQL> CREATE TABLESPACE human_subsidies_2018 DATAFILE 'subsidies2018' SIZE 32M;
+
+Succeed.
+
+SQL> alter index index_false_1 on false_2 REBUILD online TABLESPACE human_subsidies_2018;
+
+Succeed.
+
+SQL> drop tablespace human_subsidies_2018 including contents and datafiles;
+
+CT-00790, Failed to drop tablespace HUMAN_SUBSIDIES_2018, because index of table in the space was created in other space
+SQL> 
+SQL> -- tablespace usage threshold --
+SQL> alter system set TABLESPACE_USAGE_ALARM_THRESHOLD = 0;
+
+Succeed.
+
+SQL> alter system set TABLESPACE_USAGE_ALARM_THRESHOLD = 101;
+
+CT-00202, The parameter value "TABLESPACE_USAGE_ALARM_THRESHOLD" was invalid
+SQL> alter system set TABLESPACE_USAGE_ALARM_THRESHOLD = 100;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2019043001699 ----
+SQL> create tablespace path_not_exists datafile '/path_not_exists/file' size 1M;
+
+CT-00003, Failed to create the file /path_not_exists/file, the error code was 2
+SQL> alter database datafile '/path_not_exists/file' autoextend on;
+
+CT-00771, data file /path_not_exists/file does not exist
+SQL> 
+SQL> -- llt --
+SQL> create tablespace set_tablespace_autooffline_on datafile 'autooffline' size 1M;
+
+Succeed.
+
+SQL> alter tablespace set_tablespace_autooffline_on autooffline on;
+
+Succeed.
+
+SQL> drop tablespace set_tablespace_autooffline_on including contents and datafiles;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2019072612142
+SQL> create tablespace nologging_extent_dynamic datafile ' nologging_extent_dynamic' size 1M extent autoallocate nologging;
+
+CT-00101, Capability: create nologging tablespace with extent autoallocate not supported
+SQL> 
+SQL> -- DTS2019102212003
+SQL> alter tablespace system rename to test_rename;
+
+CT-00613, Invalid operation, can't rename SYSTEM tablespace.
+SQL> alter tablespace undo rename to test_rename;
+
+CT-00613, Invalid operation, can't rename UNDO tablespace.
+SQL> 
+SQL> -- DTS2019101001056
+SQL> alter tablespace sysaux autooffline on;
+
+CT-00613, Invalid operation,forbid to set system space auto offline
+SQL> alter tablespace system autooffline on;
+
+CT-00613, Invalid operation,forbid to set system space auto offline
+SQL> 
+SQL> CREATE undo TABLESPACE undo_2 DATAFILE 'undo_3' SIZE 2M REUSE AUTOEXTEND ON nologging;
+
+CT-00101, Capability: create UNDO tablespace with nologging not supported
+SQL> CREATE undo TABLESPACE undo_3 DATAFILE 'undo_4' SIZE 2M EXTENT AUTOALLOCATE;
+
+CT-00101, Capability: create UNDO tablespace with extent autoallocate not supported
+SQL> CREATE undo TABLESPACE undo_4 DATAFILE 'undo_4' SIZE 2M ENCRYPTION;
+
+CT-00101, Capability: create UNDO tablespace using encrypt not supported
+SQL> CREATE undo TABLESPACE undo_5 EXTENTS 8 DATAFILE 'undo_4' SIZE 2M;
+
+CT-00101, Capability: create UNDO tablespace using extents option not supported
+SQL> CREATE undo TABLESPACE undo_2 EXTENTS 8 DATAFILE 'undo_3' SIZE 2M REUSE AUTOEXTEND ON nologging;
+
+CT-00101, Capability: create UNDO tablespace using extents option not supported
+SQL> 
+SQL> --DTS2020031607219
+SQL> conn / as sysdba
+
+connected.
+
+SQL> DROP USER IF EXISTS CHAN;
+
+Succeed.
+
+SQL> create user chan identified by Cantian_234 PROFILE "DEFAULT" DEFAULT TABLESPACE system;
+
+CT-00792, Can not specify SYSTEM tablespace as user default tablespace.
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> CREATE TABLESPACE TABLESPACEE_1 DATAFILE 'dfile_tbs_1' SIZE 32M AUTOEXTEND ON NEXT 10M;
+
+Succeed.
+
+SQL> ALTER USER SYS DEFAULT TABLESPACE TABLESPACEE_1;
+
+Succeed.
+
+SQL> ALTER USER SYS DEFAULT TABLESPACE system;
+
+Succeed.
+
+SQL> DROP TABLESPACE TABLESPACEE_1 INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL> 
+SQL> --DTS202008060HVUXFP0D00
+SQL> create undo tablespace undo_new1 datafile 'undo_new1_1' size 128M, 'undo_new1_2' size 128M;
+
+Succeed.
+
+SQL> select STATUS,TYPE,BYTES,AUTO_EXTEND,AUTO_EXTEND_SIZE,MAX_SIZE,HIGH_WATER_MARK from dv_data_files where FILE_NAME like '%undo_new1%';
+
+STATUS               TYPE                 BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE             HIGH_WATER_MARK
+-------------------- -------------------- -------------------- -------------------- -------------------- -------------------- ---------------
+ONLINE               FILE                 134217728            FALSE                0                    34359738368          2
+ONLINE               FILE                 134217728            FALSE                0                    34359738368          1
+
+2 rows fetched.
+
+SQL> alter tablespace undo_new1 autoextend on maxsize 256M;
+
+Succeed.
+
+SQL> select STATUS,TYPE,BYTES,AUTO_EXTEND,AUTO_EXTEND_SIZE,MAX_SIZE,HIGH_WATER_MARK from dv_data_files where FILE_NAME like '%undo_new1%';
+
+STATUS               TYPE                 BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE             HIGH_WATER_MARK
+-------------------- -------------------- -------------------- -------------------- -------------------- -------------------- ---------------
+ONLINE               FILE                 134217728            TRUE                 16777216             268435456            2
+ONLINE               FILE                 134217728            TRUE                 16777216             268435456            1
+
+2 rows fetched.
+
+SQL> alter tablespace undo_new1 autoextend on next 5M;
+
+Succeed.
+
+SQL> select STATUS,TYPE,BYTES,AUTO_EXTEND,AUTO_EXTEND_SIZE,MAX_SIZE,HIGH_WATER_MARK from dv_data_files where FILE_NAME like '%undo_new1%';
+
+STATUS               TYPE                 BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE             HIGH_WATER_MARK
+-------------------- -------------------- -------------------- -------------------- -------------------- -------------------- ---------------
+ONLINE               FILE                 134217728            TRUE                 5242880              268435456            2
+ONLINE               FILE                 134217728            TRUE                 5242880              268435456            1
+
+2 rows fetched.
+
+SQL> 
+SQL> drop tablespace undo_new1 INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL> create undo tablespace undo_new1 datafile 'undo_new1_1' size 128M, 'undo_new1_2' size 128M;
+
+Succeed.
+
+SQL> select STATUS,TYPE,BYTES,AUTO_EXTEND,AUTO_EXTEND_SIZE,MAX_SIZE,HIGH_WATER_MARK from dv_data_files where FILE_NAME like '%undo_new1%';
+
+STATUS               TYPE                 BYTES                AUTO_EXTEND          AUTO_EXTEND_SIZE     MAX_SIZE             HIGH_WATER_MARK
+-------------------- -------------------- -------------------- -------------------- -------------------- -------------------- ---------------
+ONLINE               FILE                 134217728            FALSE                0                    34359738368          2
+ONLINE               FILE                 134217728            FALSE                0                    34359738368          1
+
+2 rows fetched.
+
+SQL> drop tablespace undo_new1 INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL> 
+SQL> --DTS202009010PYVZDP0H00
+SQL> create tablespace DTS202009010PYVZDP0H00 datafile 'DTS202009010PYVZDP0H00' size 20M EXTENT AUTOALLOCATE;
+
+Succeed.
+
+SQL> select TABLESPACE_NAME,TOTAL_SIZE/1024/1024,USED_SIZE/1024/1024 from adm_tablespaces where TABLESPACE_NAME='DTS202009010PYVZDP0H00';
+
+TABLESPACE_NAME                                                  TOTAL_SIZE/1024/1024 USED_SIZE/1024/1024 
+---------------------------------------------------------------- -------------------- --------------------
+DTS202009010PYVZDP0H00                                           20                   1                   
+
+1 rows fetched.
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> CREATE or replace procedure calc_free_space_DTS202009010PYVZDP0H00 () is
+  2 tid INT;
+  3 free int;
+  4 used int;
+  5 totle int;
+  6 result_size int;
+  7 BEGIN
+  8 SELECT ID INTO tid FROM dv_tablespaces where NAME='DTS202009010PYVZDP0H00';
+  9 SELECT TOTAL_SIZE, USED_SIZE INTO totle, used FROM adm_tablespaces where TABLESPACE_NAME='DTS202009010PYVZDP0H00';
+ 10 select sum(BYTES) into free from table(dba_free_space(tid));
+ 11 DBE_OUTPUT.PRINT_LINE('expected free is ' || (totle-used));
+ 12 DBE_OUTPUT.PRINT_LINE('calc result is ' || (totle-free-used));
+ 13 DBE_OUTPUT.PRINT_LINE('free szie is ' || free);
+ 14 end;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> create table dts_reuse(a int)tablespace DTS202009010PYVZDP0H00;
+
+Succeed.
+
+SQL> insert into dts_reuse values(1);
+
+1 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+1 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+2 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+4 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+8 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+16 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+32 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+64 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+128 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+256 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+512 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+1024 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+2048 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+4096 rows affected.
+
+SQL> truncate table dts_reuse reuse storage;
+
+Succeed.
+
+SQL> call calc_free_space_DTS202009010PYVZDP0H00();
+
+expected free is 19726336
+calc result is 0
+free szie is 19726336
+
+PL/SQL procedure successfully completed.
+
+SQL> create table func_free_space tablespace DTS202009010PYVZDP0H00 as select * from dts_reuse;
+
+Succeed.
+
+SQL> insert into dts_reuse values(1);
+
+1 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+1 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+2 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+4 rows affected.
+
+SQL> insert into dts_reuse select * from dts_reuse;
+
+8 rows affected.
+
+SQL> drop table dts_reuse purge;
+
+Succeed.
+
+SQL> select sleep(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> 
+SQL> call calc_free_space_DTS202009010PYVZDP0H00();
+
+expected free is 19922944
+calc result is 0
+free szie is 19922944
+
+PL/SQL procedure successfully completed.
+
+SQL> select TABLESPACE_NAME,TOTAL_SIZE/1024/1024,USED_SIZE/1024/1024 from adm_tablespaces where TABLESPACE_NAME='DTS202009010PYVZDP0H00';
+
+TABLESPACE_NAME                                                  TOTAL_SIZE/1024/1024 USED_SIZE/1024/1024 
+---------------------------------------------------------------- -------------------- --------------------
+DTS202009010PYVZDP0H00                                           20                   1                   
+
+1 rows fetched.
+
+SQL> drop tablespace DTS202009010PYVZDP0H00 INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL> 
+SQL> --func dba_free_space
+SQL> select TABLESPACE_NAME,FILE_ID from table(dba_free_space(0)) limit 1;
+
+TABLESPACE_NAME                                                  FILE_ID     
+---------------------------------------------------------------- ------------
+SYSTEM                                                           0           
+
+1 rows fetched.
+
+SQL> select TABLESPACE_NAME,FILE_ID from table(dba_free_space(1)) limit 1;
+
+TABLESPACE_NAME                                                  FILE_ID     
+---------------------------------------------------------------- ------------
+TEMP                                                             1           
+
+1 rows fetched.
+
+SQL> select TABLESPACE_NAME,FILE_ID from table(dba_free_space(2)) limit 1;
+
+TABLESPACE_NAME                                                  FILE_ID     
+---------------------------------------------------------------- ------------
+UNDO                                                             2           
+
+1 rows fetched.
+
+SQL> select TABLESPACE_NAME,FILE_ID from table(dba_free_space(3)) limit 1;
+
+TABLESPACE_NAME                                                  FILE_ID     
+---------------------------------------------------------------- ------------
+USERS                                                            3           
+
+1 rows fetched.
+
+SQL> select TABLESPACE_NAME,FILE_ID from table(dba_free_space(4)) limit 1;
+
+TABLESPACE_NAME                                                  FILE_ID     
+---------------------------------------------------------------- ------------
+TEMP2                                                            4           
+
+1 rows fetched.
+
+SQL> select TABLESPACE_NAME,FILE_ID from table(dba_free_space(5)) limit 1;
+
+TABLESPACE_NAME                                                  FILE_ID     
+---------------------------------------------------------------- ------------
+TEMP2_UNDO                                                       5           
+
+1 rows fetched.
+
+SQL> select TABLESPACE_NAME,FILE_ID from table(dba_free_space(6)) limit 1;
+
+TABLESPACE_NAME                                                  FILE_ID     
+---------------------------------------------------------------- ------------
+SYSAUX                                                           6           
+
+1 rows fetched.
+
+SQL> 
+SQL> -- normal
+SQL> create tablespace FUNC_FREE_SPACE datafile 'func_free_space' size 1040k;
+
+Succeed.
+
+SQL> create table t_free_space(a int, b varchar(30), c varchar(30)) tablespace FUNC_FREE_SPACE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE or replace procedure insert_t_free_space(num int) is
+  2 i int;
+  3 begin
+  4   for i in 1 .. num loop
+  5     insert into t_free_space values(i, 'jjjjjjjjjjjjjjjjjjjjjjjjjjjjjj', 'jjjjjjjjjjjjjjjjjjjjjjjjjjjjjj');
+  6   end loop;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE or replace procedure calc_free_space_FUNC_FREE_SPACE () is
+  2 tid INT;
+  3 free int;
+  4 used int;
+  5 totle int;
+  6 result_size int;
+  7 BEGIN
+  8 SELECT ID INTO tid FROM dv_tablespaces where NAME='FUNC_FREE_SPACE';
+  9 SELECT TOTAL_SIZE, USED_SIZE INTO totle, used FROM adm_tablespaces where TABLESPACE_NAME='FUNC_FREE_SPACE';
+ 10 select sum(BYTES) into free from table(dba_free_space(tid));
+ 11 DBE_OUTPUT.PRINT_LINE('expected free is ' || (totle-used));
+ 12 DBE_OUTPUT.PRINT_LINE('calc result is ' || (totle-free-used));
+ 13 DBE_OUTPUT.PRINT_LINE('free size is ' || free);
+ 14 end;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 1048576
+calc result is 0
+free size is 1048576
+
+PL/SQL procedure successfully completed.
+
+SQL> call insert_t_free_space(10000);
+
+PL/SQL procedure successfully completed.
+
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 0
+calc result is 
+free size is 
+
+PL/SQL procedure successfully completed.
+
+SQL> call insert_t_free_space(1200);
+
+PL/SQL procedure successfully completed.
+
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 0
+calc result is 
+free size is 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> alter tablespace FUNC_FREE_SPACE add datafile 'func_free_space2' size 1032k;
+
+Succeed.
+
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 1048576
+calc result is 0
+free size is 1048576
+
+PL/SQL procedure successfully completed.
+
+SQL> call insert_t_free_space(10000);
+
+PL/SQL procedure successfully completed.
+
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 0
+calc result is 
+free size is 
+
+PL/SQL procedure successfully completed.
+
+SQL> drop tablespace FUNC_FREE_SPACE INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL> 
+SQL> -- bitmap
+SQL> create tablespace FUNC_FREE_SPACE datafile 'func_free_space' size 2M, 'func_free_space2' size 3M EXTENT AUTOALLOCATE;
+
+Succeed.
+
+SQL> create table t_free_space(a int, b varchar(30), c varchar(30)) tablespace FUNC_FREE_SPACE;
+
+Succeed.
+
+SQL> 
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 3145728
+calc result is 0
+free size is 3145728
+
+PL/SQL procedure successfully completed.
+
+SQL> call insert_t_free_space(20000);
+
+PL/SQL procedure successfully completed.
+
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 1048576
+calc result is 0
+free size is 1048576
+
+PL/SQL procedure successfully completed.
+
+SQL> call insert_t_free_space(10000);
+
+PL/SQL procedure successfully completed.
+
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 0
+calc result is 
+free size is 
+
+PL/SQL procedure successfully completed.
+
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 0
+calc result is 
+free size is 
+
+PL/SQL procedure successfully completed.
+
+SQL> alter tablespace FUNC_FREE_SPACE add datafile 'func_free_space3' size 2M;
+
+Succeed.
+
+SQL> call insert_t_free_space(10000);
+
+PL/SQL procedure successfully completed.
+
+SQL> call calc_free_space_FUNC_FREE_SPACE();
+
+expected free is 0
+calc result is 
+free size is 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop tablespace FUNC_FREE_SPACE INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL> 
+SQL> -- resize datafile
+SQL> alter database datafile 'system' resize 127M;
+
+CT-00881, File size specified is smaller than minimum required
+SQL> alter database datafile 'sysaux' resize 127M;
+
+CT-00881, File size specified is smaller than minimum required
+SQL> alter database datafile 'undo' resize 127M;
+
+CT-00881, File size specified is smaller than minimum required
+SQL>
+SQL> -- shrink space
+SQL> alter tablespace system shrink space keep 127M;
+
+CT-00601, Sql syntax error: size value is smaller than minimum(134217728) required
+SQL> alter tablespace sysaux shrink space keep 127M;
+
+CT-00601, Sql syntax error: size value is smaller than minimum(134217728) required
+SQL> alter tablespace undo shrink space keep 127M;
+
+CT-00601, Sql syntax error: size value is smaller than minimum(268435456) required
+SQL>
+SQL> -- add datafile
+SQL> alter tablespace system add datafile 'system2' size 127M;
+
+CT-00601, Sql syntax error: size value is smaller than minimum(134217728) required
+SQL> alter tablespace sysaux add datafile 'sysaux2' size 127M;
+
+CT-00601, Sql syntax error: size value is smaller than minimum(134217728) required
+SQL> alter tablespace undo add datafile 'undo2' size 127M;
+
+CT-00601, Sql syntax error: size value is smaller than minimum(134217728) required
+SQL>
+SQL> -- create space
+SQL> create undo tablespace undo2 datafile 'undo2_1' size 127M;
+CT-00601, Sql syntax error: size value is smaller than minimum(134217728) required
+SQL> 
+SQL> ---punch space
+SQL> alter tablespace undo punch;
+
+CT-00130, Operation punch tablespace is not supported on default tablespace
+SQL> create tablespace PUNCH_SPACE datafile 'p_space' size 32M, 'p_space2' size 32M AUTOEXTEND ON NEXT 10M;
+
+Succeed.
+
+SQL> alter tablespace PUNCH_SPACE punch;
+
+Succeed.
+
+SQL> drop tablespace PUNCH_SPACE INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL> create tablespace PUNCH_SPACE datafile 'p_space' size 32M, 'p_space2' size 32M AUTOEXTEND ON NEXT 10M EXTENT AUTOALLOCATE;
+
+Succeed.
+
+SQL> alter tablespace PUNCH_SPACE punch 1s;
+
+CT-00601, Sql syntax error: expected end but "1s" found
+SQL> alter tablespace PUNCH_SPACE punch size;
+
+CT-00601, [1:40]Sql syntax error: size must be a positive long integer
+SQL> alter tablespace PUNCH_SPACE punch size 10g;
+
+Succeed.
+SQL> drop tablespace PUNCH_SPACE INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL>
+SQL> --DTS202105210JDNJ0P0J00
+SQL> SELECT DBE_DIAGNOSE.DBA_SPCSIZE(600,'PAGE');
+
+CT-00794, [1:8]tablespace id 600 does not exists
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_space cascade;
+
+Succeed.
+
+SQL> create user test_space identified by Cantian_234;
+
+Succeed.
+
+SQL> grant resource, connect to test_space;
+
+Succeed.
+
+SQL> conn test_space/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> -- create table
+SQL> create table sys_tab_t1(id int, score int) tablespace system;
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> create table sys_tab_t2(id int, score int) tablespace sysaux;
+
+CT-01013, The user lacks privilege to use SYSAUX tablespace
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_2
+  2 (
+  3     sn     NUMBER(38),   
+  4     num    int,
+  5     PRIMARY KEY ( sn ) using index tablespace system
+  6 );
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> 
+SQL> CREATE TABLE T01(C1 INT, C2 CLOB) LOB(C2) STORE AS (TABLESPACE system);
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> 
+SQL> -- create part table
+SQL> CREATE TABLE test_sys_part(ID INT, C1 INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (maxvalue)
+  6 ) TABLESPACE system;
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> 
+SQL> -- hash part
+SQL> drop table if exists test_hash_tab;
+
+Succeed.
+
+SQL> create table test_hash_tab (
+  2 c1 char(20) primary key,
+  3 c2 number(8) not null
+  4 )
+  5 partition by hash(c1)
+  6 (
+  7 partition part_01,
+  8 partition part_02 tablespace sysaux,
+  9 partition part_03 tablespace system
+ 10 );
+
+CT-01013, The user lacks privilege to use SYSAUX tablespace
+SQL> 
+SQL> -- range part
+SQL> DROP TABLE IF EXISTS TEST_INTREVAL_ALL_PART_STORE;
+
+Succeed.
+
+SQL> create table TEST_INTREVAL_ALL_PART_STORE
+  2 ( EMPNO VARCHAR2(20) NOT NULL,
+  3 EMPNAME VARCHAR2(20),
+  4 JOB VARCHAR2(20),
+  5 MGR NUMBER(38),
+  6 HIREDATE DATE,
+  7 SALARY NUMBER(38),
+  8 DEPTNO NUMBER(38))
+  9 PARTITION BY RANGE (HIREDATE)
+ 10 INTERVAL (NUMTODSINTERVAL(1,'DAY'))
+ 11 STORE IN(tablespace users, tablespace system)
+ 12 (PARTITION ALL_PART_STORE_PART01
+ 13 VALUES LESS THAN (TO_DATE ('02/02/1981', 'MM/DD/YYYY')),
+ 14 PARTITION ALL_PART_STORE_PART02
+ 15 VALUES LESS THAN (TO_DATE ('03/02/1981', 'MM/DD/YYYY'))
+ 16 );
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> 
+SQL> -- subpart
+SQL> drop table if exists test_subpart_space;
+
+Succeed.
+
+SQL> create table test_subpart_space(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50) tablespace system,
+  6 subpartition p12 values less than(100) tablespace system
+  7 ),
+  8 partition p2 values less than(100) 
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 ),
+ 13 partition p3 values less than(150)
+ 14 (
+ 15 subpartition p31 values less than(50),
+ 16 subpartition p32 values less than(100)
+ 17 )
+ 18 );
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> 
+SQL> 
+SQL> -- add part
+SQL> drop table if exists test_hash_tab;
+
+Succeed.
+
+SQL> create table test_hash_tab (
+  2 c1 char(20) primary key,
+  3 c2 number(8) not null
+  4 )
+  5 partition by hash(c1)
+  6 (
+  7 partition part_01,
+  8 partition part_02,
+  9 partition part_03
+ 10 );
+
+Succeed.
+
+SQL> 
+SQL> alter table test_hash_tab add partition part_04 tablespace SYSTEM;
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> 
+SQL> -- add subpart
+SQL> drop table if exists test_add_subpart;
+
+Succeed.
+
+SQL> create table test_add_subpart(id int) PARTITION BY RANGE(ID) INTERVAL(50) SUBPARTITION BY RANGE(id)
+  2 (
+  3 PARTITION P1 VALUES LESS THAN(50)
+  4 (
+  5 SUBPARTITION p11 VALUES LESS THAN (2),
+  6 SUBPARTITION p12 VALUES LESS THAN (4),
+  7 SUBPARTITION P13 VALUES LESS THAN (6)
+  8 )
+  9 );
+
+Succeed.
+
+SQL> 
+SQL> alter table test_add_subpart modify partition p1 add subpartition p14 values less than(8) tablespace SYSTEM;
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> 
+SQL> -- index
+SQL> drop table if exists T81;
+
+Succeed.
+
+SQL> CREATE TABLE T81(C1 INT, C2 INT);
+
+Succeed.
+
+SQL> CREATE INDEX I81 ON T81(C1) TABLESPACE system;
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> CREATE INDEX I82 ON T81(C2) TABLESPACE sysaux;
+
+CT-01013, The user lacks privilege to use SYSAUX tablespace
+SQL> ALTER TABLE T81 ADD CONSTRAINT CONS UNIQUE(C2) USING INDEX TABLESPACE system;
+
+CT-01013, The user lacks privilege to use SYSTEM tablespace
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_space cascade;
+
+Succeed.
+
+SQL> create user test_space identified by Cantian_234;
+
+Succeed.
+
+SQL> grant resource, connect to test_space;
+
+Succeed.
+
+SQL> grant use any tablespace to test_space;
+
+Succeed.
+
+SQL> conn test_space/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> -- create table
+SQL> create table sys_tab_t1(id int, score int) tablespace system;
+
+Succeed.
+
+SQL> create table sys_tab_t2(id int, score int) tablespace sysaux;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_2
+  2 (
+  3     sn     NUMBER(38),   
+  4     num    int,
+  5     PRIMARY KEY ( sn ) using index tablespace system
+  6 );
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE T01(C1 INT, C2 CLOB) LOB(C2) STORE AS (TABLESPACE system);
+
+Succeed.
+
+SQL> 
+SQL> -- create part table
+SQL> CREATE TABLE test_sys_part(ID INT, C1 INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (maxvalue)
+  6 ) TABLESPACE system;
+
+Succeed.
+
+SQL> 
+SQL> -- hash part
+SQL> drop table if exists test_hash_tab;
+
+Succeed.
+
+SQL> create table test_hash_tab (
+  2 c1 char(20) primary key,
+  3 c2 number(8) not null
+  4 )
+  5 partition by hash(c1)
+  6 (
+  7 partition part_01,
+  8 partition part_02 tablespace sysaux,
+  9 partition part_03 tablespace system
+ 10 );
+
+Succeed.
+
+SQL> 
+SQL> -- range part
+SQL> DROP TABLE IF EXISTS TEST_INTREVAL_ALL_PART_STORE;
+
+Succeed.
+
+SQL> create table TEST_INTREVAL_ALL_PART_STORE
+  2 ( EMPNO VARCHAR2(20) NOT NULL,
+  3 EMPNAME VARCHAR2(20),
+  4 JOB VARCHAR2(20),
+  5 MGR NUMBER(38),
+  6 HIREDATE DATE,
+  7 SALARY NUMBER(38),
+  8 DEPTNO NUMBER(38))
+  9 PARTITION BY RANGE (HIREDATE)
+ 10 INTERVAL (NUMTODSINTERVAL(1,'DAY'))
+ 11 STORE IN(tablespace users, tablespace system)
+ 12 (PARTITION ALL_PART_STORE_PART01
+ 13 VALUES LESS THAN (TO_DATE ('02/02/1981', 'MM/DD/YYYY')),
+ 14 PARTITION ALL_PART_STORE_PART02
+ 15 VALUES LESS THAN (TO_DATE ('03/02/1981', 'MM/DD/YYYY'))
+ 16 );
+
+Succeed.
+
+SQL> 
+SQL> -- subpart
+SQL> drop table if exists test_subpart_space;
+
+Succeed.
+
+SQL> create table test_subpart_space(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50) tablespace system,
+  6 subpartition p12 values less than(100) tablespace system
+  7 ),
+  8 partition p2 values less than(100) 
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 ),
+ 13 partition p3 values less than(150)
+ 14 (
+ 15 subpartition p31 values less than(50),
+ 16 subpartition p32 values less than(100)
+ 17 )
+ 18 );
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> -- add part
+SQL> drop table if exists test_hash_tab;
+
+Succeed.
+
+SQL> create table test_hash_tab (
+  2 c1 char(20) primary key,
+  3 c2 number(8) not null
+  4 )
+  5 partition by hash(c1)
+  6 (
+  7 partition part_01,
+  8 partition part_02,
+  9 partition part_03
+ 10 );
+
+Succeed.
+
+SQL> 
+SQL> alter table test_hash_tab add partition part_04 tablespace SYSTEM;
+
+Succeed.
+
+SQL> 
+SQL> -- add subpart
+SQL> drop table if exists test_add_subpart;
+
+Succeed.
+
+SQL> create table test_add_subpart(id int) PARTITION BY RANGE(ID) INTERVAL(50) SUBPARTITION BY RANGE(id)
+  2 (
+  3 PARTITION P1 VALUES LESS THAN(50)
+  4 (
+  5 SUBPARTITION p11 VALUES LESS THAN (2),
+  6 SUBPARTITION p12 VALUES LESS THAN (4),
+  7 SUBPARTITION P13 VALUES LESS THAN (6)
+  8 )
+  9 );
+
+Succeed.
+
+SQL> 
+SQL> alter table test_add_subpart modify partition p1 add subpartition p14 values less than(8) tablespace SYSTEM;
+
+Succeed.
+
+SQL> 
+SQL> -- index
+SQL> drop table if exists T81;
+
+Succeed.
+
+SQL> CREATE TABLE T81(C1 INT, C2 INT);
+
+Succeed.
+
+SQL> CREATE INDEX I81 ON T81(C1) TABLESPACE system;
+
+Succeed.
+
+SQL> CREATE INDEX I82 ON T81(C2) TABLESPACE sysaux;
+
+Succeed.
+
+SQL> ALTER TABLE T81 ADD CONSTRAINT CONS UNIQUE(C2) USING INDEX TABLESPACE system;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists test_space cascade;
+Succeed.
+
+SQL> 
+SQL> -- datafile_count
+SQL> create tablespace datafile_count_space datafile 'datafile_count_1' size 32M;
+
+Succeed.
+
+SQL> alter tablespace datafile_count_space add datafile 'datafile_count_2' size 32M;
+
+Succeed.
+
+SQL> select name, file_count from dv_tablespaces where name = 'DATAFILE_COUNT_SPACE';
+
+NAME                                                             FILE_COUNT
+---------------------------------------------------------------- ------------
+DATAFILE_COUNT_SPACE                                             2
+
+1 rows fetched.
+
+SQL> alter tablespace datafile_count_space drop datafile 'datafile_count_2';
+
+Succeed.
+
+SQL> select name, file_count from dv_tablespaces where name = 'DATAFILE_COUNT_SPACE';
+
+NAME                                                             FILE_COUNT
+---------------------------------------------------------------- ------------
+DATAFILE_COUNT_SPACE                                             1
+
+1 rows fetched.

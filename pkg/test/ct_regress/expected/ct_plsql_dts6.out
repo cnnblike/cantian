@@ -1,0 +1,1369 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_plsql_dts6 cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_dts6 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to gs_plsql_dts6;
+
+Succeed.
+
+SQL> conn gs_plsql_dts6/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> alter system set EMPTY_STRING_AS_NULL=false;
+
+Succeed.
+
+SQL> drop table if exists tt_clob;
+
+Succeed.
+
+SQL> create table tt_clob(a int primary key, jsdoc clob);
+
+Succeed.
+
+SQL> ALTER TABLE tt_clob ADD CHECK(jsdoc IS JSON);
+
+Succeed.
+
+SQL> insert into tt_clob values(1,'{"fruit": [{"name": "banana", "size": "medium"}]}');
+
+1 rows affected.
+
+SQL> insert into tt_clob values(1,'') on duplicate key update a=2,jsdoc='';
+
+2 rows affected.
+
+SQL> alter system set EMPTY_STRING_AS_NULL=true;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2     sql1 varchar(1024);
+  3     val int;
+  4 begin
+  5     savepoint aa1;
+  6     begin
+  7         savepoint aa2;
+  8         execute immediate 'savepoint aa3';
+  9     end;
+ 10     select value into val from dv_gma_stats where  POOL='sql pool' and NAME='free page count';
+ 11     for i in 1..val loop
+ 12         sql1 := 'select '||i||' from sys_dummy';
+ 13         execute immediate sql1;
+ 14     end loop;
+ 15     select value into val from dv_gma_stats where  POOL='sql pool' and NAME='free page count';
+ 16     --dbe_output.print(val);
+ 17     execute immediate 'rollback to aa3';
+ 18     rollback to aa2;
+ 19     rollback to aa1;
+ 20 end;
+ 21 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --PL_MAX_BLOCK_DEPTH
+SQL> DROP TABLE IF EXISTS table_temp;
+
+Succeed.
+
+SQL> CREATE TABLE table_temp(f1 INT, f2 VARCHAR2(20));
+
+Succeed.
+
+SQL> --128
+SQL> CREATE OR REPLACE PROCEDURE p_no_param IS
+  2 begin
+  3 begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin
+  4   INSERT INTO table_temp VALUES(1,'xxx');
+  5 end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> call p_no_param();
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --129
+SQL> CREATE OR REPLACE PROCEDURE p_no_param IS
+  2 begin
+  3 begin
+  4 begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin begin
+  5   INSERT INTO table_temp VALUES(1,'xxx');
+  6 end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end; end;
+  7 end;
+  8 end;
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.P_NO_PARAM) terminated with compiling errors
+[4:757] PLC-00943 PL/SQL: block too complex, depth exceed the limitation 128
+
+
+SQL> call p_no_param();
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00944 PL/SQL(SYS.P_NO_PARAM) terminated with compiling errors
+[4:757] PLC-00943 PL/SQL: block too complex, depth exceed the limitation 128
+
+
+SQL> DROP PROCEDURE p_no_param;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS table_temp;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS t_sql_plan PURGE;
+
+Succeed.
+
+SQL> CREATE TABLE t_sql_plan(SNAP_TIME  DATE)
+  2 PARTITION BY RANGE(SNAP_TIME) INTERVAL (NUMTODSINTERVAL(1,'DAY')) (PARTITION P_0 VALUES LESS THAN (TO_DATE('2009-02-01','YYYY-MM-DD')));
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE WSR$WRITE_INSTANCE_SNAP2
+  2 AS
+  3 BEGIN
+  4     INSERT INTO t_sql_plan( SNAP_TIME)VALUES(SYSDATE);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS t_sql_plan PURGE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE function f_random_string() return VARCHAR2 AS
+  2 c VARCHAR2(2000);
+  3 BEGIN
+  4     c := DBE_RANDOM.GET_STRING(flag  => 'a',len  => 5);
+  5     c := DBE_RANDOM.GET_VALUE(2,1);
+  6     return 1;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL>
+SQL> select f_random_string();
+
+F_RANDOM_STRING()
+----------------------------------------------------------------
+1
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> drop table if exists parallel_scan_tab;
+
+Succeed.
+
+SQL> create table parallel_scan_tab
+  2 (
+  3 a int,
+  4 b varchar(1024)
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2         for i in 1..10 loop
+  3                 insert into parallel_scan_tab values(i,i||i);
+  4         end loop;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 beg_id number;
+  3 end_id number;
+  4 scn_id number;
+  5 d int;
+  6 e int;
+  7 begin
+  8         select BEG,END into beg_id,end_id from table(get_tab_parallel('parallel_scan_tab', 1));
+  9         select current_scn into scn_id from dv_database;
+ 10          execute immediate 'select count(1) from parallel_scan_tab as of scn :x' into d using scn_id;
+ 11          dbe_output.print_line(d);
+ 12         insert into parallel_scan_tab values(11,'bb');
+ 13         insert into parallel_scan_tab values(12,'gg');
+ 14         commit;
+ 15         select count(1) into e from table(get_tab_rows('parallel_scan_tab', -1,scn_id,NULL, beg_id,end_id)) ;
+ 16         dbe_output.print_line(e);
+ 17 end;
+ 18 /
+
+10
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace function fun_stack_depth_002(num int) return clob
+  2 is
+  3  v_lang clob := 'abc';
+  4 BEGIN
+  5  FOR I IN 1 .. num 
+  6  LOOP
+  7  FOR I IN 1 .. num 
+  8  LOOP
+  9  FOR I IN 1 .. num 
+ 10  LOOP
+ 11  FOR I IN 1 .. num 
+ 12  LOOP
+ 13  FOR I IN 1 .. num 
+ 14  LOOP
+ 15  FOR I IN 1 .. num 
+ 16  LOOP
+ 17  FOR I IN 1 .. num 
+ 18  LOOP
+ 19  FOR I IN 1 .. num 
+ 20  LOOP
+ 21  FOR I IN 1 .. num 
+ 22  LOOP
+ 23  FOR I IN 1 .. num 
+ 24  LOOP
+ 25  FOR I IN 1 .. num 
+ 26  LOOP
+ 27  FOR I IN 1 .. num 
+ 28  LOOP
+ 29  FOR I IN 1 .. num 
+ 30  LOOP
+ 31  FOR I IN 1 .. num 
+ 32  LOOP
+ 33  FOR I IN 1 .. num 
+ 34  LOOP
+ 35  FOR I IN 1 .. num 
+ 36  LOOP
+ 37  FOR I IN 1 .. num 
+ 38  LOOP
+ 39  FOR I IN 1 .. num 
+ 40  LOOP
+ 41  FOR I IN 1 .. num 
+ 42  LOOP
+ 43  FOR I IN 1 .. num 
+ 44  LOOP
+ 45  FOR I IN 1 .. num 
+ 46  LOOP
+ 47  FOR I IN 1 .. num 
+ 48  LOOP
+ 49  FOR I IN 1 .. num 
+ 50  LOOP
+ 51  FOR I IN 1 .. num 
+ 52  LOOP
+ 53  FOR I IN 1 .. num 
+ 54  LOOP
+ 55  FOR I IN 1 .. num 
+ 56  LOOP
+ 57  FOR I IN 1 .. num 
+ 58  LOOP
+ 59  FOR I IN 1 .. num 
+ 60  LOOP
+ 61  FOR I IN 1 .. num 
+ 62  LOOP
+ 63  FOR I IN 1 .. num 
+ 64  LOOP
+ 65  FOR I IN 1 .. num 
+ 66  LOOP
+ 67  FOR I IN 1 .. num 
+ 68  LOOP
+ 69  FOR I IN 1 .. num 
+ 70  LOOP
+ 71  FOR I IN 1 .. num 
+ 72  LOOP
+ 73  FOR I IN 1 .. num 
+ 74  LOOP
+ 75  FOR I IN 1 .. num 
+ 76  LOOP
+ 77  FOR I IN 1 .. num 
+ 78  LOOP
+ 79  FOR I IN 1 .. num 
+ 80  LOOP
+ 81  FOR I IN 1 .. num 
+ 82  LOOP
+ 83  FOR I IN 1 .. num 
+ 84  LOOP
+ 85  FOR I IN 1 .. num 
+ 86  LOOP
+ 87  FOR I IN 1 .. num 
+ 88  LOOP
+ 89  FOR I IN 1 .. num 
+ 90  LOOP
+ 91  FOR I IN 1 .. num 
+ 92  LOOP
+ 93  FOR I IN 1 .. num 
+ 94  LOOP
+ 95  FOR I IN 1 .. num 
+ 96  LOOP
+ 97  FOR I IN 1 .. num 
+ 98  LOOP
+ 99  FOR I IN 1 .. num 
+100  LOOP
+101  FOR I IN 1 .. num 
+102  LOOP
+103  FOR I IN 1 .. num 
+104  LOOP
+105  FOR I IN 1 .. num 
+106  LOOP
+107  FOR I IN 1 .. num 
+108  LOOP
+109  FOR I IN 1 .. num 
+110  LOOP
+111  FOR I IN 1 .. num 
+112  LOOP
+113  FOR I IN 1 .. num 
+114  LOOP
+115  FOR I IN 1 .. num 
+116  LOOP
+117  FOR I IN 1 .. num 
+118  LOOP
+119  FOR I IN 1 .. num 
+120  LOOP
+121  FOR I IN 1 .. num 
+122  LOOP
+123  FOR I IN 1 .. num 
+124  LOOP
+125  FOR I IN 1 .. num 
+126  LOOP
+127  FOR I IN 1 .. num 
+128  LOOP
+129  FOR I IN 1 .. num 
+130  LOOP
+131  FOR I IN 1 .. num 
+132  LOOP
+133  FOR I IN 1 .. num 
+134  LOOP
+135  FOR I IN 1 .. num 
+136  LOOP
+137  FOR I IN 1 .. num 
+138  LOOP
+139  FOR I IN 1 .. num 
+140  LOOP
+141  FOR I IN 1 .. num 
+142  LOOP
+143  FOR I IN 1 .. num 
+144  LOOP
+145  FOR I IN 1 .. num 
+146  LOOP
+147  FOR I IN 1 .. num 
+148  LOOP
+149  FOR I IN 1 .. num 
+150  LOOP
+151  FOR I IN 1 .. num 
+152  LOOP
+153  FOR I IN 1 .. num 
+154  LOOP
+155  FOR I IN 1 .. num 
+156  LOOP
+157  FOR I IN 1 .. num 
+158  LOOP
+159  FOR I IN 1 .. num 
+160  LOOP
+161  FOR I IN 1 .. num 
+162  LOOP
+163  FOR I IN 1 .. num 
+164  LOOP
+165  FOR I IN 1 .. num 
+166  LOOP
+167  FOR I IN 1 .. num 
+168  LOOP
+169  FOR I IN 1 .. num 
+170  LOOP
+171  FOR I IN 1 .. num 
+172  LOOP
+173  FOR I IN 1 .. num 
+174  LOOP
+175  FOR I IN 1 .. num 
+176  LOOP
+177  FOR I IN 1 .. num 
+178  LOOP
+179  FOR I IN 1 .. num 
+180  LOOP
+181  FOR I IN 1 .. num 
+182  LOOP
+183  FOR I IN 1 .. num 
+184  LOOP
+185  FOR I IN 1 .. num 
+186  LOOP
+187  FOR I IN 1 .. num 
+188  LOOP
+189  FOR I IN 1 .. num 
+190  LOOP
+191  FOR I IN 1 .. num 
+192  LOOP
+193  FOR I IN 1 .. num 
+194  LOOP
+195  FOR I IN 1 .. num 
+196  LOOP
+197  FOR I IN 1 .. num 
+198  LOOP
+199  FOR I IN 1 .. num 
+200  LOOP
+201  FOR I IN 1 .. num 
+202  LOOP
+203  FOR I IN 1 .. num 
+204  LOOP
+205  FOR I IN 1 .. num 
+206  LOOP
+207  FOR I IN 1 .. num 
+208  LOOP
+209  FOR I IN 1 .. num 
+210  LOOP
+211  FOR I IN 1 .. num 
+212  LOOP
+213  FOR I IN 1 .. num 
+214  LOOP
+215  FOR I IN 1 .. num 
+216  LOOP
+217  FOR I IN 1 .. num 
+218  LOOP
+219  FOR I IN 1 .. num 
+220  LOOP
+221  FOR I IN 1 .. num 
+222  LOOP
+223  FOR I IN 1 .. num 
+224  LOOP
+225  FOR I IN 1 .. num 
+226  LOOP
+227  FOR I IN 1 .. num 
+228  LOOP
+229  FOR I IN 1 .. num 
+230  LOOP
+231  FOR I IN 1 .. num 
+232  LOOP
+233  FOR I IN 1 .. num 
+234  LOOP
+235  FOR I IN 1 .. num 
+236  LOOP
+237  FOR I IN 1 .. num 
+238  LOOP
+239  FOR I IN 1 .. num 
+240  LOOP
+241  FOR I IN 1 .. num 
+242  LOOP
+243  FOR I IN 1 .. num 
+244  LOOP
+245  FOR I IN 1 .. num 
+246  LOOP
+247  FOR I IN 1 .. num 
+248  LOOP
+249  FOR I IN 1 .. num 
+250  LOOP
+251  FOR I IN 1 .. num 
+252  LOOP
+253  FOR I IN 1 .. num 
+254  LOOP
+255  FOR I IN 1 .. num 
+256  LOOP
+257  FOR I IN 1 .. num 
+258  LOOP
+259     if num>0 then
+260 	v_lang := v_lang || 'e';
+261 	end if;
+262  END LOOP;
+263  END LOOP;
+264  END LOOP;
+265  END LOOP;
+266  END LOOP;
+267  END LOOP;
+268  END LOOP;
+269  END LOOP;
+270  END LOOP;
+271  END LOOP;
+272  END LOOP;
+273  END LOOP;
+274  END LOOP;
+275  END LOOP;
+276  END LOOP;
+277  END LOOP;
+278  END LOOP;
+279  END LOOP;
+280  END LOOP;
+281  END LOOP;
+282  END LOOP;
+283  END LOOP;
+284  END LOOP;
+285  END LOOP;
+286  END LOOP;
+287  END LOOP;
+288  END LOOP;
+289  END LOOP;
+290  END LOOP;
+291  END LOOP;
+292  END LOOP;
+293  END LOOP;
+294  END LOOP;
+295  END LOOP;
+296  END LOOP;
+297  END LOOP;
+298  END LOOP;
+299  END LOOP;
+300  END LOOP;
+301  END LOOP;
+302  END LOOP;
+303  END LOOP;
+304  END LOOP;
+305  END LOOP;
+306  END LOOP;
+307  END LOOP;
+308  END LOOP;
+309  END LOOP;
+310  END LOOP;
+311  END LOOP;
+312  END LOOP;
+313  END LOOP;
+314  END LOOP;
+315  END LOOP;
+316  END LOOP;
+317  END LOOP;
+318  END LOOP;
+319  END LOOP;
+320  END LOOP;
+321  END LOOP;
+322  END LOOP;
+323  END LOOP;
+324  END LOOP;
+325  END LOOP;
+326  END LOOP;
+327  END LOOP;
+328  END LOOP;
+329  END LOOP;
+330  END LOOP;
+331  END LOOP;
+332  END LOOP;
+333  END LOOP;
+334  END LOOP;
+335  END LOOP;
+336  END LOOP;
+337  END LOOP;
+338  END LOOP;
+339  END LOOP;
+340  END LOOP;
+341  END LOOP;
+342  END LOOP;
+343  END LOOP;
+344  END LOOP;
+345  END LOOP;
+346  END LOOP;
+347  END LOOP;
+348  END LOOP;
+349  END LOOP;
+350  END LOOP;
+351  END LOOP;
+352  END LOOP;
+353  END LOOP;
+354  END LOOP;
+355  END LOOP;
+356  END LOOP;
+357  END LOOP;
+358  END LOOP;
+359  END LOOP;
+360  END LOOP;
+361  END LOOP;
+362  END LOOP;
+363  END LOOP;
+364  END LOOP;
+365  END LOOP;
+366  END LOOP;
+367  END LOOP;
+368  END LOOP;
+369  END LOOP;
+370  END LOOP;
+371  END LOOP;
+372  END LOOP;
+373  END LOOP;
+374  END LOOP;
+375  END LOOP;
+376  END LOOP;
+377  END LOOP;
+378  END LOOP;
+379  END LOOP;
+380  END LOOP;
+381  END LOOP;
+382  END LOOP;
+383  END LOOP;
+384  END LOOP;
+385  END LOOP;
+386  END LOOP;
+387  END LOOP;
+388  END LOOP;
+389  return v_lang;
+390 END;
+391 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.FUN_STACK_DEPTH_002) terminated with compiling errors
+[259:5] PLC-00943 PL/SQL: block too complex, depth exceed the limitation 128
+
+
+SQL> 
+SQL> create or replace procedure procedureA() as 
+  2 begin
+  3     dbe_output.print_line(1);
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA1() as 
+  2 begin
+  3     procedureA();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA2() as 
+  2 begin
+  3     procedureA1();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA3() as 
+  2 begin
+  3     procedureA2();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA4() as 
+  2 begin
+  3     procedureA3();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA5() as 
+  2 begin
+  3     procedureA4();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA6() as 
+  2 begin
+  3     procedureA5();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA7() as 
+  2 begin
+  3     procedureA6();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA8() as 
+  2 begin
+  3     procedureA7();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA9() as 
+  2 begin
+  3     procedureA8();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA10() as 
+  2 begin
+  3     procedureA9();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA11() as 
+  2 begin
+  3     procedureA10();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA12() as 
+  2 begin
+  3     procedureA11();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA13() as 
+  2 begin
+  3     procedureA12();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA14() as 
+  2 begin
+  3     procedureA13();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA15() as 
+  2 begin
+  3     procedureA14();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA16() as 
+  2 begin
+  3     procedureA15();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA17() as 
+  2 begin
+  3     procedureA16();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA18() as 
+  2 begin
+  3     procedureA17();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA19() as 
+  2 begin
+  3     procedureA18();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA20() as 
+  2 begin
+  3     procedureA19();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace procedure procedureA21() as 
+  2 begin
+  3     procedureA20();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA22() as 
+  2 begin
+  3     procedureA21();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA23() as 
+  2 begin
+  3     procedureA22();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA24() as 
+  2 begin
+  3     procedureA23();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA25() as 
+  2 begin
+  3     procedureA24();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA26() as 
+  2 begin
+  3     procedureA25();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA27() as 
+  2 begin
+  3     procedureA26();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA28() as 
+  2 begin
+  3     procedureA27();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA29() as 
+  2 begin
+  3     procedureA28();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA30() as 
+  2 begin
+  3     procedureA29();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA31() as 
+  2 begin
+  3     procedureA30();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA32() as 
+  2 begin
+  3     procedureA31();
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procedureA() as 
+  2 begin
+  3     dbe_output.print_line(1);
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> call procedureA32();
+
+1
+
+PL/SQL procedure successfully completed.
+
+
+SQL> 
+SQL> --nameable datatype as right value in pl, such as int
+SQL> drop table if exists t123;
+
+Succeed.
+
+SQL> create table t123(int int, id int);
+
+Succeed.
+
+SQL> insert into t123 values(12, 45);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select sum(int) from t123 where int < 20;
+
+SUM(INT)            
+--------------------
+12                  
+
+1 rows fetched.
+
+SQL> select dense_rank(15) within group (order by int) from t123;
+
+DENSE_RANK(15) WITHIN GROUP (ORDER BY INT)
+------------------------------------------
+2                                         
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION ztest_f1112(a int, b int) RETURN int
+  2 AS
+  3 int int;
+  4 n int;
+  5 id int := 3;
+  6 BEGIN
+  7 int := a + b + 2;
+  8 dbe_output.print_line(int);
+  9 n := int;
+ 10 dbe_output.print_line(n);
+ 11 select id into n from t123; --When a column name has the same name as a variable, the variable takes precedence
+ 12 dbe_output.print_line(n);
+ 13 select int into int from t123;
+ 14 RETURN int;
+ 15 END;
+ 16 /
+
+Succeed.
+
+SQL> select ztest_f1112(int, 2) from t123;
+
+ZTEST_F1112(INT, 2)
+-------------------
+16                 
+
+1 rows fetched.
+
+16
+16
+3
+
+SQL> 
+SQL> declare
+  2 c2 sys_refcursor;
+  3 type type_name is record
+  4 (c_int int,
+  5 c_id int);
+  6 int type_name;
+  7 begin
+  8 open c2 for select * from t123;
+  9 fetch c2 into int;
+ 10 close c2;
+ 11 DBE_OUTPUT.PRINT_LINE('Happy new year ' || int.c_int);
+ 12 DBE_OUTPUT.PRINT_LINE('Happy new year ' || int.c_id);
+ 13 end;
+ 14 /
+
+Happy new year 12
+Happy new year 45
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table if exists t123;
+
+Succeed.
+
+SQL> 
+SQL> --error: Built-in Advanced Packages(FO_PROC) as right value
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop PUBLIC synonym if exists SP_DBE_STD;
+
+Succeed.
+
+SQL> create or replace public synonym SP_DBE_STD for DBE_STD;
+
+Succeed.
+
+SQL> conn gs_plsql_dts6/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> --plc_compile_return->plc_verify_expr
+SQL> drop function if exists f_DBMS_STANDARD;
+
+Succeed.
+
+SQL> CREATE OR REPLACE function f_DBMS_STANDARD() return varchar2 AS
+  2 BEGIN
+  3     execute immediate '
+  4     declare
+  5         begin
+  6         a := DBE_RANDOM.GET_VALUE(low  => 100,high  => 200);
+  7         end';
+  8 EXCEPTION
+  9         WHEN others THEN SP_DBE_STD.THROW_EXCEPTION(error_code => -20009,message => 'error1');
+ 10         return SP_DBE_STD.THROW_EXCEPTION(error_code => -20009,message => 'error1');
+ 11 END;
+ 12 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS6.F_DBMS_STANDARD) terminated with compiling errors
+[10:16] PLC-00601 Sql syntax error: procedure is not allowed here.
+[12:1] PLC-00954 more text expected but EOF found
+
+
+SQL> CREATE OR REPLACE function f_DBMS_STANDARD() return varchar2 AS
+  2 BEGIN
+  3     execute immediate '
+  4     declare
+  5         begin
+  6         a := DBE_RANDOM.GET_VALUE(low  => 100,high  => 200);
+  7         end';
+  8 	return DBE_LOB.SUBSTR('CERTPIC',4);
+  9 EXCEPTION
+ 10         WHEN others THEN SP_DBE_STD.THROW_EXCEPTION(error_code => -20009,message => 'error1');
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> select f_DBMS_STANDARD();
+
+CT-00932, [10:26] PL/SQL(GS_PLSQL_DTS6.F_DBMS_STANDARD) terminated with execute errors
+[10:26] PL/SQL(SP_DBE_STD.THROW_EXCEPTION) terminated with execute errors
+[10:67] CT--20009, error1
+
+SQL> 
+SQL> CREATE OR REPLACE function f_DBMS_STANDARD() return varchar2 AS
+  2 BEGIN
+  3     execute immediate '
+  4     declare
+  5 	    a int;
+  6         begin
+  7         a := DBE_RANDOM.GET_VALUE(low  => 100,high  => 200);
+  8         end';
+  9 	return DBE_LOB.SUBSTR('CERTPIC',4);
+ 10 EXCEPTION
+ 11         WHEN others THEN SP_DBE_STD.THROW_EXCEPTION(error_code => -20009,message => 'error1');
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> select f_DBMS_STANDARD();
+
+F_DBMS_STANDARD()                                               
+----------------------------------------------------------------
+CERT                                                            
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE function f_DBMS_STANDARD(b int) return varchar2 AS
+  2 BEGIN
+  3     return SLEEP(1);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS6.F_DBMS_STANDARD) terminated with compiling errors
+[3:12] PLC-00601 Sql syntax error: procedure is not allowed here.
+
+
+SQL> 
+SQL> drop procedure if exists procedure_002;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE procedure_002(a in int) IS
+  2 b int;
+  3 BEGIN
+  4   b := a;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE function f_DBMS_STANDARD(b int) return varchar2 AS
+  2 BEGIN
+  3     return procedure_002(1);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS6.F_DBMS_STANDARD) terminated with compiling errors
+[3:12] PLC-00828 function GS_PLSQL_DTS6.PROCEDURE_002 does not exist
+
+
+SQL> drop procedure procedure_002;
+
+Succeed.
+
+SQL> 
+SQL> --plc_verify_using_expr
+SQL> CREATE OR REPLACE function f_DBMS_STANDARD() return varchar2 AS
+  2 BEGIN
+  3     execute immediate '
+  4         declare
+  5 	    a varchar2;
+  6         begin
+  7         a := :1;
+  8 		dbe_output.print_line(''a'');
+  9         end' using SP_DBE_STD.THROW_EXCEPTION(error_code => -20010,message => 'error1');
+ 10         return '2';
+ 11 END;
+ 12 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS6.F_DBMS_STANDARD) terminated with compiling errors
+[9:20] PLC-00601 Sql syntax error: procedure is not allowed here.
+
+
+SQL> drop function f_DBMS_STANDARD;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --plc_verify_setval->plc_verify_expr
+SQL> declare
+  2 a varchar(30);
+  3 begin
+  4 a := SP_DBE_STD.THROW_EXCEPTION(error_code => -20010,message => 'error2');
+  5 dbe_output.print_line(a || ' 3');
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[4:6] PLC-00601 Sql syntax error: procedure is not allowed here.
+
+SQL> begin
+  2  sleep(2) := 2;
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[2:2] PLC-00916 PL/SQL:syntax error(unexpected pl-variant occurs)
+
+SQL> --plc_compile_default_def->plc_verify_expr
+SQL> declare
+  2 a varchar(30) default sleep(2);
+  3 begin
+  4 dbe_output.print_line(a || ' 3');
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[2:23] PLC-00601 Sql syntax error: procedure is not allowed here.
+
+SQL> --plc_expected_fetch_range->plc_verify_expr
+SQL> begin
+  2  for i in 1 .. sleep(2) loop
+  3   dbe_output.print_line(' 3');
+  4  end loop;
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[2:16] PLC-00601 Sql syntax error: procedure is not allowed here.
+
+SQL> --plc_try_compile_when_case->plc_verify_expr
+SQL> declare
+  2 a int := null;
+  3 begin
+  4  CASE a
+  5     WHEN dbe_task.run(1008) THEN
+  6       dbe_output.print_line('1');
+  7     ELSE
+  8       dbe_output.print_line('2');
+  9   END CASE;
+ 10 end;
+ 11 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[5:10] PLC-00601 Sql syntax error: procedure is not allowed here.
+[7:5] PLC-00955 Unexpected ELSE found
+[9:7] PLC-00954 ';' expected but CASE found
+
+SQL> 
+SQL> drop table if exists test_exception;
+
+Succeed.
+
+SQL> create table test_exception(i int, msg varchar(50));
+
+Succeed.
+
+SQL> begin 
+  2  for i in 1..500 loop
+  3     insert into test_exception values(1, 'msg');
+  4  end loop;
+  5  commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_exeception_block()
+  2 as 
+  3     RPTEXCEPTION EXCEPTION ;
+  4 begin
+  5     for res in (select i, msg from test_exception) loop
+  6         begin
+  7             IF (res.i  = 1) THEN
+  8                 RAISE RPTEXCEPTION;
+  9             END IF;
+ 10         EXCEPTION 
+ 11              WHEN RPTEXCEPTION THEN
+ 12                 NULL;
+ 13         end;
+ 14     end loop;
+ 15 end;
+ 16 /
+
+Succeed.
+
+SQL> call test_exeception_block();
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure test_if_cond() as
+  2 i int;
+  3 begin
+  4 i:=1;
+  5 if (i != 1) then
+  6  dbe_output.print_line('i != 1');
+  7 end if;
+  8 
+  9 if (i = 1) then
+ 10     begin
+ 11         if (i < 0) then
+ 12             dbe_output.print_line('i < 0');
+ 13         else 
+ 14             if (i < 0) then
+ 15                dbe_output.print_line('i < 0');
+ 16             else
+ 17                 begin
+ 18                     dbe_output.print_line('i = 1');
+ 19                 end;
+ 20             end if;
+ 21         end if;
+ 22     end;
+ 23 else
+ 24     begin
+ 25         dbe_output.print_line('i != 1');
+ 26     end;
+ 27 end if;
+ 28 end;
+ 29 /
+
+Succeed.
+
+SQL> 
+SQL> call test_if_cond();
+
+i = 1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> exec dbe_output.print_line(prior);
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[1:24] PLC-00601 Sql syntax error: If there is no 'connect by', 'prior' is not allowed
+
+SQL> exec dbe_output.print_line(sys_connect_by_path(1,1));
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00601 Sql syntax error: CONNECT BY clause required in this query block
+
+SQL> exec dbe_output.print_line(grouping);
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00610 GROUPING function is supported only with GROUP BY clause
+
+SQL> exec dbe_output.print_line(grouping_id);
+
+CT-00944, PL/SQL(GS_PLSQL_DTS6.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00610 GROUPING function is supported only with GROUP BY clause
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop PUBLIC synonym SP_DBE_STD;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_dts6 cascade;
+
+Succeed.
+
+SQL> set serveroutput off;
+OFF
+
+
+

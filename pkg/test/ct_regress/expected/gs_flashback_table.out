@@ -1,0 +1,3009 @@
+
+
+SQL> --FLASHBACK QUERY WITH INVALID SCN
+SQL> DROP TABLE IF EXISTS FB_QTBL_INVALID_1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_INVALID_1 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_INVALID_1 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_INVALID_1;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> SELECT * FROM FB_QTBL_INVALID_1 AS OF SCN 0;
+
+CT-00732, The table definition of SYS.FB_QTBL_INVALID_1 has been changed.
+SQL> SELECT * FROM FB_QTBL_INVALID_1 AS OF SCN 1;
+
+CT-00732, The table definition of SYS.FB_QTBL_INVALID_1 has been changed.
+SQL> SELECT * FROM FB_QTBL_INVALID_1 AS OF SCN 9999999999999999;
+
+CT-00635, Value error: specified number is not a valid system change number
+SQL> SELECT * FROM FB_QTBL_INVALID_1 AS OF SCN 9999999999999998 + 1/1;
+
+CT-00635, Value error: specified number is not a valid system change number
+SQL> SELECT * FROM FB_QTBL_INVALID_1 AS OF SCN 'ASDFGAG';
+
+CT-00636, Invalid number -- unexpected character
+SQL> SELECT * FROM FB_QTBL_INVALID_1 AS OF SCN (SELECT CURRENT_SCN FROM V$DATABASE);
+
+CT-01316, Unexpected SUBSELECT
+SQL> DROP TABLE FB_QTBL_INVALID_1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK QUERY WITH INVALID TIMESTAMP
+SQL> DROP TABLE IF EXISTS FB_QTBL_INVALID_2;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_INVALID_2 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_INVALID_2 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_INVALID_2;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> SELECT * FROM FB_QTBL_INVALID_2 AS OF TIMESTAMP 0;
+
+CT-00606, Inconsistent datatypes, expected TIMESTAMP - got BINARY_INTEGER
+SQL> SELECT * FROM FB_QTBL_INVALID_2 AS OF TIMESTAMP 123.45678;
+
+CT-00606, Inconsistent datatypes, expected TIMESTAMP - got NUMBER
+SQL> SELECT * FROM FB_QTBL_INVALID_2 AS OF TIMESTAMP 'ASDFGAG';
+
+CT-00606, Inconsistent datatypes, expected TIMESTAMP - got CHAR
+SQL> SELECT * FROM FB_QTBL_INVALID_2 AS OF TIMESTAMP SYSDATE - 1/24;
+
+CT-00806, Scn too old and no snapshot found based on specified time
+SQL> SELECT * FROM FB_QTBL_INVALID_2 AS OF TIMESTAMP SYSTIMESTAMP + 1/24;
+
+CT-00635, Value error: invalid timestamp specified
+SQL> SELECT * FROM FB_QTBL_INVALID_1 AS OF TIMESTAMP (SELECT CURRENT_SCN FROM V$DATABASE);
+
+CT-01316, Unexpected SUBSELECT
+SQL> DROP TABLE FB_QTBL_INVALID_2;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK QUERY TO BEFORE DDL
+SQL> DROP TABLE IF EXISTS FB_QTBL_INVALID_3;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_INVALID_3 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_INVALID_3 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE INDEX IDX_FB_QTBL_INVALID_3 ON FB_QTBL_INVALID_3 (ID);
+
+Succeed.
+
+SQL> DROP INDEX IDX_FB_QTBL_INVALID_3 ON FB_QTBL_INVALID_3;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_INVALID_3 AS OF TIMESTAMP SYSDATE - 1/(24*60*60);
+
+CT-00732, The table definition of SYS.FB_QTBL_INVALID_3 has been changed.
+SQL> DROP TABLE FB_QTBL_INVALID_3;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS FB_QTBL_INVALID_4;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_INVALID_4 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 );
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_INVALID_4 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE FB_QTBL_INVALID_4 ADD PARTITION P3 VALUES LESS THAN (30);
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_INVALID_4 AS OF TIMESTAMP SYSDATE - 1/(24*60*60);
+
+CT-00732, The table definition of SYS.FB_QTBL_INVALID_4 has been changed.
+SQL> DROP TABLE FB_QTBL_INVALID_4;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK QUERY NORMAL TABLE
+SQL> DROP TABLE IF EXISTS FB_QTBL_NORMAL_1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_NORMAL_1 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_NORMAL_1 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> UPDATE FB_QTBL_NORMAL_1 SET ID = 2 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_NORMAL_1;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> SELECT * FROM FB_QTBL_NORMAL_1 AS OF TIMESTAMP SYSTIMESTAMP - 1/(24*60*60);
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> DROP TABLE FB_QTBL_NORMAL_1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK QUERY NORMAL TABLE WITH INDEX
+SQL> DROP TABLE IF EXISTS FB_QTBL_NORMAL_2;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_NORMAL_2 (ID INT);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_QTBL_NORMAL_2 ON FB_QTBL_NORMAL_2 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_NORMAL_2 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> UPDATE FB_QTBL_NORMAL_2 SET ID = 2 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_NORMAL_2 VALUES (10);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_NORMAL_2;
+
+ID          
+------------
+2           
+10          
+
+2 rows fetched.
+
+SQL> SELECT * FROM FB_QTBL_NORMAL_2 AS OF TIMESTAMP SYSTIMESTAMP - 1/(24*60*60) WHERE ID > 0;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL>
+SQL> DROP TABLE FB_QTBL_NORMAL_2;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK QUERY NORMAL TABLE WITH INDEX AND LOB
+SQL> DROP TABLE IF EXISTS FB_QTBL_NORMAL_3;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_NORMAL_3 (ID INT, TT CLOB);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_QTBL_NORMAL_3 ON FB_QTBL_NORMAL_3 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_NORMAL_3 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> UPDATE FB_QTBL_NORMAL_3 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_NORMAL_3 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_NORMAL_3;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> SELECT * FROM FB_QTBL_NORMAL_3 AS OF TIMESTAMP SYSTIMESTAMP - 2/(24*60*60) WHERE ID > 0;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE FB_QTBL_NORMAL_3;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK QUERY PARTITION TABLE
+SQL> DROP TABLE IF EXISTS FB_QTBL_PART_1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_PART_1 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 );
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_PART_1 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> UPDATE FB_QTBL_PART_1 SET ID = 2 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_PART_1;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> SELECT * FROM FB_QTBL_PART_1 AS OF TIMESTAMP SYSTIMESTAMP - 2/(24*60*60);
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> DROP TABLE FB_QTBL_PART_1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK QUERY PARTITION TABLE WITH GLOBAL INDEX
+SQL> DROP TABLE IF EXISTS FB_QTBL_PART_2;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_PART_2 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 );
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_QTBL_PART_2 ON FB_QTBL_PART_2 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_PART_2 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> UPDATE FB_QTBL_PART_2 SET ID = 2 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_PART_2 VALUES (10);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_PART_2;
+
+ID          
+------------
+2           
+10          
+
+2 rows fetched.
+
+SQL> SELECT * FROM FB_QTBL_PART_2 AS OF TIMESTAMP SYSTIMESTAMP - 1/(24*60*60) WHERE ID > 0;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL>
+SQL> DROP TABLE FB_QTBL_PART_2;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK QUERY PARTITION TABLE WITH LOCAL INDEX AND LOB
+SQL> DROP TABLE IF EXISTS FB_QTBL_PART_3;
+
+Succeed.
+
+SQL> CREATE TABLE FB_QTBL_PART_3 (ID INT, TT CLOB)
+  2 PARTITION BY LIST(ID)
+  3 (
+  4 PARTITION P1 VALUES (1,2,3,4,5),
+  5 PARTITION P2 VALUES (6,7,8,9,10)
+  6 );
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_QTBL_PART_3 ON FB_QTBL_PART_3 (ID) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_PART_3 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> UPDATE FB_QTBL_PART_3 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_QTBL_PART_3 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_QTBL_PART_3;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> SELECT * FROM FB_QTBL_PART_3 AS OF TIMESTAMP SYSTIMESTAMP - 1/(24*60*60) WHERE ID > 0;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE FB_QTBL_PART_3;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --FLASHBACK WITH INVALID SCN
+SQL> DROP TABLE IF EXISTS FB_TBL_INVALID_1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_INVALID_1 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_INVALID_1 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_INVALID_1;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> FLASHBACK TABLE FB_TBL_INVALID_1 TO SCN 0;
+
+CT-00732, The table definition of SYS.FB_TBL_INVALID_1 has been changed.
+SQL> FLASHBACK TABLE FB_TBL_INVALID_1 TO SCN 1;
+
+CT-00732, The table definition of SYS.FB_TBL_INVALID_1 has been changed.
+SQL> FLASHBACK TABLE FB_TBL_INVALID_1 TO SCN 9999999999999999;
+
+CT-00635, Value error: specified number is not a valid system change number
+SQL> FLASHBACK TABLE FB_TBL_INVALID_1 TO SCN 9999999999999999 / 1;
+
+CT-00635, Value error: specified number is not a valid system change number
+SQL> FLASHBACK TABLE FB_TBL_INVALID_1 TO SCN 'ASDFGAG';
+
+CT-00636, Invalid number -- unexpected character
+SQL> FLASHBACK TABLE FB_TBL_INVALID_1 TO SCN (SELECT CURRENT_SCN FROM V$DATABASE);
+
+CT-01316, Unexpected SUBSELECT here
+SQL> DROP TABLE FB_TBL_INVALID_1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK WITH INVALID TIMESTAMP
+SQL> DROP TABLE IF EXISTS FB_TBL_INVALID_2;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_INVALID_2 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_INVALID_2 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_INVALID_2;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> FLASHBACK TABLE FB_TBL_INVALID_2 TO TIMESTAMP 0;
+
+CT-00606, Inconsistent datatypes, expected TIMESTAMP - got BINARY_INTEGER
+SQL> FLASHBACK TABLE FB_TBL_INVALID_2 TO TIMESTAMP 123.45678;
+
+CT-00606, Inconsistent datatypes, expected TIMESTAMP - got NUMBER
+SQL> FLASHBACK TABLE FB_TBL_INVALID_2 TO TIMESTAMP 'ASDFGAG';
+
+CT-00606, Inconsistent datatypes, expected TIMESTAMP - got CHAR
+SQL> FLASHBACK TABLE FB_TBL_INVALID_2 TO TIMESTAMP SYSDATE - 1/24;
+
+CT-00806, Scn too old and no snapshot found based on specified time
+SQL> FLASHBACK TABLE FB_TBL_INVALID_2 TO TIMESTAMP SYSTIMESTAMP + 1/24;
+
+CT-00635, Value error: invalid timestamp specified
+SQL> FLASHBACK TABLE FB_TBL_INVALID_1 TO TIMESTAMP (SELECT CURRENT_SCN FROM V$DATABASE);
+
+CT-01316, Unexpected SUBSELECT here
+SQL> DROP TABLE FB_TBL_INVALID_2;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK TO BEFORE DDL
+SQL> DROP TABLE IF EXISTS FB_TBL_INVALID_3;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_INVALID_3 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_INVALID_3 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FLASHBACK1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT SYSDATE INTO SCN_NUM FROM DUAL;
+  6 	INSERT INTO TEMP VALUES(SCN_NUM);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE INDEX IDX_FB_TBL_INVALID_3 ON FB_TBL_INVALID_3 (ID);
+
+Succeed.
+
+SQL> DROP INDEX IDX_FB_TBL_INVALID_3 ON FB_TBL_INVALID_3;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_INVALID_3()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_INVALID_3 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_INVALID_3();
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[6:2] PL/SQL(SYS.PRO_FB_TBL_INVALID_3) terminated with execute errors
+[6:2] CT-00732, The table definition of SYS.FB_TBL_INVALID_3 has been changed.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_INVALID_3;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS FB_TBL_INVALID_4;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_INVALID_4 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 );
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_INVALID_4 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> ALTER TABLE FB_TBL_INVALID_4 ADD PARTITION P3 VALUES LESS THAN (30);
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_INVALID_4()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_INVALID_4 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_INVALID_4();
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[6:2] PL/SQL(SYS.PRO_FB_TBL_INVALID_4) terminated with execute errors
+[6:2] CT-00732, The table definition of SYS.FB_TBL_INVALID_4 has been changed.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_INVALID_4;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK NORMAL TABLE
+SQL> DROP TABLE IF EXISTS FB_TBL_NORMAL_1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_NORMAL_1 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_1 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_NORMAL_1 SET ID = 2 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_1;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_NORMAL_1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_NORMAL_1 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_NORMAL_1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_1;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL_1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK NORMAL TABLE WITH INDEX
+SQL> DROP TABLE IF EXISTS FB_TBL_NORMAL_2;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_NORMAL_2 (ID INT);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_NORMAL_2 ON FB_TBL_NORMAL_2 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_2 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_NORMAL_2 SET ID = 2 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_2 VALUES (10);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_2;
+
+ID          
+------------
+2           
+10          
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_NORMAL_2()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_NORMAL_2 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_NORMAL_2();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_2 WHERE ID > 0;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL_2;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK NORMAL TABLE WITH INDEX AND LOB
+SQL> DROP TABLE IF EXISTS FB_TBL_NORMAL_3;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_NORMAL_3 (ID INT, TT CLOB);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_NORMAL_3 ON FB_TBL_NORMAL_3 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_3 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_NORMAL_3 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_3 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_3;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_NORMAL_3()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_NORMAL_3 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_NORMAL_3();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_3;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL_3;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK PARTITION TABLE
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_1 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 );
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_1 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_PART_1 SET ID = 2 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_PART_1;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_PART_1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_PART_1 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_PART_1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_PART_1;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_PART_1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK PARTITION TABLE WITH GLOBAL INDEX
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_2;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_2 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 );
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_2 ON FB_TBL_PART_2 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_2 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_PART_2 SET ID = 2 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_2 VALUES (10);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_PART_2;
+
+ID          
+------------
+2           
+10          
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_PART_2()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_PART_2 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_PART_2();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_PART_2;
+
+ID          
+------------
+1           
+
+1 rows fetched.
+
+SQL>
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_PART_2;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK PARTITION TABLE WITH LOCAL INDEX AND LOB
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_3;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_3 (ID INT, TT CLOB)
+  2 PARTITION BY LIST(ID)
+  3 (
+  4 PARTITION P1 VALUES (1,2,3,4,5),
+  5 PARTITION P2 VALUES (6,7,8,9,10)
+  6 );
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_3 ON FB_TBL_PART_3 (ID) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_3 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_PART_3 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_3 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_PART_3;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_PART_3()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_PART_3 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_PART_3();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_PART_3;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_PART_3;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --RE-FLASHBACK NORMAL TABLE
+SQL> DROP TABLE IF EXISTS FB_TBL_NORMAL_RE1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_NORMAL_RE1 (ID INT, TT CLOB) CRMODE ROW;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_NORMAL_RE1 ON FB_TBL_NORMAL_RE1 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_RE1 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FLASHBACK1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT SYSDATE INTO SCN_NUM FROM DUAL;
+  6 	INSERT INTO TEMP VALUES(SCN_NUM);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_NORMAL_RE1 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_RE1 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_RE1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_NORMAL_RE1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_NORMAL_RE1 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_NORMAL_RE1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_RE1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL_RE1;
+
+Succeed.
+
+SQL> 
+SQL> --RE-FLASHBACK PART TABLE
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_RE1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_RE1 (ID INT, TT CLOB)
+  2 PARTITION BY LIST(ID)
+  3 (
+  4 PARTITION P1 VALUES (1,2,3,4,5),
+  5 PARTITION P2 VALUES (6,7,8,9,10)
+  6 ) CRMODE ROW;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_RE1 ON FB_TBL_PART_RE1 (ID) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_RE1 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_PART_RE1 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_RE1 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_PART_RE1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_PART_RE1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_PART_RE1 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_PART_RE1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_PART_RE1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> FLASHBACK TABLE FB_TBL_PART_RE1 TO BEFORE TRUNCATE FORCE;
+
+CT-00829, Recyclebin object SYS.FB_TBL_PART_RE1 does not exist
+SQL> SELECT * FROM FB_TBL_PART_RE1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> CALL PRO_FB_TBL_PART_RE1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_PART_RE1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_PART_RE1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK NORMAL TABLE AFTER FLASHBACK DROP
+SQL> DROP TABLE IF EXISTS FB_TBL_NORMAL_RB1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_NORMAL_RB1 (ID INT, TT CLOB) tablespace users;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_NORMAL_RB1 ON FB_TBL_NORMAL_RB1 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_RB1 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_NORMAL_RB1 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL_RB1;
+
+Succeed.
+
+SQL> FLASHBACK TABLE FB_TBL_NORMAL_RB1 TO BEFORE DROP;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_RB1 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_RB1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_NORMAL_RB1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_NORMAL_RB1 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_NORMAL_RB1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_RB1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL_RB1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK NORMAL TABLE AFTER FLASHBACK TRUNCATE
+SQL> DROP TABLE IF EXISTS FB_TBL_NORMAL_RB2;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_NORMAL_RB2 (ID INT, TT CLOB) tablespace users;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_NORMAL_RB2 ON FB_TBL_NORMAL_RB2 (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_RB2 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_NORMAL_RB2 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> TRUNCATE TABLE FB_TBL_NORMAL_RB2;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL_RB2 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> FLASHBACK TABLE FB_TBL_NORMAL_RB2 TO BEFORE TRUNCATE;
+
+CT-00643, Table SYS.FB_TBL_NORMAL_RB2 is not empty, hint: use force option to flashback truncate
+SQL> FLASHBACK TABLE FB_TBL_NORMAL_RB2 TO BEFORE TRUNCATE FORCE;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_RB2;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_NORMAL_RB2()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_NORMAL_RB2 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_NORMAL_RB2();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL_RB2;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL_RB2;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK PART TABLE AFTER FLASHBACK DROP
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_RB1;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_RB1 (ID INT, TT CLOB)
+  2 PARTITION BY RANGE(ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 ) tablespace users;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_RB1 ON FB_TBL_PART_RB1 (ID) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_RB1 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_PART_RB1 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_PART_RB1;
+
+Succeed.
+
+SQL> FLASHBACK TABLE FB_TBL_PART_RB1 TO BEFORE DROP;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_RB1 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_PART_RB1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_PART_RB1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_PART_RB1 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_PART_RB1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_PART_RB1;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_PART_RB1;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK PART TABLE AFTER FLASHBACK TRUNCATE
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_RB2;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_RB2 (ID INT, TT CLOB)
+  2 PARTITION BY RANGE(ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 ) tablespace users;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_RB2 ON FB_TBL_PART_RB2 (ID) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_RB2 VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_PART_RB2 SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> TRUNCATE TABLE FB_TBL_PART_RB2;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_RB2 VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> FLASHBACK TABLE FB_TBL_PART_RB2 TO BEFORE TRUNCATE;
+
+CT-00643, Table SYS.FB_TBL_PART_RB2 is not empty, hint: use force option to flashback truncate
+SQL> FLASHBACK TABLE FB_TBL_PART_RB2 TO BEFORE TRUNCATE FORCE;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_PART_RB2;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_PART_RB2()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_PART_RB2 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_PART_RB2();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_PART_RB2;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_PART_RB2;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK PART TABLE TO BEFORE SCN AFTER TRUNCATE(ALLOWED BUT NOT RECOMMENDED)
+SQL> DROP TABLE IF EXISTS FB_TABLE_PART_RB3;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_RB3(ID1 INT, CONSTRAINT PK_FB_TBL_PART_RB3 PRIMARY KEY(ID1), ID2 INT, ID3 INT)
+  2 PARTITION BY RANGE (ID3)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20),
+  6 PARTITION P3 VALUES LESS THAN (30)
+  7 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_RB3_1 ON FB_TBL_PART_RB3 (ID2);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_RB3_2 ON FB_TBL_PART_RB3 (ID3) LOCAL;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO FB_TBL_PART_RB3 VALUES (1, 1, 1);
+
+1 rows affected.
+
+SQL> INSERT INTO FB_TBL_PART_RB3 VALUES (11, 11, 11);
+
+1 rows affected.
+
+SQL> INSERT INTO FB_TBL_PART_RB3 VALUES (21, 21, 21);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE FB_TBL_PART_RB3 TRUNCATE PARTITION P1;
+
+Succeed.
+
+SQL> UPDATE FB_TBL_PART_RB3 SET ID1 = 22, ID2 = 22, ID3 = 22 WHERE ID3 = 21;
+
+CT-00823, Index PK_FB_TBL_PART_RB3 is unusable, need to rebuild index first.
+SQL> DROP TABLE FB_TBL_PART_RB3 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_RB4;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_RB4(ID1 INT, ID2 INT, ID3 INT)
+  2 PARTITION BY RANGE (ID3)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20),
+  6 PARTITION P3 VALUES LESS THAN (30)
+  7 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_RB3_1 ON FB_TBL_PART_RB4 (ID1, upper(ID2));
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_RB3_2 ON FB_TBL_PART_RB4 (upper(ID3), ID1) LOCAL;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO FB_TBL_PART_RB4 VALUES (1, 1, 1);
+
+1 rows affected.
+
+SQL> INSERT INTO FB_TBL_PART_RB4 VALUES (11, 11, 11);
+
+1 rows affected.
+
+SQL> INSERT INTO FB_TBL_PART_RB4 VALUES (21, 21, 21);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE FB_TBL_PART_RB4 TRUNCATE PARTITION P1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FUN ON TEMP(UPPER(A));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_PART_RB4 SET ID1 = 22, ID2 = 22, ID3 = 22 WHERE ID3 = 21;
+
+1 rows affected.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_PART_RB4()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_PART_RB4 TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_PART_RB4();
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP TABLE FB_TBL_PART_RB4 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE FLASH_TABLE(c_id INT, c_first VARCHAR(8000), c_first2 VARCHAR(8000)) CRMODE PAGE  TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO FLASH_TABLE VALUES(1, lpad(' ', 1000, 'a'), lpad(' ', 2000, 'a'));
+
+1 rows affected.
+
+SQL> INSERT INTO FLASH_TABLE VALUES(2, lpad(' ', 1000, 'a'), lpad(' ', 2000, 'a'));
+
+1 rows affected.
+
+SQL> INSERT INTO FLASH_TABLE VALUES(3, 'a', 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO FLASH_TABLE VALUES(4, 'a', 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO FLASH_TABLE VALUES(5, 'a', 'b');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> UPDATE FLASH_TABLE SET c_first = lpad(' ', 5000, 'a') WHERE c_id = 2;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE TEMP_SCN(c_scn varchar(200));
+
+Succeed.
+
+SQL> INSERT INTO TEMP_SCN SELECT current_scn FROM v$database;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> UPDATE FLASH_TABLE SET c_first2 = lpad(' ', 2000, 'b') WHERE c_id = 2;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> SELECT COUNT(*) FROM FLASH_TABLE;
+
+COUNT(*)            
+--------------------
+5                   
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE FLASHBACK_PRO()
+  2 AS
+  3 FLASH_SCN varchar2(200);
+  4 BEGIN
+  5 SELECT c_scn INTO FLASH_SCN FROM TEMP_SCN;
+  6 EXECUTE IMMEDIATE 'FLASHBACK TABLE FLASH_TABLE TO SCN '||FLASH_SCN;
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL FLASHBACK_PRO();
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> SELECT COUNT(*) FROM FLASH_TABLE;
+
+COUNT(*)            
+--------------------
+5                   
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP_SCN;
+
+Succeed.
+
+SQL> DROP TABLE FLASH_TABLE;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK NORMAL TABLE TO THE SAME SCN MORE TIMES
+SQL> DROP TABLE IF EXISTS FB_TBL_NORMAL;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_NORMAL (ID INT, TT CLOB) tablespace users;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_NORMAL ON FB_TBL_NORMAL (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(A VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FLASHBACK1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT SYSDATE INTO SCN_NUM FROM DUAL;
+  6 	INSERT INTO TEMP VALUES(SCN_NUM);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FLASHBACK1();
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_TBL_NORMAL SET ID = 2, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> INSERT INTO FB_TBL_NORMAL VALUES (10, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+2            AFAGADGHH                                                       
+10           QWETYUUQER                                                      
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_NORMAL_RB1()
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT A INTO SCN_NUM FROM TEMP;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_NORMAL TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_NORMAL_RB1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> UPDATE FB_TBL_NORMAL SET ID = 3, TT = 'AFAGADGHH' WHERE ID = 1;
+
+1 rows affected.
+
+SQL> INSERT INTO FB_TBL_NORMAL VALUES (20, 'QWETYUUQER');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+20           QWETYUUQER                                                      
+3            AFAGADGHH                                                       
+
+2 rows fetched.
+
+SQL> CALL PRO_FB_TBL_NORMAL_RB1();
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL;
+
+Succeed.
+
+SQL> 
+SQL> --FLASHBACK NORMAL TABLE TO THE SCN1, EXCUTE DML, FLASHBACK TO SCN2, EXCUTE DML, FLASHBACK TO SCN3, EXCUTE DML, FLASHBACK TO SCN1
+SQL> DROP TABLE IF EXISTS FB_TBL_NORMAL;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_NORMAL (ID INT, TT CLOB) tablespace users;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_NORMAL ON FB_TBL_NORMAL (ID);
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_NORMAL VALUES(1,'ADGASDFASG');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(ID INT, NAME VARCHAR2(200));
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> INSERT INTO TEMP SELECT 1, SYSDATE;
+
+1 rows affected.
+
+SQL> UPDATE FB_TBL_NORMAL SET ID = 10 WHERE ID = 1;
+
+1 rows affected.
+
+SQL> INSERT INTO FB_TBL_NORMAL VALUES(100, 'SFGSAFJHAF');
+
+1 rows affected.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> INSERT INTO TEMP SELECT 2, SYSDATE;
+
+1 rows affected.
+
+SQL> UPDATE FB_TBL_NORMAL SET ID = 20 WHERE ID = 10;
+
+1 rows affected.
+
+SQL> INSERT INTO TEMP SELECT 3, SYSDATE;
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+20           ADGASDFASG                                                      
+100          SFGSAFJHAF                                                      
+
+2 rows fetched.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TBL_NORMAL_RB1(V_ID INT)
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT NAME INTO SCN_NUM FROM TEMP WHERE ID = V_ID;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_TBL_NORMAL TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> CALL PRO_FB_TBL_NORMAL_RB1(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> CALL PRO_FB_TBL_NORMAL_RB1(2);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> CALL PRO_FB_TBL_NORMAL_RB1(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT * FROM FB_TBL_NORMAL;
+
+ID           TT                                                              
+------------ ----------------------------------------------------------------
+1            ADGASDFASG                                                      
+
+1 rows fetched.
+
+SQL> DROP TABLE TEMP;
+
+Succeed.
+
+SQL> DROP TABLE FB_TBL_NORMAL;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_RB;
+
+Succeed.
+
+SQL> CREATE TABLE FB_TBL_PART_RB(ID INT, C1 INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (maxvalue)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_FB_TBL_PART_RB_1 ON FB_TBL_PART_RB (C1);
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO FB_TBL_PART_RB VALUES (1, 1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> TRUNCATE TABLE FB_TBL_PART_RB;
+
+Succeed.
+
+SQL> INSERT INTO FB_TBL_PART_RB VALUES (1, 1);
+
+1 rows affected.
+
+SQL> ALTER TABLE FB_TBL_PART_RB TRUNCATE PARTITION P1;
+
+Succeed.
+
+SQL> FLASHBACK TABLE FB_TBL_PART_RB TO BEFORE TRUNCATE;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO FB_TBL_PART_RB VALUES (11, 11);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE FB_TBL_PART_RB;
+
+Succeed.
+
+SQL> FLASHBACK TABLE FB_TBL_PART_RB TO BEFORE TRUNCATE;
+
+Succeed.
+
+SQL> DELETE FROM FB_TBL_PART_RB;
+
+2 rows affected.
+
+SQL> DROP TABLE IF EXISTS FB_TBL_PART_RB;
+
+Succeed.
+
+SQL> 
+SQL> DROP PROCEDURE IF EXISTS PRO_SAVE_TIME;
+
+Succeed.
+
+SQL> DROP PROCEDURE IF EXISTS PRO_FB_TABLE_TIMESTAMP;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS FB_REFERENCE_STUDENT_TABLE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS FB_REFERENCE_SCORE_TABLE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE FB_REFERENCE_STUDENT_TABLE(ID INT, NAME VARCHAR(20), CONSTRAINT _PK_FB_TAB_ID PRIMARY KEY(ID)) PARTITION BY RANGE(ID)
+  2 (
+  3 PARTITION P1 VALUES LESS THAN(50),
+  4 PARTITION P2 VALUES LESS THAN(100)
+  5 );
+
+Succeed.
+
+SQL> CREATE TABLE FB_REFERENCE_SCORE_TABLE(ID INT REFERENCES FB_REFERENCE_STUDENT_TABLE(ID), SCORE INT);
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(NUM INT, TIME_STAMP VARCHAR(200));
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_SAVE_TIME(ID INT)
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT SYSDATE INTO SCN_NUM FROM DUAL;
+  6 	INSERT INTO TEMP VALUES(ID, SCN_NUM);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TABLE_TIMESTAMP(ID INT)
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT TIME_STAMP INTO SCN_NUM FROM TEMP WHERE NUM = ID;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_REFERENCE_STUDENT_TABLE TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO FB_REFERENCE_STUDENT_TABLE VALUES(10, 'ZHANGSAN');
+
+1 rows affected.
+
+SQL> INSERT INTO FB_REFERENCE_STUDENT_TABLE VALUES(60, 'LISI');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_SAVE_TIME(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_REFERENCE_STUDENT_TABLE SET NAME = 'ZHANGSANSAN' WHERE ID = 10;
+
+1 rows affected.
+
+SQL> CALL PRO_FB_TABLE_TIMESTAMP(1);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[6:2] PL/SQL(SYS.PRO_FB_TABLE_TIMESTAMP) terminated with execute errors
+[6:2] CT-00642, The unique index or primary key was referenced by a foreign key
+
+SQL> DROP TABLE FB_REFERENCE_SCORE_TABLE;
+
+Succeed.
+
+SQL> ALTER TABLE FB_REFERENCE_STUDENT_TABLE SPLIT PARTITION P2 AT(80) INTO(PARTITION P3, PARTITION P4);
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_SAVE_TIME(2);
+
+PL/SQL procedure successfully completed.
+
+SQL> UPDATE FB_REFERENCE_STUDENT_TABLE SET NAME = 'WANGWU' WHERE ID = 60;
+
+1 rows affected.
+
+SQL> CALL PRO_FB_TABLE_TIMESTAMP(2);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[6:2] PL/SQL(SYS.PRO_FB_TABLE_TIMESTAMP) terminated with execute errors
+[6:2] CT-00823, Index _PK_FB_TAB_ID is unusable, need to rebuild index first.
+
+SQL> DROP PROCEDURE IF EXISTS PRO_SAVE_TIME;
+
+Succeed.
+
+SQL> DROP PROCEDURE IF EXISTS PRO_FB_TABLE_TIMESTAMP;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS FB_REFERENCE_STUDENT_TABLE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS FB_REFERENCE_SCORE_TABLE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS FB_CONSTRAINT_TABLE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL> CREATE TABLE FB_CONSTRAINT_TABLE(ID INT, NAME VARCHAR(20)) CRMODE ROW;
+
+Succeed.
+
+SQL> CREATE TABLE TEMP(NUM INT, TIME_STAMP VARCHAR(200));
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_SAVE_TIME(ID INT)
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT SYSDATE INTO SCN_NUM FROM DUAL;
+  6 	INSERT INTO TEMP VALUES(ID, SCN_NUM);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE PRO_FB_TABLE_TIMESTAMP(ID INT)
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 BEGIN
+  5 	SELECT TIME_STAMP INTO SCN_NUM FROM TEMP WHERE NUM = ID;
+  6 	EXECUTE IMMEDIATE 'FLASHBACK TABLE FB_CONSTRAINT_TABLE TO TIMESTAMP TO_TIMESTAMP ('''|| SCN_NUM ||''',''yyyy-mm-dd hh24:mi:ss'')';
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO FB_CONSTRAINT_TABLE VALUES(10, 'ZHANGSAN');
+
+1 rows affected.
+
+SQL> INSERT INTO FB_CONSTRAINT_TABLE VALUES(60, 'LISI');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT SLEEP(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> CALL PRO_SAVE_TIME(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> ALTER TABLE FB_CONSTRAINT_TABLE ADD CONSTRAINT CK_ID CHECK(ID>5);
+
+Succeed.
+
+SQL> INSERT INTO FB_CONSTRAINT_TABLE VALUES(30, 'WANGWU');
+
+1 rows affected.
+
+SQL> ALTER TABLE FB_CONSTRAINT_TABLE DISABLE VALIDATE CONSTRAINT CK_ID;
+
+Succeed.
+
+SQL> CALL PRO_FB_TABLE_TIMESTAMP(1);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[6:2] PL/SQL(SYS.PRO_FB_TABLE_TIMESTAMP) terminated with execute errors
+[6:2] CT-00641, No insert/update/delete on table with some constraints disabled and validated
+
+SQL> ALTER TABLE FB_CONSTRAINT_TABLE ENABLE CONSTRAINT CK_ID;
+
+Succeed.
+
+SQL> DELETE FROM FB_CONSTRAINT_TABLE WHERE ID = 30;
+
+1 rows affected.
+
+SQL> DELETE FROM FB_CONSTRAINT_TABLE WHERE ID = 60;
+
+1 rows affected.
+
+SQL> ALTER TABLE FB_CONSTRAINT_TABLE DISABLE VALIDATE CONSTRAINT CK_ID;
+
+Succeed.
+
+SQL> CALL PRO_FB_TABLE_TIMESTAMP(1);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[6:2] PL/SQL(SYS.PRO_FB_TABLE_TIMESTAMP) terminated with execute errors
+[6:2] CT-00641, No insert/update/delete on table with some constraints disabled and validated
+
+SQL> DROP PROCEDURE IF EXISTS PRO_SAVE_TIME;
+
+Succeed.
+
+SQL> DROP PROCEDURE IF EXISTS PRO_FB_TABLE_TIMESTAMP;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS FB_CONSTRAINT_TABLE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS training;
+
+Succeed.
+
+SQL> DROP INDEX IF EXISTS training_index ON TRAINING;
+
+CT-00843, The table or view SYS.TRAINING does not exist.
+SQL> CREATE TABLE training(staff_id INT NOT NULL, score INT)
+  2 PARTITION BY RANGE(staff_id)
+  3 (
+  4 PARTITION training1 VALUES LESS than(10),
+  5 PARTITION training2 VALUES LESS than(20),
+  6 PARTITION training3 VALUES LESS than(30)
+  7 );
+
+Succeed.
+
+SQL> CREATE INDEX training_index ON TRAINING(STAFF_ID)
+  2 LOCAL
+  3 (
+  4   PARTITION training1,
+  5   PARTITION training2,
+  6   PARTITION training3
+  7 );
+
+Succeed.
+
+SQL>
+SQL> CREATE OR REPLACE PROCEDURE table_version
+  2 AS
+  3 SCN_NUM VARCHAR2(200);
+  4 result_num int;
+  5 BEGIN
+  6     SELECT current_scn INTO SCN_NUM from dv_database;
+  7     EXECUTE IMMEDIATE'ALTER TABLE training ADD PARTITION training4 VALUES LESS THAN (40)';
+  8     EXECUTE IMMEDIATE'select count(*) from db_tab_partitions as of scn ('||SCN_NUM||') where table_name = upper(''training'')' into result_num;
+  9     DBE_OUTPUT.PRINT_LINE('result_num='||result_num);
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> set SERVEROUTPUT on;
+
+ON
+SQL> call table_version;
+
+result_num=3
+
+PL/SQL procedure successfully completed.
+
+SQL> set SERVEROUTPUT off;
+
+OFF
+SQL> DROP TABLE training;
+
+Succeed.
+
+SQL> DROP PROCEDURE table_version;
+
+Succeed.
+
+SQL> --CLEANUP
+SQL> PURGE RECYCLEBIN;
+
+Succeed.
+
+SQL> 
+
+

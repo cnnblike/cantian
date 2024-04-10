@@ -1,0 +1,249 @@
+
+
+SQL> -- table with crmode row and index with different crmode
+SQL> create table crmode_tb1 (a int, b int, c int, d int, e int , f int) crmode row;
+
+Succeed.
+
+SQL> create index crmode_idx1 on crmode_tb1(a);
+
+Succeed.
+
+SQL> create index crmode_idx2 on crmode_tb1(b) crmode row;
+
+Succeed.
+
+SQL> create index crmode_idx3 on crmode_tb1(c) crmode page;
+
+Succeed.
+
+SQL> 
+SQL> select cr_mode from all_tables where table_name = 'CRMODE_TB1';
+
+CR_MODE
+-------
+ROW    
+
+1 rows fetched.
+
+SQL> select cr_mode from all_indexes where index_name = 'CRMODE_IDX1';
+
+CR_MODE
+-------
+ROW    
+
+1 rows fetched.
+
+SQL> select cr_mode from all_indexes where index_name = 'CRMODE_IDX2';
+
+CR_MODE
+-------
+ROW    
+
+1 rows fetched.
+
+SQL> select cr_mode from all_indexes where index_name = 'CRMODE_IDX3';
+
+CR_MODE
+-------
+PAGE   
+
+1 rows fetched.
+
+SQL> 
+SQL> insert into crmode_tb1 values(1,1,1,1,1,1);
+
+1 rows affected.
+
+SQL> insert into crmode_tb1 values(2,2,2,2,2,2);
+
+1 rows affected.
+
+SQL> insert into crmode_tb1 values(3,3,3,3,3,3);
+
+1 rows affected.
+
+SQL> 
+SQL> select * from crmode_tb1 where a = 1;
+
+A            B            C            D            E            F           
+------------ ------------ ------------ ------------ ------------ ------------
+1            1            1            1            1            1           
+
+1 rows fetched.
+
+SQL> select * from crmode_tb1 where b = 2;
+
+A            B            C            D            E            F           
+------------ ------------ ------------ ------------ ------------ ------------
+2            2            2            2            2            2           
+
+1 rows fetched.
+
+SQL> select * from crmode_tb1 where c = 3;
+
+A            B            C            D            E            F           
+------------ ------------ ------------ ------------ ------------ ------------
+3            3            3            3            3            3           
+
+1 rows fetched.
+
+SQL> 
+SQL> create index crmode_idx4 on crmode_tb1(d);
+
+Succeed.
+
+SQL> create index crmode_idx5 on crmode_tb1(e) crmode row;
+
+Succeed.
+
+SQL> create index crmode_idx6 on crmode_tb1(f) crmode page;
+
+Succeed.
+
+SQL> 
+SQL> -- table with crmode page and index with different crmode
+SQL> create table crmode_tb2 (a int, b int, c int, d int, e int ,f int) crmode page;
+
+Succeed.
+
+SQL> create index crmode_idx7 on crmode_tb2(a);
+
+Succeed.
+
+SQL> create index crmode_idx8 on crmode_tb2(b) crmode row;
+
+Succeed.
+
+SQL> create index crmode_idx9 on crmode_tb2(c) crmode page;
+
+Succeed.
+
+SQL> 
+SQL> select cr_mode from all_tables where table_name = 'CRMODE_TB2';
+
+CR_MODE
+-------
+PAGE   
+
+1 rows fetched.
+
+SQL> select cr_mode from all_indexes where index_name = 'CRMODE_IDX4';
+
+CR_MODE
+-------
+ROW    
+
+1 rows fetched.
+
+SQL> select cr_mode from all_indexes where index_name = 'CRMODE_IDX5';
+
+CR_MODE
+-------
+ROW    
+
+1 rows fetched.
+
+SQL> select cr_mode from all_indexes where index_name = 'CRMODE_IDX6';
+
+CR_MODE
+-------
+PAGE   
+
+1 rows fetched.
+
+SQL> 
+SQL> insert into crmode_tb2 values(1,1,1,1,1,1);
+
+1 rows affected.
+
+SQL> insert into crmode_tb2 values(2,2,2,2,2,2);
+
+1 rows affected.
+
+SQL> insert into crmode_tb2 values(3,3,3,3,3,3);
+
+1 rows affected.
+
+SQL> 
+SQL> select * from crmode_tb2 where a = 1;
+
+A            B            C            D            E            F           
+------------ ------------ ------------ ------------ ------------ ------------
+1            1            1            1            1            1           
+
+1 rows fetched.
+
+SQL> select * from crmode_tb2 where b = 2;
+
+A            B            C            D            E            F           
+------------ ------------ ------------ ------------ ------------ ------------
+2            2            2            2            2            2           
+
+1 rows fetched.
+
+SQL> select * from crmode_tb2 where c = 3;
+
+A            B            C            D            E            F           
+------------ ------------ ------------ ------------ ------------ ------------
+3            3            3            3            3            3           
+
+1 rows fetched.
+
+SQL> 
+SQL> create index crmode_idx10 on crmode_tb2(d);
+
+Succeed.
+
+SQL> create index crmode_idx11 on crmode_tb2(e) crmode row;
+
+Succeed.
+
+SQL> create index crmode_idx12 on crmode_tb2(f) crmode page;
+
+Succeed.
+
+SQL> -- verify crmode of primary key 
+SQL> create table crmode_tb3 (id int primary key) crmode row;
+
+Succeed.
+
+SQL> create table crmode_tb4 (id int primary key) crmode page;
+
+Succeed.
+
+SQL> 
+SQL> -- verify add contraints 
+SQL> create table crmode_tb5 (a int) crmode page;
+
+Succeed.
+
+SQL> alter table crmode_tb5 add constraint crmode_cons unique(a) using index(create unique index crmode_idx13 on crmode_tb5(a) crmode page);
+
+Succeed.
+
+SQL> 
+SQL> drop table crmode_tb1;
+
+Succeed.
+
+SQL> drop table crmode_tb2;
+
+Succeed.
+
+SQL> drop table crmode_tb3;
+
+Succeed.
+
+SQL> drop table crmode_tb4;
+
+Succeed.
+
+SQL> drop table crmode_tb5;
+
+Succeed.
+
+SQL> 
+SQL> 
+
+
