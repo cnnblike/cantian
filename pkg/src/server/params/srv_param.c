@@ -249,7 +249,7 @@ config_item_t g_parameters[] = {
     { "DB_ISOLEVEL", CT_TRUE, ATTR_NONE, "RC", NULL, NULL, "-", "RC,CC", "CT_TYPE_VARCHAR", NULL, PARAM_DB_ISOLEVEL,
       EFFECT_IMMEDIATELY, CFG_INS, sql_verify_als_db_isolevel, sql_notify_als_db_isolevel,
       sql_notify_als_db_isolevel_value, NULL },
-    { "_SERIALIZED_COMMIT", CT_TRUE, ATTR_NONE, "FALSE", NULL, NULL, "-", "FALSE,TRUE", "CT_TYPE_BOOLEAN", NULL,
+    { "_SERIALIZED_COMMIT", CT_TRUE, ATTR_NONE, "TRUE", NULL, NULL, "-", "FALSE,TRUE", "CT_TYPE_BOOLEAN", NULL,
       PARAM__SERIALIZED_COMMIT, EFFECT_REBOOT, CFG_INS, sql_verify_als_bool, sql_notify_als_bool, sql_notify_als_bool,
       NULL },
     { "ARCHIVE_CONFIG", CT_TRUE, ATTR_READONLY, "SEND,RECEIVE,NODG_CONFIG", NULL, NULL, "-", "-", "CT_TYPE_VARCHAR",
