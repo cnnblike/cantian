@@ -88,6 +88,7 @@ sql_func_t g_func_tab[] = {
     { { (char *)"covar_pop", 9 }, sql_func_covar_or_corr, sql_verify_covar_or_corr, AGGR_TYPE_COVAR_POP, FO_NONE, ID_FUNC_ITEM_COVAR_POP, FO_COVAR, CT_FALSE },
     { { (char *)"covar_samp", 10 }, sql_func_covar_or_corr, sql_verify_covar_or_corr, AGGR_TYPE_COVAR_SAMP, FO_NONE, ID_FUNC_ITEM_COVAR_SAMP, FO_COVAR, CT_FALSE },
     { { (char *)"cume_dist", 9 }, sql_func_cume_dist, sql_verify_cume_dist, AGGR_TYPE_CUME_DIST, FO_NONE, ID_FUNC_ITEM_CUME_DIST, FO_USUAL, CT_FALSE },
+    { { (char *)"curdate", 7 }, sql_func_current_timestamp, sql_verify_current_timestamp, AGGR_TYPE_NONE, FO_SPECIAL, ID_FUNC_ITEM_CURDATE, FO_USUAL, CT_FALSE },   
     { { (char *)"current_timestamp", 17 }, sql_func_current_timestamp, sql_verify_current_timestamp, AGGR_TYPE_NONE, FO_SPECIAL, ID_FUNC_ITEM_CURRENT_TIMESTAMP, FO_USUAL, CT_FALSE },
     { { (char *)"decode", 6 }, sql_func_decode, sql_verify_decode, AGGR_TYPE_NONE, FO_NORMAL, ID_FUNC_ITEM_DECODE, FO_USUAL, CT_TRUE },
     { { (char *)"dense_rank", 10 }, sql_func_dense_rank, sql_verify_dense_rank, AGGR_TYPE_DENSE_RANK, FO_NONE, ID_FUNC_ITEM_DENSE_RANK, FO_USUAL, CT_FALSE },
