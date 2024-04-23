@@ -141,16 +141,16 @@ typedef struct st_dtc_rcy_node {
     uint8 node_id;
     uint8 unused;
     uint16 blk_size;
-    aligned_buf_t read_buf[CT_DTC_RCY_NODE_READ_BUF_SIZE];
+    aligned_buf_t *read_buf;
     uint8 read_buf_read_index;
     uint8 read_buf_write_index;
-    bool32 read_buf_ready[CT_DTC_RCY_NODE_READ_BUF_SIZE];
+    bool32 *read_buf_ready;
     bool32 recover_done;
     bool32 ulog_exist_data;
     uint64 pitr_lfn;  // pitr use
     uint64 ddl_lsn_pitr;  // pitr use
-    uint32 read_pos[CT_DTC_RCY_NODE_READ_BUF_SIZE];
-    uint32 write_pos[CT_DTC_RCY_NODE_READ_BUF_SIZE];
+    uint32 *read_pos;
+    uint32 *write_pos;
     uint64 curr_file_length;
     arch_file_t arch_file; // archive logfile
     int32 handle[CT_MAX_LOG_FILES];  // online logfile handle

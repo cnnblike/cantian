@@ -137,9 +137,10 @@ static inline void dtc_rcy_add_to_bucket(rcy_set_bucket_t *bucket, rcy_set_item_
 
 static inline void reset_read_buffer(){
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     for(int i = 0; i < dtc_rcy->node_count; ++i){
         dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[i];
-        for(int j = 0 ; j < CT_DTC_RCY_NODE_READ_BUF_SIZE; ++j){
+        for(int j = 0 ; j < read_buf_size; ++j){
             rcy_node->read_buf_ready[j] = CT_FALSE;
         }
         rcy_node->read_buf_read_index = 0;
@@ -1148,11 +1149,15 @@ void dtc_recovery_close(knl_session_t *session)
     }
 
     // [reformer] release memory malloced in dtc_rcy_init_rcynode
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     if (dtc_rcy->rcy_nodes != NULL) {
         for (uint32 i = 0; i < dtc_rcy->node_count; i++) {
-            for(int j = 0; j < CT_DTC_RCY_NODE_READ_BUF_SIZE; ++j){
+            for(int j = 0; j < read_buf_size; ++j){
                 cm_aligned_free(&dtc_rcy->rcy_nodes[i].read_buf[j]);
             }
+            CM_FREE_PTR(dtc_rcy->rcy_nodes[i].read_buf_ready);
+            CM_FREE_PTR(dtc_rcy->rcy_nodes[i].read_pos);
+            CM_FREE_PTR(dtc_rcy->rcy_nodes[i].write_pos);
         }
     }
     // [reformer] release memroy malloced in dtc_rcy_init_context
@@ -1961,6 +1966,7 @@ bool32 dtc_standby_rcy_end(knl_session_t *session)
 
 status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
 {
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[node_id];
     log_batch_t *batch = NULL;
@@ -1987,7 +1993,7 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
     left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
     if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
         rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
-        rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % CT_DTC_RCY_NODE_READ_BUF_SIZE;
+        rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
         CT_LOG_RUN_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
                        " node_id = %u read_buf_read_index = %u",
                        rcy_node->node_id , rcy_node->read_buf_read_index);
@@ -3234,6 +3240,7 @@ static status_t dtc_rcy_replay_batches_paral(knl_session_t *session)
 }
 
 static inline status_t dtc_rcy_try_to_read_last_failed_node_log(knl_session_t *session, dtc_rcy_context_t *dtc_rcy, uint32 last_failed_id){
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     // try to read last failed node log
     dtc_rcy_node_t *last_failed_node = &dtc_rcy->rcy_nodes[last_failed_id];
     if (dtc_read_node_log(dtc_rcy,session,last_failed_id,CT_TRUE) != CT_SUCCESS) {
@@ -3241,13 +3248,14 @@ static inline status_t dtc_rcy_try_to_read_last_failed_node_log(knl_session_t *s
         return CT_ERROR;
     }
     last_failed_node->read_buf_ready[last_failed_node->read_buf_write_index] = CT_TRUE;
-    last_failed_node->read_buf_write_index = (last_failed_node->read_buf_write_index + 1) % CT_DTC_RCY_NODE_READ_BUF_SIZE;
+    last_failed_node->read_buf_write_index = (last_failed_node->read_buf_write_index + 1) % read_buf_size;
     CT_LOG_RUN_INF("[DTC RCY] dtc rcy try to read last failed node log node_id=%u read_buf_write_index=%u", last_failed_node->node_id, last_failed_node->read_buf_write_index);
     return CT_SUCCESS;
 }
 
 void dtc_rcy_read_node_log_proc(thread_t *thread)
 {
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     knl_session_t *session = (knl_session_t *)thread->argument;
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     bool32 last_success = CT_TRUE;
@@ -3305,7 +3313,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             }
             CT_LOG_RUN_INF("[DTC RCY] read node log proc finish read node log node_id=%u read_buf_write_index=%u", node->node_id, node->read_buf_write_index);
             node->read_buf_ready[node->read_buf_write_index] = CT_TRUE;
-            node->read_buf_write_index = (node->read_buf_write_index + 1) % CT_DTC_RCY_NODE_READ_BUF_SIZE;
+            node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
         }
     }
     thread->result = CT_TRUE;
@@ -3314,6 +3322,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
 
 static inline void dtc_rcy_next_phase(knl_session_t *session)
 {
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     dtc_rcy->phase = PHASE_RECOVERY;
     dtc_rcy->curr_node_idx = CT_INVALID_ID8;
@@ -3328,7 +3337,7 @@ static inline void dtc_rcy_next_phase(knl_session_t *session)
         dtc_rcy->rcy_log_points[i].rcy_write_point = dtc_rcy->rcy_log_points[i].rcy_point_saved;
         dtc_rcy->rcy_nodes[i].recover_done = CT_FALSE;
         dtc_rcy->rcy_nodes[i].ulog_exist_data = CT_TRUE;
-        for(int j = 0 ; j < CT_DTC_RCY_NODE_READ_BUF_SIZE ; ++j){
+        for(int j = 0 ; j < read_buf_size ; ++j){
             dtc_rcy->rcy_nodes[i].read_pos[j] = 0;
             dtc_rcy->rcy_nodes[i].write_pos[j] = 0;
         }
@@ -3661,7 +3670,7 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     dtc_rcy_node_t *rcy_node = NULL;
     reform_rcy_node_t *rcy_log_point = NULL;
     uint8 node_id = recover_list->inst_id_list[idx];
-
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     if (dtc_read_node_ctrl(session, node_id) != CT_SUCCESS) {
         CT_LOG_RUN_ERR("[DTC RCY] failed to read ctrl page for crashed node=%u", node_id);
         return CT_ERROR;
@@ -3675,11 +3684,6 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     rcy_node->ddl_lsn_pitr = CT_INVALID_ID64;
     rcy_node->arch_file.handle = CT_INVALID_HANDLE;
     rcy_node->ulog_exist_data = CT_TRUE;
-    for(int i = 0 ; i < CT_DTC_RCY_NODE_READ_BUF_SIZE ; ++i){
-        rcy_node->write_pos[i] = 0;
-        rcy_node->read_pos[i] = 0;
-        rcy_node->read_buf_ready[i] = CT_FALSE;
-    }
     rcy_node->curr_file_length = 0;
     rcy_node->latest_lsn = 0;
     rcy_node->latest_rcy_end_lsn = 0;
@@ -3692,6 +3696,16 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     rcy_log_point->rcy_point_saved = ctrl->rcy_point;
     rcy_log_point->rcy_write_point = ctrl->rcy_point;
 
+    rcy_node->read_buf = (aligned_buf_t *)malloc(read_buf_size * sizeof(aligned_buf_t));
+    rcy_node->read_pos = (uint32 *)malloc(read_buf_size * sizeof(uint32));
+    rcy_node->write_pos = (uint32 *)malloc(read_buf_size * sizeof(uint32));
+    rcy_node->read_buf_ready = (bool32 *)malloc(read_buf_size * sizeof(bool32));
+    for(int i = 0 ; i < read_buf_size ; ++i){
+        rcy_node->write_pos[i] = 0;
+        rcy_node->read_pos[i] = 0;
+        rcy_node->read_buf_ready[i] = CT_FALSE;
+    }
+
     dtc_update_scn(session, ctrl->scn);
     dtc_update_lsn(session, ctrl->lsn);
 
@@ -3703,7 +3717,7 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     }
 
     int64 size = (int64)LOG_LGWR_BUF_SIZE(session);
-    for(int i = 0; i < CT_DTC_RCY_NODE_READ_BUF_SIZE; ++i){
+    for(int i = 0; i < read_buf_size; ++i){
         if (cm_aligned_malloc(size, "dtc rcy read buffer", &rcy_node->read_buf[i]) != CT_SUCCESS) {
             CT_LOG_RUN_ERR("[DTC RCY] failed to alloc log read buffer for crashed node=%u", node_id);
             // free memory in dtc_recovery_close
@@ -3781,7 +3795,7 @@ status_t dtc_recovery_init(knl_session_t *session, instance_list_t *recover_list
 {
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     uint32 count = recover_list->inst_id_count;
-
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     dtc_rcy_init_last_recovery_stat(recover_list);
     cm_reset_error();
     if (dtc_rcy_init_context(session, dtc_rcy, count, full_recovery) != CT_SUCCESS) {
@@ -3799,7 +3813,7 @@ status_t dtc_recovery_init(knl_session_t *session, instance_list_t *recover_list
         if (dtc_rcy_init_rcynode(session, recover_list, i) != CT_SUCCESS) {
             // release memory malloced in dtc_rcy_init_rcynode
             for (uint32 j = 0; j < i; j++) {
-                for(int k = 0 ; k < CT_DTC_RCY_NODE_READ_BUF_SIZE ; k++){
+                for(int k = 0 ; k < read_buf_size ; k++){
                     cm_aligned_free(&dtc_rcy->rcy_nodes[j].read_buf[k]);
                 }
             }
@@ -3819,7 +3833,7 @@ status_t dtc_recovery_init(knl_session_t *session, instance_list_t *recover_list
     if (dtc_rcy_init_rcyset(&dtc_rcy->rcy_set) != CT_SUCCESS) {
         // release memory malloced in dtc_rcy_init_rcynode
         for (uint32 i = 0; i < count; i++) {
-            for(int k = 0 ; k < CT_DTC_RCY_NODE_READ_BUF_SIZE ; k++){
+            for(int k = 0 ; k < read_buf_size ; k++){
                 cm_aligned_free(&dtc_rcy->rcy_nodes[i].read_buf[k]);
             }
         }

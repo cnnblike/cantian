@@ -699,7 +699,6 @@ typedef enum en_cs_distribute_type {
 #define CT_MAX_ARCH_CLEAN_PERCENT (uint32)100
 #define CT_MIN_ARCH_CLEAN_UL_PERCENT (uint32)1
 #define CT_MIN_ARCH_CLEAN_LL_PERCENT (uint32)0
-#define CT_DTC_RCY_NODE_READ_BUF_SIZE (uint32)2
 #define CT_DTC_RCY_NODE_READ_BUF_TIMEOUT (uint32)(60*1000)// 60s
 #define CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME (uint32)1// 1ms
 
