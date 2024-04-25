@@ -187,7 +187,7 @@ static status_t wait_for_read_buf_ready(uint32 index){
                 CT_LOG_RUN_ERR("[DTC RCY] dtc rcy fetch log batch wait for read buf time out");
                 return CT_TIMEDOUT;
             }
-            if(rcy_node->recover_done == CT_TRUE){
+            if(rcy_node->recover_done == CT_TRUE || rcy_node->recover_read_done == CT_TRUE){
                 CT_LOG_RUN_INF("[DTC RCY] read node log proc node is done node_id = %u", index);
                 return CT_SUCCESS;
             }
@@ -2050,13 +2050,6 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
         CT_LOG_RUN_INF("[DTC RCY] dtc fetch log finish wait for read buf sleep "
                        "time = %llu node_id = %u read_buf_read_index = %u",
                        sleep_time, rcy_node->node_id , rcy_node->read_buf_read_index);
-        if(rcy_node->recover_read_done == CT_TRUE){
-            rcy_node->recover_read_done_after_update_index_cnt++;
-            CT_LOG_RUN_INF("[DTC RCY] dtc fetch log update done after cnt"
-                           "node_id = %u read_buf_read_index = %u , done after cnt=%u",
-                           rcy_node->node_id , rcy_node->read_buf_read_index,
-                           rcy_node->recover_read_done_after_update_index_cnt);
-        }
     }
     return CT_SUCCESS;
 }
@@ -2219,7 +2212,26 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
             }
             continue;
         }
-
+        if (rcy_node->recover_read_done) {
+            bool32 has_left = CT_FALSE;
+            for(int j = rcy_node->read_buf_read_index ;j < read_buf_size ;j++){
+                log_batch_t *tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, j, rcy_node->read_buf_write_index);
+                uint32 left_size =0;
+                if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
+                    CT_LOG_RUN_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
+                    rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
+                    continue;
+                }else{
+                    has_left = CT_TRUE;
+                    break;
+                }
+            }
+            if(has_left == CT_FALSE){
+                CT_LOG_RUN_INF("[DTC RCY] read node log proc node recover done node_id = %u", i);
+                rcy_node->recover_done = CT_TRUE;
+                continue;
+            }
+        }
 
         if (wait_for_read_buf_ready(i) != CT_SUCCESS){
             CT_LOG_RUN_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
@@ -2237,20 +2249,6 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
         }
 
         batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy,i, rcy_node->read_buf_read_index);
-        uint32 left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
-        if (left_size < sizeof(log_batch_t) || batch == NULL || left_size < batch->space_size) {
-            CT_LOG_RUN_INF("[DTC RCY] fetch log batch left size < sizeof(log_batch_t)"
-                           " node_id = %u read_buf_read_index = %u",
-                           rcy_node->node_id, rcy_node->read_buf_read_index);
-            if(rcy_node->recover_read_done == CT_TRUE && rcy_node->recover_read_done_after_update_index_cnt > read_buf_size){
-                CT_LOG_DEBUG_INF("[DTC RCY] dtc fetch log update done after cnt set recover done"
-                               "node_id = %u read_buf_read_index = %u , done after cnt=%u",
-                               rcy_node->node_id , rcy_node->read_buf_read_index,
-                               rcy_node->recover_read_done_after_update_index_cnt);
-                rcy_node->recover_done = CT_TRUE;
-            }
-            continue;
-        }
         CT_LOG_DEBUG_INF("[DTC RCY] fetch batch from instance %u point [%u-%u/%u/%llu],"
             " head lfn:%llu, batch writepos:%u, readpos:%u, space_size:%u, current lsn:%llu, start lsn:%llu",
             rcy_log_point->node_id, rcy_log_point->rcy_point.rst_id, rcy_log_point->rcy_point.asn,
@@ -3274,6 +3272,10 @@ static inline status_t dtc_rcy_try_to_read_last_failed_node_log(knl_session_t *s
         CT_LOG_RUN_ERR("[DTC RCY] read node lod proc failed to load redo log of last failed node=%u", last_failed_id);
         return CT_ERROR;
     }
+    if(*read_size == 0){
+        CT_LOG_RUN_INF("[DTC RCY] read node lod proc last failed log read_size = 0 node=%u", last_failed_id);
+        return CT_SUCCESS;
+    }
     last_failed_node->read_buf_ready[last_failed_node->read_buf_write_index] = CT_TRUE;
     last_failed_node->read_buf_write_index = (last_failed_node->read_buf_write_index + 1) % read_buf_size;
     CT_LOG_RUN_INF("[DTC RCY] dtc rcy try to read last failed node log node_id=%u read_buf_write_index=%u", last_failed_node->node_id, last_failed_node->read_buf_write_index);
@@ -3396,7 +3398,6 @@ static inline void dtc_rcy_next_phase(knl_session_t *session)
         dtc_rcy->rcy_nodes[i].recover_done = CT_FALSE;
         dtc_rcy->rcy_nodes[i].recover_read_done = CT_FALSE;
         dtc_rcy->rcy_nodes[i].ulog_exist_data = CT_TRUE;
-        dtc_rcy->rcy_nodes[i].recover_read_done_after_update_index_cnt = 0;
         for(int j = 0 ; j < read_buf_size ; ++j){
             dtc_rcy->rcy_nodes[i].read_pos[j] = 0;
             dtc_rcy->rcy_nodes[i].write_pos[j] = 0;
@@ -3749,7 +3750,6 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     rcy_node->latest_rcy_end_lsn = 0;
     rcy_node->read_buf_read_index = 0;
     rcy_node->read_buf_write_index = 0;
-    rcy_node->recover_read_done_after_update_index_cnt = 0;
     rcy_node->recover_read_done = CT_FALSE;
 
     rcy_log_point->node_id = node_id;
