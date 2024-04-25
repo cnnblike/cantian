@@ -2050,6 +2050,13 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
         CT_LOG_RUN_INF("[DTC RCY] dtc fetch log finish wait for read buf sleep "
                        "time = %llu node_id = %u read_buf_read_index = %u",
                        sleep_time, rcy_node->node_id , rcy_node->read_buf_read_index);
+        if(rcy_node->recover_read_done == CT_TRUE){
+            rcy_node->recover_read_done_after_update_index_cnt++;
+            CT_LOG_RUN_INF("[DTC RCY] dtc fetch log update done after cnt"
+                           "node_id = %u read_buf_read_index = %u , done after cnt=%u",
+                           rcy_node->node_id , rcy_node->read_buf_read_index,
+                           rcy_node->recover_read_done_after_update_index_cnt);
+        }
     }
     return CT_SUCCESS;
 }
@@ -2190,7 +2197,7 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
     reform_rcy_node_t *rcy_log_point = NULL;
     uint64 curr_batch_lsn = CT_INVALID_ID64;
     uint8 curr_node;
-
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     *batch_out = NULL;
 
     for (uint32 i = 0; i < dtc_rcy->node_count; i++) {
@@ -2230,6 +2237,20 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
         }
 
         batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy,i, rcy_node->read_buf_read_index);
+        uint32 left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
+        if (left_size < sizeof(log_batch_t) || batch == NULL || left_size < batch->space_size) {
+            CT_LOG_RUN_INF("[DTC RCY] fetch log batch left size < sizeof(log_batch_t)"
+                           " node_id = %u read_buf_read_index = %u",
+                           rcy_node->node_id, rcy_node->read_buf_read_index);
+            if(rcy_node->recover_read_done == CT_TRUE && rcy_node->recover_read_done_after_update_index_cnt > read_buf_size){
+                CT_LOG_DEBUG_INF("[DTC RCY] dtc fetch log update done after cnt set recover done"
+                               "node_id = %u read_buf_read_index = %u , done after cnt=%u",
+                               rcy_node->node_id , rcy_node->read_buf_read_index,
+                               rcy_node->recover_read_done_after_update_index_cnt);
+                rcy_node->recover_done = CT_TRUE;
+            }
+            continue;
+        }
         CT_LOG_DEBUG_INF("[DTC RCY] fetch batch from instance %u point [%u-%u/%u/%llu],"
             " head lfn:%llu, batch writepos:%u, readpos:%u, space_size:%u, current lsn:%llu, start lsn:%llu",
             rcy_log_point->node_id, rcy_log_point->rcy_point.rst_id, rcy_log_point->rcy_point.asn,
@@ -3375,6 +3396,7 @@ static inline void dtc_rcy_next_phase(knl_session_t *session)
         dtc_rcy->rcy_nodes[i].recover_done = CT_FALSE;
         dtc_rcy->rcy_nodes[i].recover_read_done = CT_FALSE;
         dtc_rcy->rcy_nodes[i].ulog_exist_data = CT_TRUE;
+        dtc_rcy->rcy_nodes[i].recover_read_done_after_update_index_cnt = 0;
         for(int j = 0 ; j < read_buf_size ; ++j){
             dtc_rcy->rcy_nodes[i].read_pos[j] = 0;
             dtc_rcy->rcy_nodes[i].write_pos[j] = 0;
@@ -3727,6 +3749,7 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     rcy_node->latest_rcy_end_lsn = 0;
     rcy_node->read_buf_read_index = 0;
     rcy_node->read_buf_write_index = 0;
+    rcy_node->recover_read_done_after_update_index_cnt = 0;
     rcy_node->recover_read_done = CT_FALSE;
 
     rcy_log_point->node_id = node_id;
