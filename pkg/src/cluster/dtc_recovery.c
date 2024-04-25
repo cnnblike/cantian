@@ -188,7 +188,7 @@ static status_t wait_for_read_buf_ready(uint32 index){
                 return CT_TIMEDOUT;
             }
             if(rcy_node->recover_done == CT_TRUE || rcy_node->recover_read_done == CT_TRUE){
-                CT_LOG_RUN_INF("[DTC RCY] read node log proc node is done node_id = %u", index);
+                CT_LOG_DEBUG_INF("[DTC RCY] read node log proc node is done node_id = %u", index);
                 return CT_SUCCESS;
             }
             if (dtc_rcy->read_log_thread.closed == CT_TRUE){
@@ -2033,7 +2033,7 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
     if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
         rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
         rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
-        CT_LOG_RUN_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
+        CT_LOG_DEBUG_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
                        " node_id = %u read_buf_read_index = %u",
                        rcy_node->node_id , rcy_node->read_buf_read_index);
 
@@ -2042,12 +2042,12 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
         uint64 sleep_time = 0;
         ELAPSED_BEGIN(begin_time);
         // wait for read buf ready
-        CT_LOG_RUN_INF("[DTC RCY] dtc fetch log start wait for read buf "
+        CT_LOG_DEBUG_INF("[DTC RCY] dtc fetch log start wait for read buf "
                        "node_id = %u read_buf_read_index = %u",
                        rcy_node->node_id , rcy_node->read_buf_read_index);
         wait_for_read_buf_ready(node_id);
         ELAPSED_END(begin_time, sleep_time);
-        CT_LOG_RUN_INF("[DTC RCY] dtc fetch log finish wait for read buf sleep "
+        CT_LOG_DEBUG_INF("[DTC RCY] dtc fetch log finish wait for read buf sleep "
                        "time = %llu node_id = %u read_buf_read_index = %u",
                        sleep_time, rcy_node->node_id , rcy_node->read_buf_read_index);
     }
@@ -2223,7 +2223,7 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
             continue;
         }
         if (rcy_node->read_buf_ready[rcy_node->read_buf_read_index] == CT_FALSE){
-            CT_LOG_RUN_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
+            CT_LOG_DEBUG_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
             continue;
         }
 
@@ -3282,6 +3282,7 @@ void try_to_read_failed_node(bool32 *failed_node, uint32 *failed_node_cnt, threa
                 if(failed_node_cnt[j] >= CT_DTC_RCY_NODE_READ_TRY_TO_READ_LAST_FAILED_NODE_TIMES){
                     dtc_rcy->rcy_nodes[j].recover_read_done = CT_TRUE;
                     CT_LOG_RUN_INF("[DTC RCY] read node log proc read failed node max times set recover done failed_id=%u", j);
+                    cm_sleep(300);
                 }
             }
         }else{
