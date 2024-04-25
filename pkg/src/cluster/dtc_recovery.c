@@ -2070,7 +2070,7 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
     uint32 left_size;
     for (;;) {
         left_size = size_read - rcy_node->read_pos[rcy_node->read_buf_write_index];
-        if (left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size) {
+        if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
             CT_LOG_RUN_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
             break;
         }
@@ -2078,7 +2078,7 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
         rcy_log_point->rcy_write_point.block_id += batch->space_size / rcy_node->blk_size;
         rcy_node->read_pos[rcy_node->read_buf_write_index] += batch->space_size;
         left_size = size_read - rcy_node->read_pos[rcy_node->read_buf_write_index];
-        if (left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size) {
+        if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
             CT_LOG_RUN_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
             break;
         }
@@ -2232,15 +2232,15 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
             CT_LOG_RUN_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
             continue;
         }
+
+        batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy,i, rcy_node->read_buf_read_index);
         uint32 left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
-        if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
-            CT_LOG_DEBUG_INF("[DTC RCY] fetch log batch left size < sizeof(log_batch_t)"
+        if (left_size < sizeof(log_batch_t) || batch == NULL ||left_size < batch->space_size) {
+            CT_LOG_RUN_INF("[DTC RCY] fetch log batch left size < sizeof(log_batch_t)"
                            " node_id = %u read_buf_read_index = %u",
                            rcy_node->node_id, rcy_node->read_buf_read_index);
             continue;
         }
-
-        batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy,i, rcy_node->read_buf_read_index);
         CT_LOG_DEBUG_INF("[DTC RCY] fetch batch from instance %u point [%u-%u/%u/%llu],"
             " head lfn:%llu, batch writepos:%u, readpos:%u, space_size:%u, current lsn:%llu, start lsn:%llu",
             rcy_log_point->node_id, rcy_log_point->rcy_point.rst_id, rcy_log_point->rcy_point.asn,
