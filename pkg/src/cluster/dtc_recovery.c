@@ -3271,7 +3271,7 @@ void try_to_read_failed_node(bool32 *failed_node, uint32 *failed_node_cnt, threa
             continue;
         }
         uint32 read_size = 0;
-        CT_LOG_RUN_INF("[DTC RCY] read node log proc read last failed node log last_failed_id=%u", j);
+        CT_LOG_DEBUG_INF("[DTC RCY] read node log proc read last failed node log last_failed_id=%u", j);
         status_t status = dtc_rcy_try_to_read_last_failed_node_log(session,dtc_rcy,j,&read_size);
         if(status == CT_SUCCESS){
             if(read_size != 0){
@@ -3282,7 +3282,7 @@ void try_to_read_failed_node(bool32 *failed_node, uint32 *failed_node_cnt, threa
                 if(failed_node_cnt[j] >= CT_DTC_RCY_NODE_READ_TRY_TO_READ_LAST_FAILED_NODE_TIMES){
                     dtc_rcy->rcy_nodes[j].recover_read_done = CT_TRUE;
                     CT_LOG_RUN_INF("[DTC RCY] read node log proc read failed node max times set recover done failed_id=%u", j);
-                    cm_sleep(300);
+                    cm_sleep(100);
                 }
             }
         }else{
