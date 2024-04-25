@@ -2078,11 +2078,11 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
         rcy_log_point->rcy_write_point.block_id += batch->space_size / rcy_node->blk_size;
         rcy_node->read_pos[rcy_node->read_buf_write_index] += batch->space_size;
         left_size = size_read - rcy_node->read_pos[rcy_node->read_buf_write_index];
+        tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx, rcy_node->read_buf_write_index);
         if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
             CT_LOG_RUN_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
             break;
         }
-        tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx, rcy_node->read_buf_write_index);
         CT_LOG_DEBUG_INF("[DTC RCY] process find max lsn idx=%u size_read=%u "
                          "left_size=%u batch->space_size =%u block_id=%u ,lfn=%llu",
                          idx , size_read, left_size, batch->space_size,
