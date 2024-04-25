@@ -2212,26 +2212,6 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
             }
             continue;
         }
-        if (rcy_node->recover_read_done) {
-            bool32 has_left = CT_FALSE;
-            for(int j = 0 ;j < read_buf_size ;j++){
-                log_batch_t *tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, i, rcy_node->read_buf_read_index);
-                uint32 left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
-                if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
-                    CT_LOG_RUN_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
-                    rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
-                    continue;
-                }else{
-                    has_left = CT_TRUE;
-                    break;
-                }
-            }
-            if(has_left == CT_FALSE){
-                CT_LOG_RUN_INF("[DTC RCY] read node log proc node recover done node_id = %u", i);
-                rcy_node->recover_done = CT_TRUE;
-                continue;
-            }
-        }
 
         if (wait_for_read_buf_ready(i) != CT_SUCCESS){
             CT_LOG_RUN_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
