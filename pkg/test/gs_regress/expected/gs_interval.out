@@ -1,0 +1,2759 @@
+
+
+SQL> --- DDL tese cases
+SQL> -- 1.1 ISO8601 format for YM_INTERVAL
+SQL> select cast('P123Y999999M' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=99999)
+SQL> select cast('-P0Y123M' as interval year to month) from dual;
+
+CAST('-P0Y123M' AS INTERVAL YEAR TO MONTH)
+------------------------------------------
+-10-03                                    
+
+1 rows fetched.
+
+SQL> select cast('-P0123M' as interval year to month) from dual;
+
+CAST('-P0123M' AS INTERVAL YEAR TO MONTH)
+-----------------------------------------
+-10-03                                   
+
+1 rows fetched.
+
+SQL> select cast('P123Y999999M' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=99999)
+SQL> select cast('-P0Y123M' as interval year to month) from dual;
+
+CAST('-P0Y123M' AS INTERVAL YEAR TO MONTH)
+------------------------------------------
+-10-03                                    
+
+1 rows fetched.
+
+SQL> select cast('-P0123M23D' as interval year to month) from dual;
+
+CAST('-P0123M23D' AS INTERVAL YEAR TO MONTH)
+--------------------------------------------
+-10-03                                      
+
+1 rows fetched.
+
+SQL> select cast('   +P0Y123M' as interval year to month) from dual;
+
+CAST('   +P0Y123M' AS INTERVAL YEAR TO MONTH)
+---------------------------------------------
++10-03                                       
+
+1 rows fetched.
+
+SQL> select cast('-P0Y0M' as interval year to month) from dual;
+
+CAST('-P0Y0M' AS INTERVAL YEAR TO MONTH)
+----------------------------------------
++00-00                                  
+
+1 rows fetched.
+
+SQL> select cast('-P0Y0D' as interval year to month) from dual;
+
+CAST('-P0Y0D' AS INTERVAL YEAR TO MONTH)
+----------------------------------------
++00-00                                  
+
+1 rows fetched.
+
+SQL> select cast('-P0YT0S' as interval year to month) from dual;
+
+CAST('-P0YT0S' AS INTERVAL YEAR TO MONTH)
+-----------------------------------------
++00-00                                   
+
+1 rows fetched.
+
+SQL> select cast('-P12M' as interval year to month) from dual;
+
+CAST('-P12M' AS INTERVAL YEAR TO MONTH)
+---------------------------------------
+-01-00                                 
+
+1 rows fetched.
+
+SQL> select cast('-P9999Y' as interval year to month) from dual;
+
+CAST('-P9999Y' AS INTERVAL YEAR TO MONTH)
+-----------------------------------------
+-9999-00                                 
+
+1 rows fetched.
+
+SQL> select cast('-P99999M' as interval year to month) from dual;
+
+CAST('-P99999M' AS INTERVAL YEAR TO MONTH)
+------------------------------------------
+-8333-03                                  
+
+1 rows fetched.
+
+SQL> select cast('P9999Y999999M123213D' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=99999)
+SQL> select cast('-P9999Y11M' as interval year to month) from dual;
+
+CAST('-P9999Y11M' AS INTERVAL YEAR TO MONTH)
+--------------------------------------------
+-9999-11                                    
+
+1 rows fetched.
+
+SQL> select cast('P9999Y11M' as interval year to month) from dual;
+
+CAST('P9999Y11M' AS INTERVAL YEAR TO MONTH)
+-------------------------------------------
++9999-11                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> -- 1.2 invalid cases
+SQL> select cast('-P19999Y' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- YEAR field out of range (<=9999)
+SQL> select cast('-P1000000M' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=99999)
+SQL> select cast('P123Y9999999900000000' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- no field indicator
+SQL> select cast('-P0Y123m' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P99999M' as interval year to month) from dual;
+
+CAST('-P99999M' AS INTERVAL YEAR TO MONTH)
+------------------------------------------
+-8333-03                                  
+
+1 rows fetched.
+
+SQL> select cast('-P9999Y999999M' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=99999)
+SQL> select cast('P9999Y999999M' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=99999)
+SQL> select cast('-PP0Y123m' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P10000Y123M' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- YEAR field out of range (<=9999)
+SQL> select cast('-P9999Y12M' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- out of range
+SQL> select cast('-P100Y9999999999M' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- field text is too long (<=9)
+SQL> select cast('' as interval year to month) from dual;
+
+CAST('' AS INTERVAL YEAR TO MONTH)
+----------------------------------
+                                  
+
+1 rows fetched.
+
+SQL> select cast('-' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- text is too short
+SQL> select cast('-P012.3M23D' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected decimal point
+SQL> select cast('-P012.M28D' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected decimal point
+SQL> select cast('-P012M28DT21.H' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- no fractional digits
+SQL> select cast('-P012M28DT21.123H' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P012M28DT21H213.S' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- no fractional digits
+SQL> select cast('-   P0Y123M' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('  P0Y123M' as interval year to month) from dual;
+
+CAST('  P0Y123M' AS INTERVAL YEAR TO MONTH)
+-------------------------------------------
++10-03                                     
+
+1 rows fetched.
+
+SQL> select cast(' + P0Y123M' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P1' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- text is too short
+SQL> select cast('-P12' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- no field indicator
+SQL> select cast('-PY' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- text is too short
+SQL> select cast('-PYM' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P0Y0' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- no field indicator
+SQL> select cast('-P0Y0T' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P0Y0S' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P0YT0' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- time field is too short
+SQL> select cast('-P0YT00' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- no field indicator
+SQL> select cast('-P0YT00M' as interval year to month) from dual;
+
+CAST('-P0YT00M' AS INTERVAL YEAR TO MONTH)
+------------------------------------------
++00-00                                    
+
+1 rows fetched.
+
+SQL> select cast('-P   12M' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P12M12Y' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('-PT12M12H' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('-PT12M12H' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('-P12M100000.12S' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected decimal point
+SQL> select cast('-P12M10000012S' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('-P1.2M100000D' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected decimal point
+SQL> select cast('P9999Y999999MT123213D' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=99999)
+SQL> 
+SQL> -- 2.1 SQL format  for YM_INTERVAL
+SQL> select cast('-  1233 -  2' as interval year to month) from dual;
+
+CAST('-  1233 -  2' AS INTERVAL YEAR TO MONTH)
+----------------------------------------------
+-1233-02                                      
+
+1 rows fetched.
+
+SQL> select cast('1233-0' as interval year to month) from dual;
+
+CAST('1233-0' AS INTERVAL YEAR TO MONTH)
+----------------------------------------
++1233-00                                
+
+1 rows fetched.
+
+SQL> select cast('-  1233 -  2' as interval year to month) from dual;
+
+CAST('-  1233 -  2' AS INTERVAL YEAR TO MONTH)
+----------------------------------------------
+-1233-02                                      
+
+1 rows fetched.
+
+SQL> select cast('1233-00000000000000003' as interval year to month) from dual;
+
+CAST('1233-00000000000000003' AS INTERVAL YEAR TO MONTH)
+--------------------------------------------------------
++1233-03                                                
+
+1 rows fetched.
+
+SQL> select cast('-0000000001233-00000000000000003' as interval year to month) from dual;
+
+CAST('-0000000001233-00000000000000003' AS INTERVAL YEAR TO MONT
+----------------------------------------------------------------
+-1233-03                                                        
+
+1 rows fetched.
+
+SQL> select cast('-     0000000001233-00000000000000003' as interval year to month) from dual;
+
+CAST('-     0000000001233-00000000000000003' AS INTERVAL YEAR TO
+----------------------------------------------------------------
+-1233-03                                                        
+
+1 rows fetched.
+
+SQL> select cast('     -     0000000001233-00000000000000003' as interval year to month) from dual;
+
+CAST('     -     0000000001233-00000000000000003' AS INTERVAL YE
+----------------------------------------------------------------
+-1233-03                                                        
+
+1 rows fetched.
+
+SQL> select cast('        22		-3' as interval year to month) from dual;
+
+CAST('        22		-3' AS INTERVAL YEAR TO MONTH)
+------------------------------------------------
++22-03                                          
+
+1 rows fetched.
+
+SQL> select cast('        +0-0000003' as interval year to month) from dual;
+
+CAST('        +0-0000003' AS INTERVAL YEAR TO MONTH)
+----------------------------------------------------
++00-03                                              
+
+1 rows fetched.
+
+SQL> select cast('+ 9999 - 11' as interval year to month) from dual;
+
+CAST('+ 9999 - 11' AS INTERVAL YEAR TO MONTH)
+---------------------------------------------
++9999-11                                     
+
+1 rows fetched.
+
+SQL> select cast('+ 9990 - 000000000000000000000000000000000000000' as interval year to month) from dual;
+
+CAST('+ 9990 - 000000000000000000000000000000000000000' AS INTER
+----------------------------------------------------------------
++9990-00                                                        
+
+1 rows fetched.
+
+SQL> 
+SQL> -- 2.2 invalid cases
+SQL> select cast('12332-12' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- YEAR field out of range (<=9999)
+SQL> select cast('1233-12' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=11)
+SQL> select cast('1233-00000000000000003.2' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('- +1233-00000000000000003' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('+  000-0000000000000.000' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('1233-00000000000000003h' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('1s33-00000000000000003h' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('h' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('        ' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- text is too short
+SQL> select cast('        -2' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('        22' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('        223' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('        -223' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('        22' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('        22-12' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=11)
+SQL> select cast('        22+12' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('        22--0' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('        22-' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('        -220-' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('        22            ' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('        22 - 123123123123           ' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- illegal MONTH field
+SQL> select cast('+ 9999 - 12' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MONTH field out of range (<=11)
+SQL> select cast('+ 99990 - 11' as interval year to month) from dual;
+
+CT-00692, [1:8]Invalid interval text -- YEAR field out of range (<=9999)
+SQL> select cast('+ 9999.0 - 11' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('+ 9990 - 0.11' as interval year to month) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> 
+SQL> -- 3.1 ISO8601 for DS_INTERVAL
+SQL> select cast('-PT23H23M23S' as interval day to second) from dual;
+
+CAST('-PT23H23M23S' AS INTERVAL DAY TO SECOND)
+----------------------------------------------
+-00 23:23:23.000000                           
+
+1 rows fetched.
+
+SQL> select cast('-PT23H23M23.003333S' as interval day to second) from dual;
+
+CAST('-PT23H23M23.003333S' AS INTERVAL DAY TO SECOND)
+-----------------------------------------------------
+-00 23:23:23.003333                                  
+
+1 rows fetched.
+
+SQL> select cast('-PT23H23M23.003333999S' as interval day to second) from dual;
+
+CAST('-PT23H23M23.003333999S' AS INTERVAL DAY TO SECOND)
+--------------------------------------------------------
+-00 23:23:23.003334                                     
+
+1 rows fetched.
+
+SQL> select cast('-PT23H23M23.00333999S' as interval day to second) from dual;
+
+CAST('-PT23H23M23.00333999S' AS INTERVAL DAY TO SECOND)
+-------------------------------------------------------
+-00 23:23:23.003340                                    
+
+1 rows fetched.
+
+SQL> select cast('-PT23H23M23.00333999S' as interval day to second) from dual;
+
+CAST('-PT23H23M23.00333999S' AS INTERVAL DAY TO SECOND)
+-------------------------------------------------------
+-00 23:23:23.003340                                    
+
+1 rows fetched.
+
+SQL> select cast('PT999999M' as interval day to second) from dual;
+
+CAST('PT999999M' AS INTERVAL DAY TO SECOND)
+-------------------------------------------
++694 10:39:00.000000                       
+
+1 rows fetched.
+
+SQL> select cast('PT123123S' as interval day to second) from dual;
+
+CAST('PT123123S' AS INTERVAL DAY TO SECOND)
+-------------------------------------------
++01 10:12:03.000000                        
+
+1 rows fetched.
+
+SQL> select cast('PT12312.3S' as interval day to second) from dual;
+
+CAST('PT12312.3S' AS INTERVAL DAY TO SECOND)
+--------------------------------------------
++00 03:25:12.300000                         
+
+1 rows fetched.
+
+SQL> select cast('PT12312.999999999999S' as interval day to second) from dual;
+
+CAST('PT12312.999999999999S' AS INTERVAL DAY TO SECOND)
+-------------------------------------------------------
++00 03:25:13.000000                                    
+
+1 rows fetched.
+
+SQL> select cast('PT12H312.999999999999S' as interval day to second) from dual;
+
+CAST('PT12H312.999999999999S' AS INTERVAL DAY TO SECOND)
+--------------------------------------------------------
++00 12:05:13.000000                                     
+
+1 rows fetched.
+
+SQL> select cast('PT12H312.999S      ' as interval day to second) from dual;
+
+CAST('PT12H312.999S      ' AS INTERVAL DAY TO SECOND)
+-----------------------------------------------------
++00 12:05:12.999000                                  
+
+1 rows fetched.
+
+SQL> 
+SQL> -- 3.2 invalid cases
+SQL> select cast('-P012M28DT21H213.00B' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('-P012M28DT21H213.00SB' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('-P012M28DT21H213.02.130SB' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('P999999M' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('P999999DTT' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- time field is too short
+SQL> select cast('P999999DTT123123' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('T123123' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('PT123123' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- no field indicator
+SQL> select cast('PT123123M123H' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('PT12.3H312.999999999999S' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('P12YT12.3H312.999999999999S' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> select cast('P12TT12.3H312.999S' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('PT12H312.999ST' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- undesired character(s) followed the SECOND field
+SQL> select cast('PT12H312.999S   T' as interval day to second) from dual;
+
+CT-00673, [1:8]Invalid interval text -- undesired character(s) followed the SECOND field
+SQL> 
+SQL> -- 4.1 SQL format  for ds_INTERVAL
+SQL> select cast('12 12:12:12           ' as interval day to secOND) from dual;
+
+CAST('12 12:12:12           ' AS INTERVAL DAY TO SECOND)
+--------------------------------------------------------
++12 12:12:12.000000                                     
+
+1 rows fetched.
+
+SQL> select cast('-0 0:0:0' as interval day to secOND) from dual;
+
+CAST('-0 0:0:0' AS INTERVAL DAY TO SECOND)
+------------------------------------------
++00 00:00:00.000000                       
+
+1 rows fetched.
+
+SQL> select cast('9999999 23:59:59.999999' as interval day to secOND) from dual;
+
+CAST('9999999 23:59:59.999999' AS INTERVAL DAY TO SECOND)
+---------------------------------------------------------
++9999999 23:59:59.999999                                 
+
+1 rows fetched.
+
+SQL> select cast('  -     00012    0012   :  00012 : 000000000000012           ' as interval day to secOND) from dual; 
+
+CAST('  -     00012    0012   :  00012 : 000000000000012        
+----------------------------------------------------------------
+-12 12:12:12.000000                                             
+
+1 rows fetched.
+
+SQL> select cast('+     00012    0012   :  00012 : 000000000000012           ' as interval day to secOND) from dual;
+
+CAST('+     00012    0012   :  00012 : 000000000000012          
+----------------------------------------------------------------
++12 12:12:12.000000                                             
+
+1 rows fetched.
+
+SQL> select cast('+     0    0   :  0 : 0           ' as interval day to secOND) from dual;
+
+CAST('+     0    0   :  0 : 0           ' AS INTERVAL DAY TO SEC
+----------------------------------------------------------------
++00 00:00:00.000000                                             
+
+1 rows fetched.
+
+SQL> select cast('009999999 0023:0059:0059.999999000123' as interval day to secOND) from dual;
+
+CAST('009999999 0023:0059:0059.999999000123' AS INTERVAL DAY TO 
+----------------------------------------------------------------
++9999999 23:59:59.999999                                        
+
+1 rows fetched.
+
+SQL> select cast('009999999 0022:0059:0059.999999800123' as interval day to secOND) from dual;
+
+CAST('009999999 0022:0059:0059.999999800123' AS INTERVAL DAY TO 
+----------------------------------------------------------------
++9999999 23:00:00.000000                                        
+
+1 rows fetched.
+
+SQL> select cast('+00123 12:019:59.00' as interval day to secOND) from dual;
+
+CAST('+00123 12:019:59.00' AS INTERVAL DAY TO SECOND)
+-----------------------------------------------------
++123 12:19:59.000000                                 
+
+1 rows fetched.
+
+SQL> select cast('+00123 12:019:59.000012888' as interval day to secOND) from dual;
+
+CAST('+00123 12:019:59.000012888' AS INTERVAL DAY TO SECOND)
+------------------------------------------------------------
++123 12:19:59.000013                                        
+
+1 rows fetched.
+
+SQL> select cast('+00123 12:019:0.00' as interval day to secOND) from dual;
+
+CAST('+00123 12:019:0.00' AS INTERVAL DAY TO SECOND)
+----------------------------------------------------
++123 12:19:00.000000                                
+
+1 rows fetched.
+
+SQL> select cast('+00123 12:019:0.999999999' as interval day to secOND) from dual;
+
+CAST('+00123 12:019:0.999999999' AS INTERVAL DAY TO SECOND)
+-----------------------------------------------------------
++123 12:19:01.000000                                       
+
+1 rows fetched.
+
+SQL> select cast('+00123 12:019:0.000999999999' as interval day to secOND) from dual;
+
+CAST('+00123 12:019:0.000999999999' AS INTERVAL DAY TO SECOND)
+--------------------------------------------------------------
++123 12:19:00.001000                                          
+
+1 rows fetched.
+
+SQL> select cast('+00123 12:00000000000000000000000000000000000000000000000000000000000019:0.000999999999' as interval day to secOND) from dual;
+
+CAST('+00123 12:000000000000000000000000000000000000000000000000
+----------------------------------------------------------------
++123 12:19:00.001000                                            
+
+1 rows fetched.
+
+SQL> select cast('00999999 0023:0059:0059.9999995000123' as interval day to secOND) from dual;
+
+CAST('00999999 0023:0059:0059.9999995000123' AS INTERVAL DAY TO 
+----------------------------------------------------------------
++1000000 00:00:00.000000                                        
+
+1 rows fetched.
+
+SQL> 
+SQL> -- 4.2 invalid cases  -- SQL format  for ds_INTERVAL
+SQL> select cast('+00123' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('009999999 0023:0059:0059.999999800123' as interval day to secOND) from dual;
+
+CT-00659, [1:8]INTERVAL DAY TO SECOND out of range
+SQL> select cast('0019999999 0022:0059:0059.999999800123' as interval day to secOND) from dual;
+
+CT-00692, [1:8]Invalid interval text -- DAY field out of range (<=9999999)
+SQL> select cast('00 0025:0059:0059.999999800123' as interval day to secOND) from dual;
+
+CT-00692, [1:8]Invalid interval text -- HOUR field out of range (<=23)
+SQL> select cast('00 00:0159:0059.999999800123' as interval day to secOND) from dual;
+
+CT-00692, [1:8]Invalid interval text -- MINUTE field out of range (<=59)
+SQL> select cast('00 00:019:959.999999800123' as interval day to secOND) from dual;
+
+CT-00692, [1:8]Invalid interval text -- SECOND field out of range (<=59)
+SQL> select cast('0.0 00:019:959.999999800123' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('+00123 12.3:019:959.999999800123' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('+00123 12 019:959.999999800123' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('+00123 12:59' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- format error
+SQL> select cast('+00123 12:019:59.' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- no fractional digits
+SQL> select cast('+00123 12:019:59.7o' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- undesired character(s) followed the SECOND field
+SQL> select cast('+00123 12:019:59.000000000c' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- undesired character(s) followed the SECOND field
+SQL> select cast('+00123 12::019:59.00' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('+00123 12:019:.00' as interval day to secOND) from dual;
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select cast('009999999 0023:0059:0059.9999995000123' as interval day to secOND) from dual;
+
+CT-00659, [1:8]INTERVAL DAY TO SECOND out of range
+SQL> 
+SQL> --- 5. function TO_YMINTERVAL & TO_DSINTERVAL
+SQL> select to_dsinterval('9999999 12:21:12.2323999999');
+
+TO_DSINTERVAL('9999999 12:21:12.2323999999')
+--------------------------------------------
++9999999 12:21:12.232400                    
+
+1 rows fetched.
+
+SQL> select to_yminterval('9-10');
+
+TO_YMINTERVAL('9-10')
+---------------------
++0009-10             
+
+1 rows fetched.
+
+SQL> 
+SQL> -- 5.2 invalid cases
+SQL> select to_yminterval('9999999 12:21:12.2323999999');
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select to_dsinterval('9-10');
+
+CT-00673, [1:8]Invalid interval text -- unexpected character
+SQL> select to_dsinterval(''::bool);
+
+CT-00614, [1:22]Parameter error: illegal function argument: string argument expected - got BOOLEAN
+SQL> -- merely string is allowed
+SQL> select to_dsinterval(123);
+
+CT-00614, [1:22]Parameter error: illegal function argument: string argument expected - got BINARY_INTEGER
+SQL> select to_dsinterval(sysdate);
+
+CT-00614, [1:22]Parameter error: illegal function argument: string argument expected - got DATE
+SQL> select to_dsinterval(TRUE);
+
+CT-00614, [1:22]Parameter error: illegal function argument: string argument expected - got BOOLEAN
+SQL> select to_yminterval(123);
+
+CT-00614, [1:22]Parameter error: illegal function argument: string argument expected - got BINARY_INTEGER
+SQL> select to_yminterval(sysdate);
+
+CT-00614, [1:22]Parameter error: illegal function argument: string argument expected - got DATE
+SQL> select to_yminterval(FALSE);
+
+CT-00614, [1:22]Parameter error: illegal function argument: string argument expected - got BOOLEAN
+SQL> 
+SQL> --- 6.5 interval column
+SQL> -- 6.5.1 yminterval test
+SQL> drop table if exists PFA_YMITVL;
+
+Succeed.
+
+SQL> create table PFA_YMITVL(id int, ymval interval year(4) to month);
+
+Succeed.
+
+SQL> insert into  PFA_YMITVL values(1, '1231-2');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(2, 'P12Y');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(3, 'P12YT12H');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(4, 'P1Y55MT12H');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(5, '-P1Y55MT12H');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(6, '-100-11');
+
+1 rows affected.
+
+SQL> -- Error cases
+SQL> insert into  PFA_YMITVL values(7, 123123);
+
+CT-00606, [1:35]Inconsistent datatypes, expected INTERVAL YEAR TO MONTH - got BINARY_INTEGER
+SQL> insert into  PFA_YMITVL values(8, '123-123');
+
+CT-00692, Invalid interval text -- MONTH field out of range (<=11)
+SQL> insert into  PFA_YMITVL values(9, '1231-23');
+
+CT-00692, Invalid interval text -- MONTH field out of range (<=11)
+SQL> 
+SQL> select * from PFA_YMITVL order by id;
+
+ID           YMVAL     
+------------ ----------
+1            +1231-02  
+2            +0012-00  
+3            +0012-00  
+4            +0005-07  
+5            -0005-07  
+6            -0100-11  
+
+6 rows fetched.
+
+SQL> select * from PFA_YMITVL order by ymval;
+
+ID           YMVAL     
+------------ ----------
+6            -0100-11  
+5            -0005-07  
+4            +0005-07  
+2            +0012-00  
+3            +0012-00  
+1            +1231-02  
+
+6 rows fetched.
+
+SQL> select * from PFA_YMITVL where ymval = '-P100Y11Md';
+
+CT-00673, Invalid interval text -- unexpected character
+SQL> select * from PFA_YMITVL where ymval = '-P100Y11M';
+
+ID           YMVAL     
+------------ ----------
+6            -0100-11  
+
+1 rows fetched.
+
+SQL> select * from PFA_YMITVL where ymval > 'P100Y11M';
+
+ID           YMVAL     
+------------ ----------
+1            +1231-02  
+
+1 rows fetched.
+
+SQL> select * from PFA_YMITVL where ymval < 123;
+
+CT-00606, [1:40]Inconsistent datatypes, expected INTERVAL YEAR TO MONTH - got BINARY_INTEGER
+SQL> select sum(ymval) from PFA_YMITVL;
+
+CT-00606, [1:8]Inconsistent datatypes, expected NUMERIC - got INTERVAL YEAR TO MONTH
+SQL> select count(ymval) from PFA_YMITVL;
+
+COUNT(YMVAL)        
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> select min(ymval), max(ymval) from PFA_YMITVL;
+
+MIN(YMVAL) MAX(YMVAL)
+---------- ----------
+-0100-11   +1231-02  
+
+1 rows fetched.
+
+SQL> 
+SQL> update PFA_YMITVL set ymval = '111-11' where ymval < '-0-0';
+
+2 rows affected.
+
+SQL> select * from PFA_YMITVL order by id;
+
+ID           YMVAL     
+------------ ----------
+1            +1231-02  
+2            +0012-00  
+3            +0012-00  
+4            +0005-07  
+5            +0111-11  
+6            +0111-11  
+
+6 rows fetched.
+
+SQL> delete PFA_YMITVL where ymval < 'P111Y11M';
+
+3 rows affected.
+
+SQL> select * from PFA_YMITVL order by id;
+
+ID           YMVAL     
+------------ ----------
+1            +1231-02  
+5            +0111-11  
+6            +0111-11  
+
+3 rows fetched.
+
+SQL> 
+SQL> -- index test
+SQL> delete from PFA_YMITVL;
+
+3 rows affected.
+
+SQL> CREATE INDEX Idx_PFA_YMITVL_ymval ON PFA_YMITVL(ymval);
+
+Succeed.
+
+SQL> insert into  PFA_YMITVL values(1, '1231-2');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(2, 'P12Y');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(3, 'P1Y55MT12H');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(4, '-P1Y55MT12H');
+
+1 rows affected.
+
+SQL> insert into  PFA_YMITVL values(5, '-100-11');
+
+1 rows affected.
+
+SQL> select * from PFA_YMITVL where ymval > to_yminterval('P100Y11M');
+
+ID           YMVAL     
+------------ ----------
+1            +1231-02  
+
+1 rows fetched.
+
+SQL> select * from PFA_YMITVL where ymval > to_dsinterval('P100Y11M');
+
+CT-00673, [1:40]Invalid interval text -- trailing fields must be less significant than the previous field
+SQL> 
+SQL> -- 6.5.2 dsinterval test
+SQL> drop table if exists PFA_dsitvl;
+
+Succeed.
+
+SQL> create table PFA_dsitvl(id int, dsval interval day(7) to second);
+
+Succeed.
+
+SQL> insert into  PFA_dsitvl values(1, '1231 12:3:4.1234');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(2, 'P1231DT16H3.3333333S');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(3, 'PT12H');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(4, '-P99DT655M999.99999S');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(5, '-0 00:19:7.7777777777');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(6, '-1234 0:0:0.0004');
+
+1 rows affected.
+
+SQL> -- Error cases
+SQL> insert into  PFA_dsitvl values(7, 123123);
+
+CT-00606, [1:35]Inconsistent datatypes, expected INTERVAL DAY TO SECOND - got BINARY_INTEGER
+SQL> insert into  PFA_dsitvl values(8, '123 123:123:12');
+
+CT-00692, Invalid interval text -- HOUR field out of range (<=23)
+SQL> insert into  PFA_dsitvl values(9, '1231-23');
+
+CT-00673, Invalid interval text -- unexpected character
+SQL> 
+SQL> select * from PFA_dsitvl order by id;
+
+ID           DSVAL                   
+------------ ------------------------
+1            +0001231 12:03:04.123400
+2            +0001231 16:00:03.333333
+3            +0000000 12:00:00.000000
+4            -0000099 11:11:39.999990
+5            -0000000 00:19:07.777778
+6            -0001234 00:00:00.000400
+
+6 rows fetched.
+
+SQL> select * from PFA_dsitvl order by dsval;
+
+ID           DSVAL                   
+------------ ------------------------
+6            -0001234 00:00:00.000400
+4            -0000099 11:11:39.999990
+5            -0000000 00:19:07.777778
+3            +0000000 12:00:00.000000
+1            +0001231 12:03:04.123400
+2            +0001231 16:00:03.333333
+
+6 rows fetched.
+
+SQL> select * from PFA_dsitvl where dsval = '0000 12:0000:0.000000';
+
+ID           DSVAL                   
+------------ ------------------------
+3            +0000000 12:00:00.000000
+
+1 rows fetched.
+
+SQL> select * from PFA_dsitvl where dsval = '0000 12:0000:0.000000S';
+
+CT-00673, Invalid interval text -- undesired character(s) followed the SECOND field
+SQL> select * from PFA_dsitvl where dsval > 'P0000DT00000012H0000M0.0000S';
+
+ID           DSVAL                   
+------------ ------------------------
+1            +0001231 12:03:04.123400
+2            +0001231 16:00:03.333333
+
+2 rows fetched.
+
+SQL> select * from PFA_dsitvl where dsval < 123;
+
+CT-00606, [1:40]Inconsistent datatypes, expected INTERVAL DAY TO SECOND - got BINARY_INTEGER
+SQL> select sum(dsval) from PFA_dsitvl;
+
+CT-00606, [1:8]Inconsistent datatypes, expected NUMERIC - got INTERVAL DAY TO SECOND
+SQL> select count(dsval) from PFA_dsitvl;
+
+COUNT(DSVAL)        
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> select min(dsval), max(dsval) from PFA_dsitvl;
+
+MIN(DSVAL)               MAX(DSVAL)              
+------------------------ ------------------------
+-0001234 00:00:00.000400 +0001231 16:00:03.333333
+
+1 rows fetched.
+
+SQL> 
+SQL> update PFA_dsitvl set dsval = 'P999999D' where dsval < '-0 0:0:0';
+
+3 rows affected.
+
+SQL> select * from PFA_dsitvl order by id;
+
+ID           DSVAL                   
+------------ ------------------------
+1            +0001231 12:03:04.123400
+2            +0001231 16:00:03.333333
+3            +0000000 12:00:00.000000
+4            +0999999 00:00:00.000000
+5            +0999999 00:00:00.000000
+6            +0999999 00:00:00.000000
+
+6 rows fetched.
+
+SQL> delete PFA_dsitvl where dsval > 'P999998DT59.99999S';
+
+3 rows affected.
+
+SQL> select * from PFA_dsitvl order by id;
+
+ID           DSVAL                   
+------------ ------------------------
+1            +0001231 12:03:04.123400
+2            +0001231 16:00:03.333333
+3            +0000000 12:00:00.000000
+
+3 rows fetched.
+
+SQL> 
+SQL> -- index test
+SQL> delete from PFA_dsitvl;
+
+3 rows affected.
+
+SQL> CREATE INDEX Idx_PFA_dsitvl_dsval ON PFA_dsitvl(dsval);
+
+Succeed.
+
+SQL> insert into  PFA_dsitvl values(1, '111111 11:11:11.111111111');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(2, '222222 22:22:22.222222222');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(3, 'P333333DT33M33.333333S');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(4, '-P4444DT44M44.44444444S');
+
+1 rows affected.
+
+SQL> insert into  PFA_dsitvl values(5, '000 0000000:0:000000.0000');
+
+1 rows affected.
+
+SQL> select * from PFA_dsitvl where dsval > to_dsinterval('P123456D');
+
+ID           DSVAL                   
+------------ ------------------------
+3            +0333333 00:33:33.333333
+2            +0222222 22:22:22.222222
+
+2 rows fetched.
+
+SQL> select * from PFA_dsitvl where dsval < to_dsinterval('-000000000 0:0:0000000000000000000000.00000000000');
+
+ID           DSVAL                   
+------------ ------------------------
+4            -0004444 00:44:44.444444
+
+1 rows fetched.
+
+SQL> select * from PFA_dsitvl where dsval > to_yminterval('P123456D');
+
+CT-00606, [1:40]Inconsistent datatypes, expected INTERVAL DAY TO SECOND - got INTERVAL YEAR TO MONTH
+SQL> select * from PFA_dsitvl where dsval > to_yminterval('ABCDEFGHIJKLMN');
+
+CT-00673, [1:40]Invalid interval text -- unexpected character
+SQL> 
+SQL> -- default values
+SQL> drop table if exists PFA_dsitvl_def;
+
+Succeed.
+
+SQL> create table PFA_dsitvl_def(id int, dsval interval day to second default 'P0D'||'T'||'0H0M0S');
+
+Succeed.
+
+SQL> insert into  PFA_dsitvl_def values(1, default);
+
+1 rows affected.
+
+SQL> select * from PFA_dsitvl_def;
+
+ID           DSVAL                   
+------------ ------------------------
+1            +00 00:00:00.000000     
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists PFA_YMITVL_DEF;
+
+Succeed.
+
+SQL> create table PFA_YMITVL_DEF(id int, ymval interval year to month default '0-0');
+
+Succeed.
+
+SQL> insert into  PFA_YMITVL_DEF values(1, default);
+
+1 rows affected.
+
+SQL> select * from PFA_YMITVL_DEF;
+
+ID           YMVAL     
+------------ ----------
+1            +00-00    
+
+1 rows fetched.
+
+SQL> 
+SQL> --- 7. function NUMTOYMINTERVAL & NUMTODSINTERVAL
+SQL> -- test cases for NUMTOYMINTERVAL
+SQL> select numtoyminterval(9999.9, '    year') from dual;
+
+NUMTOYMINTERVAL(9999.9, '    YEAR')
+-----------------------------------
++9999-11                           
+
+1 rows fetched.
+
+SQL> select numtoyminterval(9999.999999999999, 'year') from dual;
+
+CT-00674, [1:8]YEAR field exceeds the specified precision (9999)
+SQL> select numtoyminterval(9999.9999999999999, 'year') from dual;
+
+CT-00674, [1:8]YEAR field exceeds the specified precision (9999)
+SQL> select numtoyminterval(9999.9, '    month') from dual;
+
+NUMTOYMINTERVAL(9999.9, '    MONTH')
+------------------------------------
++0833-04                            
+
+1 rows fetched.
+
+SQL> select numtoyminterval(12 + sysdate, '    month') from dual;
+
+CT-00614, [1:24]Parameter error: illegal function argument: NUMERIC argument expected - got DATE
+SQL> select numtoyminterval('123', 'month') from dual;
+
+NUMTOYMINTERVAL('123', 'MONTH')
+-------------------------------
++0010-03                       
+
+1 rows fetched.
+
+SQL> select numtoyminterval('123', 3.2) from dual;
+
+CT-00614, [1:31]Parameter error: illegal function argument: string argument expected - got NUMBER
+SQL> select numtoyminterval('123', systimestamp) from dual;
+
+CT-00614, [1:31]Parameter error: illegal function argument: string argument expected - got TIMESTAMP_TZ
+SQL> select numtoyminterval('123', 'systimestamp') from dual;
+
+CT-00614, [1:31]Parameter error: 'YEAR' or 'MONTH' expected
+SQL> select numtoyminterval('123', 'systimestamp' + 3.2) from dual;
+
+CT-00636, [1:46]Invalid number -- unexpected character
+SQL> select numtoyminterval(99999.9, 'month') from dual;
+
+NUMTOYMINTERVAL(99999.9, 'MONTH')
+---------------------------------
++8333-04                         
+
+1 rows fetched.
+
+SQL> select numtoyminterval(99999.9999999999, 'month') from dual;
+
+NUMTOYMINTERVAL(99999.9999999999, 'MONTH')
+------------------------------------------
++8333-04                                  
+
+1 rows fetched.
+
+SQL> select numtoyminterval(99999.99999999999, 'month') from dual;
+
+CT-00674, [1:8]MONTH field exceeds the specified precision (99999)
+SQL> select numtoyminterval(99999.999999999999, 'month') from dual;
+
+CT-00674, [1:8]MONTH field exceeds the specified precision (99999)
+SQL> select numtoyminterval(-99999.9999999999, 'month') from dual;
+
+NUMTOYMINTERVAL(-99999.9999999999, 'MONTH')
+-------------------------------------------
+-8333-04                                   
+
+1 rows fetched.
+
+SQL> select numtoyminterval(-'123', 'month') from dual;
+
+NUMTOYMINTERVAL(-'123', 'MONTH')
+--------------------------------
+-0010-03                        
+
+1 rows fetched.
+
+SQL> select numtoyminterval(-'-123', 'year') from dual;
+
+NUMTOYMINTERVAL(-'-123', 'YEAR')
+--------------------------------
++0123-00                        
+
+1 rows fetched.
+
+SQL> select numtoyminterval(+3.1425926535897932384626, 'year') from dual;
+
+NUMTOYMINTERVAL(+3.1425926535897932384626, 'YEAR')
+--------------------------------------------------
++0003-02                                          
+
+1 rows fetched.
+
+SQL> select numtoyminterval(+3.1425926535897932384626, -'year') from dual;
+
+CT-00636, [1:51]Invalid number -- unexpected character
+SQL> select numtoyminterval(-3.1425926535897932384626, 'month') from dual;
+
+NUMTOYMINTERVAL(-3.1425926535897932384626, 'MONTH')
+---------------------------------------------------
+-0000-03                                           
+
+1 rows fetched.
+
+SQL> select numtoyminterval(9999.95, 'year') from dual;
+
+NUMTOYMINTERVAL(9999.95, 'YEAR')
+--------------------------------
++9999-11                        
+
+1 rows fetched.
+
+SQL> select numtoyminterval(9999.96, 'year') from dual;
+
+CT-00674, [1:8]YEAR field exceeds the specified precision (9999)
+SQL> select numtoyminterval(-9999.95, 'year') from dual;
+
+NUMTOYMINTERVAL(-9999.95, 'YEAR')
+---------------------------------
+-9999-11                         
+
+1 rows fetched.
+
+SQL> select numtoyminterval(-9999.96, 'year') from dual;
+
+CT-00674, [1:8]YEAR field exceeds the specified precision (9999)
+SQL> 
+SQL> -- test cases for NUMTODSINTERVAL
+SQL> select numtodsinterval(3.1425926535897932384626, 'DAY') from dual;
+
+NUMTODSINTERVAL(3.1425926535897932384626, 'DAY')
+------------------------------------------------
++0000003 03:25:20.005270                        
+
+1 rows fetched.
+
+SQL> select numtodsinterval(3.1425926535897932384626, 'HOUR') from dual;
+
+NUMTODSINTERVAL(3.1425926535897932384626, 'HOUR')
+-------------------------------------------------
++0000000 03:08:33.333553                         
+
+1 rows fetched.
+
+SQL> select numtodsinterval(3.1425926535897932384626, 'MINUTE') from dual;
+
+NUMTODSINTERVAL(3.1425926535897932384626, 'MINUTE')
+---------------------------------------------------
++0000000 00:03:08.555559                           
+
+1 rows fetched.
+
+SQL> select numtodsinterval(3.1425926535897932384626, 'SECOND') from dual;
+
+NUMTODSINTERVAL(3.1425926535897932384626, 'SECOND')
+---------------------------------------------------
++0000000 00:00:03.142593                           
+
+1 rows fetched.
+
+SQL> select numtodsinterval(999999, 'DAY') from dual;
+
+NUMTODSINTERVAL(999999, 'DAY')
+------------------------------
++0999999 00:00:00.000000      
+
+1 rows fetched.
+
+SQL> select numtodsinterval(-10000000, 'DAY') from dual;
+
+CT-00674, [1:35]DAY field exceeds the specified precision (9999999)
+SQL> select numtodsinterval(9999999.000000001, 'DAY') from dual;
+
+NUMTODSINTERVAL(9999999.000000001, 'DAY')
+-----------------------------------------
++9999999 00:00:00.000128                 
+
+1 rows fetched.
+
+SQL> select numtodsinterval(9999999.00000001, 'DAY') from dual;
+
+NUMTODSINTERVAL(9999999.00000001, 'DAY')
+----------------------------------------
++9999999 00:00:00.000768                
+
+1 rows fetched.
+
+SQL> select numtodsinterval(9999999.000001, 'DAY') from dual;
+
+NUMTODSINTERVAL(9999999.000001, 'DAY')
+--------------------------------------
++9999999 00:00:00.086400              
+
+1 rows fetched.
+
+SQL> select numtodsinterval(9999999.000001, 'hoUr') from dual;
+
+NUMTODSINTERVAL(9999999.000001, 'HOUR')
+---------------------------------------
++0416666 15:00:00.003600               
+
+1 rows fetched.
+
+SQL> select numtodsinterval(999999999, 'Hour') from dual;
+
+CT-00674, [1:35]HOUR field exceeds the specified precision (99999999)
+SQL> select numtodsinterval(99999999, 'Hour') from dual;
+
+NUMTODSINTERVAL(99999999, 'HOUR')
+---------------------------------
++4166666 15:00:00.000000         
+
+1 rows fetched.
+
+SQL> select numtodsinterval(99999999.9999999999, 'Hour') from dual;
+
+CT-00674, [1:45]HOUR field exceeds the specified precision (99999999)
+SQL> select numtodsinterval(99999999.99999, 'Hour') from dual;
+
+NUMTODSINTERVAL(99999999.99999, 'HOUR')
+---------------------------------------
++4166666 15:59:59.964032               
+
+1 rows fetched.
+
+SQL> select numtodsinterval(99999999.9999, 'Hour') from dual;
+
+NUMTODSINTERVAL(99999999.9999, 'HOUR')
+--------------------------------------
++4166666 15:59:59.640000              
+
+1 rows fetched.
+
+SQL> select numtodsinterval(99999999.999, 'Hour') from dual;
+
+NUMTODSINTERVAL(99999999.999, 'HOUR')
+-------------------------------------
++4166666 15:59:56.400000             
+
+1 rows fetched.
+
+SQL> select numtodsinterval(999999999.99, 'minute') from dual;
+
+NUMTODSINTERVAL(999999999.99, 'MINUTE')
+---------------------------------------
++0694444 10:39:59.400000               
+
+1 rows fetched.
+
+SQL> select numtodsinterval(999999999.999999, 'minute') from dual;
+
+NUMTODSINTERVAL(999999999.999999, 'MINUTE')
+-------------------------------------------
++0694444 10:39:59.999944                   
+
+1 rows fetched.
+
+SQL> select numtodsinterval(999999999.99999, 'minute') from dual;
+
+NUMTODSINTERVAL(999999999.99999, 'MINUTE')
+------------------------------------------
++0694444 10:39:59.999408                  
+
+1 rows fetched.
+
+SQL> select numtodsinterval(999999999.99999, 'second') from dual;
+
+NUMTODSINTERVAL(999999999.99999, 'SECOND')
+------------------------------------------
++0011574 01:46:39.999990                  
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1999999999.99999, 'second') from dual;
+
+CT-00674, [1:42]SECOND field exceeds the specified precision (999999999)
+SQL> select numtodsinterval(1999999999.99999, 'year') from dual;
+
+CT-00614, [1:42]Parameter error: 'DAY', 'HOUR', 'MINUTE' or 'SECOND' expected
+SQL> select numtodsinterval(1999999999.99999, 1234.23) from dual;
+
+CT-00614, [1:42]Parameter error: illegal function argument: string argument expected - got NUMBER
+SQL> select numtodsinterval(1999999999.99999, systimestamp) from dual;
+
+CT-00614, [1:42]Parameter error: illegal function argument: string argument expected - got TIMESTAMP_TZ
+SQL> select numtodsinterval(sysdate, 'second') from dual;
+
+CT-00614, [1:24]Parameter error: illegal function argument: NUMERIC argument expected - got DATE
+SQL> 
+SQL> 
+SQL> --- 8. interval expr
+SQL> select to_date('2018-05-14', 'YYYY-MM-DD') + numtodsinterval(1, 'DAY') from dual;
+
+TO_DATE('2018-05-14', 'YYYY-MM-DD') + NUMTODSINTERVAL(1, 'DAY')
+---------------------------------------------------------------
+2018-05-15 00:00:00                                            
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') + to_date('2018-05-14', 'YYYY-MM-DD') from dual;
+
+NUMTODSINTERVAL(1, 'DAY') + TO_DATE('2018-05-14', 'YYYY-MM-DD')
+---------------------------------------------------------------
+2018-05-15 00:00:00                                            
+
+1 rows fetched.
+
+SQL> select to_date('2018-05-14', 'YYYY-MM-DD') - numtodsinterval(1, 'DAY') from dual;
+
+TO_DATE('2018-05-14', 'YYYY-MM-DD') - NUMTODSINTERVAL(1, 'DAY')
+---------------------------------------------------------------
+2018-05-13 00:00:00                                            
+
+1 rows fetched.
+
+SQL> 
+SQL> select to_timestamp('2018-05-14', 'YYYY-MM-DD') + numtodsinterval(1, 'DAY') from dual;
+
+TO_TIMESTAMP('2018-05-14', 'YYYY-MM-DD') + NUMTODSINTERVAL(1, 'D
+----------------------------------------------------------------
+2018-05-15 00:00:00.000000                                      
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') + to_timestamp('2018-05-14', 'YYYY-MM-DD') from dual;
+
+NUMTODSINTERVAL(1, 'DAY') + TO_TIMESTAMP('2018-05-14', 'YYYY-MM-
+----------------------------------------------------------------
+2018-05-15 00:00:00.000000                                      
+
+1 rows fetched.
+
+SQL> select to_timestamp('2018-05-14', 'YYYY-MM-DD') - numtodsinterval(1, 'DAY') from dual;
+
+TO_TIMESTAMP('2018-05-14', 'YYYY-MM-DD') - NUMTODSINTERVAL(1, 'D
+----------------------------------------------------------------
+2018-05-13 00:00:00.000000                                      
+
+1 rows fetched.
+
+SQL> select to_date('2018-05-14', 'YYYY-MM-DD') + numtodsinterval(9999999, 'DAY') from dual;
+
+CT-00694, [1:44]DATETIME out of range, it must be between 0001-01-01 00:00:00 and 9999-12-31 23:59:59
+SQL> select to_timestamp('2018-05-14', 'YYYY-MM-DD') - numtodsinterval(999999, 'DAY') from dual;
+
+CT-00695, [1:49]TIMESTAMP out of range, it must be between 0001-01-01 00:00:00.000000 and 9999-12-31 23:59:59.999999
+SQL> 
+SQL> select numtodsinterval(1, 'DAY') - numtodsinterval(999999, 'DAY') from dual;
+
+NUMTODSINTERVAL(1, 'DAY') - NUMTODSINTERVAL(999999, 'DAY')
+----------------------------------------------------------
+-0999998 00:00:00.000000                                  
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') - numtoyminterval(999, 'year') from dual;
+
+CT-01320, [1:34]Undefined operator: INTERVAL DAY TO SECOND - INTERVAL YEAR TO MONTH
+SQL> select numtodsinterval(-1, 'DAY') - numtodsinterval(9999999, 'DAY') from dual;
+
+CT-00659, [1:35]INTERVAL DAY TO SECOND out of range
+SQL> select numtodsinterval(-1, 'DAY') + numtodsinterval(9999999, 'DAY') from dual;
+
+NUMTODSINTERVAL(-1, 'DAY') + NUMTODSINTERVAL(9999999, 'DAY')
+------------------------------------------------------------
++9999998 00:00:00.000000                                    
+
+1 rows fetched.
+
+SQL> select numtodsinterval(22, 'HOUR') + numtodsinterval(9999999, 'DAY') from dual;
+
+NUMTODSINTERVAL(22, 'HOUR') + NUMTODSINTERVAL(9999999, 'DAY')
+-------------------------------------------------------------
++9999999 22:00:00.000000                                     
+
+1 rows fetched.
+
+SQL> select numtodsinterval(24, 'HOUR') + numtodsinterval(9999999, 'DAY') from dual;
+
+CT-00659, [1:36]INTERVAL DAY TO SECOND out of range
+SQL> select numtoyminterval(24, 'month') + numtoyminterval(9, 'month') from dual;
+
+NUMTOYMINTERVAL(24, 'MONTH') + NUMTOYMINTERVAL(9, 'MONTH')
+----------------------------------------------------------
++0002-09                                                  
+
+1 rows fetched.
+
+SQL> select numtoyminterval(24, 'month') - numtoyminterval(9, 'month') from dual;
+
+NUMTOYMINTERVAL(24, 'MONTH') - NUMTOYMINTERVAL(9, 'MONTH')
+----------------------------------------------------------
++0001-03                                                  
+
+1 rows fetched.
+
+SQL> select numtoyminterval(24, 'month') + numtoyminterval(9998, 'year') from dual;
+
+CT-00659, [1:37]INTERVAL YEAR TO MONTH out of range
+SQL> select numtoyminterval(8888, 'month') - numtoyminterval(987.99, 'month') from dual;
+
+NUMTOYMINTERVAL(8888, 'MONTH') - NUMTOYMINTERVAL(987.99, 'MONTH'
+----------------------------------------------------------------
++0658-04                                                        
+
+1 rows fetched.
+
+SQL> 
+SQL> select numtodsinterval(1, 'DAY') / 2::integer from dual;
+
+NUMTODSINTERVAL(1, 'DAY') / 2::INTEGER
+--------------------------------------
++0000000 12:00:00.000000              
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') / 5::bigint from dual;
+
+NUMTODSINTERVAL(1, 'DAY') / 5::BIGINT
+-------------------------------------
++0000000 04:48:00.000000             
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') / 1.33::real from dual;
+
+NUMTODSINTERVAL(1, 'DAY') / 1.33::REAL
+--------------------------------------
++0000000 18:02:42.406015              
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') / 1.33::number from dual;
+
+NUMTODSINTERVAL(1, 'DAY') / 1.33::NUMBER
+----------------------------------------
++0000000 18:02:42.406015                
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') / 1.33::real from dual;
+
+NUMTODSINTERVAL(1, 'DAY') / 1.33::REAL
+--------------------------------------
++0000000 18:02:42.406015              
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') / 0::real from dual;
+
+CT-00637, [1:34]The divisor was zero
+SQL> select numtodsinterval(1, 'DAY') / 1E-20::real from dual;
+
+CT-00637, [1:34]The divisor was zero
+SQL> select numtodsinterval(1, 'DAY') / 1E-10 from dual;
+
+CT-00659, [1:34]INTERVAL DAY TO SECOND out of range
+SQL> select numtodsinterval(1, 'DAY') / 1E-300::number from dual;
+
+CT-00659, [1:34]INTERVAL DAY TO SECOND out of range
+SQL> select numtodsinterval(1, 'DAY') / 1E-125 from dual;
+
+CT-00659, [1:34]INTERVAL DAY TO SECOND out of range
+SQL> select 30/numtodsinterval(1, 'DAY') from dual;
+
+CT-01320, [1:10]Undefined operator: BINARY_INTEGER / INTERVAL DAY TO SECOND
+SQL> select numtodsinterval(1, 'DAY') / sysdate from dual;
+
+CT-01320, [1:34]Undefined operator: INTERVAL DAY TO SECOND / DATE
+SQL> select numtodsinterval(1, 'DAY') / 1.0E-5 from dual;
+
+NUMTODSINTERVAL(1, 'DAY') / 1.0E-5
+----------------------------------
++0099999 23:59:59.999999          
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') / '1.0E-5' from dual;
+
+NUMTODSINTERVAL(1, 'DAY') / '1.0E-5'
+------------------------------------
++0099999 23:59:59.999999            
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'DAY') / '1.0E-5.' from dual;
+
+CT-00636, [1:34]Invalid number -- unexpected character in exponent
+SQL> select numtodsinterval(1, 'D'||'A'||'Y') / 1.33::real from dual;
+
+NUMTODSINTERVAL(1, 'D'||'A'||'Y') / 1.33::REAL
+----------------------------------------------
++0000000 18:02:42.406015                      
+
+1 rows fetched.
+
+SQL> 
+SQL> select numtoyminterval(1, 'year') / 2::integer from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') / 2::INTEGER
+---------------------------------------
++0000-06                               
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') / 5::bigint from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') / 5::BIGINT
+--------------------------------------
++0000-02                              
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') / 7 from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') / 7
+------------------------------
++0000-01                      
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') / 1.33::real from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') / 1.33::REAL
+---------------------------------------
++0000-09                               
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') / 1.33::number from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') / 1.33::NUMBER
+-----------------------------------------
++0000-09                                 
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') / 1.33::real from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') / 1.33::REAL
+---------------------------------------
++0000-09                               
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') / 0::real from dual;
+
+CT-00637, [1:35]The divisor was zero
+SQL> select numtoyminterval(1, 'year') / 1E-20::real from dual;
+
+CT-00637, [1:35]The divisor was zero
+SQL> select numtoyminterval(1, 'year') / 1E-10 from dual;
+
+CT-00659, [1:35]INTERVAL YEAR TO MONTH out of range
+SQL> select numtoyminterval(1, 'year') / 1.0E-5 from dual;
+
+CT-00659, [1:35]INTERVAL YEAR TO MONTH out of range
+SQL> select numtoyminterval(1, 'year') / 1E-300::number from dual;
+
+CT-00659, [1:35]INTERVAL YEAR TO MONTH out of range
+SQL> select numtoyminterval(1, 'year') / 1E-125 from dual;
+
+CT-00659, [1:35]INTERVAL YEAR TO MONTH out of range
+SQL> select 30/numtoyminterval(1, 'year') from dual;
+
+CT-01320, [1:10]Undefined operator: BINARY_INTEGER / INTERVAL YEAR TO MONTH
+SQL> select numtoyminterval(1, 'year') / sysdate from dual;
+
+CT-01320, [1:35]Undefined operator: INTERVAL YEAR TO MONTH / DATE
+SQL> select numtoyminterval(1, 'year') / '1.0E-5.' from dual;
+
+CT-00636, [1:35]Invalid number -- unexpected character in exponent
+SQL> select numtoyminterval(1, 'year') / '1.0E-5' from dual;
+
+CT-00659, [1:35]INTERVAL YEAR TO MONTH out of range
+SQL> select numtoyminterval(1, 'year') / '1.0E-2' from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') / '1.0E-2'
+-------------------------------------
++0100-00                             
+
+1 rows fetched.
+
+SQL> 
+SQL> select numtodsinterval(1, 'day') * 2::integer from dual;
+
+NUMTODSINTERVAL(1, 'DAY') * 2::INTEGER
+--------------------------------------
++0000002 00:00:00.000000              
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'day') * 5::bigint from dual;
+
+NUMTODSINTERVAL(1, 'DAY') * 5::BIGINT
+-------------------------------------
++0000005 00:00:00.000000             
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'day') * 7 from dual;
+
+NUMTODSINTERVAL(1, 'DAY') * 7
+-----------------------------
++0000007 00:00:00.000000     
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'day') * 1.33::real from dual;
+
+NUMTODSINTERVAL(1, 'DAY') * 1.33::REAL
+--------------------------------------
++0000001 07:55:12.000000              
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'day') * 1.33::number from dual;
+
+NUMTODSINTERVAL(1, 'DAY') * 1.33::NUMBER
+----------------------------------------
++0000001 07:55:12.000000                
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'day') * 0::real from dual;
+
+NUMTODSINTERVAL(1, 'DAY') * 0::REAL
+-----------------------------------
++0000000 00:00:00.000000           
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1, 'day') * -99999999::real from dual;
+
+CT-00659, [1:34]INTERVAL DAY TO SECOND out of range
+SQL> select numtodsinterval(1, 'day') * sysdate from dual;
+
+CT-01320, [1:34]Undefined operator: INTERVAL DAY TO SECOND * DATE
+SQL> select numtodsinterval(1, 'day') * '1.0E-5.' from dual;
+
+CT-00636, [1:34]Invalid number -- unexpected character in exponent
+SQL> select numtodsinterval(1000, 'day') * '1.0E-5' from dual;
+
+NUMTODSINTERVAL(1000, 'DAY') * '1.0E-5'
+---------------------------------------
++0000000 00:14:24.000000               
+
+1 rows fetched.
+
+SQL> select numtodsinterval(1000, 'day') * '1.0E-2' from dual;
+
+NUMTODSINTERVAL(1000, 'DAY') * '1.0E-2'
+---------------------------------------
++0000010 00:00:00.000000               
+
+1 rows fetched.
+
+SQL> select numtodsinterval(0.0000001, 'day') * 1.0E10 from dual;
+
+NUMTODSINTERVAL(0.0000001, 'DAY') * 1.0E10
+------------------------------------------
++0001000 00:00:00.000000                  
+
+1 rows fetched.
+
+SQL> select numtodsinterval(0.01, 'day') * 1.0E10::real from dual;
+
+CT-00659, [1:37]INTERVAL DAY TO SECOND out of range
+SQL> select numtodsinterval(0.0000000001, 'day') * 1.0E10 from dual;
+
+NUMTODSINTERVAL(0.0000000001, 'DAY') * 1.0E10
+---------------------------------------------
++0000001 01:00:00.000000                     
+
+1 rows fetched.
+
+SQL> select numtodsinterval(0.1, 'day') * 1.0E10::real from dual;
+
+CT-00659, [1:36]INTERVAL DAY TO SECOND out of range
+SQL> select numtodsinterval(500, 'day') * 300000 from dual;
+
+CT-00659, [1:36]INTERVAL DAY TO SECOND out of range
+SQL> 
+SQL> select numtoyminterval(1, 'year') * 2::integer from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') * 2::INTEGER
+---------------------------------------
++0002-00                               
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') * 5::bigint from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') * 5::BIGINT
+--------------------------------------
++0005-00                              
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') * 7 from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') * 7
+------------------------------
++0007-00                      
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') * 1.33::real from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') * 1.33::REAL
+---------------------------------------
++0001-03                               
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') * 1.33::number from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') * 1.33::NUMBER
+-----------------------------------------
++0001-03                                 
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') * 0::real from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') * 0::REAL
+------------------------------------
++0000-00                            
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') * -99999::real from dual;
+
+CT-00659, [1:35]INTERVAL YEAR TO MONTH out of range
+SQL> select numtoyminterval(1, 'year') * sysdate from dual;
+
+CT-01320, [1:35]Undefined operator: INTERVAL YEAR TO MONTH * DATE
+SQL> select numtoyminterval(1, 'year') * '1.0E-5.' from dual;
+
+CT-00636, [1:35]Invalid number -- unexpected character in exponent
+SQL> select numtoyminterval(1000, 'year') * '1.0E-5' from dual;
+
+NUMTOYMINTERVAL(1000, 'YEAR') * '1.0E-5'
+----------------------------------------
++0000-00                                
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1000, 'year') * '1.0E-2' from dual;
+
+NUMTOYMINTERVAL(1000, 'YEAR') * '1.0E-2'
+----------------------------------------
++0010-00                                
+
+1 rows fetched.
+
+SQL> select numtoyminterval(0.01, 'year') * 1.0E10 from dual;
+
+NUMTOYMINTERVAL(0.01, 'YEAR') * 1.0E10
+--------------------------------------
++0000-00                              
+
+1 rows fetched.
+
+SQL> select numtoyminterval(0.01, 'year') * 1.0E10::real from dual;
+
+NUMTOYMINTERVAL(0.01, 'YEAR') * 1.0E10::REAL
+--------------------------------------------
++0000-00                                    
+
+1 rows fetched.
+
+SQL> select numtoyminterval(0.1, 'year') * 1.0E10::real from dual;
+
+CT-00659, [1:37]INTERVAL YEAR TO MONTH out of range
+SQL> select numtoyminterval(500, 'year') * 300 from dual;
+
+CT-00659, [1:37]INTERVAL YEAR TO MONTH out of range
+SQL> 
+SQL> select 123::int * numtodsinterval(1, 'day') from dual;
+
+123::INT * NUMTODSINTERVAL(1, 'DAY')
+------------------------------------
++0000123 00:00:00.000000            
+
+1 rows fetched.
+
+SQL> select 123::bigint * numtodsinterval(1, 'day') from dual;
+
+123::BIGINT * NUMTODSINTERVAL(1, 'DAY')
+---------------------------------------
++0000123 00:00:00.000000               
+
+1 rows fetched.
+
+SQL> select 123::real * numtodsinterval(1, 'day') from dual;
+
+123::REAL * NUMTODSINTERVAL(1, 'DAY')
+-------------------------------------
++0000123 00:00:00.000000             
+
+1 rows fetched.
+
+SQL> select 123::decimal * numtodsinterval(1, 'day') from dual;
+
+123::DECIMAL * NUMTODSINTERVAL(1, 'DAY')
+----------------------------------------
++0000123 00:00:00.000000                
+
+1 rows fetched.
+
+SQL> select '123' * numtodsinterval(1, 'day') from dual;
+
+'123' * NUMTODSINTERVAL(1, 'DAY')
+---------------------------------
++0000123 00:00:00.000000         
+
+1 rows fetched.
+
+SQL> select '123 * 100' * numtodsinterval(1, 'day') from dual;
+
+CT-00636, [1:20]Invalid number -- unexpected character
+SQL> select 123E5 * numtodsinterval(1, 'day') from dual;
+
+CT-00659, [1:14]INTERVAL DAY TO SECOND out of range
+SQL> select 0.00003 * numtodsinterval(1, 'day') from dual;
+
+0.00003 * NUMTODSINTERVAL(1, 'DAY')
+-----------------------------------
++0000000 00:00:02.592000           
+
+1 rows fetched.
+
+SQL> select 99999999 * numtodsinterval(1, 'day') from dual;
+
+CT-00659, [1:17]INTERVAL DAY TO SECOND out of range
+SQL> select systimestamp * numtodsinterval(1, 'day') from dual;
+
+CT-01320, [1:21]Undefined operator: TIMESTAMP_TZ * INTERVAL DAY TO SECOND
+SQL> select numtoyminterval(0.1, 'year') * numtodsinterval(1, 'day') from dual;
+
+CT-01320, [1:37]Undefined operator: INTERVAL YEAR TO MONTH * INTERVAL DAY TO SECOND
+SQL> 
+SQL> select 123::int * numtoyminterval(1, 'year') from dual;
+
+123::INT * NUMTOYMINTERVAL(1, 'YEAR')
+-------------------------------------
++0123-00                             
+
+1 rows fetched.
+
+SQL> select 123::bigint * numtoyminterval(1, 'year') from dual;
+
+123::BIGINT * NUMTOYMINTERVAL(1, 'YEAR')
+----------------------------------------
++0123-00                                
+
+1 rows fetched.
+
+SQL> select 123::real * numtoyminterval(1, 'year') from dual;
+
+123::REAL * NUMTOYMINTERVAL(1, 'YEAR')
+--------------------------------------
++0123-00                              
+
+1 rows fetched.
+
+SQL> select 123::decimal * numtoyminterval(1, 'year') from dual;
+
+123::DECIMAL * NUMTOYMINTERVAL(1, 'YEAR')
+-----------------------------------------
++0123-00                                 
+
+1 rows fetched.
+
+SQL> select '123' * numtoyminterval(1, 'year') from dual;
+
+'123' * NUMTOYMINTERVAL(1, 'YEAR')
+----------------------------------
++0123-00                          
+
+1 rows fetched.
+
+SQL> select '123 * 100' * numtoyminterval(1, 'year') from dual;
+
+CT-00636, [1:20]Invalid number -- unexpected character
+SQL> select 123E2 * numtoyminterval(1, 'year') from dual;
+
+CT-00659, [1:14]INTERVAL YEAR TO MONTH out of range
+SQL> select 0.3 * numtoyminterval(1, 'year') from dual;
+
+0.3 * NUMTOYMINTERVAL(1, 'YEAR')
+--------------------------------
++0000-03                        
+
+1 rows fetched.
+
+SQL> select 9999 * numtoyminterval(1.1, 'year') from dual;
+
+CT-00659, [1:13]INTERVAL YEAR TO MONTH out of range
+SQL> select 99999 * numtoyminterval(0.5, 'year') from dual;
+
+CT-00659, [1:14]INTERVAL YEAR TO MONTH out of range
+SQL> 
+SQL> select to_date('2018-01-31', 'YYYY-MM-DD') + numtoyminterval(1, 'year') from dual;
+
+TO_DATE('2018-01-31', 'YYYY-MM-DD') + NUMTOYMINTERVAL(1, 'YEAR')
+----------------------------------------------------------------
+2019-01-31 00:00:00                                             
+
+1 rows fetched.
+
+SQL> select numtoyminterval(1, 'year') + to_date('2018-01-31', 'YYYY-MM-DD') from dual;
+
+NUMTOYMINTERVAL(1, 'YEAR') + TO_DATE('2018-01-31', 'YYYY-MM-DD')
+----------------------------------------------------------------
+2019-01-31 00:00:00                                             
+
+1 rows fetched.
+
+SQL> select to_date('2018-01-31', 'YYYY-MM-DD') + numtoyminterval(1, 'month') from dual;
+
+TO_DATE('2018-01-31', 'YYYY-MM-DD') + NUMTOYMINTERVAL(1, 'MONTH'
+----------------------------------------------------------------
+2018-02-28 00:00:00                                             
+
+1 rows fetched.
+
+SQL> select to_date('2018-01-31', 'YYYY-MM-DD') + numtoyminterval(8888, 'year') from dual;
+
+CT-00659, [1:44]DATETIME out of range
+SQL> select to_date('2018-01-31', 'YYYY-MM-DD') - numtoyminterval(8888, 'year') from dual;
+
+CT-00659, [1:44]DATETIME out of range
+SQL> select to_date('2018-01-31', 'YYYY-MM-DD') + numtoyminterval(-1, 'year') from dual;
+
+TO_DATE('2018-01-31', 'YYYY-MM-DD') + NUMTOYMINTERVAL(-1, 'YEAR'
+----------------------------------------------------------------
+2017-01-31 00:00:00                                             
+
+1 rows fetched.
+
+SQL> select to_date('2016-02-29', 'YYYY-MM-DD') + to_yminterval('P1Y')  from dual;
+
+TO_DATE('2016-02-29', 'YYYY-MM-DD') + TO_YMINTERVAL('P1Y')
+----------------------------------------------------------
+2017-02-28 00:00:00                                       
+
+1 rows fetched.
+
+SQL> select to_date('2016-07-31', 'YYYY-MM-DD') + to_yminterval('P1M')  from dual;
+
+TO_DATE('2016-07-31', 'YYYY-MM-DD') + TO_YMINTERVAL('P1M')
+----------------------------------------------------------
+2016-08-31 00:00:00                                       
+
+1 rows fetched.
+
+SQL> select to_date('2016-07-31', 'YYYY-MM-DD') + to_yminterval('P2M')  from dual;
+
+TO_DATE('2016-07-31', 'YYYY-MM-DD') + TO_YMINTERVAL('P2M')
+----------------------------------------------------------
+2016-09-30 00:00:00                                       
+
+1 rows fetched.
+
+SQL> select to_timestamp('2017-07-31 23:12:11.12313', 'YYYY-MM-DD HH24:MI:SS.FF') + to_yminterval('P1M')  from dual;
+
+TO_TIMESTAMP('2017-07-31 23:12:11.12313', 'YYYY-MM-DD HH24:MI:SS
+----------------------------------------------------------------
+2017-08-31 23:12:11.123130                                      
+
+1 rows fetched.
+
+SQL> select to_timestamp('2017-07-31 23:12:11.12313', 'YYYY-MM-DD HH24:MI:SS.FF') + to_yminterval('P2M')  from dual;
+
+TO_TIMESTAMP('2017-07-31 23:12:11.12313', 'YYYY-MM-DD HH24:MI:SS
+----------------------------------------------------------------
+2017-09-30 23:12:11.123130                                      
+
+1 rows fetched.
+
+SQL> select to_yminterval('P3M') - sysdate from dual;
+
+CT-01320, [1:29]Undefined operator: INTERVAL YEAR TO MONTH - DATE
+SQL> 
+SQL> select to_date('9999-05-23 11', 'YYYY-MM-DD HH24') - to_date('2018-01-01 00', 'YYYY-MM-DD HH24') from dual;
+
+TO_DATE('9999-05-23 11', 'YYYY-MM-DD HH24') - TO_DATE('2018-01-0
+----------------------------------------------------------------
+2915142.45833333333333333333333333333333                        
+
+1 rows fetched.
+
+SQL> select to_char(to_date('9999-05-23 11', 'YYYY-MM-DD HH24') - to_date('2018-01-01 00', 'YYYY-MM-DD HH24')) from dual;
+
+TO_CHAR(TO_DATE('9999-05-23 11', 'YYYY-MM-DD HH24') - TO_DATE('2
+----------------------------------------------------------------
+2915142.45833333333333333333333333333333                        
+
+1 rows fetched.
+
+SQL> select to_date('9999-05-23 11', 'YYYY-MM-DD HH24') - to_timestamp('2018-01-01 00', 'YYYY-MM-DD HH24') from dual;
+
+TO_DATE('9999-05-23 11', 'YYYY-MM-DD HH24') - TO_TIMESTAMP('2018
+----------------------------------------------------------------
++2915142 11:00:00.000000                                        
+
+1 rows fetched.
+
+SQL> select to_timestamp('9999-05-23 11', 'YYYY-MM-DD HH24') - to_timestamp('2018-01-01 00', 'YYYY-MM-DD HH24') from dual;
+
+TO_TIMESTAMP('9999-05-23 11', 'YYYY-MM-DD HH24') - TO_TIMESTAMP(
+----------------------------------------------------------------
++2915142 11:00:00.000000                                        
+
+1 rows fetched.
+
+SQL> select to_timestamp('9999-05-23 11', 'YYYY-MM-DD HH24') - to_date('2018-01-01 00', 'YYYY-MM-DD HH24') from dual;
+
+TO_TIMESTAMP('9999-05-23 11', 'YYYY-MM-DD HH24') - TO_DATE('2018
+----------------------------------------------------------------
++2915142 11:00:00.000000                                        
+
+1 rows fetched.
+
+SQL> 
+SQL> select * from dual where sysdate - systimestamp < '0 0:0:30';
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from dual where sysdate - sysdate < '0 0:0:30';
+
+CT-00636, Invalid number -- unexpected character
+SQL> select * from dual where systimestamp - systimestamp < '0 0:0:30';
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from dual where sysdate - sysdate < 0.1;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> 
+SQL> -- 7. limit the interval to the specified precisions
+SQL> drop table if exists PFA_YMINTERVAL_02;
+
+Succeed.
+
+SQL> create table PFA_YMINTERVAL_02(id int, ymval interval year(1) to mon);
+
+CT-00601, [1:66]Sql syntax error: 'TO MONTH' expected
+SQL> create table PFA_YMINTERVAL_02(id int, ymval interval year(123) to month);
+
+CT-00601, [1:60]Sql syntax error: YEAR precision must be between 0 and 4
+SQL> create table PFA_YMINTERVAL_02(id int, ymval interval year(2) to month);
+
+Succeed.
+
+SQL> insert into PFA_YMINTERVAL_02 values(1, '21-11');
+
+1 rows affected.
+
+SQL> insert into PFA_YMINTERVAL_02 values(2, '121-11');
+
+CT-00674, YEAR field exceeds the specified precision (2)
+SQL> insert into PFA_YMINTERVAL_02 values(3, 'P1200M');
+
+CT-00674, YEAR field exceeds the specified precision (2)
+SQL> insert into PFA_YMINTERVAL_02 values(4, '-P1200M');
+
+CT-00674, YEAR field exceeds the specified precision (2)
+SQL> insert into PFA_YMINTERVAL_02 values(5, '-P1199M');
+
+1 rows affected.
+
+SQL> select * from PFA_YMINTERVAL_02 order by id;
+
+ID           YMVAL     
+------------ ----------
+1            +21-11    
+5            -99-11    
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists PFA_YMINTERVAL_03;
+
+Succeed.
+
+SQL> create table PFA_YMINTERVAL_03(id int, ymval interval year(0) to month);
+
+Succeed.
+
+SQL> insert into PFA_YMINTERVAL_03 values(1, '21-11');
+
+CT-00674, YEAR field exceeds the specified precision (0)
+SQL> insert into PFA_YMINTERVAL_03 values(2, '0-11');
+
+1 rows affected.
+
+SQL> insert into PFA_YMINTERVAL_03 values(3, '-1-11');
+
+CT-00674, YEAR field exceeds the specified precision (0)
+SQL> insert into PFA_YMINTERVAL_03 values(4, '-0-11');
+
+1 rows affected.
+
+SQL> select * from PFA_YMINTERVAL_03 order by id;
+
+ID           YMVAL     
+------------ ----------
+2            +0-11     
+4            -0-11     
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists PFA_DSINTERVAL_02;
+
+Succeed.
+
+SQL> create table PFA_DSINTERVAL_02(id int, dsval interval day(30) to second);
+
+CT-00601, [1:59]Sql syntax error: DAY precision must be between 0 and 7
+SQL> create table PFA_DSINTERVAL_02(id int, dsval interval day(3) to second(30));
+
+CT-00601, [1:72]Sql syntax error: SECOND precision must be between 0 and 6
+SQL> create table PFA_DSINTERVAL_02(id int, dsval interval day(3) to second(4));
+
+Succeed.
+
+SQL> insert into  PFA_DSINTERVAL_02 values(1, '000 0000000:0:000000.213456');
+
+1 rows affected.
+
+SQL> insert into  PFA_DSINTERVAL_02 values(2, '999 0000000:0:000000.75769999999');
+
+1 rows affected.
+
+SQL> insert into  PFA_DSINTERVAL_02 values(3, '1000 0000000:0:000000.1239');
+
+CT-00674, DAY field exceeds the specified precision (3)
+SQL> insert into  PFA_DSINTERVAL_02 values(3, '999 23:59:59.79999');
+
+1 rows affected.
+
+SQL> insert into  PFA_DSINTERVAL_02 values(4, '999 23:59:59.99999');
+
+CT-00674, DAY field exceeds the specified precision (3)
+SQL> insert into  PFA_DSINTERVAL_02 values(5, '-11233 23:59:59.99999');
+
+CT-00674, DAY field exceeds the specified precision (3)
+SQL> select * from PFA_DSINTERVAL_02 order by id;
+
+ID           DSVAL                   
+------------ ------------------------
+1            +000 00:00:00.2135      
+2            +999 00:00:00.7577      
+3            +999 23:59:59.8000      
+
+3 rows fetched.
+
+SQL> 
+SQL> drop table if exists PFA_DSINTERVAL_03;
+
+Succeed.
+
+SQL> create table PFA_DSINTERVAL_03(id int, dsval interval day(0) to second(0));
+
+Succeed.
+
+SQL> insert into  PFA_DSINTERVAL_03 values(1, '000 0000000:0:000000.213456');
+
+1 rows affected.
+
+SQL> insert into  PFA_DSINTERVAL_03 values(2, '0 23:0:000000.1239');
+
+1 rows affected.
+
+SQL> insert into  PFA_DSINTERVAL_03 values(3, 'PT24H');
+
+CT-00674, DAY field exceeds the specified precision (0)
+SQL> insert into  PFA_DSINTERVAL_03 values(4, '-1 23:0:000000.1239');
+
+CT-00674, DAY field exceeds the specified precision (0)
+SQL> insert into  PFA_DSINTERVAL_03 values(5, '-00 23:59:59.123765');
+
+1 rows affected.
+
+SQL> insert into  PFA_DSINTERVAL_03 values(6, '-00 23:59:59.523765');
+
+CT-00674, DAY field exceeds the specified precision (0)
+SQL> select * from PFA_DSINTERVAL_03 order by id;
+
+ID           DSVAL                   
+------------ ------------------------
+1            +0 00:00:00             
+2            +0 23:00:00             
+5            -0 23:59:59             
+
+3 rows fetched.
+
+SQL> 
+SQL> --DAYTOSECOND INTERVAL
+SQL> select INTERVAL '4 5:12:10.222' DAY TO SECOND from dual;
+
+INTERVAL '4 5:12:10.222' DAY TO SECOND
+--------------------------------------
++04 05:12:10.222000                   
+
+1 rows fetched.
+
+SQL> select INTERVAL '4 5:12' DAY TO MINUTE from dual;
+
+INTERVAL '4 5:12' DAY TO MINUTE
+-------------------------------
++04 05:12:00                   
+
+1 rows fetched.
+
+SQL> select INTERVAL '400 5' DAY(3) TO HOUR from dual;
+
+INTERVAL '400 5' DAY(3) TO HOUR
+-------------------------------
++400 05:00:00                  
+
+1 rows fetched.
+
+SQL> select interval '400' DAY(3) from dual;
+
+INTERVAL '400' DAY(3)   
+------------------------
++400 00:00:00           
+
+1 rows fetched.
+
+SQL> select INTERVAL '11:12:10.222222' HOUR TO SECOND from dual;
+
+INTERVAL '11:12:10.222222' HOUR TO SECOND
+-----------------------------------------
++00 11:12:10.222222                      
+
+1 rows fetched.
+
+SQL> select INTERVAL '11:20' HOUR TO MINUTE from dual;
+
+INTERVAL '11:20' HOUR TO MINUTE
+-------------------------------
++00 11:20:00                   
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '10' MINUTE FROM DUAL;
+
+INTERVAL '10' MINUTE    
+------------------------
++00 00:10:00            
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '4' DAY	FROM DUAL;
+
+INTERVAL '4' DAY        
+------------------------
++04 00:00:00            
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '25' HOUR FROM DUAL;
+
+INTERVAL '25' HOUR      
+------------------------
++01 01:00:00            
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '120' HOUR(3) FROM DUAL;
+
+INTERVAL '120' HOUR(3)  
+------------------------
++005 00:00:00           
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '12:12' HOUR FROM DUAL;
+
+CT-00673, Invalid interval text -- format error
+SQL> select interval '400 5' DAY(3) from dual;
+
+CT-00673, Invalid interval text -- format error
+SQL> 
+SQL> --YEARTOMONTH INTERVAL
+SQL> select INTERVAL '123-2' YEAR(3) TO MONTH from dual;
+
+INTERVAL '123-2' YEAR(3) TO MONTH
+---------------------------------
++123-02                          
+
+1 rows fetched.
+
+SQL> select INTERVAL '123-1' YEAR(3) from dual;
+
+CT-00673, Invalid interval text -- format error
+SQL> select INTERVAL '300' MONTH(3) from dual;
+
+INTERVAL '300' MONTH(3)
+-----------------------
++025-00                
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '4' YEAR FROM DUAL;
+
+INTERVAL '4' YEAR
+-----------------
++04-00           
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '50' MONTH FROM DUAL;
+
+INTERVAL '50' MONTH
+-------------------
++04-02             
+
+1 rows fetched.
+
+SQL> 
+SQL> --interval calc
+SQL> SELECT INTERVAL '3-11' YEAR TO MONTH + 1 FROM DUAL;
+
+CT-01320, [1:38]Undefined operator: INTERVAL YEAR TO MONTH + BINARY_INTEGER
+SQL> SELECT INTERVAL '3-11' YEAR TO MONTH + TO_DATE('2017-01-01','YYYY-MM-DD') FROM DUAL;
+
+INTERVAL '3-11' YEAR TO MONTH + TO_DATE('2017-01-01','YYYY-MM-DD
+----------------------------------------------------------------
+2020-12-01 00:00:00                                             
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '3-11' YEAR TO MONTH + INTERVAL '10' SECOND FROM DUAL;
+
+CT-01320, [1:38]Undefined operator: INTERVAL YEAR TO MONTH + INTERVAL DAY TO SECOND
+SQL> SELECT INTERVAL '3' YEAR + INTERVAL '12' MONTH FROM DUAL;
+
+INTERVAL '3' YEAR + INTERVAL '12' MONTH
+---------------------------------------
++0004-00                               
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '3 23:59:59' DAY TO SECOND + INTERVAL '0.9994' SECOND(2,3) FROM DUAL;
+
+INTERVAL '3 23:59:59' DAY TO SECOND + INTERVAL '0.9994' SECOND(2
+----------------------------------------------------------------
++0000003 23:59:59.999000                                        
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '3 23:59:59' DAY TO SECOND + INTERVAL '0.9995' SECOND(2,3) FROM DUAL;
+
+INTERVAL '3 23:59:59' DAY TO SECOND + INTERVAL '0.9995' SECOND(2
+----------------------------------------------------------------
++0000004 00:00:00.000000                                        
+
+1 rows fetched.
+
+SQL> SELECT 1 FROM DUAL WHERE (INTERVAL '1' DAY + INTERVAL '11:11:11.1111' HOUR TO SECOND(3)) = TO_DSINTERVAL('1 11:11:11.111');
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT INTERVAL '400' DAY(3) TO DAY FROM DUAL;
+
+INTERVAL '400' DAY(3) TO DAY
+----------------------------
++400 00:00:00               
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '200' YEAR(3) TO YEAR FROM DUAL;
+
+INTERVAL '200' YEAR(3) TO YEAR
+------------------------------
++200-00                       
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '200 - 12' YEAR(3) TO MONTH FROM DUAL;
+
+CT-00692, Invalid interval text -- MONTH field out of range (<=11)
+SQL> SELECT INTERVAL '400' DAY(3) TO SECOND FROM DUAL;
+
+CT-00673, Invalid interval text -- format error
+SQL> SELECT INTERVAL '1 24:00:00' DAY TO SECOND FROM DUAL;
+
+CT-00692, Invalid interval text -- HOUR field out of range (<=23)
+SQL> SELECT INTERVAL '1 23:60:00' DAY TO SECOND FROM DUAL;
+
+CT-00692, Invalid interval text -- MINUTE field out of range (<=59)
+SQL> SELECT INTERVAL '1 23:59:60' DAY TO SECOND FROM DUAL;
+
+CT-00692, Invalid interval text -- SECOND field out of range (<=59)
+SQL> 
+SQL> SELECT INTERVAL '200' year(5) FROM DUAL;
+
+CT-00601, [1:28]Sql syntax error: YEAR precision must be between 0 and 4
+SQL> SELECT INTERVAL '200' SECOND(9,2) FROM DUAL;
+
+CT-00601, [1:30]Sql syntax error: DAY precision must be between 0 and 7
+SQL> SELECT INTERVAL '24:00:00' HOUR TO SECOND FROM DUAL;
+
+INTERVAL '24:00:00' HOUR TO SECOND
+----------------------------------
++01 00:00:00.000000               
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '60:20' MINUTE TO SECOND FROM DUAL;
+
+INTERVAL '60:20' MINUTE TO SECOND
+---------------------------------
++00 01:00:20.000000              
+
+1 rows fetched.
+
+SQL> SELECT INTERVAL '200' SECOND FROM DUAL;
+
+INTERVAL '200' SECOND   
+------------------------
++00 00:03:20.000000     
+
+1 rows fetched.
+
+SQL> SELECT TO_DSINTERVAL('-1 0023:59:59.003333791')/-10 from dual; 
+
+TO_DSINTERVAL('-1 0023:59:59.003333791')/-10
+--------------------------------------------
++0000000 04:47:59.900333                    
+
+1 rows fetched.
+
+SQL> SELECT TO_YMINTERVAL('-3-2')/-10 from dual; 
+
+TO_YMINTERVAL('-3-2')/-10
+-------------------------
++0000-03                 
+
+1 rows fetched.
+
+SQL> 
+SQL> select to_date('2020-02-29', 'YYYY-MM-DD') - interval '1' year from dual;
+
+TO_DATE('2020-02-29', 'YYYY-MM-DD') - INTERVAL '1' YEAR
+-------------------------------------------------------
+2019-02-28 00:00:00                                    
+
+1 rows fetched.
+
+SQL> select to_date('2020-02-29', 'YYYY-MM-DD') - interval '12' month from dual;
+
+TO_DATE('2020-02-29', 'YYYY-MM-DD') - INTERVAL '12' MONTH
+---------------------------------------------------------
+2019-02-28 00:00:00                                      
+
+1 rows fetched.
+
+SQL> select to_date('2020-02-29', 'YYYY-MM-DD') - NUMTOYMINTERVAL(1, 'year') from dual;
+
+TO_DATE('2020-02-29', 'YYYY-MM-DD') - NUMTOYMINTERVAL(1, 'YEAR')
+----------------------------------------------------------------
+2019-02-28 00:00:00                                             
+
+1 rows fetched.
+
+SQL> select to_date('2020-02-29', 'YYYY-MM-DD') - NUMTOYMINTERVAL(12, 'month') from dual;
+
+TO_DATE('2020-02-29', 'YYYY-MM-DD') - NUMTOYMINTERVAL(12, 'MONTH
+----------------------------------------------------------------
+2019-02-28 00:00:00                                             
+
+1 rows fetched.
+
+SQL> select to_date('2020-02-29', 'YYYY-MM-DD') - TO_YMINTERVAL('01-00') from dual;
+
+TO_DATE('2020-02-29', 'YYYY-MM-DD') - TO_YMINTERVAL('01-00')
+------------------------------------------------------------
+2019-02-28 00:00:00                                         
+
+1 rows fetched.
+
+SQL> 
+SQL> select to_date('2020-3-31', 'YYYY-MM-DD') + interval '1' month from dual;
+
+TO_DATE('2020-3-31', 'YYYY-MM-DD') + INTERVAL '1' MONTH
+-------------------------------------------------------
+2020-04-30 00:00:00                                    
+
+1 rows fetched.
+
+SQL> select to_date('2020-4-30', 'YYYY-MM-DD') - interval '2' month from dual;
+
+TO_DATE('2020-4-30', 'YYYY-MM-DD') - INTERVAL '2' MONTH
+-------------------------------------------------------
+2020-02-29 00:00:00                                    
+
+1 rows fetched.
+
+SQL> 
+SQL> select to_date('2020-2-29', 'YYYY-MM-DD') - NUMTODSINTERVAL(366, 'day') from dual;
+
+TO_DATE('2020-2-29', 'YYYY-MM-DD') - NUMTODSINTERVAL(366, 'DAY')
+----------------------------------------------------------------
+2019-02-28 00:00:00                                             
+
+1 rows fetched.
+
+SQL> select to_date('2020-2-29', 'YYYY-MM-DD') + NUMTODSINTERVAL(365, 'day') from dual;
+TO_DATE('2020-2-29', 'YYYY-MM-DD') + NUMTODSINTERVAL(365, 'DAY')
+----------------------------------------------------------------
+2021-02-28 00:00:00                                             
+
+1 rows fetched.
+
+SQL> select INTERVAL '123' MONTH(3.4) from dual;
+
+CT-00601, [1:29]Sql syntax error: invalid YEAR precision, expected integer
+SQL> select INTERVAL '1' year(2.5) from dual;
+
+CT-00601, [1:26]Sql syntax error: invalid YEAR precision, expected integer

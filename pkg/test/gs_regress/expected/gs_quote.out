@@ -1,0 +1,354 @@
+
+
+SQL> drop user if exists quote_test;
+
+Succeed.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists "t1";
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> drop table if exists t3;
+
+Succeed.
+
+SQL> drop table if exists t4;
+
+Succeed.
+
+SQL> drop table if exists "table";
+
+Succeed.
+
+SQL> drop view if exists v1;
+
+Succeed.
+
+SQL> drop view if exists "v1";
+
+Succeed.
+
+SQL> drop view if exists v2;
+
+Succeed.
+
+SQL> drop table if exists "quote_test"."drop";
+
+Succeed.
+
+SQL> drop table if exists "QUOTE_TEST"."Drop";
+
+Succeed.
+
+SQL> 
+SQL> create user quote_test identified by 'Huawei123';
+
+Succeed.
+
+SQL> grant dba to quote_test;
+
+Succeed.
+
+SQL> 
+SQL> create table t1(a int, b int);
+
+Succeed.
+
+SQL> create table "t1"(f1 int, f2 int);
+
+Succeed.
+
+SQL> create table t2(a int, "a" int, b int, "b" int);
+
+Succeed.
+
+SQL> create table t3(f1 int,f2 int, f3 int)
+  2 partition by list(f1)
+  3 (
+  4 partition p1   values (1,2,3,4,5),
+  5 partition "p1" values (default)
+  6 );
+
+Succeed.
+
+SQL> create table t4(f1 int, f2 int, f3 int)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p2   values less than(10),
+  5  PARTITION "p2" values less than(MAXVALUE)
+  6 );
+
+Succeed.
+
+SQL> create table table(index int);
+
+CT-00601, [1:14]Sql syntax error: invalid variant/object name was found
+SQL> create table "table"("index" int);
+
+Succeed.
+
+SQL> create index QUOTA_idx_t1__1 on t2(a);
+
+Succeed.
+
+SQL> create index "QUOTA_idx_t1__1" on t2("a");
+
+Succeed.
+
+SQL> create index idx_t1_2 on t2(b, "b");
+
+Succeed.
+
+SQL> create view v1 as select * from t1;
+
+Succeed.
+
+SQL> create view "v1" as select * from "t1";
+
+Succeed.
+
+SQL> create view v2(f1,"f1") as select * from t1;
+
+Succeed.
+
+SQL> insert into table values(1);
+
+CT-00601, [1:13]Sql syntax error: table name expected but table found
+SQL> insert into "table" values(1);
+
+1 rows affected.
+
+SQL> insert into "table"(index) values(10);
+
+CT-00601, [1:21]Sql syntax error: invalid variant/object name was found
+SQL> insert into "table"("index") values(10);
+
+1 rows affected.
+
+SQL> insert into "table"("index") values(20);
+
+1 rows affected.
+
+SQL> insert into t2 values(1,1,1,1);
+
+1 rows affected.
+
+SQL> insert into t2 values(10,1,5,1);
+
+1 rows affected.
+
+SQL> select * from t1;
+
+A            B           
+------------ ------------
+
+0 rows fetched.
+
+SQL> select * from "t1";
+
+F1           F2          
+------------ ------------
+
+0 rows fetched.
+
+SQL> select * from table;
+
+CT-00601, [1:20]Sql syntax error: (...) expected but  found
+SQL> select index from table;
+
+CT-00601, [1:8]Sql syntax error: invalid expression
+SQL> select "index" from "table";
+
+index       
+------------
+1           
+10          
+20          
+
+3 rows fetched.
+
+SQL> select "index" from "table" where "index" = 10;
+
+index       
+------------
+10          
+
+1 rows fetched.
+
+SQL> select "index" from "table" where "index" > 10 group by index;
+
+CT-00601, [1:57]Sql syntax error: invalid expression
+SQL> select "index" from "table" where "index" >= 10 group by "index" order by 1;
+
+index       
+------------
+10          
+20          
+
+2 rows fetched.
+
+SQL> select "index" from "table" where "index" >= 10 group by "index" order by index;
+
+CT-00601, [1:75]Sql syntax error: invalid expression
+SQL> select "index" from "table" where "index" >= 10 group by "index" order by "index";
+
+index       
+------------
+10          
+20          
+
+2 rows fetched.
+
+SQL> update "table" set "index" = 5 where "index"=1;
+
+1 rows affected.
+
+SQL> delete from "table" where "index"=5;
+
+1 rows affected.
+
+SQL> merge into "table" using dual on (1=1) when not matched then insert ("index") values(100);
+
+0 rows affected.
+
+SQL> create table "quote_test"."drop"("Table" int, "inDex" int);
+
+Succeed.
+
+SQL> create table "QUOTE_TEST"."Drop"("Table" int, "inDex" int);
+
+Succeed.
+
+SQL> select * from "quote_test"."drop";
+
+Table        inDex       
+------------ ------------
+
+0 rows fetched.
+
+SQL> select * from v1;
+
+A            B           
+------------ ------------
+
+0 rows fetched.
+
+SQL> select * from "v1";
+
+F1           F2          
+------------ ------------
+
+0 rows fetched.
+
+SQL> select * from v2;
+
+F1           f1          
+------------ ------------
+
+0 rows fetched.
+
+SQL> select * from t2 where "a"=1;
+
+A            a            B            b           
+------------ ------------ ------------ ------------
+1            1            1            1           
+10           1            5            1           
+
+2 rows fetched.
+
+SQL> 
+SQL> alter table "quote_test"."drop" add a4 varchar(10) default 'abcd';
+
+Succeed.
+
+SQL> alter table "QUOTE_TEST"."Drop" modify "inDex" varchar(10);
+
+Succeed.
+
+SQL> alter table "QUOTE_TEST"."Drop" rename column "inDex" to dddd;
+
+Succeed.
+
+SQL> alter table "QUOTE_TEST"."Drop" drop column dddd;
+
+Succeed.
+
+SQL> select * from "quote_test"."drop";
+
+Table        inDex        A4        
+------------ ------------ ----------
+
+0 rows fetched.
+
+SQL> select * from "QUOTE_TEST"."Drop";
+
+Table       
+------------
+
+0 rows fetched.
+
+SQL> select * from `QUOTE_TesT`.`Drop`;
+
+Table       
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> drop user if exists quote_test;
+
+CT-00815, user objects is being used, can not drop
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists "t1";
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> drop table if exists t3;
+
+Succeed.
+
+SQL> drop table if exists t4;
+
+Succeed.
+
+SQL> drop table if exists "table";
+
+Succeed.
+
+SQL> drop view if exists v1;
+
+Succeed.
+
+SQL> drop view if exists "v1";
+
+Succeed.
+
+SQL> drop view if exists v2;
+
+Succeed.
+
+SQL> drop table if exists "quote_test"."drop";
+
+Succeed.
+
+SQL> drop table if exists "QUOTE_TEST"."Drop";
+Succeed.
+
+
+
+

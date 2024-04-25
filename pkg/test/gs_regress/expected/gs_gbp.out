@@ -1,0 +1,198 @@
+
+
+SQL> --USE_GBP
+SQL> alter system set USE_GBP = TRUE;
+
+Succeed.
+
+SQL> select value from v$parameter where name = 'USE_GBP';
+
+VALUE                                                           
+----------------------------------------------------------------
+TRUE                                                            
+
+1 rows fetched.
+
+SQL> alter system set USE_GBP = FALSE;
+
+Succeed.
+
+SQL> select value from v$parameter where name = 'USE_GBP';
+
+VALUE                                                           
+----------------------------------------------------------------
+FALSE                                                           
+
+1 rows fetched.
+
+SQL> 
+SQL> --GBP_ADDR
+SQL> alter system set GBP_ADDR = 127.0.0.1;
+
+CT-00636, [1:29]Invalid number -- existing multiple decimal points
+SQL> alter system set GBP_ADDR = '-1.0.0.1';
+
+CT-00330, [1:29]Invalid IP address: -1.0.0.1
+SQL> alter system set GBP_ADDR = '';
+
+CT-00330, Invalid IP address: 
+SQL> alter system set GBP_ADDR = '0.0.0.0,0.0.0.256';
+
+CT-00330, [1:29]Invalid IP address: 0.0.0.256
+SQL> alter system set GBP_ADDR = '1.1.1.1,2.2.2.2,3.3.3.3,4.4.4.4,5.5.5.5,6.6.6.6,7.7.7.7,8.8.8.8,9.9.9.9';
+
+CT-00336, [1:29]Number of IP address exceeds the maximum(8)
+SQL> alter system set GBP_ADDR = '1.1.1.1,2.2.2.2';
+
+Succeed.
+
+SQL> alter system set GBP_ADDR = '127.0.0.1';
+
+Succeed.
+
+SQL> 
+SQL> --GBP_PORT
+SQL> alter system set GBP_PORT = 65536;
+
+CT-00202, [1:29]The parameter value "GBP_PORT" was invalid
+SQL> alter system set GBP_PORT = 65535;
+
+Succeed.
+
+SQL> alter system set GBP_PORT = 1024;
+
+Succeed.
+
+SQL> alter system set GBP_PORT = 1023;
+
+CT-00209, [1:29]The value of parameter "GBP_PORT" is too small, at least 1024
+SQL> alter system set GBP_PORT = 2061;
+
+Succeed.
+
+SQL> 
+SQL> --_GBP_TRANS_TYPE
+SQL> alter system set _GBP_TRANS_TYPE = XXXX;
+
+CT-00601, [1:36]Sql syntax error: TCP or RDMA expected
+SQL> alter system set _GBP_TRANS_TYPE = TCP;
+
+Succeed.
+
+SQL> alter system set _GBP_TRANS_TYPE = RDMA;
+
+Succeed.
+
+SQL> alter system set _GBP_TRANS_TYPE = tcp;
+
+Succeed.
+
+SQL> alter system set _GBP_TRANS_TYPE = rdma;
+
+Succeed.
+
+SQL> 
+SQL> --_GBP_FOR_RECOVERY
+SQL> alter system set _GBP_FOR_RECOVERY = TRUE;
+
+Succeed.
+
+SQL> select value from v$parameter where name = '_GBP_FOR_RECOVERY';
+
+VALUE                                                           
+----------------------------------------------------------------
+TRUE                                                            
+
+1 rows fetched.
+
+SQL> alter system set _GBP_FOR_RECOVERY = FALSE;
+
+Succeed.
+
+SQL> select value from v$parameter where name = '_GBP_FOR_RECOVERY';
+
+VALUE                                                           
+----------------------------------------------------------------
+FALSE                                                           
+
+1 rows fetched.
+
+SQL> 
+SQL> --_MRP_RES_LOGSIZE
+SQL> alter system debug mode _MRP_RES_LOGSIZE = -1;
+
+CT-00601, [1:44]Sql syntax error: size must be a positive long integer
+SQL> alter system debug mode _MRP_RES_LOGSIZE = 9223372036854775808;
+
+CT-00601, [1:44]Sql syntax error: size must be a positive long integer
+SQL> alter system debug mode _MRP_RES_LOGSIZE = 0M;
+
+Succeed.
+
+SQL> alter system debug mode _GBP_RCY_CHECK = FALSE;
+
+Succeed.
+
+SQL> 
+SQL> --DV_GBP_ANALYZE_INFO
+SQL> select STATISTIC#, NAME from DV_GBP_ANALYZE_INFO;
+
+STATISTIC#   NAME                                                            
+------------ ----------------------------------------------------------------
+0            GBP_SAFE                                                        
+1            GBP_IN_WINDOW                                                   
+2            GBP_CONNECTED                                                   
+3            GBP_SERVER_ADDR                                                 
+4            GBP_IS_WORKING                                                  
+5            GBP_WINDOW_RANGE                                                
+6            CURR_POINT                                                      
+7            LRPL_BEGIN_POINT                                                
+8            LRPL_CURR_POINT                                                 
+9            LRPL_TOTAL_LGSIZE                                               
+10           LRPL_REMAIN_LGSIZE                                              
+11           LRPL_DONE                                                       
+12           ALY_CURR_POINT                                                  
+13           ALY_REMAIN_LGSIZE                                               
+14           ALY_DONE                                                        
+15           ALY_ITEM_FREE_SPACE                                             
+16           PROMOTE_BEGIN_TIME                                              
+17           PROMOTE_END_TIME                                                
+18           PROMOTE_LRPL_ELAPSED                                            
+19           PROMOTE_TOTAL_ELAPSED                                           
+20           LAST_RCY_WITH_GBP                                               
+  
+21 rows fetched.
+
+SQL> 
+SQL> --DV_GBPSTAT
+SQL> select STATISTIC#, NAME from DV_GBP_STATS;
+
+STATISTIC#   NAME                                                            
+------------ ----------------------------------------------------------------
+0            gbp lfn gap                                                     
+1            gbp page min_lfn                                                
+2            gbp page write                                                  
+3            gbp page write time(us)                                         
+4            gbp write wait                                                  
+5            gbp knl read                                                    
+6            gbp bg read                                                     
+7            gbp bg read time(us)                                            
+8            gbp miss                                                        
+9            gbp hit                                                         
+10           gbp ahead                                                       
+11           gbp usable                                                      
+12           gbp old                                                         
+13           gbp total read time(ms)                                         
+14           redo analyze time(ms)                                           
+15           redo analyze pages                                              
+16           redo analyze resident pages                                     
+17           redo analyze new pages                                          
+18           redo replay time(ms)                                            
+19           promote total time(ms)                                          
+20           promote lrpl time(ms)                                              
+
+21 rows fetched.
+
+SQL> 
+
+

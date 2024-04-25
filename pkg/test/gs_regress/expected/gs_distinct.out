@@ -1,0 +1,484 @@
+
+
+SQL> DROP TABLE IF EXISTS T_DISTINCT_1;
+
+Succeed.
+
+SQL> CREATE TABLE T_DISTINCT_1 (F_INT1 INT, F_INT2 INT, F_CHAR VARCHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> --test empty record
+SQL> select distinct a.f_int1,count(b.f_int2) from T_DISTINCT_1 a, T_DISTINCT_1 b group by a.f_int1;
+
+F_INT1       COUNT(B.F_INT2)     
+------------ --------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> INSERT INTO T_DISTINCT_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_1 VALUES(1,3,'b','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_1 VALUES(2,3,'D','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_1 VALUES(2,3,'E','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_1 VALUES(1,3,'F','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_1 VALUES(3,4,'G','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_DISTINCT_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_DISTINCT_2 (F_INT1 INT, F_INT2 INT, F_CHAR VARCHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(1,3,'b','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(2,3,'D','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(2,3,'E','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(1,3,'F','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(3,4,'G1','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(NULL,4,'G2','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_2 VALUES(NULL,4,'G1','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --ERROR
+SQL> SELECT DISTINCT();
+
+CT-00601, Sql syntax error: invalid expression
+SQL> SELECT DISTINCT F_INT2,MAX(F_INT1) FROM T_DISTINCT_1;
+
+CT-00609, Expression not in group list
+SQL> SELECT DISTINCT F_INT2,COUNT(1) FROM T_DISTINCT_1;
+
+CT-00609, Expression not in group list
+SQL> 
+SQL> SELECT DISTINCT * FROM T_DISTINCT_1 ORDER BY 1,2,3,4;
+
+F_INT1       F_INT2       F_CHAR           F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            F                2017-12-11 14:18:00   
+1            3            b                2017-12-11 14:18:00   
+2            3            D                2017-12-11 16:08:00   
+2            3            E                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+3            4            G                2017-12-12 16:08:00   
+
+7 rows fetched.
+
+SQL> SELECT DISTINCT F_INT2,F_INT1 FROM T_DISTINCT_1 ORDER BY 1,2;
+
+F_INT2       F_INT1      
+------------ ------------
+2            1           
+3            1           
+3            2           
+4            3           
+
+4 rows fetched.
+
+SQL> SELECT DISTINCT F_INT2,F_INT1 FROM T_DISTINCT_1 ORDER BY 1 DESC,2 DESC;
+
+F_INT2       F_INT1      
+------------ ------------
+4            3           
+3            2           
+3            1           
+2            1           
+
+4 rows fetched.
+
+SQL> SELECT DISTINCT F_INT2,F_INT1 FROM T_DISTINCT_1 GROUP BY F_INT1,F_INT2 ORDER BY 1,2;
+
+F_INT2       F_INT1      
+------------ ------------
+2            1           
+3            1           
+3            2           
+4            3           
+
+4 rows fetched.
+
+SQL> SELECT DISTINCT F_INT2,F_INT1 FROM T_DISTINCT_1 GROUP BY F_INT1,F_INT2 ORDER BY F_INT2 DESC,F_INT1;
+
+F_INT2       F_INT1      
+------------ ------------
+4            3           
+3            1           
+3            2           
+2            1           
+
+4 rows fetched.
+
+SQL> SELECT DISTINCT F_INT2,F_INT1 FROM T_DISTINCT_1 GROUP BY F_INT1,F_INT2 ORDER BY 1 DESC,2;
+
+F_INT2       F_INT1      
+------------ ------------
+4            3           
+3            1           
+3            2           
+2            1           
+
+4 rows fetched.
+
+SQL> SELECT DISTINCT F_INT2,MAX(F_INT1) FROM T_DISTINCT_1 GROUP BY F_INT2 ORDER BY F_INT2 DESC;
+
+F_INT2       MAX(F_INT1) 
+------------ ------------
+4            3           
+3            2           
+2            1           
+
+3 rows fetched.
+
+SQL> SELECT COUNT(*) FROM (SELECT DISTINCT F_INT2,MAX(F_INT1) FROM T_DISTINCT_1 GROUP BY F_INT2);
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> SELECT COUNT(*) FROM (SELECT DISTINCT F_INT2,MAX(F_INT1) FROM T_DISTINCT_1 GROUP BY F_INT2),T_DISTINCT_2 WHERE T_DISTINCT_2.F_INT2=3;
+
+COUNT(*)            
+--------------------
+12                  
+
+1 rows fetched.
+
+SQL> SELECT DISTINCT F_INT1 FROM T_DISTINCT_2 ORDER BY 1;
+
+F_INT1      
+------------
+1           
+2           
+3           
+            
+
+4 rows fetched.
+
+SQL> SELECT DISTINCT F_CHAR,COUNT(*) FROM T_DISTINCT_2 GROUP BY F_CHAR HAVING F_CHAR LIKE '%' ORDER BY 1,2;
+
+F_CHAR           COUNT(*)            
+---------------- --------------------
+A                1                   
+C                1                   
+D                1                   
+E                1                   
+F                1                   
+G1               2                   
+G2               1                   
+b                1                   
+
+8 rows fetched.
+
+SQL> SELECT DISTINCT LENGTH(F_CHAR) F1,COUNT(*) FROM T_DISTINCT_2 GROUP BY F_CHAR HAVING F_CHAR LIKE '%' ORDER BY 1,2;
+
+F1                   COUNT(*)            
+-------------------- --------------------
+1                    1                   
+2                    1                   
+2                    2                   
+
+3 rows fetched.
+
+SQL> 
+SQL> select distinct lnnvl(F_INT1)  from T_DISTINCT_1 order by lnnvl(F_INT2);
+
+CT-00601, [1:59]Sql syntax error: expression not in distinct list
+SQL> select distinct F_INT1 ,F_CHAR from T_DISTINCT_1 order by if(F_INT1 > F_INT2, F_INT1, F_CHAR);
+
+CT-00601, [1:59]Sql syntax error: expression not in distinct list
+SQL> select distinct lnnvl(F_INT1)  from T_DISTINCT_1 group by lnnvl(F_INT2);
+
+CT-00609, [1:23]Expression not in group list
+SQL> --TEST INDEX DISTINCT
+SQL> DROP TABLE IF EXISTS T_DISTINCT_3;
+
+Succeed.
+
+SQL> CREATE TABLE T_DISTINCT_3 (F_INT1 INT, F_INT2 INT, F_CHAR VARCHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_T_DISTINCT_3_1 ON T_DISTINCT_3(F_INT1, F_CHAR, F_DATE);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_T_DISTINCT_3_2 ON T_DISTINCT_3(F_INT1, F_INT2);
+
+Succeed.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(1,3,'b','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(2,3,'D','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(2,3,'E','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(1,3,'F','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(3,4,'G1','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(NULL,4,'G2','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DISTINCT_3 VALUES(NULL,4,'G1','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+
+SQL> SELECT DISTINCT * FROM T_DISTINCT_3 ORDER BY 1,2,3,4;
+
+F_INT1       F_INT2       F_CHAR           F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            F                2017-12-11 14:18:00   
+1            3            b                2017-12-11 14:18:00   
+2            3            D                2017-12-11 16:08:00   
+2            3            E                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+3            4            G1               2017-12-12 16:08:00   
+             4            G1               2017-12-12 16:08:00   
+             4            G2               2017-12-12 16:08:00   
+
+9 rows fetched.
+
+SQL> SELECT DISTINCT F_INT1,F_CHAR,F_DATE FROM T_DISTINCT_3;
+
+F_INT1       F_CHAR           F_DATE                
+------------ ---------------- ----------------------
+1            A                2017-12-11 14:08:00   
+1            b                2017-12-11 14:18:00
+3            C                2017-12-12 16:08:00
+2            D                2017-12-11 16:08:00
+2            E                2017-12-11 16:08:00   
+1            F                2017-12-11 14:18:00
+3            G1               2017-12-12 16:08:00
+             G2               2017-12-12 16:08:00
+             G1               2017-12-12 16:08:00
+
+9 rows fetched.
+
+SQL> SELECT DISTINCT F_INT1,F_CHAR FROM T_DISTINCT_3;
+
+F_INT1       F_CHAR          
+------------ ----------------
+1            A               
+1            b
+3            C
+2            D
+2            E               
+1            F
+3            G1
+             G2
+             G1
+
+9 rows fetched.
+
+SQL> SELECT DISTINCT F_CHAR,F_DATE FROM T_DISTINCT_3 ORDER BY 1,2;
+
+F_CHAR           F_DATE                
+---------------- ----------------------
+A                2017-12-11 14:08:00   
+C                2017-12-12 16:08:00   
+D                2017-12-11 16:08:00   
+E                2017-12-11 16:08:00   
+F                2017-12-11 14:18:00   
+G1               2017-12-12 16:08:00   
+G2               2017-12-12 16:08:00   
+b                2017-12-11 14:18:00   
+
+8 rows fetched.
+
+SQL> SELECT DISTINCT F_INT1,F_INT2 FROM T_DISTINCT_3;
+
+F_INT1       F_INT2      
+------------ ------------
+1            2           
+1            3           
+3            4
+2            3
+             4
+
+5 rows fetched.
+
+SQL> SELECT DISTINCT 10,F_INT1,F_INT2,18 FROM T_DISTINCT_3;
+
+10           F_INT1       F_INT2       18          
+------------ ------------ ------------ ------------
+10           1            2            18          
+10           1            3            18          
+10           3            4            18
+10           2            3            18
+10                        4            18
+
+5 rows fetched.
+
+SQL> DROP TABLE IF EXISTS STORAGE_ACID_ATOM_TABLE_000_1;
+
+Succeed.
+
+SQL> CREATE TABLE STORAGE_ACID_ATOM_TABLE_000_1 (c_id int,
+  2                         c_d_id int NOT NULL,
+  3                         c_w_id int NOT NULL,
+  4                         c_first varchar(16) NOT NULL,
+  5                         c_middle char(2),
+  6                         c_last varchar(16) NOT NULL,
+  7                         c_street_1 varchar(20) NOT NULL,
+  8                         c_street_2 varchar(20),
+  9                         c_city varchar(20) NOT NULL,
+ 10                         c_state char(2) NOT NULL,
+ 11                         c_zip char(9) NOT NULL,
+ 12                         c_phone char(16) NOT NULL,
+ 13                         c_since timestamp,
+ 14                         c_credit char(2) NOT NULL,
+ 15                         c_credit_lim numeric(12,2),
+ 16                         c_discount numeric(4,4),
+ 17                         c_balance numeric(12,2),
+ 18                         c_ytd_payment numeric(12,2) NOT NULL,
+ 19                         c_payment_cnt int NOT NULL,
+ 20                         c_delivery_cnt int NOT NULL,
+ 21                         c_data varchar(500) NOT NULL);
+
+Succeed.
+
+SQL> 
+SQL> CREATE INDEX STORAGE_ACID_ATOM_INDEX_000_4 ON STORAGE_ACID_ATOM_TABLE_000_1(c_first,c_state,c_w_id);
+
+Succeed.
+
+SQL> insert into STORAGE_ACID_ATOM_TABLE_000_1 values (1,1,1,'iscmvlstpn','OE','BARBARBAR','bkilipzfcxcle','pmbwodmpvhvpafbj','dyfaoptppzjcgjrvyqa','uq','480211111','9400872216162535','2013-01-04 11:26:41','GC',50000.0,0.4361328,-10.0,10.0,1,0,'qvldetanrbrburbmzqujshoqnggsmnteccipriirdhirwiynpfzcsykxxyscdsfqafhatdokmjogfgslucunvwbtbfsqzjeclbacpjqdhjchvgbnrkjrgjrycsgppsocnevautzfeosviaxbvobffnjuqhlvnwuqhtgjqsbfacwjpbvpgthpyxcpmnutcjxrbxxbmrmwwxcepwiixvvleyajautcesljhrsfsmsnmzjcxvcuxdwmyijbwywiirsgocwktedbbokhynznceaesuifkgoaafagugetfhbcylksrjukvbufqcvbffaxnzssyquidvwefktknrchyxfphunqktwnipnsrvqswsymocnoexbabwnpmnxsvshdsjhazcauvqjgvqjfkjjgqrceyjmbumkapmcbxeashybpgekjkfezthnjbhfqiwbutbxtkjkndyylrvrhsazhijvmkmhdgvuyvyayiavdmypqomgobo');
+
+1 rows affected.
+
+SQL> UPDATE STORAGE_ACID_ATOM_TABLE_000_1 SET c_first='aaaaaaaaaaaaaaa';
+
+1 rows affected.
+
+SQL> SELECT distinct c_first FROM STORAGE_ACID_ATOM_TABLE_000_1 where c_d_id=1;
+
+C_FIRST         
+----------------
+aaaaaaaaaaaaaaa 
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists eliminate_distinct_lnnvl;
+
+Succeed.
+
+SQL> create table eliminate_distinct_lnnvl(
+  2     c1 INT,
+  3     c2 INT
+  4 );
+
+Succeed.
+
+SQL> insert into eliminate_distinct_lnnvl values(1,0);
+
+1 rows affected.
+
+SQL> insert into eliminate_distinct_lnnvl values(2,1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select distinct lnnvl(c1), lnnvl(c2) from eliminate_distinct_lnnvl;
+
+LNNVL(C1) LNNVL(C2)
+--------- ---------
+FALSE     TRUE     
+FALSE     FALSE    
+
+2 rows fetched.
+
+SQL> drop table eliminate_distinct_lnnvl;
+Succeed.
+
+
+
+

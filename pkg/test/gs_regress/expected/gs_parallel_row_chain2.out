@@ -1,0 +1,62 @@
+
+
+SQL> DECLARE
+  2 CNT INT;
+  3 BEGIN
+  4 CNT := 0;
+  5 LOOP
+  6   SELECT COUNT(*) INTO CNT FROM TABLE$ WHERE NAME='ROW_CHAIN_TABLE' ;
+  7   EXIT WHEN CNT = 1;
+  8 END LOOP;
+  9 END;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> SELECT SLEEP(5);
+
+SLEEP(5)
+--------
+        
+
+1 rows fetched.
+
+SQL> 
+SQL> DECLARE
+  2 CNT INT;
+  3 BEGIN
+  4 CNT := 0;
+  5 LOOP
+  6   SELECT COUNT(*) INTO CNT FROM ROW_CHAIN_TABLE ;
+  7   EXIT WHEN CNT = 1;
+  8 END LOOP;
+  9 END;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> SELECT SLEEP(10);
+
+SLEEP(10)
+---------
+         
+
+1 rows fetched.
+
+SQL> 
+SQL> SYNCPOINT SP_B1_TRUNCATE_TABLE WAIT start_get_chain_row;
+
+Succeed.
+
+SQL> SYNCPOINT SP_B2_TRUNCATE_TABLE SIGNAL truncate_table_end RAISE 1;
+
+Succeed.
+
+SQL> TRUNCATE TABLE ROW_CHAIN_TABLE;
+Succeed.
+
+
+
+

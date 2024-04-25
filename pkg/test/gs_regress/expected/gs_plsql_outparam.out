@@ -1,0 +1,233 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_plsql_outparam cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_outparam identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to gs_plsql_outparam;
+
+Succeed.
+
+SQL> 
+SQL> conn gs_plsql_outparam/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> 
+SQL> create or replace function myf(v1 in int default 9, v2 in out int, v3 out int,v4 out int, v5 out int) return int
+  2 is
+  3 begin
+  4 dbe_output.print(v1||v2||v3||v4||v5);
+  5 v2:=v1;
+  6 v3:=v2;
+  7 v4:=v3;
+  8 v5:=v4;
+  9 dbe_output.print(v1||v2||v3||v4||v5);
+ 10 return v5;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> --expect right
+SQL> declare
+  2 b1 int :=10;
+  3 b2 int :=20;
+  4 b3 int;
+  5 b4 int;
+  6 b5 int;
+  7 begin
+  8 --not use default
+  9 dbe_output.print(myf(v1=>b1,v2=>b2,v3=>b3,v4=>b4,v5=>b5));
+ 10 dbe_output.print(myf(v5=>b5,v4=>b4,v3=>b3,v2=>b2,v1=>b1));
+ 11 dbe_output.print(myf(v5=>b5,v1=>b1,v4=>b4,v3=>b3,v2=>b2));
+ 12 dbe_output.print(myf(v4=>b4,v5=>b5,v1=>b1,v3=>b3,v2=>b2));
+ 13 --use default
+ 14 dbe_output.print(myf(v2=>b2,v3=>b3,v4=>b4,v5=>b5));
+ 15 dbe_output.print(myf(v5=>b5,v4=>b4,v3=>b3,v2=>b2));
+ 16 end;
+ 17 /
+
+1020
+1010101010
+10
+1010
+1010101010
+10
+1010
+1010101010
+10
+1010
+1010101010
+10
+910
+99999
+9
+99
+99999
+9
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> --expect right
+SQL> declare
+  2 b1 int :=10;
+  3 b2 int :=20;
+  4 b3 int;
+  5 b4 int;
+  6 b5 int;
+  7 begin
+  8 --not use default
+  9 dbe_output.print(myf(b1,v2=>b2,v3=>b3,v4=>b4,v5=>b5));
+ 10 dbe_output.print(myf(b1,b2,v3=>b3,v4=>b4,v5=>b5));
+ 11 dbe_output.print(myf(b1,b2,b3,v4=>b4,v5=>b5));
+ 12 dbe_output.print(myf(b1,b2,b3,b4,v5=>b5));
+ 13 dbe_output.print(myf(b1,b2,b3,b4,b5));
+ 14 --use default
+ 15 dbe_output.print(myf(v2=>b2,v3=>b3,v4=>b4,v5=>b5));
+ 16 end;
+ 17 /
+
+1020
+1010101010
+10
+1010
+1010101010
+10
+1010
+1010101010
+10
+1010
+1010101010
+10
+1010
+1010101010
+10
+910
+99999
+9
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --expect wrong
+SQL> declare
+  2 b1 int :=10;
+  3 begin
+  4 b1 := myf(v1=>b1);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_OUTPARAM.ANONYMOUS BLOCK) terminated with compiling errors
+[4:7] PLC-00644 Too few arguments for procedure/function
+
+SQL> 
+SQL> --expect wrong
+SQL> declare
+  2 b2 int :=10;
+  3 begin
+  4 b2 := myf(v2=>b2);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_OUTPARAM.ANONYMOUS BLOCK) terminated with compiling errors
+[4:7] PLC-00644 Too few arguments for procedure/function
+
+SQL> 
+SQL> --expect wrong
+SQL> declare
+  2 b3 int :=10;
+  3 begin
+  4 b3 := myf(v3=>b3);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_OUTPARAM.ANONYMOUS BLOCK) terminated with compiling errors
+[4:7] PLC-00644 Too few arguments for procedure/function
+
+SQL> 
+SQL> --expect wrong
+SQL> declare
+  2 b1 int :=10;
+  3 b2 int :=20;
+  4 b3 int;
+  5 b4 int;
+  6 b5 int;
+  7 begin
+  8 dbe_output.print(myf(b2,v3=>b3,v4=>b4,v5=>b5));
+  9 dbe_output.print(myf(b2,b3,v4=>b4,v5=>b5));
+ 10 dbe_output.print(myf(b2,b3,b4,v5=>b5));
+ 11 dbe_output.print(myf(b2,b3,b4,b5));
+ 12 end;
+ 13 /
+
+CT-00944, PL/SQL(GS_PLSQL_OUTPARAM.ANONYMOUS BLOCK) terminated with compiling errors
+[8:18] PLC-00644 Too few arguments for procedure/function
+[9:18] PLC-00644 Too few arguments for procedure/function
+[10:18] PLC-00644 Too few arguments for procedure/function
+[11:18] PLC-00644 Too few arguments for procedure/function
+
+SQL> 
+SQL> --expect wrong
+SQL> declare
+  2 b1 int :=10;
+  3 b2 int :=20;
+  4 b3 int;
+  5 b4 int;
+  6 b5 int;
+  7 begin
+  8 dbe_output.print(myf(v1=>b1,v2=>b2,v3=>b3,v4=>b4,v4=>b5));
+  9 end;
+ 10 /
+
+CT-00944, PL/SQL(GS_PLSQL_OUTPARAM.ANONYMOUS BLOCK) terminated with compiling errors
+[8:47] PLC-00948 Duplicate argument V4 in MYF
+
+SQL> 
+SQL> --expect right
+SQL> declare
+  2 b1 int :=10;
+  3 b2 int :=20;
+  4 b3 int;
+  5 b4 int;
+  6 b5 int;
+  7 begin
+  8 dbe_output.print(myf(v1=>b1,v2=>b2,v3=>b3,v4=>b5,v5=>b5));
+  9 end;
+ 10 /
+
+1020
+1010101010
+10
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> set serveroutput off;
+
+OFF
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user gs_plsql_outparam cascade;
+Succeed.
+
+
+
+

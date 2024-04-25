@@ -1,0 +1,420 @@
+
+
+SQL> drop user if exists liu_dependency cascade;
+
+Succeed.
+
+SQL> create user liu_dependency identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to liu_dependency;
+
+Succeed.
+
+SQL> conn liu_dependency/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> select d_name,d_type#,p_name,p_type# from sys.sys_dependencies where d_owner# in (select user_id from dv_me) order by 1,2,3;
+
+D_NAME                                                           D_TYPE#      P_NAME                                                           P_TYPE#     
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------
+
+0 rows fetched.
+
+SQL> select name,status from sys.sys_procs where user# in (select user_id from dv_me) order by 1;
+
+NAME                                                             STATUS      
+---------------------------------------------------------------- ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> create user liu_dependency identified by Cantian_234;
+
+CT-00753, The object user LIU_DEPENDENCY already exists.
+SQL> grant dba to liu_dependency;
+
+Succeed.
+
+SQL> 
+SQL> conn liu_dependency/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create table dep_t1(a int);
+
+Succeed.
+
+SQL> insert into dep_t1 values(10);
+
+1 rows affected.
+
+SQL> create table dep_t2(a int);
+
+Succeed.
+
+SQL> insert into dep_t2 values(10);
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace procedure procA is
+  2 tmp int;
+  3 begin
+  4 select a into tmp from dep_t1;
+  5 select a into tmp from dep_t2;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procB is
+  2 tmp int;
+  3 begin
+  4 select a into tmp from dep_t1;
+  5 select a into tmp from dep_t2;
+  6 procA();
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procC is
+  2 tmp int;
+  3 begin
+  4 select a into tmp from dep_t1;
+  5 select a into tmp from dep_t2;
+  6 procA();
+  7 procB();
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procD is
+  2 tmp int;
+  3 begin
+  4 select a into tmp from dep_t1;
+  5 select a into tmp from dep_t2;
+  6 procA();
+  7 procB();
+  8 procC();
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procE is
+  2 tmp int;
+  3 begin
+  4 select a into tmp from dep_t1;
+  5 select a into tmp from dep_t2;
+  6 procA();
+  7 procB();
+  8 procC();
+  9 procD();
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure procF is
+  2 tmp int;
+  3 begin
+  4 select a into tmp from dep_t1;
+  5 select a into tmp from dep_t2;
+  6 procA();
+  7 procB();
+  8 procC();
+  9 procD();
+ 10 procE();
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> alter table dep_t1 add column b int;
+
+Succeed.
+
+SQL> select d_name,d_type#,p_name,p_type# from sys.sys_dependencies where d_owner# in (select user_id from dv_me) order by 1,2,3;
+
+D_NAME                                                           D_TYPE#      P_NAME                                                           P_TYPE#     
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------
+PROCA                                                            3            DEP_T1                                                           0           
+PROCA                                                            3            DEP_T2                                                           0           
+PROCB                                                            3            DEP_T1                                                           0           
+PROCB                                                            3            DEP_T2                                                           0           
+PROCB                                                            3            PROCA                                                            3           
+PROCC                                                            3            DEP_T1                                                           0           
+PROCC                                                            3            DEP_T2                                                           0           
+PROCC                                                            3            PROCA                                                            3           
+PROCC                                                            3            PROCB                                                            3           
+PROCD                                                            3            DEP_T1                                                           0           
+PROCD                                                            3            DEP_T2                                                           0           
+PROCD                                                            3            PROCA                                                            3           
+PROCD                                                            3            PROCB                                                            3           
+PROCD                                                            3            PROCC                                                            3           
+PROCE                                                            3            DEP_T1                                                           0           
+PROCE                                                            3            DEP_T2                                                           0           
+PROCE                                                            3            PROCA                                                            3           
+PROCE                                                            3            PROCB                                                            3           
+PROCE                                                            3            PROCC                                                            3           
+PROCE                                                            3            PROCD                                                            3           
+PROCF                                                            3            DEP_T1                                                           0           
+PROCF                                                            3            DEP_T2                                                           0           
+PROCF                                                            3            PROCA                                                            3           
+PROCF                                                            3            PROCB                                                            3           
+PROCF                                                            3            PROCC                                                            3           
+PROCF                                                            3            PROCD                                                            3           
+PROCF                                                            3            PROCE                                                            3           
+
+27 rows fetched.
+
+SQL> select name,status from sys.sys_procs where user# in (select user_id from dv_me) order by 1;
+
+NAME                                                             STATUS      
+---------------------------------------------------------------- ------------
+PROCA                                                            2           
+PROCB                                                            2           
+PROCC                                                            2           
+PROCD                                                            2           
+PROCE                                                            2           
+PROCF                                                            2           
+
+6 rows fetched.
+
+SQL> 
+SQL> call procF;
+
+PL/SQL procedure successfully completed.
+
+SQL> select name,status from sys.sys_procs where user# in (select user_id from dv_me) order by 1;
+
+NAME                                                             STATUS      
+---------------------------------------------------------------- ------------
+PROCA                                                            1           
+PROCB                                                            1           
+PROCC                                                            1           
+PROCD                                                            1           
+PROCE                                                            1           
+PROCF                                                            1           
+
+6 rows fetched.
+
+SQL> call procE;
+
+PL/SQL procedure successfully completed.
+
+SQL> select name,status from sys.sys_procs where user# in (select user_id from dv_me) order by 1;
+
+NAME                                                             STATUS      
+---------------------------------------------------------------- ------------
+PROCA                                                            1           
+PROCB                                                            1           
+PROCC                                                            1           
+PROCD                                                            1           
+PROCE                                                            1           
+PROCF                                                            1           
+
+6 rows fetched.
+
+SQL> 
+SQL> --END
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists liu_dependency cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS202104290PCME4P1H00 START
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS DTS202104290PCME4P1H00_U1;
+
+Succeed.
+
+SQL> CREATE USER DTS202104290PCME4P1H00_U1 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> GRANT DBA TO DTS202104290PCME4P1H00_U1;
+
+Succeed.
+
+SQL> CONN DTS202104290PCME4P1H00_U1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE TABLE DTS202104290PCME4P1H00_T1(C1 INT);
+
+Succeed.
+
+SQL> CREATE OR REPLACE SYNONYM DTS202104290PCME4P1H00_SYN1 FOR DTS202104290PCME4P1H00_T1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE VIEW DTS202104290PCME4P1H00_V1 AS SELECT * FROM DTS202104290PCME4P1H00_T1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM DTS202104290PCME4P1H00_PUB_SYN1 FOR DTS202104290PCME4P1H00_T1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE DTS202104290PCME4P1H00_TYPE1 IS TABLE OF DTS202104290PCME4P1H00_T1%ROWTYPE;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE DTS202104290PCME4P1H00_TYPE2 IS TABLE OF DTS202104290PCME4P1H00_T1.C1%TYPE;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE DTS202104290PCME4P1H00_TYPE3 IS TABLE OF DTS202104290PCME4P1H00_PUB_SYN1%ROWTYPE;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TYPE DTS202104290PCME4P1H00_TYPE4 IS TABLE OF DTS202104290PCME4P1H00_PUB_SYN1.C1%TYPE;
+  2 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290PCME4P1H00_PROC1(C1 INT) IS
+  2  V1 DTS202104290PCME4P1H00_T1%ROWTYPE;
+  3  V2 DTS202104290PCME4P1H00_PUB_SYN1%ROWTYPE;
+  4 BEGIN
+  5  NULL;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290PCME4P1H00_PROC2(C1 INT) IS
+  2  V1 DTS202104290PCME4P1H00_V1%ROWTYPE;
+  3  V2 DTS202104290PCME4P1H00_PUB_SYN1.C1%TYPE;
+  4 BEGIN
+  5  NULL;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290PCME4P1H00_PROC3(C1 INT) IS
+  2  V1 DTS202104290PCME4P1H00_SYN1%ROWTYPE;
+  3 BEGIN
+  4  NULL;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290PCME4P1H00_PROC4(C1 INT) IS
+  2  V1 DTS202104290PCME4P1H00_TYPE1;
+  3  V2 DTS202104290PCME4P1H00_TYPE3;
+  4 BEGIN
+  5  NULL;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290PCME4P1H00_PROC5(C1 INT) IS
+  2  V1 DTS202104290PCME4P1H00_TYPE2;
+  3  V2 DTS202104290PCME4P1H00_TYPE4;
+  4 BEGIN
+  5  NULL;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> SELECT NAME,TYPE,REFERENCED_NAME,REFERENCED_TYPE FROM MY_DEPENDENCIES WHERE NAME LIKE '%DTS202104290PCME4P1H00%' ORDER BY NAME, REFERENCED_NAME;
+
+NAME                                                             TYPE         REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------
+DTS202104290PCME4P1H00_PROC1                                     PROCEDURE    DTS202104290PCME4P1H00_PUB_SYN1                                  SYNONYM        
+DTS202104290PCME4P1H00_PROC1                                     PROCEDURE    DTS202104290PCME4P1H00_T1                                        TABLE          
+DTS202104290PCME4P1H00_PROC2                                     PROCEDURE    DTS202104290PCME4P1H00_PUB_SYN1                                  SYNONYM        
+DTS202104290PCME4P1H00_PROC2                                     PROCEDURE    DTS202104290PCME4P1H00_V1                                        VIEW           
+DTS202104290PCME4P1H00_PROC3                                     PROCEDURE    DTS202104290PCME4P1H00_SYN1                                      SYNONYM        
+DTS202104290PCME4P1H00_PROC4                                     PROCEDURE    DTS202104290PCME4P1H00_TYPE1                                     TYPE           
+DTS202104290PCME4P1H00_PROC4                                     PROCEDURE    DTS202104290PCME4P1H00_TYPE3                                     TYPE           
+DTS202104290PCME4P1H00_PROC5                                     PROCEDURE    DTS202104290PCME4P1H00_TYPE2                                     TYPE           
+DTS202104290PCME4P1H00_PROC5                                     PROCEDURE    DTS202104290PCME4P1H00_TYPE4                                     TYPE           
+DTS202104290PCME4P1H00_SYN1                                      SYNONYM      DTS202104290PCME4P1H00_T1                                        TABLE          
+DTS202104290PCME4P1H00_TYPE1                                     TYPE         DTS202104290PCME4P1H00_T1                                        TABLE          
+DTS202104290PCME4P1H00_TYPE2                                     TYPE         DTS202104290PCME4P1H00_T1                                        TABLE          
+DTS202104290PCME4P1H00_TYPE3                                     TYPE         DTS202104290PCME4P1H00_PUB_SYN1                                  SYNONYM        
+DTS202104290PCME4P1H00_TYPE4                                     TYPE         DTS202104290PCME4P1H00_PUB_SYN1                                  SYNONYM        
+DTS202104290PCME4P1H00_V1                                        VIEW         DTS202104290PCME4P1H00_T1                                        TABLE          
+
+15 rows fetched.
+
+SQL> SELECT OBJECT_NAME,STATUS FROM MY_OBJECTS WHERE OBJECT_NAME LIKE '%DTS202104290PCME4P1H00%' ORDER BY OBJECT_NAME;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+DTS202104290PCME4P1H00_PROC1                                     VALID  
+DTS202104290PCME4P1H00_PROC2                                     VALID  
+DTS202104290PCME4P1H00_PROC3                                     VALID  
+DTS202104290PCME4P1H00_PROC4                                     VALID  
+DTS202104290PCME4P1H00_PROC5                                     VALID  
+DTS202104290PCME4P1H00_SYN1                                      VALID  
+DTS202104290PCME4P1H00_T1                                        VALID  
+DTS202104290PCME4P1H00_TYPE1                                     VALID  
+DTS202104290PCME4P1H00_TYPE2                                     VALID  
+DTS202104290PCME4P1H00_TYPE3                                     VALID  
+DTS202104290PCME4P1H00_TYPE4                                     VALID  
+DTS202104290PCME4P1H00_V1                                        VALID  
+
+12 rows fetched.
+
+SQL> DROP TABLE DTS202104290PCME4P1H00_T1;
+
+Succeed.
+
+SQL> SELECT OBJECT_NAME,STATUS FROM MY_OBJECTS WHERE OBJECT_NAME LIKE '%DTS202104290PCME4P1H00%' ORDER BY OBJECT_NAME;
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+DTS202104290PCME4P1H00_PROC1                                     UNKNOWN
+DTS202104290PCME4P1H00_PROC2                                     UNKNOWN
+DTS202104290PCME4P1H00_PROC3                                     UNKNOWN
+DTS202104290PCME4P1H00_PROC4                                     UNKNOWN
+DTS202104290PCME4P1H00_PROC5                                     UNKNOWN
+DTS202104290PCME4P1H00_SYN1                                      UNKNOWN
+DTS202104290PCME4P1H00_TYPE1                                     UNKNOWN
+DTS202104290PCME4P1H00_TYPE2                                     UNKNOWN
+DTS202104290PCME4P1H00_TYPE3                                     UNKNOWN
+DTS202104290PCME4P1H00_TYPE4                                     UNKNOWN
+DTS202104290PCME4P1H00_V1                                        UNKNOWN
+
+11 rows fetched.
+
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS DTS202104290PCME4P1H00_U1 CASCADE;
+
+Succeed.
+
+SQL> --DTS202104290PCME4P1H00 END
+
+

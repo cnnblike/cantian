@@ -1,0 +1,987 @@
+
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> 
+SQL> drop user if exists inherit_user cascade;
+
+Succeed.
+
+SQL> drop user if exists inherit_user2 cascade;
+
+Succeed.
+
+SQL> drop user if exists inherit_user4 cascade;
+
+Succeed.
+
+SQL> drop user if exists inherit_user5 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --new user has INHERIT PRIVILEGES on himself to PUBLIC
+SQL> ALTER SYSTEM SET AUTO_INHERIT_USER = ON;
+
+Succeed.
+
+SQL> create user inherit_user identified by Cantian_234;
+
+Succeed.
+
+SQL> create user inherit_user2 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user inherit_user4 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user inherit_user5 identified by Cantian_234;
+
+Succeed.
+
+SQL> ALTER SYSTEM SET AUTO_INHERIT_USER = OFF;
+
+Succeed.
+
+SQL> grant create session to inherit_user, inherit_user2, inherit_user4, inherit_user5;
+
+Succeed.
+
+SQL> select * from dba_tab_privs where PRIVILEGE='INHERIT PRIVILEGES' and object_name like 'INHERIT_USER%';
+
+GRANTEE                                                          OWNER                                                            OBJECT_NAME                                                      OBJECT_TYPE PRIVILEGE            GRANTABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- -------------------- ---------
+PUBLIC                                                           SYS                                                              INHERIT_USER2                                                    USER        INHERIT PRIVILEGES   NO
+PUBLIC                                                           SYS                                                              INHERIT_USER                                                     USER        INHERIT PRIVILEGES   NO
+PUBLIC                                                           SYS                                                              INHERIT_USER4                                                    USER        INHERIT PRIVILEGES   NO
+PUBLIC                                                           SYS                                                              INHERIT_USER5                                                    USER        INHERIT PRIVILEGES   NO       
+
+4 rows fetched.
+
+SQL> 
+SQL> drop procedure if exists inherit_user2.procedure_002;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE inherit_user2.procedure_002(a in int) IS
+  2 b int;
+  3 BEGIN
+  4   b:= a * a * 3;
+  5    dbe_output.print_line(b);
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> grant execute on inherit_user2.procedure_002 to inherit_user5;
+
+Succeed.
+
+SQL> conn inherit_user5/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> call inherit_user2.procedure_002(2);
+
+12
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke INHERIT PRIVILEGES on User inherit_user5 from public;
+
+Succeed.
+
+SQL> select * from dba_tab_privs where PRIVILEGE='INHERIT PRIVILEGES' and object_name like 'INHERIT_USER%';
+
+GRANTEE                                                          OWNER                                                            OBJECT_NAME                                                      OBJECT_TYPE PRIVILEGE            GRANTABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- -------------------- ---------
+PUBLIC                                                           SYS                                                              INHERIT_USER2                                                    USER        INHERIT PRIVILEGES   NO
+PUBLIC                                                           SYS                                                              INHERIT_USER                                                     USER        INHERIT PRIVILEGES   NO
+PUBLIC                                                           SYS                                                              INHERIT_USER4                                                    USER        INHERIT PRIVILEGES   NO
+
+3 rows fetched.
+
+SQL> conn inherit_user5/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call inherit_user2.procedure_002(3);
+
+CT-00932, [1:2] PL/SQL(INHERIT_USER5.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] CT-01011, Insufficient inherit privileges
+
+SQL> 
+SQL> --INHERIT ANY PRIVILEGES
+SQL> conn / as sysdba
+
+connected.
+
+SQL> select * from dba_sys_privs where grantee = 'SYS' and privilege='INHERIT ANY PRIVILEGES';
+
+GRANTEE                                                          PRIVILEGE                    ADMIN_OPTION
+---------------------------------------------------------------- ---------------------------- ------------
+SYS                                                              INHERIT ANY PRIVILEGES       YES         
+
+1 rows fetched.
+
+SQL> select * from dba_sys_privs where grantee = 'DBA' and privilege='INHERIT ANY PRIVILEGES';
+
+GRANTEE                                                          PRIVILEGE                    ADMIN_OPTION
+---------------------------------------------------------------- ---------------------------- ------------
+
+0 rows fetched.
+
+SQL> grant INHERIT ANY PRIVILEGES to inherit_user5;
+
+Succeed.
+
+SQL> conn inherit_user5/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call inherit_user2.procedure_002(3);  --error
+
+CT-00932, [1:2] PL/SQL(INHERIT_USER5.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] CT-01011, Insufficient inherit privileges
+
+SQL> select * from my_sys_privs;
+
+USERNAME                                                         PRIVILEGE                    ADMIN_OPTION
+---------------------------------------------------------------- ---------------------------- ------------
+INHERIT_USER5                                                    CREATE SESSION               NO          
+INHERIT_USER5                                                    INHERIT ANY PRIVILEGES       NO          
+
+2 rows fetched.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant INHERIT ANY PRIVILEGES to inherit_user2;
+
+Succeed.
+
+SQL> conn inherit_user5/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call inherit_user2.procedure_002(3);
+
+27
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> ------------INHERIT PRIVILEGES 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke INHERIT ANY PRIVILEGES from inherit_user2, inherit_user5;
+
+Succeed.
+
+SQL> grant INHERIT PRIVILEGES on USER inherit_user5 to inherit_user2;
+
+Succeed.
+
+SQL> conn inherit_user5/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call inherit_user2.procedure_002(4);
+
+48
+
+PL/SQL procedure successfully completed.
+
+SQL> conn inherit_user2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from my_tab_privs;
+
+GRANTEE                                                          OWNER                                                            OBJECT_NAME                                                      OBJECT_TYPE PRIVILEGE            GRANTABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- -------------------- ---------
+INHERIT_USER2                                                    SYS                                                              INHERIT_USER5                                                    USER        INHERIT PRIVILEGES   NO       
+
+1 rows fetched.
+
+SQL> 
+SQL> ------------role
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create role c##role1_inhe;
+
+Succeed.
+
+SQL> grant INHERIT ANY PRIVILEGES to c##role1_inhe;
+
+Succeed.
+
+SQL> grant INHERIT PRIVILEGES on USER inherit_user5 to c##role1_inhe; --error
+
+CT-00601, Sql syntax error: user privileges can't be granted to role
+SQL> drop role c##role1_inhe;
+
+Succeed.
+
+SQL> 
+SQL> ---------grant any object privilege
+SQL> conn inherit_user4/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> grant INHERIT PRIVILEGES on USER inherit_user4 to inherit_user5;
+
+Succeed.
+
+SQL> grant INHERIT PRIVILEGES on USER inherit_user to inherit_user5;  --error
+
+CT-01001, Permissions were insufficient
+SQL> revoke INHERIT PRIVILEGES on USER inherit_user5 from inherit_user2;   --error
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant grant any object privilege to inherit_user4;
+
+Succeed.
+
+SQL> conn inherit_user4/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> grant INHERIT PRIVILEGES on USER inherit_user to inherit_user5; 
+
+Succeed.
+
+SQL> revoke INHERIT PRIVILEGES on USER inherit_user5 from inherit_user2;
+
+Succeed.
+
+SQL> grant INHERIT PRIVILEGES on USER sys to inherit_user5;  --error
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> ----grammar
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant INHERIT PRIVILEGES on USER inherit_user to inherit_user4 , inherit_user2;
+
+Succeed.
+
+SQL> select * from dba_tab_privs where PRIVILEGE='INHERIT PRIVILEGES' and object_name like 'INHERIT_USER';
+
+GRANTEE                                                          OWNER                                                            OBJECT_NAME                                                      OBJECT_TYPE PRIVILEGE            GRANTABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- -------------------- ---------
+PUBLIC                                                           SYS                                                              INHERIT_USER                                                     USER        INHERIT PRIVILEGES   NO       
+INHERIT_USER2                                                    SYS                                                              INHERIT_USER                                                     USER        INHERIT PRIVILEGES   NO       
+INHERIT_USER4                                                    SYS                                                              INHERIT_USER                                                     USER        INHERIT PRIVILEGES   NO       
+INHERIT_USER5                                                    SYS                                                              INHERIT_USER                                                     USER        INHERIT PRIVILEGES   NO       
+
+4 rows fetched.
+
+SQL> revoke INHERIT PRIVILEGES on USER inherit_user from inherit_user4, inherit_user2;
+
+Succeed.
+
+SQL> select * from dba_tab_privs where PRIVILEGE='INHERIT PRIVILEGES' and object_name like 'INHERIT_USER';
+
+GRANTEE                                                          OWNER                                                            OBJECT_NAME                                                      OBJECT_TYPE PRIVILEGE            GRANTABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- -------------------- ---------
+PUBLIC                                                           SYS                                                              INHERIT_USER                                                     USER        INHERIT PRIVILEGES   NO       
+INHERIT_USER5                                                    SYS                                                              INHERIT_USER                                                     USER        INHERIT PRIVILEGES   NO       
+
+2 rows fetched.
+
+SQL> revoke INHERIT PRIVILEGES on User inherit_user from public;
+
+Succeed.
+
+SQL> grant INHERIT PRIVILEGES on USER sys to inherit_user5;
+
+Succeed.
+
+SQL> revoke INHERIT PRIVILEGES on USER sys from inherit_user5;
+
+Succeed.
+
+SQL> 
+SQL> grant INHERIT PRIVILEGES on USER public to inherit_user4; --error
+
+CT-00601, [1:34]Sql syntax error: invalid variant/object name was found
+SQL> grant INHERIT PRIVILEGES on USER inherit_user, inherit_user2 to inherit_user4; --error
+
+CT-00601, [1:46]Sql syntax error: TO expected
+SQL> grant INHERIT PRIVILEGES on inherit_user5 to inherit_user; --error
+
+CT-00828, object SYS.INHERIT_USER5 does not exist
+SQL> grant INHERIT PRIVILEGES on USER inherit_user, USER inherit_user2 to inherit_user4; --error
+
+CT-00601, [1:46]Sql syntax error: TO expected
+SQL> grant INHERIT PRIVILEGES on USER inherit_user to inherit_user4 with grant option;  --error
+
+CT-00601, [1:69]Sql syntax error: cannot GRANT to a user privilege WITH GRANT OPTION now
+SQL> create table inherit_user.tab1(id int);
+
+Succeed.
+
+SQL> grant select on USER inherit_user.tab1 to inherit_user4; --error
+
+CT-00601, Sql syntax error: invalid privilege on user
+SQL> grant INHERIT PRIVILEGES on USER inherit_user.tab1 to inherit_user4; --error
+
+CT-00781, The user TAB1 does not exist.
+SQL> 
+SQL> drop user inherit_user cascade;
+
+Succeed.
+
+SQL> drop user inherit_user2 cascade;
+
+Succeed.
+
+SQL> drop user inherit_user4 cascade;
+
+Succeed.
+
+SQL> drop user inherit_user5 cascade;
+
+Succeed.
+
+SQL> select * from dba_tab_privs where PRIVILEGE='INHERIT PRIVILEGES' and object_name like 'INHERIT_USER%';
+
+GRANTEE                                                          OWNER                                                            OBJECT_NAME                                                      OBJECT_TYPE PRIVILEGE            GRANTABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- -------------------- ---------
+
+0 rows fetched.
+
+SQL> 
+SQL> 
+SQL> -- test trigger
+SQL> conn / as sysdba
+
+connected.
+
+SQL> ALTER SYSTEM SET AUTO_INHERIT_USER = ON;
+
+Succeed.
+
+SQL> drop user if exists normal_user cascade;
+
+Succeed.
+
+SQL> create user normal_user identified by Cantian_234;
+
+Succeed.
+
+SQL> grant connect, create table, insert any table, create view, create any trigger to normal_user;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists test_user cascade;
+
+Succeed.
+
+SQL> create user test_user identified by Cantian_234;
+
+Succeed.
+
+SQL> grant connect, create table, insert any table, create view, create any trigger to test_user;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists top_user cascade;
+
+Succeed.
+
+SQL> create user top_user identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to top_user;
+
+Succeed.
+
+SQL> ALTER SYSTEM SET AUTO_INHERIT_USER = OFF;
+
+Succeed.
+
+SQL> conn normal_user/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create table test_table(user_id int, value_id int);
+
+Succeed.
+
+SQL> insert into test_table values(1, 1);
+
+1 rows affected.
+
+SQL> insert into test_table values(2, 2);
+
+1 rows affected.
+
+SQL> insert into test_table values(3, 3);
+
+1 rows affected.
+
+SQL> insert into test_table values(4, 4);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test_table order by user_id;
+
+USER_ID      VALUE_ID    
+------------ ------------
+1            1           
+2            2           
+3            3           
+4            4           
+
+4 rows fetched.
+
+SQL> 
+SQL> conn test_user/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create table test(i int);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TEST_TRIG AFTER INSERT ON test
+  2 FOR EACH ROW
+  3 BEGIN
+  4     UPDATE normal_user.test_table SET user_id = 0;
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(TEST_USER.TEST_TRIG) terminated with compiling errors
+[4:5] PLC-01001 Permissions were insufficient
+
+
+SQL> insert into test values(1); 
+
+CT-00944, PL/SQL(TEST_USER.TEST_TRIG) terminated with compiling errors
+[4:5] PLC-01001 Permissions were insufficient
+
+SQL> 
+SQL> conn top_user/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> REVOKE INHERIT PRIVILEGES ON USER top_user FROM PUBLIC;
+
+Succeed.
+
+SQL> insert into test_user.test values(2); 
+
+CT-00944, PL/SQL(TEST_USER.TEST_TRIG) terminated with compiling errors
+[4:5] PLC-01001 Permissions were insufficient
+
+SQL> select * from normal_user.test_table order by user_id;
+
+USER_ID      VALUE_ID    
+------------ ------------
+1            1           
+2            2           
+3            3           
+4            4           
+
+4 rows fetched.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER top_user TO public;
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant UPDATE on normal_user.test_table to test_user;
+
+Succeed.
+
+SQL> 
+SQL> conn top_user/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> insert into test_user.test values(2);
+
+1 rows affected.
+
+SQL> select * from normal_user.test_table order by user_id;
+
+USER_ID      VALUE_ID    
+------------ ------------
+0            1           
+0            2           
+0            3           
+0            4           
+
+4 rows fetched.
+
+SQL> set serveroutput off;
+
+OFF
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> ALTER SYSTEM SET AUTO_INHERIT_USER = ON;
+
+Succeed.
+
+SQL> drop user normal_user cascade;
+
+Succeed.
+
+SQL> drop user test_user cascade;
+
+Succeed.
+
+SQL> drop user top_user cascade;
+
+Succeed.
+
+SQL> create user super_grantor identified by Cantian_234;
+
+Succeed.
+
+SQL> create user grantor1 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user grantor2 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user grantor3 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user grantee1 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user grantee2 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user grantee3 identified by Cantian_234;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER super_grantor TO grantor1;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER super_grantor TO grantor2;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER super_grantor TO grantor3;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor1 TO grantee1;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor1 TO grantee2;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor1 TO grantee3;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor2 TO grantee1;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor2 TO grantee2;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor2 TO grantee3;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor3 TO grantee1;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor3 TO grantee2;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor3 TO grantee3;
+
+Succeed.
+
+SQL> drop user grantor1 cascade;
+
+Succeed.
+
+SQL> drop user grantor2 cascade;
+
+Succeed.
+
+SQL> drop user grantor3 cascade;
+
+Succeed.
+
+SQL> create user grantor1 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user grantor2 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user grantor3 identified by Cantian_234;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER super_grantor TO grantor1;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER super_grantor TO grantor2;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER super_grantor TO grantor3;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor1 TO grantee1;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor2 TO grantee2;
+
+Succeed.
+
+SQL> GRANT INHERIT PRIVILEGES ON USER grantor3 TO grantee3;
+
+Succeed.
+
+SQL> drop user super_grantor cascade;
+
+Succeed.
+
+SQL> drop user grantor1 cascade;
+
+Succeed.
+
+SQL> drop user grantor2 cascade;
+
+Succeed.
+
+SQL> drop user grantor3 cascade;
+
+Succeed.
+
+SQL> drop user grantee1 cascade;
+
+Succeed.
+
+SQL> drop user grantee2 cascade;
+
+Succeed.
+
+SQL> drop user grantee3 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS202104290QOJZZP1300 START change to correct user to check system priv
+SQL> DROP USER IF EXISTS DTS202104290QOJZZP1300_U1 CASCADE;
+
+Succeed.
+
+SQL> DROP USER IF EXISTS DTS202104290QOJZZP1300_U2 CASCADE;
+
+Succeed.
+
+SQL> CREATE USER DTS202104290QOJZZP1300_U1 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> CREATE USER DTS202104290QOJZZP1300_U2 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_U1.PROC1(V1 INT) IS --succeed
+  2 BEGIN
+  3  NULL;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_U1.PROC2(V1 INT) IS --succeed
+  2 BEGIN
+  3  DTS202104290QOJZZP1300_U1.PROC1(V1);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_U2.PROC1(V1 INT) IS --PLC-01001 Permissions were insufficient
+  2 BEGIN
+  3  DTS202104290QOJZZP1300_U1.PROC1(V1);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(DTS202104290QOJZZP1300_U2.PROC1) terminated with compiling errors
+[3:2] PLC-01001 Permissions were insufficient
+
+
+SQL> GRANT EXECUTE ON DTS202104290QOJZZP1300_U1.PROC1 TO DTS202104290QOJZZP1300_U2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_U2.PROC1(V1 INT) IS --succeed
+  2 BEGIN
+  3  DTS202104290QOJZZP1300_U1.PROC1(V1);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> REVOKE EXECUTE ON DTS202104290QOJZZP1300_U1.PROC1 FROM DTS202104290QOJZZP1300_U2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_U2.PROC1(V1 INT) IS --PLC-01001 Permissions were insufficient
+  2 BEGIN
+  3  DTS202104290QOJZZP1300_U1.PROC1(V1);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(DTS202104290QOJZZP1300_U2.PROC1) terminated with compiling errors
+[3:2] PLC-01001 Permissions were insufficient
+
+
+SQL> GRANT EXECUTE ANY PROCEDURE TO DTS202104290QOJZZP1300_U2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_U2.PROC1(V1 INT) IS --succeed
+  2 BEGIN
+  3  DTS202104290QOJZZP1300_U1.PROC1(V1);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> REVOKE EXECUTE ANY PROCEDURE FROM DTS202104290QOJZZP1300_U2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_U2.PROC1(V1 INT) IS --PLC-01001 Permissions were insufficient
+  2 BEGIN
+  3  DTS202104290QOJZZP1300_U1.PROC1(V1);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(DTS202104290QOJZZP1300_U2.PROC1) terminated with compiling errors
+[3:2] PLC-01001 Permissions were insufficient
+
+
+SQL> DROP USER IF EXISTS DTS202104290QOJZZP1300_U1 CASCADE;
+
+Succeed.
+
+SQL> DROP USER IF EXISTS DTS202104290QOJZZP1300_U2 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE USER DTS202104290QOJZZP1300_U1 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> GRANT CONNECT TO DTS202104290QOJZZP1300_U1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_U1.PROC1(V1 INT) IS --succeed
+  2 BEGIN
+  3  NULL;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE DTS202104290QOJZZP1300_PROC1(V1 INT) IS --succeed
+  2 BEGIN
+  3  DTS202104290QOJZZP1300_U1.PROC1(V1);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> GRANT EXECUTE ON DTS202104290QOJZZP1300_PROC1 TO DTS202104290QOJZZP1300_U1;
+
+Succeed.
+
+SQL> CONN DTS202104290QOJZZP1300_U1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CALL DTS202104290QOJZZP1300_U1.PROC1(1); --succeed
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL SYS.DTS202104290QOJZZP1300_PROC1(1); --succeed
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS DTS202104290QOJZZP1300_U1 CASCADE;
+
+Succeed.
+
+SQL> DROP PROCEDURE DTS202104290QOJZZP1300_PROC1;
+
+Succeed.
+
+SQL> --DTS202104290QOJZZP1300 END
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> alter system set auto_inherit_user = off;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists inherit_test_user cascade;
+
+Succeed.
+
+SQL> create user inherit_test_user identified by Cantian_234;
+
+Succeed.
+
+SQL> grant resource, connect to inherit_test_user;
+
+Succeed.
+
+SQL> create or replace procedure inherit_test_user.test_inherit(i int) as 
+  2 begin
+  3     dbe_output.print_line(i);
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists dba_test_user cascade;
+
+Succeed.
+
+SQL> create user dba_test_user identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to dba_test_user;
+
+Succeed.
+
+SQL> conn dba_test_user/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call inherit_test_user.test_inherit(2);
+
+CT-00932, [1:2] PL/SQL(DBA_TEST_USER.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] CT-01011, Insufficient inherit privileges
+
+SQL> create or replace procedure test_print(i int) as 
+  2 begin
+  3     dbe_output.print_line(i);
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace public synonym test_public_syn for test_print;
+
+Succeed.
+
+SQL> call test_public_syn(2);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists inherit_test_user cascade;
+
+Succeed.
+
+SQL> drop user if exists dba_test_user cascade;
+
+Succeed.
+
+SQL> alter system set auto_inherit_user = ON;
+Succeed.
+
+
+
+

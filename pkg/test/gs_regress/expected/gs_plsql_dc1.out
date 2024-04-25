@@ -1,0 +1,694 @@
+
+
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> --环境初始化
+SQL> DROP USER IF EXISTS PL_DC1 CASCADE;
+
+Succeed.
+
+SQL> CREATE USER PL_DC1 IDENTIFIED BY Cantian_123456;
+
+Succeed.
+
+SQL> GRANT DBA TO PL_DC1;
+
+Succeed.
+
+SQL> CONN PL_DC1/Cantian_123456@127.0.0.1:1611
+
+connected.
+
+SQL> SET SERVEROUTPUT ON
+
+ON
+SQL> 
+SQL> --一、基本查找功能测试
+SQL> --1.递归 FUNCTION/PROCEDURE
+SQL> 
+SQL> DROP TABLE IF EXISTS T1;
+
+Succeed.
+
+SQL> CREATE TABLE T1(C1 INT);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION F1(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  IF C1 > 0 THEN
+  4   RETURN F1(C1 - 1) + C1;
+  5  ELSE
+  6   RETURN 0;
+  7  END IF;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> SELECT F1(10);
+
+F1(10)      
+------------
+55          
+
+1 rows fetched.
+
+SQL> SELECT F1(10,1);--error
+
+CT-00916, [1:8]PL/SQL:syntax error(unexpected more arguments for current procedure/function)
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE P1(C1 INT) IS
+  2 BEGIN
+  3  IF C1 > 0 THEN
+  4   INSERT INTO T1 VALUES(C1);
+  5   P1(C1 - 1);
+  6  ELSE
+  7   INSERT INTO T1 VALUES(0);
+  8  END IF;
+  9  COMMIT;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> CALL P1(1);
+
+PL/SQL procedure successfully completed.
+
+SQL> CALL P1(1,1);--error
+
+CT-00944, PL/SQL(PL_DC1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00916 PL/SQL:syntax error(unexpected more arguments for current procedure/function)
+
+SQL> select p1(1);
+
+CT-00828, [1:8]function PL_DC1.P1 does not exist
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE SYNONYM L_SYN_F1 FOR F1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE SYNONYM L_SYN_P1 FOR P1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_F1 FOR F1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_P1 FOR P1;
+
+Succeed.
+
+SQL> SELECT L_SYN_F1(12);
+
+L_SYN_F1(12)
+------------
+78          
+
+1 rows fetched.
+
+SQL> CALL L_SYN_P1(2);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+2           
+
+1 rows fetched.
+
+SQL> SELECT P_SYN_F1(12);
+
+P_SYN_F1(12)
+------------
+78          
+
+1 rows fetched.
+
+SQL> CALL P_SYN_P1(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+3           
+
+1 rows fetched.
+
+SQL> 
+SQL> --2.包内自调用 PACKAGE
+SQL> CREATE OR REPLACE PACKAGE PKG2 IS
+  2  FUNCTION F1(C1 INT) RETURN INT;
+  3  FUNCTION F2(C1 INT) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY PKG2 IS
+  2  FUNCTION F1(C1 INT) RETURN INT IS
+  3  BEGIN
+  4   RETURN C1;
+  5  END;
+  6  FUNCTION F2(C1 INT) RETURN INT IS
+  7  BEGIN
+  8   RETURN 10 * C1 + F1(C1);
+  9  END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT PKG2.F2(10);
+
+PKG2.F2(10) 
+------------
+110         
+
+1 rows fetched.
+
+SQL> SELECT PKG2.F4(10);--error
+
+CT-00828, [1:8]function PKG2.F4 does not exist
+SQL> CREATE OR REPLACE SYNONYM L_SYN_PKG2 FOR PKG2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_PKG2 FOR PKG2;
+
+Succeed.
+
+SQL> SELECT L_SYN_PKG2.F2(11);
+
+L_SYN_PKG2.F2(11)
+-----------------
+121              
+
+1 rows fetched.
+
+SQL> SELECT P_SYN_PKG2.F2(11);
+
+P_SYN_PKG2.F2(11)
+-----------------
+121              
+
+1 rows fetched.
+
+SQL> 
+SQL> --3.内置函数
+SQL> SELECT ABS(-1);
+
+ABS(-1)                                 
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> SELECT ABS(-1,1);
+
+CT-00615, [1:8]Invalid argument number for ABS, min=1, max=1
+SQL> CREATE OR REPLACE SYNONYM L_SYN_ABS FOR ABS; --error
+
+CT-00828, The object PL_DC1.ABS does not exist
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_ABS FOR ABS; --error
+
+CT-00828, The object PL_DC1.ABS does not exist
+SQL> 
+SQL> --4.标准包
+SQL> CREATE OR REPLACE PROCEDURE P4(C1 INT) IS
+  2  A INT;
+  3 BEGIN
+  4  A := C1 / 0;
+  5 EXCEPTION
+  6  when Zero_divide then 
+  7  SYS.dbe_output.print_line('Zero divide');
+  8  SYS.dbe_output.print_line(DBE_STD.SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+  9  when others then
+ 10  SYS.dbe_output.print_line('other error');
+ 11  SYS.dbe_output.print_line(DBE_STD.SQL_ERR_CODE||' error '||SQL_ERR_MSG);
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> CALL P4(1);
+
+Zero divide
+637 error The divisor was zero
+
+PL/SQL procedure successfully completed.
+
+SQL> CREATE OR REPLACE SYNONYM L_SYN_ERR FOR SQL_ERR_CODE; --error
+
+CT-00828, The object PL_DC1.SQL_ERR_CODE does not exist
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_ERR FOR SQL_ERR_CODE; --error
+
+CT-00828, The object PL_DC1.SQL_ERR_CODE does not exist
+SQL> 
+SQL> --5.用户自定义函数
+SQL> CREATE OR REPLACE FUNCTION F5(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  RETURN 1;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> SELECT F5(11);
+
+F5(11)      
+------------
+1           
+
+1 rows fetched.
+
+SQL> SELECT F5('asf3');--error
+
+CT-00636, [1:11]Invalid number -- unexpected character
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE P5(C1 INT) IS
+  2 BEGIN
+  3  INSERT INTO T1 VALUES(C1);
+  4  COMMIT;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CALL P5(6);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+6           
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE SYNONYM L_SYN_F5 FOR F5;
+
+Succeed.
+
+SQL> CREATE OR REPLACE SYNONYM L_SYN_P5 FOR P5;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_F5 FOR F5;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_P5 FOR P5;
+
+Succeed.
+
+SQL> SELECT L_SYN_F5(12);
+
+L_SYN_F5(12)
+------------
+1           
+
+1 rows fetched.
+
+SQL> SELECT P_SYN_F5(12);
+
+P_SYN_F5(12)
+------------
+1           
+
+1 rows fetched.
+
+SQL> CALL L_SYN_P5(7);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+7           
+
+1 rows fetched.
+
+SQL> CALL P_SYN_P5(8);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+8           
+
+1 rows fetched.
+
+SQL> 
+SQL> --6.PUBLIC用户对象
+SQL> CREATE OR REPLACE FUNCTION "PUBLIC".F6(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  RETURN C1 + 6;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> GRANT INSERT ON PL_DC1.T1 TO PUBLIC;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE "PUBLIC".P6(C1 INT) IS
+  2 BEGIN
+  3  INSERT INTO PL_DC1.T1 VALUES(C1 + 6);
+  4  COMMIT;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE "PUBLIC".PL_DC_PKG6 IS
+  2  FUNCTION PL_DC_PKG6_F1(C1 INT) RETURN INT;
+  3  FUNCTION PL_DC_PKG6_F2(C1 INT) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY "PUBLIC".PL_DC_PKG6 IS
+  2  FUNCTION PL_DC_PKG6_F1(C1 INT) RETURN INT IS
+  3  BEGIN
+  4   RETURN C1 * 10;
+  5  END;
+  6  FUNCTION PL_DC_PKG6_F2(C1 INT) RETURN INT IS
+  7  BEGIN
+  8   RETURN PL_DC_PKG6_F1(C1) + C1;
+  9  END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT F6(6);
+
+F6(6)       
+------------
+12          
+
+1 rows fetched.
+
+SQL> CALL P6(6);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+12          
+
+1 rows fetched.
+
+SQL> SELECT PL_DC_PKG6.PL_DC_PKG6_F1(6);
+
+PL_DC_PKG6.PL_DC_PKG6_F1(6)
+---------------------------
+60                         
+
+1 rows fetched.
+
+SQL> SELECT PL_DC_PKG6.PL_DC_PKG6_F2(6);
+
+PL_DC_PKG6.PL_DC_PKG6_F2(6)
+---------------------------
+66                         
+
+1 rows fetched.
+
+SQL> SELECT PL_DC_PKG6.PL_DC_PKG6_F3(6);--error
+
+CT-00828, [1:8]function PL_DC_PKG6.PL_DC_PKG6_F3 does not exist
+SQL> 
+SQL> CREATE OR REPLACE SYNONYM L_SYN_F6 FOR "PUBLIC".F6;
+
+Succeed.
+
+SQL> CREATE OR REPLACE SYNONYM L_SYN_P6 FOR "PUBLIC".P6;
+
+Succeed.
+
+SQL> CREATE OR REPLACE SYNONYM L_SYN_PKG6 FOR "PUBLIC".PL_DC_PKG6;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_F6 FOR "PUBLIC".F6;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_P6 FOR "PUBLIC".P6;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM P_SYN_PKG6 FOR "PUBLIC".PL_DC_PKG6;
+
+Succeed.
+
+SQL> SELECT L_SYN_F6(7);
+
+L_SYN_F6(7) 
+------------
+13          
+
+1 rows fetched.
+
+SQL> CALL L_SYN_P6(7);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+13          
+
+1 rows fetched.
+
+SQL> SELECT L_SYN_PKG6.PL_DC_PKG6_F1(7);
+
+L_SYN_PKG6.PL_DC_PKG6_F1(7)
+---------------------------
+70                         
+
+1 rows fetched.
+
+SQL> SELECT L_SYN_PKG6.PL_DC_PKG6_F2(7);
+
+L_SYN_PKG6.PL_DC_PKG6_F2(7)
+---------------------------
+77                         
+
+1 rows fetched.
+
+SQL> SELECT P_SYN_F6(8);
+
+P_SYN_F6(8) 
+------------
+14          
+
+1 rows fetched.
+
+SQL> CALL P_SYN_P6(8);
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT MAX(C1) FROM T1;
+
+MAX(C1)     
+------------
+14          
+
+1 rows fetched.
+
+SQL> SELECT P_SYN_PKG6.PL_DC_PKG6_F1(8);
+
+P_SYN_PKG6.PL_DC_PKG6_F1(8)
+---------------------------
+80                         
+
+1 rows fetched.
+
+SQL> SELECT P_SYN_PKG6.PL_DC_PKG6_F2(8);
+
+P_SYN_PKG6.PL_DC_PKG6_F2(8)
+---------------------------
+88                         
+
+1 rows fetched.
+
+SQL> 
+SQL> --7.报错
+SQL> SELECT F_ERR(1);
+
+CT-00828, [1:8]function PL_DC1.F_ERR does not exist
+SQL> CALL P_ERR(1);
+
+CT-00944, PL/SQL(PL_DC1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00828 procedure PL_DC1.P_ERR does not exist
+
+SQL> 
+SQL> --二.优先级
+SQL> --7.包内自调用
+SQL> ----用户自定义函数
+SQL> ----PUBLIC用户对象
+SQL> CREATE OR REPLACE FUNCTION F7(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  RETURN 7;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM F7 FOR F7;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION F7_1(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  RETURN 8;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PUBLIC SYNONYM F7_1 FOR F7_1;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION "PUBLIC".F7_2(C1 INT) RETURN INT IS
+  2 BEGIN
+  3  RETURN 9;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE PKG7 IS
+  2  FUNCTION F7(C1 INT) RETURN INT;
+  3  FUNCTION F8(C1 INT) RETURN INT;
+  4  FUNCTION F9(C1 INT) RETURN INT;
+  5  FUNCTION F10(C1 INT) RETURN INT;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY PKG7 IS
+  2  FUNCTION F7(C1 INT) RETURN INT IS
+  3  BEGIN
+  4   RETURN C1 * 10 + 7;
+  5  END;
+  6  FUNCTION F8(C1 INT) RETURN INT IS
+  7  BEGIN
+  8   RETURN F7(C1);
+  9  END;
+ 10  FUNCTION F9(C1 INT) RETURN INT IS
+ 11  BEGIN
+ 12   RETURN F7_1(C1);
+ 13  END;
+ 14  FUNCTION F10(C1 INT) RETURN INT IS
+ 15  BEGIN
+ 16   RETURN F7_2(C1);
+ 17  END;
+ 18 END;
+ 19 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT PKG7.F7(10);
+
+PKG7.F7(10) 
+------------
+107         
+
+1 rows fetched.
+
+SQL> SELECT PKG7.F8(10);
+
+PKG7.F8(10) 
+------------
+107         
+
+1 rows fetched.
+
+SQL> SELECT F7_1(10);
+
+F7_1(10)    
+------------
+8           
+
+1 rows fetched.
+
+SQL> SELECT PKG7.F9(10);
+
+PKG7.F9(10) 
+------------
+8           
+
+1 rows fetched.
+
+SQL> SELECT F7_2(10);
+
+F7_2(10)    
+------------
+9           
+
+1 rows fetched.
+
+SQL> SELECT PKG7.F10(10);
+
+PKG7.F10(10)
+------------
+9           
+
+1 rows fetched.
+
+SQL> 
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS PL_DC1 CASCADE;
+Succeed.
+
+
+
+

@@ -1,0 +1,78 @@
+
+
+SQL> create table cr_pool_t1(a int, b int);
+
+Succeed.
+
+SQL> create table cr_pool_t2(a int, b int);
+
+Succeed.
+
+SQL> create index cr_pool_idx_t2_1 on cr_pool_t2(b);
+
+Succeed.
+
+SQL> 
+SQL> insert into cr_pool_t1 values(1,1);
+
+1 rows affected.
+
+SQL> insert into cr_pool_t1 values(2,2);
+
+1 rows affected.
+
+SQL> insert into cr_pool_t1 values(3,3);
+
+1 rows affected.
+
+SQL> 
+SQL> insert into cr_pool_t2 values(1,1);
+
+1 rows affected.
+
+SQL> insert into cr_pool_t2 values(2,2);
+
+1 rows affected.
+
+SQL> insert into cr_pool_t2 values(3,3);
+
+1 rows affected.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select * from cr_pool_t1 where exists (select 1 from cr_pool_t2 where cr_pool_t1.b = cr_pool_t2.b);
+
+A            B           
+------------ ------------
+1            1           
+2            2           
+3            3           
+
+3 rows fetched.
+
+SQL> select * from cr_pool_t1 join cr_pool_t2 on cr_pool_t1.b = cr_pool_t2.b;
+
+A            B            A            B           
+------------ ------------ ------------ ------------
+1            1            1            1           
+2            2            2            2           
+3            3            3            3           
+
+3 rows fetched.
+
+SQL> 
+SQL> drop table cr_pool_t1;
+
+Succeed.
+
+SQL> drop table cr_pool_t2;
+
+Succeed.
+
+SQL> 
+
+

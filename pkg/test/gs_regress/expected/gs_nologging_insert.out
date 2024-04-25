@@ -1,0 +1,674 @@
+
+
+SQL> drop table if exists nolog_ins1; 
+
+Succeed.
+
+SQL> create table nolog_ins1 (id int, name varchar(20));
+
+Succeed.
+
+SQL> alter table nolog_ins1 enable nologging;
+
+Succeed.
+
+SQL> alter table nolog_ins1 enable nologging ;
+
+CT-00613, Invalid operation, the table already has the nologging attribute
+SQL> alter table nolog_ins1 disable nologging;
+
+Succeed.
+
+SQL> alter table nolog_ins1 enable nologging ;
+
+Succeed.
+
+SQL> insert into nolog_ins1 values(0, 'it is a long string');
+
+1 rows affected.
+
+SQL> insert into nolog_ins1 values(0, 'it is a long string');
+
+1 rows affected.
+
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> insert into nolog_ins1 values(0, 'it is a long string');
+
+1 rows affected.
+
+SQL> rollback to savepoint sp1;
+
+Succeed.
+
+SQL> select count(*) from nolog_ins1;
+
+COUNT(*)            
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> insert into nolog_ins1 values(0, 'it is a long string');
+
+1 rows affected.
+
+SQL> insert into nolog_ins1 values(0, 'it is a long string');
+
+1 rows affected.
+
+SQL> insert into nolog_ins1 values(0, 'it is a long string');
+
+1 rows affected.
+
+SQL> select count(*) from nolog_ins1;
+
+COUNT(*)            
+--------------------
+5                   
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into nolog_ins1 select * from nolog_ins1;
+
+5 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> truncate table nolog_ins1;
+
+Succeed.
+
+SQL> alter table nolog_ins1 disable nologging;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists nolog_ins1; 
+
+Succeed.
+
+SQL> create table nolog_ins1 (id int, name clob);
+
+Succeed.
+
+SQL> alter table nolog_ins1 enable nologging;
+
+Succeed.
+
+SQL> insert into nolog_ins1 values(1,lpad('clob',5500,'clob'));
+
+1 rows affected.
+
+SQL> insert into nolog_ins1 values(1,lpad('clob',5500,'clob'));
+
+1 rows affected.
+
+SQL> insert into nolog_ins1 values(1,lpad('clob',5500,'clob'));
+
+1 rows affected.
+
+SQL> insert into nolog_ins1 values(1,lpad('clob',5500,'clob'));
+
+1 rows affected.
+
+SQL> insert into nolog_ins1 values(1,lpad('clob',5500,'clob'));
+
+1 rows affected.
+
+SQL> alter table nolog_ins1 disable nologging;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists nolog_subpart1;
+
+Succeed.
+
+SQL> create table nolog_subpart1(id int, c_id int, c_d_id int, c_w_id int) partition by range(id) subpartition by range(c_d_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> alter table nolog_subpart1 enable partition p1  nologging force ;
+
+CT-00601, [1:65]Sql syntax error: expected end but force found
+SQL> alter table nolog_subpart1 enable partition p1  nologging undo;
+
+CT-00601, [1:63]Sql syntax error: expected end but undo found
+SQL> alter table nolog_subpart1 enable partition p1  nologging ;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 enable partition p2  nologging ;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 enable subpartition p11  nologging ;
+
+CT-00613, Invalid operation, the table subpartition already has the nologging attribute
+SQL> alter table nolog_subpart1 enable subpartition p12  nologging ;
+
+CT-00613, Invalid operation, the table subpartition already has the nologging attribute
+SQL> alter table nolog_subpart1 disable partition p1  nologging;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 disable partition p2  nologging;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 enable subpartition p11  nologging ;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 enable subpartition p12  nologging ;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists nolog_subpart1;
+
+Succeed.
+
+SQL> create table nolog_subpart1(id int, c_id int, c_d_id int, c_w_id int) partition by range(id) subpartition by range(c_d_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> alter table nolog_subpart1 enable partition p1  nologging ;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 enable partition p2  nologging ;
+
+Succeed.
+
+SQL> 
+SQL> insert into nolog_subpart1 values(10, 11, 12, 13);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(21, 22, 23, 24);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(31, 32, 61, 62);
+
+1 rows affected.
+
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> insert into nolog_subpart1 values(41, 42, 71, 72);
+
+1 rows affected.
+
+SQL> savepoint sp2;
+
+Succeed.
+
+SQL> insert into nolog_subpart1 values(51, 51, 11, 12);
+
+1 rows affected.
+
+SQL> rollback to savepoint sp1;
+
+Succeed.
+
+SQL> select * from nolog_subpart1 order by id;
+
+ID           C_ID         C_D_ID       C_W_ID      
+------------ ------------ ------------ ------------
+10           11           12           13          
+21           22           23           24          
+31           32           61           62          
+
+3 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists nolog_subpart1;
+
+Succeed.
+
+SQL> create table nolog_subpart1(id int, c_id int, c_d_id int, c_w_id int) partition by range(id) subpartition by range(c_d_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> alter table nolog_subpart1 enable partition p1  nologging ;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 enable partition p2  nologging ;
+
+Succeed.
+
+SQL> 
+SQL> insert into nolog_subpart1 values(10, 11, 12, 13);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(21, 22, 23, 24);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(31, 32, 61, 62);
+
+1 rows affected.
+
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> insert into nolog_subpart1 values(51, 51, 11, 12);
+
+1 rows affected.
+
+SQL> savepoint sp2;
+
+Succeed.
+
+SQL> insert into nolog_subpart1 values(41, 42, 71, 72);
+
+1 rows affected.
+
+SQL> rollback to savepoint sp1;
+
+Succeed.
+
+SQL> rollback to savepoint sp2;
+
+CT-00736, The savepoint 'SP2' does not exist.
+SQL> select * from nolog_subpart1 order by id;
+
+ID           C_ID         C_D_ID       C_W_ID      
+------------ ------------ ------------ ------------
+10           11           12           13          
+21           22           23           24          
+31           32           61           62          
+
+3 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> savepoint sp1;
+
+Succeed.
+
+SQL> insert into nolog_subpart1 values(31, 32, 61, 62);
+
+1 rows affected.
+
+SQL> rollback to savepoint sp1;
+
+Succeed.
+
+SQL> select * from nolog_subpart1 order by id;
+
+ID           C_ID         C_D_ID       C_W_ID      
+------------ ------------ ------------ ------------
+10           11           12           13          
+21           22           23           24          
+31           32           61           62          
+
+3 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into nolog_subpart1 values(50, 51, 73, 74);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(53, 54, 50, 51);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(55, 56, 71, 72);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(57, 58, 99, 102);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(61, 62, 21, 22);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(71, 72, 50, 51);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(81, 82, 83, 84);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(91, 92, 99, 103);
+
+1 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> select * from nolog_subpart1 order by id;
+
+ID           C_ID         C_D_ID       C_W_ID      
+------------ ------------ ------------ ------------
+10           11           12           13          
+21           22           23           24          
+31           32           61           62          
+
+3 rows fetched.
+
+SQL> 
+SQL> alter table nolog_subpart1 disable partition p2  nologging;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 enable partition p2  nologging ;
+
+Succeed.
+
+SQL> truncate table nolog_subpart1;
+
+Succeed.
+
+SQL> alter table nolog_subpart1 enable partition p2  nologging ;
+
+CT-00613, Invalid operation, the table partition already has the nologging attribute
+SQL> insert into nolog_subpart1 values(50, 51, 73, 74);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(53, 54, 50, 51);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(55, 56, 71, 72);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(57, 58, 99, 102);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(61, 62, 21, 22);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(71, 72, 50, 51);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(81, 82, 83, 84);
+
+1 rows affected.
+
+SQL> insert into nolog_subpart1 values(91, 92, 99, 103);
+
+1 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> select * from nolog_subpart1 order by id;
+
+ID           C_ID         C_D_ID       C_W_ID      
+------------ ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> alter system set AUTO_INHERIT_USER = ON;
+
+Succeed.
+
+SQL> drop table if exists test_nologging_000;
+
+Succeed.
+
+SQL> create table test_nologging_000(c_id int,c_d_id bigint NOT NULL,c_w_id tinyint unsigned NOT NULL,c_first varchar(16) NOT NULL,c_middle char(2),c_last varchar(16) NOT NULL,c_street_1 varchar(20) NOT NULL,c_street_2 varchar(20),c_city varchar(20) NOT NULL,c_state varchar(20) NOT NULL,c_zip char(9) NOT NULL,c_phone char(16) NOT NULL,c_since timestamp,c_credit char(2) NOT NULL,c_credit_lim numeric(12,2),c_discount numeric(4,4),c_balance numeric(12,2),c_ytd_payment real NOT NULL,c_payment_cnt number NOT NULL,c_delivery_cnt bool NOT NULL,c_end date NOT NULL,c_data1 varchar(8000),c_data2 varchar(8000),c_data3 varchar(8000),c_data4 varchar(8000),c_data5 varchar(8000),c_data6 varchar(8000),c_data7 varchar(6000),c_data8 varchar(4000),c_clob clob,c_blob blob);
+
+Succeed.
+
+SQL> CREATE or replace procedure procedure_test_nologging_000(startnum int,endall int) is
+  2 i INT :=1;
+  3 j varchar(10);
+  4 BEGIN
+  5   FOR i IN startnum..endall LOOP
+  6     select cast(i as varchar(10)) into j from sys_dummy;
+  7     insert into test_nologging_000 select i,i,i,'iscmRDs'||j,'OE','BARBar'||j,'bkilifcrRGF'||j,'pmbwovhSDGj'||j,'dyfrDa'||j,'uq','4801'||j,'940215'||j,sysdate,'GC',50000.0,0.4361328,-10.0,10.0,1,1,sysdate,lpad('QVBRfSCC3484942ZCSfjvCF',4000,'QVLDBURhlhfrc484ZCSfjF'),lpad('QVBUflcHOQNvmgfvdPFZSF',4000,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',4000,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',4000,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',4000,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',4000,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',4000,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',3000,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',1000,'QVLDfscHOQgfvmPFZDSF'),lpad('12314315487569809',5000,'1435764ABC7890abcdef') from sys_dummy;
+  8   END LOOP;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> call procedure_test_nologging_000(1,1000);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter tablespace undo_00 autoextend on next 1G;
+
+Succeed.
+
+SQL> drop table if exists test_nologging;
+
+Succeed.
+
+SQL> create table test_nologging(c_id int,c_d_id bigint,c_w_id tinyint unsigned,c_first varchar(16),c_middle char(2),c_last varchar(16),c_street_1 varchar(20),c_street_2 varchar(20),c_city varchar(20),c_state varchar(20),c_zip char(9),c_phone char(16),c_since timestamp,c_credit char(2),c_credit_lim numeric(12,2),c_discount numeric(4,4),c_balance numeric(12,2),c_ytd_payment real,c_payment_cnt NUMBER2,c_delivery_cnt bool,c_end date,c_data1 varchar(7744),c_data2 varchar(7744),c_data3 varchar(7744),c_data4 varchar(7744),c_data5 varchar(7744),c_data6 varchar(7744),c_data7 varchar(7744),c_data8 varchar(7744),c_clob clob,c_blob blob) partition by range(c_id) interval(10) (partition PART_1 values less than (21),partition PART_2 values less than (41),partition PART_3 values less than (61),partition PART_4 values less than (81)) format csf;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX test_nologging_indx_1 ON test_nologging(c_id,c_d_id);
+
+Succeed.
+
+SQL> CREATE INDEX test_nologging_indx_2 ON test_nologging(c_id) local;
+
+Succeed.
+
+SQL>
+SQL> alter table test_nologging enable partition part_2 nologging;
+
+Succeed.
+
+SQL> insert into test_nologging select * from test_nologging_000;
+
+1000 rows affected.
+
+SQL> delete from test_nologging;
+
+1000 rows affected.
+
+SQL> alter table test_nologging shrink space;
+
+Succeed.
+
+SQL> insert into test_nologging select * from test_nologging_000;
+
+1000 rows affected.
+
+SQL> savepoint aa;
+
+Succeed.
+
+SQL> delete from test_nologging where c_id < 500;
+
+499 rows affected.
+
+SQL> select count(*) from test_nologging where c_id > 500;
+
+COUNT(*)
+--------------------
+500
+
+1 rows fetched.
+
+SQL> update test_nologging set c_id = c_id - 500;
+
+501 rows affected.
+
+SQL> select count(*) from test_nologging where c_id > 500;
+
+COUNT(*)
+--------------------
+0
+
+1 rows fetched.
+
+SQL> rollback to savepoint aa;
+
+Succeed.
+
+SQL> select count(*) from test_nologging;
+
+COUNT(*)            
+--------------------
+1000                
+
+1 rows fetched.
+
+SQL>
+SQL> alter system set recyclebin = true;
+
+Succeed.
+
+SQL> alter table test_nologging truncate partition part_2;
+
+Succeed.
+
+SQL> flashback table test_nologging partition part_2 to before truncate;
+
+CT-00852, Recyclebin object SYS.TEST_NOLOGGING (sub)partition PART_2 does not exist
+SQL> select count(*) from test_nologging;
+
+COUNT(*)
+--------------------
+980                 
+
+1 rows fetched.
+
+SQL>
+SQL> truncate table test_nologging;
+
+Succeed.
+
+SQL> flashback table test_nologging to before truncate;
+
+CT-00829, Recyclebin object SYS.TEST_NOLOGGING does not exist
+SQL> select count(*) from test_nologging;
+
+COUNT(*)
+--------------------
+0
+
+1 rows fetched.
+
+SQL> alter system set recyclebin = false;
+
+Succeed.
+
+SQL>
+SQL> alter index test_nologging_indx_1 ON test_nologging rebuild;
+
+Succeed.
+
+SQL> drop table if exists test_nologging_000;
+
+Succeed.
+
+SQL> drop table if exists test_nologging;
+Succeed.
+
+SQL> 
+SQL> drop table if exists idx_coalesce_tab_001;
+
+Succeed.
+
+SQL> create table idx_coalesce_tab_001(f1 int not null,f2 bigint,f3 numeric,f4 char(180),f5 date) nologging;
+
+Succeed.
+
+SQL> CREATE or replace procedure proc_idx_coalesce_tab_001_1(startnum int,endall int) is
+  2 i INT :=1;
+  3 j varchar(10);
+  4 BEGIN
+  5  FOR i IN startnum..endall LOOP
+  6  insert into idx_coalesce_tab_001 values (i,1000,12389.12789,'aaaaaaaaaaaaaaaa',sysdate);
+  7  END LOOP;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> call proc_idx_coalesce_tab_001_1(1,30000);
+
+PL/SQL procedure successfully completed.
+
+SQL> create index idx_coalesce_tab_001_idx_001 on idx_coalesce_tab_001(f1,f4) nologging;
+Succeed.
+
+
+
+

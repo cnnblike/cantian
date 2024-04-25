@@ -1,0 +1,695 @@
+
+
+SQL> -- test export exclude option
+SQL> drop user if exists test;
+
+Succeed.
+
+SQL> create user test identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test;
+
+Succeed.
+
+SQL> conn test/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table t1(c int);
+
+Succeed.
+
+SQL> create table t2(c int);
+
+Succeed.
+
+SQL> create table st1(c int);
+
+Succeed.
+
+SQL> create table st2(c int);
+
+Succeed.
+
+SQL> exp users=test exclude=table"='T1'";
+Parsing export options ... 
+
+CT-00601, Sql syntax error: exclude ':' expected.
+Logical export failed.
+
+SQL> exp users=test exclude=table:T1;
+Parsing export options ... 
+
+CT-00601, Sql syntax error: exclude condition double quota expected.
+Logical export failed.
+
+SQL> exp users=test exclude=table:"='T1'",table:"='T2'";
+Parsing export options ... 
+
+CT-00601, Sql syntax error: duplicate exclude type.
+Logical export failed.
+
+SQL> exp users=test exclude=tab:"='T1'";
+Parsing export options ... 
+
+CT-00601, Sql syntax error: invalid exclude type expected.
+Logical export failed.
+
+SQL> exp users=test exclude=table:"='T1'",user:"='T2'";
+Parsing export options ... 
+
+CT-00601, Sql syntax error: invalid exclude type expected.
+Logical export failed.
+
+SQL> exp users=test exclude=table:"='T1'";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST
+-- FILE TYPE = TXT
+-- DUMP FILE = EXPDAT.DMP
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- EXCLUDE = "='T1'"
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST ...
+Exporting sequence of schema TEST ...
+Exporting profile of schema TEST ...
+Exporting type of schema TEST ...
+Exporting tables of schema TEST ...
+Reading table objects of TEST
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T2                                                               1         
+ST1                                                              2         
+ST2                                                              3         
+
+Exporting tables (scripts or data) of TEST
+exporting table TEST.T2 ...
+  exporting DDL of TEST.T2 ...
+  exporting data of TEST.T2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.T2 ...
+  exporting constraints on TEST.T2 ...
+
+exporting table TEST.ST1 ...
+  exporting DDL of TEST.ST1 ...
+  exporting data of TEST.ST1 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.ST1 ...
+  exporting constraints on TEST.ST1 ...
+
+exporting table TEST.ST2 ...
+  exporting DDL of TEST.ST2 ...
+  exporting data of TEST.ST2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.ST2 ...
+  exporting constraints on TEST.ST2 ...
+
+Exporting procedures/functions/triggers of schema TEST ...
+Exporting views of schema TEST ...
+Exporting synonyms of schema TEST ...
+Exporting package of schema TEST ...
+End of export schema TEST ...
+
+Logical export succeeded.
+
+SQL> exp users=test exclude=table:"like 'T%'";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST
+-- FILE TYPE = TXT
+-- DUMP FILE = EXPDAT.DMP
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- EXCLUDE = "like 'T%'"
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST ...
+Exporting sequence of schema TEST ...
+Exporting profile of schema TEST ...
+Exporting type of schema TEST ...
+Exporting tables of schema TEST ...
+Reading table objects of TEST
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+ST1                                                              1         
+ST2                                                              2         
+
+Exporting tables (scripts or data) of TEST
+exporting table TEST.ST1 ...
+  exporting DDL of TEST.ST1 ...
+  exporting data of TEST.ST1 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.ST1 ...
+  exporting constraints on TEST.ST1 ...
+
+exporting table TEST.ST2 ...
+  exporting DDL of TEST.ST2 ...
+  exporting data of TEST.ST2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.ST2 ...
+  exporting constraints on TEST.ST2 ...
+
+Exporting procedures/functions/triggers of schema TEST ...
+Exporting views of schema TEST ...
+Exporting synonyms of schema TEST ...
+Exporting package of schema TEST ...
+End of export schema TEST ...
+
+Logical export succeeded.
+
+SQL> exp users=test exclude=table:"in ('T1','ST1')";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST
+-- FILE TYPE = TXT
+-- DUMP FILE = EXPDAT.DMP
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- EXCLUDE = "in ('T1','ST1')"
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST ...
+Exporting sequence of schema TEST ...
+Exporting profile of schema TEST ...
+Exporting type of schema TEST ...
+Exporting tables of schema TEST ...
+Reading table objects of TEST
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T2                                                               1         
+ST2                                                              2         
+
+Exporting tables (scripts or data) of TEST
+exporting table TEST.T2 ...
+  exporting DDL of TEST.T2 ...
+  exporting data of TEST.T2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.T2 ...
+  exporting constraints on TEST.T2 ...
+
+exporting table TEST.ST2 ...
+  exporting DDL of TEST.ST2 ...
+  exporting data of TEST.ST2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.ST2 ...
+  exporting constraints on TEST.ST2 ...
+
+Exporting procedures/functions/triggers of schema TEST ...
+Exporting views of schema TEST ...
+Exporting synonyms of schema TEST ...
+Exporting package of schema TEST ...
+End of export schema TEST ...
+
+Logical export succeeded.
+
+SQL> exp users=test exclude=table:"in ('T1','ST1')" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST
+-- FILE TYPE = BIN
+-- DUMP FILE = EXPDAT.DMP
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- EXCLUDE = "in ('T1','ST1')"
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST ...
+Exporting sequence of schema TEST ...
+Exporting profile of schema TEST ...
+Exporting type of schema TEST ...
+Exporting tables of schema TEST ...
+Reading table objects of TEST
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T2                                                               1         
+ST2                                                              2         
+
+Exporting tables (scripts or data) of TEST
+exporting table TEST.T2 ...
+  exporting DDL of TEST.T2 ...
+  exporting data of TEST.T2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.T2 ...
+  exporting constraints on TEST.T2 ...
+
+exporting table TEST.ST2 ...
+  exporting DDL of TEST.ST2 ...
+  exporting data of TEST.ST2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST.ST2 ...
+  exporting constraints on TEST.ST2 ...
+
+Exporting procedures/functions/triggers of schema TEST ...
+Exporting views of schema TEST ...
+Exporting synonyms of schema TEST ...
+Exporting package of schema TEST ...
+End of export schema TEST ...
+
+Logical export succeeded.
+
+SQL> 
+SQL> -- table exclude triggers also where use 'exp users=xx'
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test1;
+
+Succeed.
+
+SQL> create user test1 identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test1;
+
+Succeed.
+
+SQL> conn test1/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table t1(c int);
+
+Succeed.
+
+SQL> create table t2(c int);
+
+Succeed.
+
+SQL> create or replace trigger trig_t1 
+  2 BEFORE INSERT ON t1
+  3 BEGIN
+  4         dbe_output.print_line('BEFORE t1');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> create or replace trigger trig_t2 
+  2 BEFORE INSERT ON t2
+  3 BEGIN
+  4         dbe_output.print_line('BEFORE t1');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> create or replace function trig_t1(a varchar)
+  2 RETURN varchar
+  3 AS
+  4 BEGIN
+  5    if (a = 'ab') then
+  6         return a;
+  7    else
+  8         return 'abc';
+  9    end if;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> exp users=test1 file="./data/test1.dmp" filetype=txt exclude=table:"='T1'";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST1
+-- FILE TYPE = TXT
+-- DUMP FILE = ./data/test1.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- EXCLUDE = "='T1'"
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST1 ...
+Exporting sequence of schema TEST1 ...
+Exporting profile of schema TEST1 ...
+Exporting type of schema TEST1 ...
+Exporting tables of schema TEST1 ...
+Reading table objects of TEST1
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T2                                                               1         
+
+Exporting tables (scripts or data) of TEST1
+exporting table TEST1.T2 ...
+  exporting DDL of TEST1.T2 ...
+  exporting data of TEST1.T2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST1.T2 ...
+  exporting constraints on TEST1.T2 ...
+
+Exporting procedures/functions/triggers of schema TEST1 ...
+  exporting TRIGGER TEST1.TRIG_T2
+  exporting FUNCTION TEST1.TRIG_T1
+Exporting views of schema TEST1 ...
+Exporting synonyms of schema TEST1 ...
+Exporting package of schema TEST1 ...
+End of export schema TEST1 ...
+
+Logical export succeeded.
+
+SQL> drop trigger trig_t1;
+
+Succeed.
+
+SQL> drop table t1;
+
+Succeed.
+
+SQL> drop function trig_t1;
+
+Succeed.
+
+SQL> imp users=test1 file="./data/test1.dmp" filetype=txt ;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST1
+-- DUMP FILE = ./data/test1.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from t1;
+
+CT-00843, [1:15]The table or view TEST1.T1 does not exist.
+SQL> select trig_t1('ab');
+
+TRIG_T1('AB')                                                   
+----------------------------------------------------------------
+ab                                                              
+
+1 rows fetched.
+
+SQL> 
+SQL> -- table exclude triggers also where use 'exp tables=%'
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists test2;
+
+Succeed.
+
+SQL> create user test2 identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test2;
+
+Succeed.
+
+SQL> conn test2/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table t1(c int);
+
+Succeed.
+
+SQL> create table t2(c int);
+
+Succeed.
+
+SQL> create or replace trigger trig_t1 
+  2 BEFORE INSERT ON t1
+  3 BEGIN
+  4         dbe_output.print_line('BEFORE t1');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> create or replace trigger trig_t2 
+  2 BEFORE INSERT ON t2
+  3 BEGIN
+  4         dbe_output.print_line('BEFORE t1');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> exp tables=% file="./data/test2.dmp" filetype=txt exclude=table:"='T1'";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = ALL_TABLES
+-- EXPORT OBJECTS = 
+-- FILE TYPE = TXT
+-- DUMP FILE = ./data/test2.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- EXCLUDE = "='T1'"
+-- INDEX_PARTITIONS = N
+
+Reading table objects of TEST2
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+T2                                                               1         
+
+Exporting tables (scripts or data) of TEST2
+exporting table TEST2.T2 ...
+  exporting DDL of TEST2.T2 ...
+  exporting data of TEST2.T2 ...
+    data exporting success, 0 rows are dumped.
+
+  exporting indexes on TEST2.T2 ...
+  exporting constraints on TEST2.T2 ...
+
+Exporting triggers of schema TEST2 ...
+  exporting TRIGGER TEST2.TRIG_T2
+Logical export succeeded.
+
+SQL> drop trigger trig_t1;
+
+Succeed.
+
+SQL> drop table t1;
+
+Succeed.
+
+SQL> drop trigger trig_t2;
+
+Succeed.
+
+SQL> drop table t2;
+
+Succeed.
+
+SQL> imp tables=% file="./data/test2.dmp" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = ALL_TABLES
+-- IMPORT OBJECTS = 
+-- DUMP FILE = ./data/test2.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> select * from t1;
+
+CT-00843, [1:15]The table or view TEST2.T1 does not exist.
+SQL> select * from t2;
+
+C           
+------------
+
+0 rows fetched.
+
+SQL> 
+
+

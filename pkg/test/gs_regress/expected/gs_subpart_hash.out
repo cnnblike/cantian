@@ -1,0 +1,2517 @@
+
+
+SQL> create tablespace  partrange_tablespace1 datafile 'tablespace_partrange_001' size 32M AUTOEXTEND on next 16M extent autoallocate;
+
+Succeed.
+
+SQL> create tablespace  partrange_tablespace2 datafile 'tablespace_partrange_002' size 32M AUTOEXTEND on next 16M extent autoallocate;
+
+Succeed.
+
+SQL> alter tablespace partrange_tablespace1 autopurge off;
+
+Succeed.
+
+SQL> alter tablespace partrange_tablespace2 autopurge off;
+
+Succeed.
+
+SQL> purge recyclebin;
+
+Succeed.
+
+SQL> drop user if exists nebula cascade;
+
+Succeed.
+
+SQL> create user nebula identified by Gauss_234;
+
+Succeed.
+
+SQL> drop table if exists NEBULA.STRG_RANGE_DML_MUL_TBL_000;
+
+Succeed.
+
+SQL> CREATE TABLE NEBULA.STRG_RANGE_DML_MUL_TBL_000(C_ID INT,
+  2 C_D_ID INT NOT NULL,
+  3 C_W_ID INT NOT NULL,
+  4 C_FIRST VARCHAR(64) NOT NULL,
+  5 C_MIDDLE CHAR(3),
+  6 C_LAST VARCHAR(64) NOT NULL,
+  7 C_STREET_1 VARCHAR(20) NOT NULL,
+  8 C_STREET_2 VARCHAR(20),
+  9 C_CITY VARCHAR(20) NOT NULL,
+ 10 C_STATE CHAR(2) NOT NULL,
+ 11 C_ZIP CHAR(9) NOT NULL,
+ 12 C_PHONE CHAR(16) NOT NULL,
+ 13 C_SINCE TIMESTAMP,
+ 14 C_CREDIT CHAR(2) NOT NULL,
+ 15 C_CREDIT_LIM NUMERIC(12,2),
+ 16 C_DISCOUNT NUMERIC(4,4),
+ 17 C_BALANCE NUMERIC(12,2),
+ 18 C_YTD_PAYMENT REAL NOT NULL,
+ 19 C_PAYMENT_CNT NUMBER NOT NULL,
+ 20 C_DELIVERY_CNT BOOL NOT NULL,
+ 21 C_END DATE NOT NULL,
+ 22 C_VCHAR VARCHAR(1000),
+ 23 C_DATA CLOB,
+ 24 C_TEXT BLOB);
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST;
+
+Succeed.
+
+SQL> CREATE TABLE NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST(id int, c char);
+
+Succeed.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(0, 'A');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(1, 'B');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(2, 'C');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(3, 'D');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(4, 'E');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(5, 'F');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(6, 'G');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(7, 'H');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(8, 'I');
+
+1 rows affected.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST VALUES(9, 'J');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> CREATE or replace procedure nebula_ddl_range_func_001(PART_NO int, SUBPART_NO int)  as 
+  2 i INT;
+  3 j INT;
+  4 c_part CHAR;
+  5 c_subpart CHAR;
+  6 BEGIN
+  7   FOR i IN 1..40 LOOP
+  8     j := part_no * 200 + subpart_no * 40 + i;
+  9     select c into c_part from NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST where id = part_no;
+ 10 	select c into c_subpart from NEBULA.STRG_RANGE_DML_MUL_TBL_ASSIST where id = subpart_no;
+ 11 	insert into NEBULA.STRG_RANGE_DML_MUL_TBL_000 values(j, j, j, c_part || j ||'Cabdg', c_subpart || 'OE', c_part || j ||'Bdbed','bki'|| part_no || subpart_no ||'fdger','pwo'|| j ||'vedef', c_part || j ||'Yed3f','uq',4801|| j ,940|| j ,to_char(sysdate,'yyyy-mm-dd hh24:mi:ss'),'GC',50000.0,0.4361328,-10.0,10.0,1,true,to_char(sysdate,'yyyy-mm-dd hh24:mi:ss'),'QVLDETANdfdffdfRB'|| j ,'QVLDETANRBRBUflnfufscHOQNGGSMjjjjgfvmgfvdfcmkgvNPFZCSYKXXYSCDSFQVLDETANRBRBUflnfufscHOQNGGSMjjjjgfvmgfvdfcmkgvNPFZCSYKXXYSCDSFQVLDETANRBRBUflnfufscHOQNGGSMjjjjgfvmgfvdfcmkgvNPFZCSYKXXYSCDSFQVLDETANRBRBUflnfufscHOQNGGSMjjjjgfvmgfvdfcmkgvNPFZCSYKXXYSCDSFQVLDETANRBRBUflnfufscHOQNGGSMjjjjgfvmgfvdfcmkgvNPFZCSYKXXYSCDSFQVLDETANRBRBUflnfufscHOQNGGSMjjjjgfvmgfvdfcmkgvNPFZCSYKXXYSCDSF'|| j ,'1234354587643123455213445656723123424554566776763221132454566768767433242323445453565654542323');
+ 12 	commit;
+ 13   END LOOP;
+ 14 END;
+ 15 /
+
+Succeed.
+
+SQL> 
+SQL> call nebula_ddl_range_func_001(0, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(0, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(0, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(0, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(0, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(1, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(1, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(1, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(1, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(1, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(2, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(2, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(2, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(2, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(2, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(3, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(3, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(3, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(3, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(3, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(4, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(4, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(4, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(4, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(4, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(5, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(5, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(5, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(5, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(5, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(6, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(6, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(6, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(6, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(6, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(7, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(7, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(7, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(7, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(8, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(8, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(8, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(8, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(8, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(9, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(9, 1);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(9, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(9, 3);
+
+PL/SQL procedure successfully completed.
+
+SQL> call nebula_ddl_range_func_001(9, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --hash-range
+SQL> drop table if exists NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> CREATE TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_ID INT,C_D_ID INT NOT NULL,C_W_ID INT NOT NULL,C_FIRST VARCHAR(64) NOT NULL,C_MIDDLE CHAR(3),C_LAST VARCHAR(64) NOT NULL,C_STREET_1 VARCHAR(20) NOT NULL,C_STREET_2 VARCHAR(20),C_CITY VARCHAR(64) NOT NULL,C_STATE CHAR(2) NOT NULL,C_ZIP CHAR(9) NOT NULL,C_PHONE CHAR(16) NOT NULL,C_SINCE TIMESTAMP,C_CREDIT CHAR(2) NOT NULL,C_CREDIT_LIM NUMERIC(12,2),C_DISCOUNT NUMERIC(4,4),C_BALANCE NUMERIC(12,2),C_YTD_PAYMENT REAL NOT NULL,C_PAYMENT_CNT NUMBER NOT NULL,C_DELIVERY_CNT BOOLEAN NOT NULL,C_END DATE NOT NULL,C_VCHAR VARCHAR(1000),C_DATA CLOB,C_TEXT BLOB ) PARTITION BY HASH(C_FIRST, C_LAST) SUBPARTITION BY RANGE(C_D_ID, C_MIDDLE) (
+  2 PARTITION PART_1 tablespace partrange_tablespace1
+  3 (
+  4  SUBPARTITION PART_11 VALUES LESS THAN(41, 'B'),
+  5  SUBPARTITION PART_12 VALUES LESS THAN(81, 'C'),
+  6  SUBPARTITION PART_13 VALUES LESS THAN(121, 'D'),
+  7  SUBPARTITION PART_14 VALUES LESS THAN(161, 'E'),
+  8  SUBPARTITION PART_15 VALUES LESS THAN(MAXVALUE, MAXVALUE)
+  9 ),
+ 10 PARTITION PART_2 tablespace partrange_tablespace1
+ 11 (
+ 12  SUBPARTITION PART_21 VALUES LESS THAN(241, 'B'),
+ 13  SUBPARTITION PART_22 VALUES LESS THAN(281, 'C'),
+ 14  SUBPARTITION PART_23 VALUES LESS THAN(321, 'D'),
+ 15  SUBPARTITION PART_24 VALUES LESS THAN(361, 'E'),
+ 16  SUBPARTITION PART_25 VALUES LESS THAN(MAXVALUE, MAXVALUE)
+ 17 ),
+ 18 PARTITION PART_3 tablespace partrange_tablespace1
+ 19 (
+ 20  SUBPARTITION PART_31 VALUES LESS THAN(441, 'B'),
+ 21  SUBPARTITION PART_32 VALUES LESS THAN(481, 'C'),
+ 22  SUBPARTITION PART_33 VALUES LESS THAN(521, 'D'),
+ 23  SUBPARTITION PART_34 VALUES LESS THAN(561, 'E'),
+ 24  SUBPARTITION PART_35 VALUES LESS THAN(MAXVALUE, MAXVALUE)
+ 25 ),
+ 26 PARTITION PART_4 tablespace partrange_tablespace1
+ 27 (
+ 28  SUBPARTITION PART_41 VALUES LESS THAN(641, 'B'),
+ 29  SUBPARTITION PART_42 VALUES LESS THAN(681, 'C'),
+ 30  SUBPARTITION PART_43 VALUES LESS THAN(721, 'D'),
+ 31  SUBPARTITION PART_44 VALUES LESS THAN(761, 'E'),
+ 32  SUBPARTITION PART_45 VALUES LESS THAN(MAXVALUE, MAXVALUE)
+ 33 ),
+ 34 PARTITION PART_5 tablespace partrange_tablespace1
+ 35 (
+ 36  SUBPARTITION PART_51 VALUES LESS THAN(841, 'B'),
+ 37  SUBPARTITION PART_52 VALUES LESS THAN(881, 'C'),
+ 38  SUBPARTITION PART_53 VALUES LESS THAN(921, 'D'),
+ 39  SUBPARTITION PART_54 VALUES LESS THAN(961, 'E'),
+ 40  SUBPARTITION PART_55 VALUES LESS THAN(MAXVALUE, MAXVALUE)
+ 41 ),
+ 42 PARTITION PART_6 tablespace partrange_tablespace1
+ 43 (
+ 44  SUBPARTITION PART_61 VALUES LESS THAN(1041, 'B'),
+ 45  SUBPARTITION PART_62 VALUES LESS THAN(1081, 'C'),
+ 46  SUBPARTITION PART_63 VALUES LESS THAN(1121, 'D'),
+ 47  SUBPARTITION PART_64 VALUES LESS THAN(1161, 'E'),
+ 48  SUBPARTITION PART_65 VALUES LESS THAN(MAXVALUE, MAXVALUE)
+ 49 ),
+ 50 PARTITION PART_7 tablespace partrange_tablespace1
+ 51 (
+ 52  SUBPARTITION PART_71 VALUES LESS THAN(1241, 'B'),
+ 53  SUBPARTITION PART_72 VALUES LESS THAN(1281, 'C'),
+ 54  SUBPARTITION PART_73 VALUES LESS THAN(1321, 'D'),
+ 55  SUBPARTITION PART_74 VALUES LESS THAN(1361, 'E'),
+ 56  SUBPARTITION PART_75 VALUES LESS THAN(MAXVALUE, MAXVALUE)
+ 57 ),
+ 58 PARTITION PART_8 tablespace partrange_tablespace1);
+
+Succeed.
+
+SQL> CREATE  UNIQUE INDEX  NEBULA.STRG_RANGE_DDL_MUL_IDX_001_1 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_ID,C_CITY,C_FIRST,C_LAST)   tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_2 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_CITY,C_LAST,C_STREET_2)  tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_5 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_STREET_1,C_W_ID)  LOCAL tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DDL_MUL_TBL_001 SELECT * FROM NEBULA.STRG_RANGE_DML_MUL_TBL_000;
+
+2000 rows affected.
+
+SQL> CREATE UNIQUE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_3 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_STREET_2,C_D_ID)  parallel 6  tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_4 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_CITY,C_FIRST) parallel 6  LOCAL tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> delete from NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+2000 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> --测试基础DML操作
+SQL> savepoint aa;
+
+Succeed.
+
+SQL> delete from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 where mod(c_id, 2) = 1;
+
+1000 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_w_id = c_w_id + 100 where c_id < 41;
+
+20 rows affected.
+
+SQL> select c_w_id from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 where c_id < 41;
+
+C_W_ID      
+------------
+112
+116
+120
+126
+128
+136
+130
+106
+114
+124
+134
+102
+108
+122
+138
+104
+110
+118
+132
+140
+
+20 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_d_id = c_d_id - 80 where c_d_id >= 41 and c_d_id < 81;
+
+20 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+8                   
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_12);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_street_1 = 'bki0fdger', c_d_id = c_d_id - 300 where c_id >= 201 and c_id < 241;
+
+20 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+11                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_21);
+
+COUNT(*)            
+--------------------
+16                  
+
+1 rows fetched.
+
+SQL> rollback to savepoint aa;
+
+Succeed.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+8                   
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_12);
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_21);
+
+COUNT(*)            
+--------------------
+34                  
+
+1 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop subpartition part_71;
+
+Succeed.
+
+SQL> flashback table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition part_71 to before drop;
+
+CT-01130, Flashback table (sub)partition to timestamp(scn or before drop) not supported
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify partition part_7 add subpartition part_71 VALUES LESS THAN(1241, 'B');
+
+CT-01103, Invalid (sub)partition key, partition bound must collate higher than that of the last partition.
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_1 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_2 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_3 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_4 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_5 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 coalesce partition;
+
+Succeed.
+
+SQL> 
+SQL> --测试两种添加分区的方案，一种指定子分区定义;一种不指定，按照默认子分区
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 ADD PARTITION PART_8 tablespace partrange_tablespace1;
+
+Succeed.
+
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 coalesce partition;
+
+Succeed.
+
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 ADD PARTITION P11 tablespace partrange_tablespace1
+  2 (
+  3  SUBPARTITION P11_1 VALUES LESS THAN(1841, 'B') tablespace partrange_tablespace1,
+  4  SUBPARTITION P11_2 VALUES LESS THAN(1881, 'C') tablespace partrange_tablespace2,
+  5  SUBPARTITION P11_3 VALUES LESS THAN(1921, 'D') tablespace partrange_tablespace1,
+  6  SUBPARTITION P11_4 VALUES LESS THAN(1961, 'E') tablespace partrange_tablespace2,
+  7  SUBPARTITION P11_5 VALUES LESS THAN(MAXVALUE, MAXVALUE) tablespace partrange_tablespace1
+  8 );
+
+Succeed.
+
+SQL> SELECT count(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 PARTITION(P11);
+
+COUNT(*)            
+--------------------
+242                 
+
+1 rows fetched.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --测试truncate以及闪回操作
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001;
+
+COUNT(*)            
+--------------------
+1870                
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 truncate subpartition part_62;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+254                 
+
+1 rows fetched.
+
+SQL> flashback table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition part_62 to before truncate;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 truncate partition part_6;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> flashback table nebula.strg_range_ddl_mul_tbl_001 partition part_6 to before truncate;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> flashback table nebula.strg_range_ddl_mul_tbl_001 partition part_6 to before truncate;
+
+CT-00852, Recyclebin object NEBULA.STRG_RANGE_DDL_MUL_TBL_001 (sub)partition PART_6 does not exist
+SQL> purge recyclebin;
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --测试分区的split
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 split subpartition part_53 at(900, 'D') into (subpartition part_531 tablespace partrange_tablespace1, subpartition part_532 tablespace partrange_tablespace2);
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_531);
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_532);
+
+COUNT(*)            
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> select name, dbe_diagnose.dba_segsize(0, entry) from sys_sub_table_parts where name = 'PART_531';
+
+NAME                                                             DBE_DIAGNOSE.DBA_SEGSIZE(0, ENTRY)
+---------------------------------------------------------------- ----------------------------------
+PART_531                                                         65536                             
+
+1 rows fetched.
+
+SQL> select name, dbe_diagnose.dba_segsize(0, entry) from sys_sub_table_parts where name = 'PART_532';
+
+NAME                                                             DBE_DIAGNOSE.DBA_SEGSIZE(0, ENTRY)
+---------------------------------------------------------------- ----------------------------------
+PART_532                                                         65536                             
+
+1 rows fetched.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_1 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_2 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_3 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_4 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_5 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> delete from nebula.strg_range_ddl_mul_tbl_001 where c_id >= 881 and c_id < 921;
+
+38 rows affected.
+
+SQL> insert into nebula.strg_range_ddl_mul_tbl_001 SELECT * FROM NEBULA.STRG_RANGE_DML_MUL_TBL_000 where c_id = 881;
+
+1 rows affected.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_531);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_532);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add column_add1 varchar(40);
+
+Succeed.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set column_add1=C_FIRST;
+
+1833 rows affected.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                88                  
+1                                        A                                                                A                                                                A                                                                83                  
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                90                  
+3                                        B                                                                B                                                                B                                                                84                  
+4                                        C                                                                C                                                                C                                                                91                  
+5                                        C                                                                C                                                                C                                                                92                  
+6                                        D                                                                D                                                                D                                                                89                  
+7                                        D                                                                D                                                                D                                                                88                  
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                76                  
+9                                        E                                                                E                                                                E                                                                75                  
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                87                  
+11                                       F                                                                F                                                                F                                                                89                  
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                96                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+28 rows fetched.
+
+SQL> 
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                88                  
+1                                        A                                                                A                                                                A                                                                83                  
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                90                  
+3                                        B                                                                B                                                                B                                                                84                  
+4                                        C                                                                C                                                                C                                                                91                  
+5                                        C                                                                C                                                                C                                                                92                  
+6                                        D                                                                D                                                                D                                                                89                  
+7                                        D                                                                D                                                                D                                                                88                  
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                76                  
+9                                        E                                                                E                                                                E                                                                75                  
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                87                  
+11                                       F                                                                F                                                                F                                                                89                  
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                96                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+28 rows fetched.
+
+SQL> --add constraint-非分区键部分索引;
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add constraint PK_RANGE_DDL_MUL_TBL_001 primary key(C_W_ID);
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add constraint UK_RANGE_DDL_MUL_TBL_001 unique(C_ID,C_W_ID);
+
+Succeed.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                88                  
+1                                        A                                                                A                                                                A                                                                83                  
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                90                  
+3                                        B                                                                B                                                                B                                                                84                  
+4                                        C                                                                C                                                                C                                                                91                  
+5                                        C                                                                C                                                                C                                                                92                  
+6                                        D                                                                D                                                                D                                                                89                  
+7                                        D                                                                D                                                                D                                                                88                  
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                76                  
+9                                        E                                                                E                                                                E                                                                75                  
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                87                  
+11                                       F                                                                F                                                                F                                                                89                  
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                96                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+28 rows fetched.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify C_STREET_1 varchar(100);
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify C_W_ID float;
+
+CT-00805, Column C_W_ID is not empty in table STRG_RANGE_DDL_MUL_TBL_001
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_LAST;
+
+CT-01106, Can not drop (sub)partitioning column
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_STREET_2;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_D_ID;
+
+CT-01106, Can not drop (sub)partitioning column
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_STREET_1;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_PHONE;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column column_add1;
+
+Succeed.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                88                  
+1                                        A                                                                A                                                                A                                                                83                  
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                90                  
+3                                        B                                                                B                                                                B                                                                84                  
+4                                        C                                                                C                                                                C                                                                91                  
+5                                        C                                                                C                                                                C                                                                92                  
+6                                        D                                                                D                                                                D                                                                89                  
+7                                        D                                                                D                                                                D                                                                88                  
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                76                  
+9                                        E                                                                E                                                                E                                                                75                  
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                87                  
+11                                       F                                                                F                                                                F                                                                89                  
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                96                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+28 rows fetched.
+
+SQL> 
+SQL> --truncate不连续多分区;
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 TRUNCATE PARTITION PART_1 reuse storage;
+
+Succeed.
+
+SQL> truncate table NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> DELETE FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 WHERE (C_ID - 5*(FLOOR(C_ID/5)))=3;
+
+0 rows affected.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop constraint UK_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop constraint PK_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> drop table NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> purge recyclebin;
+
+Succeed.
+
+SQL> 
+SQL> --hash-list
+SQL> drop table if exists NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> CREATE TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_ID INT,C_D_ID INT NOT NULL,C_W_ID INT NOT NULL,C_FIRST VARCHAR(64) NOT NULL,C_MIDDLE CHAR(3),C_LAST VARCHAR(64) NOT NULL,C_STREET_1 VARCHAR(20) NOT NULL,C_STREET_2 VARCHAR(20),C_CITY VARCHAR(64) NOT NULL,C_STATE CHAR(2) NOT NULL,C_ZIP CHAR(9) NOT NULL,C_PHONE CHAR(16) NOT NULL,C_SINCE TIMESTAMP,C_CREDIT CHAR(2) NOT NULL,C_CREDIT_LIM NUMERIC(12,2),C_DISCOUNT NUMERIC(4,4),C_BALANCE NUMERIC(12,2),C_YTD_PAYMENT REAL NOT NULL,C_PAYMENT_CNT NUMBER NOT NULL,C_DELIVERY_CNT BOOLEAN NOT NULL,C_END DATE NOT NULL,C_VCHAR VARCHAR(1000),C_DATA CLOB,C_TEXT BLOB ) PARTITION BY hash(c_first, c_last) SUBPARTITION BY LIST(c_street_1) (
+  2 PARTITION PART_1 tablespace partrange_tablespace1
+  3 (
+  4  SUBPARTITION PART_11 VALUES('bki00fdger'),
+  5  SUBPARTITION PART_12 VALUES('bki01fdger'),
+  6  SUBPARTITION PART_13 VALUES('bki02fdger'),
+  7  SUBPARTITION PART_14 VALUES('bki03fdger'),
+  8  SUBPARTITION PART_15 VALUES(DEFAULT)
+  9 ),
+ 10 PARTITION PART_2 tablespace partrange_tablespace1
+ 11 (
+ 12  SUBPARTITION PART_21 VALUES('bki10fdger'),
+ 13  SUBPARTITION PART_22 VALUES('bki11fdger'),
+ 14  SUBPARTITION PART_23 VALUES('bki12fdger'),
+ 15  SUBPARTITION PART_24 VALUES('bki13fdger'),
+ 16  SUBPARTITION PART_25 VALUES(DEFAULT)
+ 17 ),
+ 18 PARTITION PART_3 tablespace partrange_tablespace1
+ 19 (
+ 20  SUBPARTITION PART_31 VALUES('bki20fdger'),
+ 21  SUBPARTITION PART_32 VALUES('bki21fdger'),
+ 22  SUBPARTITION PART_33 VALUES('bki22fdger'),
+ 23  SUBPARTITION PART_34 VALUES('bki23fdger'),
+ 24  SUBPARTITION PART_35 VALUES(DEFAULT)
+ 25 ),
+ 26 PARTITION PART_4 tablespace partrange_tablespace1
+ 27 (
+ 28  SUBPARTITION PART_41 VALUES('bki30fdger'),
+ 29  SUBPARTITION PART_42 VALUES('bki31fdger'),
+ 30  SUBPARTITION PART_43 VALUES('bki32fdger'),
+ 31  SUBPARTITION PART_44 VALUES('bki33fdger'),
+ 32  SUBPARTITION PART_45 VALUES(DEFAULT)
+ 33 ),
+ 34 PARTITION PART_5 tablespace partrange_tablespace1
+ 35 (
+ 36  SUBPARTITION PART_51 VALUES('bki40fdger'),
+ 37  SUBPARTITION PART_52 VALUES('bki41fdger'),
+ 38  SUBPARTITION PART_53 VALUES('bki42fdger'),
+ 39  SUBPARTITION PART_54 VALUES('bki43fdger'),
+ 40  SUBPARTITION PART_55 VALUES(DEFAULT)
+ 41 ),
+ 42 PARTITION PART_6 tablespace partrange_tablespace1
+ 43 (
+ 44  SUBPARTITION PART_61 VALUES('bki50fdger'),
+ 45  SUBPARTITION PART_62 VALUES('bki51fdger'),
+ 46  SUBPARTITION PART_63 VALUES('bki52fdger'),
+ 47  SUBPARTITION PART_64 VALUES('bki53fdger'),
+ 48  SUBPARTITION PART_65 VALUES(DEFAULT)
+ 49 ),
+ 50 PARTITION PART_7 tablespace partrange_tablespace1
+ 51 (
+ 52  SUBPARTITION PART_71 VALUES('bki60fdger'),
+ 53  SUBPARTITION PART_72 VALUES('bki61fdger'),
+ 54  SUBPARTITION PART_73 VALUES('bki62fdger'),
+ 55  SUBPARTITION PART_74 VALUES('bki63fdger'),
+ 56  SUBPARTITION PART_75 VALUES(DEFAULT)
+ 57 ),
+ 58 PARTITION PART_8 tablespace partrange_tablespace1
+ 59 (
+ 60  SUBPARTITION PART_81 VALUES('bki70fdger'),
+ 61  SUBPARTITION PART_82 VALUES('bki71fdger'),
+ 62  SUBPARTITION PART_83 VALUES('bki72fdger'),
+ 63  SUBPARTITION PART_84 VALUES('bki73fdger'),
+ 64  SUBPARTITION PART_85 VALUES(DEFAULT)
+ 65 ));
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_2 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_CITY,C_LAST,C_STREET_2)  tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_3 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_STREET_2,C_D_ID)  tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_5 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_STREET_1,C_W_ID)  LOCAL tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DDL_MUL_TBL_001 SELECT * FROM NEBULA.STRG_RANGE_DML_MUL_TBL_000;
+
+2000 rows affected.
+
+SQL> CREATE  UNIQUE INDEX  NEBULA.STRG_RANGE_DDL_MUL_IDX_001_1 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_ID,C_CITY,C_FIRST,C_LAST) parallel 6 tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_4 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_CITY,C_FIRST) parallel 6 LOCAL tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> delete from NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+2000 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> 
+SQL> --测试基础DML操作
+SQL> savepoint aa;
+
+Succeed.
+
+SQL> delete from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 where mod(c_id, 2) = 1;
+
+1000 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_w_id = c_w_id + 100 where c_id < 41;
+
+20 rows affected.
+
+SQL> select c_w_id from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 where c_id < 41;
+
+C_W_ID      
+------------
+112
+116
+120
+126
+128
+136
+130
+106
+114
+124
+134
+102
+108
+122
+138
+104
+110
+118
+132
+140
+
+20 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_d_id = c_d_id - 80 where c_d_id >= 41 and c_d_id < 81;
+
+20 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_12);
+
+COUNT(*)            
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_street_1 = 'bki0fdger', c_d_id = c_d_id - 300 where c_id >= 201 and c_id < 241;
+
+20 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_21);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> rollback to savepoint aa;
+
+Succeed.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+8                   
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_12);
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_21);
+
+COUNT(*)            
+--------------------
+5                   
+
+1 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop subpartition part_71;
+
+Succeed.
+
+SQL> flashback table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition part_71 to before drop;
+
+CT-01130, Flashback table (sub)partition to timestamp(scn or before drop) not supported
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify partition part_7 add subpartition part_71 VALUES('bki60fdger');
+
+CT-01113, The 1st partition key already exists in (sub)partition PART_75
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_1 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_2 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_3 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_4 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_5 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 coalesce partition;
+
+Succeed.
+
+SQL> 
+SQL> --测试两种添加分区的方案，一种指定子分区定义;一种不指定，按照默认子分区
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 ADD PARTITION PART_8 tablespace partrange_tablespace1;
+
+Succeed.
+
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 coalesce partition;
+
+Succeed.
+
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 ADD PARTITION PART_8 tablespace partrange_tablespace1
+  2 (
+  3  SUBPARTITION PART_81 VALUES('bki70fdger'),
+  4  SUBPARTITION PART_82 VALUES('bki71fdger'),
+  5  SUBPARTITION PART_83 VALUES('bki72fdger'),
+  6  SUBPARTITION PART_84 VALUES('bki73fdger'),
+  7  SUBPARTITION PART_85 VALUES(DEFAULT)
+  8 );
+
+Succeed.
+
+SQL> SELECT count(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 PARTITION(PART_8);
+
+COUNT(*)            
+--------------------
+242                 
+
+1 rows fetched.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --测试truncate以及闪回操作
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001;
+
+COUNT(*)            
+--------------------
+1997                
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 truncate subpartition part_62;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+254                 
+
+1 rows fetched.
+
+SQL> flashback table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition part_62 to before truncate;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 truncate partition part_6;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> flashback table nebula.strg_range_ddl_mul_tbl_001 partition part_6 to before truncate;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> flashback table nebula.strg_range_ddl_mul_tbl_001 partition part_6 to before truncate;
+
+CT-00852, Recyclebin object NEBULA.STRG_RANGE_DDL_MUL_TBL_001 (sub)partition PART_6 does not exist
+SQL> purge recyclebin;
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --测试分区的split
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 split subpartition part_53 at(900, 'D') into (subpartition part_531 tablespace partrange_tablespace1, subpartition part_532 tablespace partrange_tablespace2);
+
+CT-00130, Operation split subpartition is not supported on non-range subpartitioned table
+SQL> 
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add column_add1 varchar(40);
+
+Succeed.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set column_add1=C_FIRST;
+
+1997 rows affected.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                99                  
+1                                        A                                                                A                                                                A                                                                100                 
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                99                  
+3                                        B                                                                B                                                                B                                                                100                 
+4                                        B                                                                B                                                                B                                                                1                   
+4                                        C                                                                C                                                                C                                                                99                  
+5                                        C                                                                C                                                                C                                                                100                 
+6                                        C                                                                C                                                                C                                                                1                   
+6                                        D                                                                D                                                                D                                                                99                  
+7                                        D                                                                D                                                                D                                                                100                 
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                99                  
+9                                        E                                                                E                                                                E                                                                100                 
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                99                  
+11                                       F                                                                F                                                                F                                                                100                 
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                96                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+30 rows fetched.
+
+SQL> 
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                99                  
+1                                        A                                                                A                                                                A                                                                100                 
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                99                  
+3                                        B                                                                B                                                                B                                                                100                 
+4                                        B                                                                B                                                                B                                                                1                   
+4                                        C                                                                C                                                                C                                                                99                  
+5                                        C                                                                C                                                                C                                                                100                 
+6                                        C                                                                C                                                                C                                                                1                   
+6                                        D                                                                D                                                                D                                                                99                  
+7                                        D                                                                D                                                                D                                                                100                 
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                99                  
+9                                        E                                                                E                                                                E                                                                100                 
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                99                  
+11                                       F                                                                F                                                                F                                                                100                 
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                96                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+30 rows fetched.
+
+SQL> --add constraint-非分区键部分索引;
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add constraint PK_RANGE_DDL_MUL_TBL_001 primary key(C_W_ID);
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add constraint UK_RANGE_DDL_MUL_TBL_001 unique(C_ID,C_W_ID);
+
+Succeed.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                99                  
+1                                        A                                                                A                                                                A                                                                100                 
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                99                  
+3                                        B                                                                B                                                                B                                                                100                 
+4                                        B                                                                B                                                                B                                                                1                   
+4                                        C                                                                C                                                                C                                                                99                  
+5                                        C                                                                C                                                                C                                                                100                 
+6                                        C                                                                C                                                                C                                                                1                   
+6                                        D                                                                D                                                                D                                                                99                  
+7                                        D                                                                D                                                                D                                                                100                 
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                99                  
+9                                        E                                                                E                                                                E                                                                100                 
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                99                  
+11                                       F                                                                F                                                                F                                                                100                 
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                96                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+30 rows fetched.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify C_STREET_1 varchar(100);
+
+CT-01105, The column used as the (sub)partition key can not be modified.
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify C_W_ID float;
+
+CT-00805, Column C_W_ID is not empty in table STRG_RANGE_DDL_MUL_TBL_001
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_LAST;
+
+CT-01106, Can not drop (sub)partitioning column
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_STREET_2;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_D_ID;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_STREET_1;
+
+CT-01106, Can not drop (sub)partitioning column
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_PHONE;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column column_add1;
+
+Succeed.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                99                  
+1                                        A                                                                A                                                                A                                                                100                 
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                99                  
+3                                        B                                                                B                                                                B                                                                100                 
+4                                        B                                                                B                                                                B                                                                1                   
+4                                        C                                                                C                                                                C                                                                99                  
+5                                        C                                                                C                                                                C                                                                100                 
+6                                        C                                                                C                                                                C                                                                1                   
+6                                        D                                                                D                                                                D                                                                99                  
+7                                        D                                                                D                                                                D                                                                100                 
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                99                  
+9                                        E                                                                E                                                                E                                                                100                 
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                99                  
+11                                       F                                                                F                                                                F                                                                100                 
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                96                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+30 rows fetched.
+
+SQL> 
+SQL> --truncate不连续多分区;
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 TRUNCATE PARTITION PART_1 reuse storage;
+
+Succeed.
+
+SQL> truncate table NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> DELETE FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 WHERE (C_ID - 5*(FLOOR(C_ID/5)))=3;
+
+0 rows affected.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop constraint UK_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop constraint PK_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> drop table NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> purge recyclebin;
+
+Succeed.
+
+SQL> 
+SQL> --hash-hash
+SQL> drop table if exists NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> CREATE TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_ID INT,C_D_ID INT NOT NULL,C_W_ID INT NOT NULL,C_FIRST VARCHAR(64) NOT NULL,C_MIDDLE CHAR(3),C_LAST VARCHAR(64) NOT NULL,C_STREET_1 VARCHAR(20) NOT NULL,C_STREET_2 VARCHAR(20),C_CITY VARCHAR(64) NOT NULL,C_STATE CHAR(2) NOT NULL,C_ZIP CHAR(9) NOT NULL,C_PHONE CHAR(16) NOT NULL,C_SINCE TIMESTAMP,C_CREDIT CHAR(2) NOT NULL,C_CREDIT_LIM NUMERIC(12,2),C_DISCOUNT NUMERIC(4,4),C_BALANCE NUMERIC(12,2),C_YTD_PAYMENT REAL NOT NULL,C_PAYMENT_CNT NUMBER NOT NULL,C_DELIVERY_CNT BOOLEAN NOT NULL,C_END DATE NOT NULL,C_VCHAR VARCHAR(1000),C_DATA CLOB,C_TEXT BLOB ) PARTITION BY hash(c_first, c_last) SUBPARTITION BY hash(c_street_1) (
+  2 PARTITION PART_1 tablespace partrange_tablespace1
+  3 (
+  4  SUBPARTITION PART_11,
+  5  SUBPARTITION PART_12,
+  6  SUBPARTITION PART_13,
+  7  SUBPARTITION PART_14
+  8 ),
+  9 PARTITION PART_2 tablespace partrange_tablespace1
+ 10 (
+ 11  SUBPARTITION PART_21,
+ 12  SUBPARTITION PART_22,
+ 13  SUBPARTITION PART_23,
+ 14  SUBPARTITION PART_24
+ 15 ),
+ 16 PARTITION PART_3 tablespace partrange_tablespace1
+ 17 (
+ 18  SUBPARTITION PART_31,
+ 19  SUBPARTITION PART_32,
+ 20  SUBPARTITION PART_33,
+ 21  SUBPARTITION PART_34
+ 22 ),
+ 23 PARTITION PART_4 tablespace partrange_tablespace1
+ 24 (
+ 25  SUBPARTITION PART_41,
+ 26  SUBPARTITION PART_42,
+ 27  SUBPARTITION PART_43,
+ 28  SUBPARTITION PART_44
+ 29 ),
+ 30 PARTITION PART_5 tablespace partrange_tablespace1
+ 31 (
+ 32  SUBPARTITION PART_51,
+ 33  SUBPARTITION PART_52,
+ 34  SUBPARTITION PART_53,
+ 35  SUBPARTITION PART_54
+ 36 ),
+ 37 PARTITION PART_6 tablespace partrange_tablespace1
+ 38 (
+ 39  SUBPARTITION PART_61,
+ 40  SUBPARTITION PART_62,
+ 41  SUBPARTITION PART_63,
+ 42  SUBPARTITION PART_64
+ 43 ),
+ 44 PARTITION PART_7 tablespace partrange_tablespace1
+ 45 (
+ 46  SUBPARTITION PART_71,
+ 47  SUBPARTITION PART_72,
+ 48  SUBPARTITION PART_73,
+ 49  SUBPARTITION PART_74
+ 50 ),
+ 51 PARTITION PART_8 tablespace partrange_tablespace1
+ 52 (
+ 53  SUBPARTITION PART_81,
+ 54  SUBPARTITION PART_82,
+ 55  SUBPARTITION PART_83,
+ 56  SUBPARTITION PART_84
+ 57 ));
+
+Succeed.
+
+SQL> CREATE  UNIQUE INDEX  NEBULA.STRG_RANGE_DDL_MUL_IDX_001_1 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_ID,C_CITY,C_FIRST,C_LAST)   tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_2 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_CITY,C_LAST,C_STREET_2)  tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_5 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_STREET_1,C_W_ID)  LOCAL tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> INSERT INTO NEBULA.STRG_RANGE_DDL_MUL_TBL_001 SELECT * FROM NEBULA.STRG_RANGE_DML_MUL_TBL_000;
+
+2000 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_3 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_STREET_2,C_D_ID) parallel 6 tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> CREATE INDEX NEBULA.STRG_RANGE_DDL_MUL_IDX_001_4 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001(C_CITY,C_FIRST) parallel 6 LOCAL tablespace partrange_tablespace2;
+
+Succeed.
+
+SQL> --测试基础DML操作
+SQL> savepoint aa;
+
+Succeed.
+
+SQL> delete from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 where mod(c_id, 2) = 1;
+
+1000 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+26                  
+
+1 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_w_id = c_w_id + 100 where c_id < 41;
+
+20 rows affected.
+
+SQL> select c_w_id from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 where c_id < 41;
+
+C_W_ID      
+------------
+112
+116
+120
+126
+128
+136
+130
+106
+114
+124
+134
+102
+108
+122
+138
+104
+110
+118
+132
+140
+
+20 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+26                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_12);
+
+COUNT(*)            
+--------------------
+27                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_13);
+
+COUNT(*)            
+--------------------
+39                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_14);
+
+COUNT(*)            
+--------------------
+22                  
+
+1 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_last = 'GaussDB' where c_street_1 = 'bki01fdger';
+
+20 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+26                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_12);
+
+COUNT(*)            
+--------------------
+27                  
+
+1 rows fetched.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set c_id = c_id - 240, c_street_1 = 'bki0fdger' where c_street_1 = 'bki1fdger';
+
+0 rows affected.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+26                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_12);
+
+COUNT(*)            
+--------------------
+27                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_13);
+
+COUNT(*)            
+--------------------
+38                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_14);
+
+COUNT(*)            
+--------------------
+22                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 partition(part_2);
+
+COUNT(*)            
+--------------------
+106                 
+
+1 rows fetched.
+
+SQL> rollback to savepoint aa;
+
+Succeed.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_11);
+
+COUNT(*)            
+--------------------
+51                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_12);
+
+COUNT(*)            
+--------------------
+48                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_13);
+
+COUNT(*)            
+--------------------
+68                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_14);
+
+COUNT(*)            
+--------------------
+53                  
+
+1 rows fetched.
+
+SQL> 
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_71);
+
+COUNT(*)            
+--------------------
+48                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_72);
+
+COUNT(*)            
+--------------------
+53                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_73);
+
+COUNT(*)            
+--------------------
+75                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_74);
+
+COUNT(*)            
+--------------------
+52                  
+
+1 rows fetched.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify partition part_7 coalesce subpartition;
+
+Succeed.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_71);
+
+COUNT(*)            
+--------------------
+48                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_72);
+
+COUNT(*)            
+--------------------
+105                 
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_73);
+
+COUNT(*)            
+--------------------
+75                  
+
+1 rows fetched.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify partition part_7 add subpartition part_74;
+
+Succeed.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_71);
+
+COUNT(*)            
+--------------------
+48                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_72);
+
+COUNT(*)            
+--------------------
+53                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_73);
+
+COUNT(*)            
+--------------------
+75                  
+
+1 rows fetched.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition(part_74);
+
+COUNT(*)            
+--------------------
+52                  
+
+1 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 coalesce PARTITION;
+
+Succeed.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 partition(part_4);
+
+COUNT(*)            
+--------------------
+510                 
+
+1 rows fetched.
+
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add PARTITION part_8
+  2 (
+  3  SUBPARTITION PART_81,
+  4  SUBPARTITION PART_82,
+  5  SUBPARTITION PART_83,
+  6  SUBPARTITION PART_84
+  7 );
+
+Succeed.
+
+SQL> select count(*) from NEBULA.STRG_RANGE_DDL_MUL_TBL_001 partition(part_4);
+
+COUNT(*)            
+--------------------
+268                 
+
+1 rows fetched.
+
+SQL> 
+SQL> --测试truncate以及闪回操作
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001;
+
+COUNT(*)            
+--------------------
+2000                
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 truncate subpartition part_62;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+202                 
+
+1 rows fetched.
+
+SQL> flashback table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 subpartition part_62 to before truncate;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 truncate partition part_6;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> flashback table nebula.strg_range_ddl_mul_tbl_001 partition part_6 to before truncate;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 partition(part_6);
+
+COUNT(*)            
+--------------------
+259                 
+
+1 rows fetched.
+
+SQL> flashback table nebula.strg_range_ddl_mul_tbl_001 partition part_6 to before truncate;
+
+CT-00852, Recyclebin object NEBULA.STRG_RANGE_DDL_MUL_TBL_001 (sub)partition PART_6 does not exist
+SQL> purge recyclebin;
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --测试分区的split
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 split subpartition part_63 at(1700, 'D') into (subpartition part_631 tablespace partrange_tablespace1, subpartition part_632 tablespace partrange_tablespace2);
+
+CT-00130, Operation split subpartition is not supported on non-range subpartitioned table
+SQL> 
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 split partition part_8 at(1500, 'J', 'J', 'J') into (partition part_10 tablespace partrange_tablespace1 storage(initial 2m maxsize 8m),partition part_12 tablespace partrange_tablespace2 storage(initial 2m maxsize 8m));
+
+CT-00130, Operation split partition is not supported on non-range partitioned table
+SQL> 
+SQL> --hash子分区的收缩添加
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_72);
+
+COUNT(*)            
+--------------------
+53                  
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_74);
+
+COUNT(*)            
+--------------------
+52                  
+
+1 rows fetched.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_1 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_2 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_3 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_4 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter index nebula.STRG_RANGE_DDL_MUL_IDX_001_5 ON NEBULA.STRG_RANGE_DDL_MUL_TBL_001 rebuild;
+
+Succeed.
+
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 modify partition part_7 coalesce subpartition;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_72);
+
+COUNT(*)            
+--------------------
+105                 
+
+1 rows fetched.
+
+SQL> alter table nebula.strg_range_ddl_mul_tbl_001 modify partition part_7 add subpartition part_74;
+
+Succeed.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_72);
+
+COUNT(*)            
+--------------------
+53                  
+
+1 rows fetched.
+
+SQL> select count(*) from nebula.strg_range_ddl_mul_tbl_001 subpartition(part_74);
+
+COUNT(*)            
+--------------------
+52                  
+
+1 rows fetched.
+
+SQL> 
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add column_add1 varchar(40);
+
+Succeed.
+
+SQL> update NEBULA.STRG_RANGE_DDL_MUL_TBL_001 set column_add1=C_FIRST;
+
+2000 rows affected.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                99                  
+1                                        A                                                                A                                                                A                                                                100                 
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                99                  
+3                                        B                                                                B                                                                B                                                                100                 
+4                                        B                                                                B                                                                B                                                                1                   
+4                                        C                                                                C                                                                C                                                                99                  
+5                                        C                                                                C                                                                C                                                                100                 
+6                                        C                                                                C                                                                C                                                                1                   
+6                                        D                                                                D                                                                D                                                                99                  
+7                                        D                                                                D                                                                D                                                                100                 
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                99                  
+9                                        E                                                                E                                                                E                                                                100                 
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                99                  
+11                                       F                                                                F                                                                F                                                                100                 
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                99                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+30 rows fetched.
+
+SQL> 
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                99                  
+1                                        A                                                                A                                                                A                                                                100                 
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                99                  
+3                                        B                                                                B                                                                B                                                                100                 
+4                                        B                                                                B                                                                B                                                                1                   
+4                                        C                                                                C                                                                C                                                                99                  
+5                                        C                                                                C                                                                C                                                                100                 
+6                                        C                                                                C                                                                C                                                                1                   
+6                                        D                                                                D                                                                D                                                                99                  
+7                                        D                                                                D                                                                D                                                                100                 
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                99                  
+9                                        E                                                                E                                                                E                                                                100                 
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                99                  
+11                                       F                                                                F                                                                F                                                                100                 
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                99                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+30 rows fetched.
+
+SQL> --add constraint-非分区键部分索引;
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add constraint PK_RANGE_DDL_MUL_TBL_001 primary key(C_W_ID);
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 add constraint UK_RANGE_DDL_MUL_TBL_001 unique(C_ID,C_W_ID);
+
+Succeed.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                99                  
+1                                        A                                                                A                                                                A                                                                100                 
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                99                  
+3                                        B                                                                B                                                                B                                                                100                 
+4                                        B                                                                B                                                                B                                                                1                   
+4                                        C                                                                C                                                                C                                                                99                  
+5                                        C                                                                C                                                                C                                                                100                 
+6                                        C                                                                C                                                                C                                                                1                   
+6                                        D                                                                D                                                                D                                                                99                  
+7                                        D                                                                D                                                                D                                                                100                 
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                99                  
+9                                        E                                                                E                                                                E                                                                100                 
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                99                  
+11                                       F                                                                F                                                                F                                                                100                 
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                99                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+30 rows fetched.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify C_STREET_1 varchar(100);
+
+CT-01105, The column used as the (sub)partition key can not be modified.
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 modify C_W_ID float;
+
+CT-00805, Column C_W_ID is not empty in table STRG_RANGE_DDL_MUL_TBL_001
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_LAST;
+
+CT-01106, Can not drop (sub)partitioning column
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_STREET_2;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_D_ID;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_STREET_1;
+
+CT-01106, Can not drop (sub)partitioning column
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column C_PHONE;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop column column_add1;
+
+Succeed.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+0                                        A                                                                A                                                                A                                                                99                  
+1                                        A                                                                A                                                                A                                                                100                 
+2                                        A                                                                A                                                                A                                                                1                   
+2                                        B                                                                B                                                                B                                                                99                  
+3                                        B                                                                B                                                                B                                                                100                 
+4                                        B                                                                B                                                                B                                                                1                   
+4                                        C                                                                C                                                                C                                                                99                  
+5                                        C                                                                C                                                                C                                                                100                 
+6                                        C                                                                C                                                                C                                                                1                   
+6                                        D                                                                D                                                                D                                                                99                  
+7                                        D                                                                D                                                                D                                                                100                 
+8                                        D                                                                D                                                                D                                                                1                   
+8                                        E                                                                E                                                                E                                                                99                  
+9                                        E                                                                E                                                                E                                                                100                 
+10                                       E                                                                E                                                                E                                                                1                   
+10                                       F                                                                F                                                                F                                                                99                  
+11                                       F                                                                F                                                                F                                                                100                 
+12                                       F                                                                F                                                                F                                                                1                   
+12                                       G                                                                G                                                                G                                                                99                  
+13                                       G                                                                G                                                                G                                                                100                 
+14                                       G                                                                G                                                                G                                                                1                   
+14                                       H                                                                H                                                                H                                                                99                  
+15                                       H                                                                H                                                                H                                                                100                 
+16                                       H                                                                H                                                                H                                                                1                   
+16                                       I                                                                I                                                                I                                                                99                  
+17                                       I                                                                I                                                                I                                                                100                 
+18                                       I                                                                I                                                                I                                                                1                   
+18                                       J                                                                J                                                                J                                                                99                  
+19                                       J                                                                J                                                                J                                                                100                 
+20                                       J                                                                J                                                                J                                                                1                   
+
+30 rows fetched.
+
+SQL> 
+SQL> --truncate不连续多分区;
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 TRUNCATE PARTITION PART_1 reuse storage;
+
+Succeed.
+
+SQL> truncate table NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> DELETE FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 WHERE (C_ID - 5*(FLOOR(C_ID/5)))=3;
+
+0 rows affected.
+
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+
+0 rows fetched.
+
+SQL> ALTER TABLE NEBULA.STRG_RANGE_DDL_MUL_TBL_001 DROP PARTITION PART_11;
+
+CT-00130, Operation alter table drop partition is not supported on hash partition
+SQL> SELECT DISTINCT FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1),COUNT(*) FROM NEBULA.STRG_RANGE_DDL_MUL_TBL_001 GROUP BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) ORDER BY FLOOR(C_ID/100),substr(C_FIRST,1,1),substr(C_LAST,1,1),substr(C_CITY,1,1) DESC;
+
+FLOOR(C_ID/100)                          SUBSTR(C_FIRST,1,1)                                              SUBSTR(C_LAST,1,1)                                               SUBSTR(C_CITY,1,1)                                               COUNT(*)            
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+
+0 rows fetched.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop constraint UK_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> alter table NEBULA.STRG_RANGE_DDL_MUL_TBL_001 drop constraint PK_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> drop table NEBULA.STRG_RANGE_DDL_MUL_TBL_001;
+
+Succeed.
+
+SQL> purge recyclebin;
+
+Succeed.
+
+SQL> drop tablespace partrange_tablespace1 including contents and datafiles;
+
+Succeed.
+
+SQL> drop tablespace partrange_tablespace2 including contents and datafiles;
+
+Succeed.
+
+SQL> drop user if exists nebula cascade;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists t_second_partition_hashlist;
+
+Succeed.
+
+SQL> create table t_second_partition_hashlist(id int not null,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,c_long varchar(200),c_blob blob,c_raw varchar(100),c_date date,c_timestamp timestamp) PARTITION BY hash(c_float,c_date) subpartition by list(id)
+  2 (
+  3 PARTITION p1
+  4 (
+  5 subpartition p4 values(1,2,3),
+  6 subpartition p5 values(4,5,6)
+  7 ),
+  8 PARTITION p2
+  9 (
+ 10 subpartition p6 values(7,8,9),
+ 11 subpartition p7 values(10,11,12)
+ 12 ),
+ 13 PARTITION p3
+ 14 (
+ 15 subpartition p8 values(1,2,3),
+ 16 subpartition p9 values(4,5,6)
+ 17 ),
+ 18 PARTITION p11
+ 19 (
+ 20 subpartition p10 values(default)
+ 21 )
+ 22 );
+
+Succeed.
+
+SQL> insert into t_second_partition_hashlist values(1,1000,100.123,100.456,100.789,100.123,'abc123','abcdefg',lpad('123abc',50,'abc'),lpad('123abc',50,'abc'),lpad('11100000',50,'1100'),lpad('11100001',50,'1100'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),to_timestamp(to_char('1800-03-05 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> insert into t_second_partition_hashlist values(5,null,null,null,null,null,null,'M',null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> ALTER TABLE t_second_partition_hashlist COALESCE PARTITION;
+
+CT-01118, Some rows cannot be inserted into the new partition because of a boundary value mismatch
+SQL> drop table if exists t_second_partition_hashlist;
+Succeed.
+
+
+
+

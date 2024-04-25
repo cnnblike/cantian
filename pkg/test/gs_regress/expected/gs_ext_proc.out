@@ -1,0 +1,831 @@
+
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> create or replace library test as '/home/regress/cantiandb/include/libfuncs.so';
+
+Succeed.
+
+SQL> 
+SQL> select USER#, NAME, LEAF_FILENAME from SYS_LIBRARIES where NAME = 'TEST' AND USER# = 0;
+
+USER#        NAME                                                             LEAF_FILENAME                                                   
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+0            TEST                                                             libfuncs.so                                                     
+
+1 rows fetched.
+
+SQL> 
+SQL> drop function if exists test_bool;
+
+Succeed.
+
+SQL> create function test_bool() return bool as language c library test name "return_bool"
+  2 /
+
+Succeed.
+
+SQL> drop function if exists test_add_two_short;
+
+Succeed.
+
+SQL> create function test_add_two_short (x short, y ushort) return short as language c library test name "add_two_short"
+  2 /
+
+Succeed.
+
+SQL> drop function if exists test_sub_two_int;
+
+Succeed.
+
+SQL> create function test_sub_two_int (x integer, y uinteger) return integer as language c library test name "sub_two_int"
+  2 /
+
+Succeed.
+
+SQL> drop function if exists test_mul_two_bigint;
+
+Succeed.
+
+SQL> create function test_mul_two_bigint (x bigint, y bigint) return bigint as language c library test name "mul_two_bigint"
+  2 /
+
+Succeed.
+
+SQL> drop function if exists test_div_two_double;
+
+Succeed.
+
+SQL> create function test_div_two_double (x float, y double) return double as language c library test name "div_two_double"
+  2 /
+
+Succeed.
+
+SQL> drop function if exists test_copy_binary;
+
+Succeed.
+
+SQL> create  function test_copy_binary (x binary) return binary as language c library test name "copy_binary"
+  2 /
+
+Succeed.
+
+SQL> drop function if exists test_concat_binary;
+
+Succeed.
+
+SQL> create function test_concat_binary (x binary, y varbinary, z raw) return varbinary as language c library test name "concat_binary"
+  2 /
+
+Succeed.
+
+SQL> drop function if exists test_copy_text;
+
+Succeed.
+
+SQL> create function test_copy_text(x char, y out char) return char as language c library test name "copy_text"
+  2 /
+
+Succeed.
+
+SQL> drop procedure if exists test_concat_text;
+
+Succeed.
+
+SQL> create procedure test_concat_text(x varchar, y char, z out varchar) as language c library test name "concat_text"
+  2 /
+
+Succeed.
+
+SQL> drop procedure if exists test_in_out_param;
+
+Succeed.
+
+SQL> create procedure test_in_out_param(a in out integer, b in out float, c in out binary, d in out varchar) as language c library test name "in_out_param"
+  2 /
+
+Succeed.
+
+SQL> drop function if exists test_exception_core;
+
+Succeed.
+
+SQL> create function test_exception_core() return int as language c library test name "exception_core"
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> select test_bool();
+
+TEST_BOOL()
+-----------
+TRUE       
+
+1 rows fetched.
+
+SQL> select test_add_two_short(-2, 2);
+
+TEST_ADD_TWO_SHORT(-2, 2)
+-------------------------
+0                        
+
+1 rows fetched.
+
+SQL> select test_sub_two_int(-3, 300000000);
+
+TEST_SUB_TWO_INT(-3, 300000000)
+-------------------------------
+-300000003                     
+
+1 rows fetched.
+
+SQL> select test_mul_two_bigint(-4, 400000000);
+
+TEST_MUL_TWO_BIGINT(-4, 400000000)
+----------------------------------
+-1600000000                       
+
+1 rows fetched.
+
+SQL> select test_div_two_double(1.55555555, -2.4555555555);
+
+TEST_DIV_TWO_DOUBLE(1.55555555, -2.4555555555)
+----------------------------------------------
+-0.633484160647816                            
+
+1 rows fetched.
+
+SQL> select test_copy_binary('1010101111111111111111111111111111111111111111');
+
+TEST_COPY_BINARY('1010101111111111111111111111111111111111111111
+----------------------------------------------------------------
+1010101111111111111111111111111111111111111111                  
+
+1 rows fetched.
+
+SQL> select test_concat_binary('1010', '1234'::binary(4), '4142');
+
+TEST_CONCAT_BINARY('1010', '1234'::BINARY(4), '4142')           
+----------------------------------------------------------------
+10101234AB                                                      
+
+1 rows fetched.
+
+SQL> 
+SQL> select test_add_two_short('abcde', 2);
+
+CT-00636, [1:8]Invalid number -- unexpected character
+SQL> select test_add_two_short(-2, 2, 3);
+
+CT-00916, [1:8]PL/SQL:syntax error(unexpected more arguments for current procedure/function)
+SQL> select test_add_two_short(-2);
+
+CT-00644, [1:8]Too few arguments for procedure/function
+SQL> select test_copy_text('ccc', 'ddd');
+
+CT-00949, [1:8]The 2th argument of TEST_COPY_TEXT wrong type bound to an OUT position
+SQL> 
+SQL> declare
+  2 x int;
+  3 y varchar(100);
+  4 begin
+  5 Y := test_copy_text('ccc', x);
+  6 end;
+  7 /
+
+CT-00932, [5:1] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[5:6] CT-00636, Invalid number -- unexpected character
+
+SQL> create library test as '/home/regress/cantiandb/include/libfuncs.so';
+
+CT-00753, The object SYS TEST already exists.
+SQL> drop user if exists c##test_A cascade;
+
+Succeed.
+
+SQL> create  user c##test_A identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to c##test_A;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> drop library test;
+
+CT-00828, library C##TEST_A.TEST does not exist
+SQL> drop library sys.test;
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists c##test_A cascade;
+
+Succeed.
+
+SQL> drop library test_lib123;
+
+CT-00828, library SYS.TEST_LIB123 does not exist
+SQL> 
+SQL> drop library test;
+
+Succeed.
+
+SQL> select USER#, NAME, LEAF_FILENAME from SYS_LIBRARIES where NAME = 'TEST' AND USER# = 0;
+
+USER#        NAME                                                             LEAF_FILENAME                                                   
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select test_bool();
+
+CT-00888, [1:8]Library SYS.TEST does not exist
+SQL> select test_add_two_short(-2, 2);
+
+CT-00888, [1:8]Library SYS.TEST does not exist
+SQL> 
+SQL> create library test as '/home/regress/cantiandb/include/libfuncs.so';
+
+Succeed.
+
+SQL> select USER#, NAME, LEAF_FILENAME from SYS_LIBRARIES where NAME = 'TEST' AND USER# = 0;
+
+USER#        NAME                                                             LEAF_FILENAME                                                   
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+0            TEST                                                             libfuncs.so                                                     
+
+1 rows fetched.
+
+SQL> 
+SQL> declare
+  2 x varchar(100) := 'this is x';
+  3 y varchar(100) := ', y';
+  4 ret1 varchar(100);
+  5 ret2 varchar(100);
+  6 a int := 1;
+  7 b float := 0.899999999999;
+  8 c binary(100) := '1010101111111111111111111111111111111111111111';
+  9 d varchar(100):= '123';
+ 10 begin
+ 11 	ret1 := test_copy_text(x, ret2);
+ 12 	dbe_output.print_line(ret1);
+ 13 	dbe_output.print_line(ret2);
+ 14 	test_concat_text(x, y, ret1);
+ 15 	dbe_output.print_line(ret1);
+ 16 	test_in_out_param(a, b, c, d);
+ 17 	dbe_output.print_line(a);
+ 18 	dbe_output.print_line(b);
+ 19 	dbe_output.print_line(c);
+ 20 	dbe_output.print_line(d);
+ 21 end;
+ 22 /
+
+this is x
+this is x
+this is x, y
+2
+1.899999999999
+1111111111111111111111111111111111111111111111
+zzz
+
+PL/SQL procedure successfully completed.
+
+SQL> drop library test;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_bool;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_add_two_short;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_sub_two_int;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_mul_two_bigint;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_div_two_double;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_copy_binary;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_concat_binary;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_copy_text;
+
+Succeed.
+
+SQL> 
+SQL> drop procedure test_concat_text;
+
+Succeed.
+
+SQL> 
+SQL> drop procedure test_in_out_param;
+
+Succeed.
+
+SQL> 
+SQL> drop function test_exception_core;
+
+Succeed.
+
+SQL> 
+SQL> --privilege test
+SQL> --1. create any library
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists c##test_A cascade;
+
+Succeed.
+
+SQL> create  user c##test_A identified by Cantian_234;
+
+Succeed.
+
+SQL> drop user if exists c##test_B cascade;
+
+Succeed.
+
+SQL> create  user c##test_B identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to c##test_A;
+
+Succeed.
+
+SQL> grant create library to c##test_A;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace library c##test_B.tlib1 as '/home/regress/cantiandb/include/libfuncs.so'; --fail
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke create library from c##test_A;
+
+Succeed.
+
+SQL> grant create any library to c##test_A;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace library c##test_B.tlib1 as '/home/regress/cantiandb/include/libfuncs.so';--success
+
+Succeed.
+
+SQL> 
+SQL> --2. drop any library
+SQL> drop library c##test_B.tlib1;--fail
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke create any library from c##test_A;
+
+Succeed.
+
+SQL> grant drop any library to c##test_A;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> drop library c##test_B.tlib1;--success
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke drop any library from c##test_A;
+
+Succeed.
+
+SQL> 
+SQL> --user A creates B.func, using C.lib
+SQL> --3. execute object privilege
+SQL> drop user if exists c##test_C cascade;
+
+Succeed.
+
+SQL> create  user c##test_C identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create any procedure to c##test_A;
+
+Succeed.
+
+SQL> create or replace library c##test_C.lib1 as '/home/regress/cantiandb/include/libfuncs.so';
+
+Succeed.
+
+SQL> --3.1 user A and B don't have execute object privilege on C.lib, fail.
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace function c##test_B.test_add(x short, y ushort) return short as language c library c##test_C.lib1 name "add_two_short"
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(C##TEST_B.TEST_ADD) terminated with compiling errors
+PLC-01001 Permissions were insufficient
+
+
+SQL> --3.2 only A has execute object privilege on C.lib, fail.
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant execute on c##test_C.lib1 to c##test_A;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace function c##test_B.test_add(x short, y ushort) return short as language c library c##test_C.lib1 name "add_two_short"
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(C##TEST_B.TEST_ADD) terminated with compiling errors
+PLC-01001 Permissions were insufficient
+
+
+SQL> --3.3 only B has execute object privilege on C.lib, success.
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke execute on c##test_C.lib1 from c##test_A;
+
+Succeed.
+
+SQL> grant execute on c##test_C.lib1 to c##test_B;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace function c##test_B.test_add(x short, y ushort) return short as language c library c##test_C.lib1 name "add_two_short"
+  2 /
+
+Succeed.
+
+SQL> --4. only B has execute any library system privilege, success.
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke execute on c##test_C.lib1 from c##test_B;
+
+Succeed.
+
+SQL> grant execute any library to c##test_B;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create or replace function c##test_B.test_add2(x short, y ushort) return short as language c library c##test_C.lib1 name "add_two_short"
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> --when B.func already exists which using C.lib, user A executes B.func.
+SQL> --5. execute object privilege
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user c##test_A cascade;
+
+Succeed.
+
+SQL> create  user c##test_A identified by Cantian_234;
+
+Succeed.
+
+SQL> drop user c##test_B cascade;
+
+Succeed.
+
+SQL> create  user c##test_B identified by Cantian_234;
+
+Succeed.
+
+SQL> drop user c##test_C cascade;
+
+Succeed.
+
+SQL> create  user c##test_C identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to c##test_A;
+
+Succeed.
+
+SQL> create or replace library c##test_C.lib1 as '/home/regress/cantiandb/include/libfuncs.so';
+
+Succeed.
+
+SQL> --5.1 only B has execute object privilege on C.lib, fail.
+SQL> grant execute on c##test_C.lib1 to c##test_B;
+
+Succeed.
+
+SQL> create or replace function c##test_B.test_add(x short, y ushort) return short as language c library c##test_C.lib1 name "add_two_short"
+  2 /
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select c##test_B.test_add(1, 5) from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> --5.2 only A has execute object privilege on B.func, fail.
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke execute on c##test_C.lib1 from c##test_B;
+
+Succeed.
+
+SQL> grant execute on c##test_B.test_add to c##test_A;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select c##test_B.test_add(1, 5) from dual;
+
+CT-00944, [1:8]PL/SQL(C##TEST_B.TEST_ADD) terminated with compiling errors
+PLC-01001 Permissions were insufficient
+
+SQL> --5.3 A has execute object privilege on B.func, and B has execute object privilege on C.lib, fail.
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant execute on c##test_C.lib1 to c##test_B;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select c##test_B.test_add(1, 5) from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> --5.4 A has execute object privilege on B.func, and B has execute object privilege on C.lib, a has execute object privilege on C.lib success.
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant execute on c##test_C.lib1 to c##test_A;
+
+Succeed.
+
+SQL> conn c##test_A/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select c##test_B.test_add(1, 5) from dual;
+
+C##TEST_B.TEST_ADD(1, 5)
+------------------------
+6                       
+
+1 rows fetched.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user c##test_A cascade;
+
+Succeed.
+
+SQL> drop user c##test_B cascade;
+
+Succeed.
+
+SQL> drop user c##test_C cascade;
+
+Succeed.
+
+SQL> --DTS2020020504434
+SQL> create function test_add_101_short_01 (x1 short, x2 ushort, x3 ushort, x4 ushort, x5 ushort, x6 ushort, x7 ushort, x8 ushort, x9 ushort, x10 ushort, x11 ushort, x12 ushort, x13 ushort, x14 ushort, x15 ushort, x16 ushort, x17 ushort, x18 ushort, x19 ushort, x20 ushort, x21 ushort, x22 ushort, x23 ushort, x24 ushort, x25 ushort, x26 ushort, x27 ushort, x28 ushort, x29 ushort, x30 ushort, x31 ushort, x32 ushort, x33 ushort, x34 ushort, x35 ushort, x36 ushort, x37 ushort, x38 ushort, x39 ushort, x40 ushort, x41 ushort, x42 ushort, x43 ushort, x44 ushort, x45 ushort, x46 ushort, x47 ushort, x48 ushort, x49 ushort, x50 ushort, x51 ushort, x52 ushort, x53 ushort, x54 ushort, x55 ushort, x56 ushort, x57 ushort, x58 ushort, x59 ushort, x60 ushort, x61 ushort, x62 ushort, x63 ushort, x64 ushort, x65 ushort, x66 ushort, x67 ushort, x68 ushort, x69 ushort, x70 ushort, x71 ushort, x72 ushort, x73 ushort, x74 ushort, x75 ushort, x76 ushort, x77 ushort, x78 ushort, x79 ushort, x80 ushort, x81 ushort, x82 ushort, x83 ushort, x84 ushort, x85 ushort, x86 ushort, x87 ushort, x88 ushort, x89 ushort, x90 ushort, x91 ushort, x92 ushort, x93 ushort, x94 ushort, x95 ushort, x96 ushort, x97 ushort, x98 ushort, x99 ushort, x100 ushort, x101 ushort) return short as language c library zn_test_01 name "add_101_short"
+  2 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TEST_ADD_101_SHORT_01) terminated with compiling errors
+PLC-00706 The number 101 reached the upper limit of C-LANG function params count(100).
+
+
+SQL> drop function if exists test_add_101_short_01;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2020020705506
+SQL> drop user if exists user2;
+
+Succeed.
+
+SQL> create user user2 identified by Changeme_123;
+
+Succeed.
+
+SQL> create or replace library test1_lib as '/home/regress/cantiandb/include/libfuncs.so';
+
+Succeed.
+
+SQL> grant create session to user2;
+
+Succeed.
+
+SQL> grant create any procedure to user2;
+
+Succeed.
+
+SQL> grant execute on test1_lib to user2;
+
+Succeed.
+
+SQL> conn user2/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> select * from my_tab_privs where GRANTEE='USER2';
+
+GRANTEE                                                          OWNER                                                            OBJECT_NAME                                                      OBJECT_TYPE PRIVILEGE            GRANTABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- -------------------- ---------
+USER2                                                            SYS                                                              TEST1_LIB                                                        LIBRARY     EXECUTE              NO       
+
+1 rows fetched.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop library test1_lib;
+
+Succeed.
+
+SQL> conn user2/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> select * from my_tab_privs where GRANTEE='USER2';
+
+GRANTEE                                                          OWNER                                                            OBJECT_NAME                                                      OBJECT_TYPE PRIVILEGE            GRANTABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------- -------------------- ---------
+
+0 rows fetched.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user user2 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2020020702611
+SQL> DROP USER if exists user1 CASCADE;
+
+Succeed.
+
+SQL> create user user1 identified by Changeme_123;
+
+Succeed.
+
+SQL> create or replace library lib_test2 as '/home/regress/cantiandb/include/libfuncs.so';
+
+Succeed.
+
+SQL> create OR REPLACE function func_test2 (x short, y ushort) return short as language c library lib_test2 name "add_two_short"
+  2 /
+
+Succeed.
+
+SQL> select func_test2(123,234);
+
+FUNC_TEST2(123,234)
+-------------------
+357                
+
+1 rows fetched.
+
+SQL> create library user1.lib_test2 as '/home/regress/cantiandb/include/libfuncs.so';
+
+Succeed.
+
+SQL> create  function user1.func_test3 (x short, y ushort) return short as language c library lib_test2 name "add_two_short"
+  2 /
+
+Succeed.
+
+SQL> select user1.func_test3(123,234);
+
+USER1.FUNC_TEST3(123,234)
+-------------------------
+357                      
+
+1 rows fetched.
+
+SQL> drop library lib_test2;
+
+Succeed.
+
+SQL> drop function func_test2;
+
+Succeed.
+
+SQL> drop library user1.lib_test2;
+
+Succeed.
+
+SQL> drop function user1.func_test3;
+
+Succeed.
+
+SQL> DROP USER if exists user1 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+
+

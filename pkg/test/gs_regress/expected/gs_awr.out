@@ -1,0 +1,334 @@
+
+
+SQL> call wsr$create_snapshot;
+
+PL/SQL procedure successfully completed.
+
+SQL> wsr "2021-6-17 20:00:00" "2021-6-17 20:20:00"
+
+WSR report Generation Success.
+
+WSR report file name : wsrrpt_0_0.html
+
+SQL> 
+SQL> create table DTS2019010800266(xx varchar2(8000), yy varchar2(8000));
+
+Succeed.
+
+SQL> select * from DTS2019010800266 
+  2  where xx = '111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111'
+  3    and yy >= '111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111'
+  4    and yy <= '222111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111112';   
+
+XX                                                               YY                                                              
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> create table DTS2019052804148 (xx varchar2(8000), yy varchar2(8000));
+
+Succeed.
+
+SQL> select * from DTS2019052804148  
+  2  where xx = '111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111'
+  3    and yy >= '111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111'
+  4    and yy <= '222111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111112';   
+
+XX                                                               YY                                                              
+---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> call sys.wsr$modify_setting(I_IN_LOG_DAYS=> 20);
+
+PL/SQL procedure successfully completed.
+
+SQL> call sys.wsr$modify_setting(I_IN_SESSION_INTERVAL=> 30);   
+
+PL/SQL procedure successfully completed.
+
+SQL> call sys.wsr$modify_setting(STR_IN_SESSION_STATUS=> 'Y'); 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> call wsr$create_snapshot;
+
+PL/SQL procedure successfully completed.
+
+SQL> alter system set SQL_STAT = false;
+
+Succeed.
+
+SQL> wsr 1 2 "1.html"
+
+CT-00202, The parameter value "SQL_STAT and TIMED_STATS should be true" was invalid
+WSR Report Build failed.
+
+
+SQL> alter system set SQL_STAT = true;
+
+Succeed.
+
+SQL> alter system set TIMED_STATISTICS = true;
+
+Succeed.
+
+SQL> wsr 1 2 "1.html"
+
+WSR report Generation Success.
+
+WSR report file name : 1.html
+
+SQL> 
+SQL> wsr 1 2 "./xxxx/1.html"
+
+CT-00230, ./xxxx/ is not an existing folder
+WSR Report Build failed.
+
+
+SQL> 
+SQL> create user user1 identified by Root1234;
+
+Succeed.
+
+SQL> grant connect, statistics to user1;
+
+Succeed.
+
+SQL> create user user2 identified by Root1234;
+
+Succeed.
+
+SQL> grant connect, statistics to user2;
+
+Succeed.
+
+SQL> 
+SQL> conn user1/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> wsr 1 2 "2.html"
+
+WSR report Generation Success.
+
+WSR report file name : 2.html
+
+SQL> call sys.wsr$create_snapshot;
+
+PL/SQL procedure successfully completed.
+
+SQL> call sys.wsr$drop_snapshot_range(1, 2);
+
+CT-00944, PL/SQL(USER1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> call sys.WSR$DROP_SNAPSHOT_PARTITION('WSR_SQLAREA', 1);
+
+CT-00944, PL/SQL(USER1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> call sys.WSR$DROP_SNAPSHOT_TIME;
+
+CT-00944, PL/SQL(USER1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> call sys.wsr$modify_setting(str_in_status=> 'Y');
+
+CT-00944, PL/SQL(USER1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> call sys.wsr$modify_setting(i_in_interval_minutes => 30);
+
+CT-00944, PL/SQL(USER1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> call sys.wsr$modify_setting(i_in_retention_days => 30);
+
+CT-00944, PL/SQL(USER1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> call sys.wsr$modify_setting(i_in_topsql=> 100);
+
+CT-00944, PL/SQL(USER1.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> 
+SQL> select count(null) from ADM_HIST_LONGSQL;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from DV_LONG_SQL;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_LONGSQL;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_SQLTEXT;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_SQLPLAN;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> conn user2/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> wsr 1 2000 "3.html"
+
+CT-00601, [1:8]Sql syntax error: end_snap_id doesn't exist!
+WSR Report Build failed.
+
+SQL> wsr "2021-6-17 20:00:00" "2021-6-17 20:20:00" "123.html" 
+
+WSR report Generation Success.
+
+WSR report file name : 123.html
+
+SQL> call sys.wsr$create_snapshot;
+
+PL/SQL procedure successfully completed.
+
+SQL> call sys.wsr$drop_snapshot_range(1, 2);
+
+CT-00944, PL/SQL(USER2.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> 
+SQL> call sys.WSR$DROP_CTIME_PARTITION('WSR_SQLTEXT', 2);
+
+CT-00944, PL/SQL(USER2.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-01001 Permissions were insufficient
+
+SQL> select count(null) from sys.WSR_EXCEPTION_LOG;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select count(null) from ADM_HIST_LONGSQL;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from DV_LONG_SQL;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_LONGSQL;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_SQLTEXT;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_SQLPLAN;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_INSTANCE_SNAP;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_SESSION_SQL;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_EXCEPTION_LOG;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(1) from SYS.WSR_EXCEPTION_LOG;
+
+COUNT(1)         
+--------------------
+4                   
+
+1 rows fetched.
+
+SQL> select count(null) from SYS.WSR_SESSION_EVENTS;
+
+COUNT(NULL)         
+--------------------
+0                   
+
+1 rows fetched.
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user user1 cascade;
+
+Succeed.
+
+SQL> drop user user2 cascade;
+
+Succeed.
+
+SQL> 
+
+

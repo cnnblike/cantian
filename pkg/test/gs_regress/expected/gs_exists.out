@@ -1,0 +1,1596 @@
+
+
+SQL> drop table if exists exists_t_001;
+
+Succeed.
+
+SQL> 
+SQL> create table exists_t_001(
+  2 id int,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10),c_vchar2 varchar2(100),c_clob clob,
+  4 c_long clob,c_blob blob,c_raw raw(100),c_date date,c_timestamp timestamp);
+
+Succeed.
+
+SQL> 
+SQL> insert into exists_t_001 values(1,1000,100.123,100.456,100.789,100.123,'abc123','abcdefg',lpad('123abc',50,'abc'),lpad('123abc',50,'abc'),lpad('11100000',50,'1100'),lpad('11100001',50,'1100'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),to_timestamp(to_char('1800-01-01 10:51:47.123456'),'yyyy-mm-dd hh24:mi:ss.FF6'));
+
+1 rows affected.
+
+SQL> insert into exists_t_001 values(0,null,null,null,null,null,null,null,null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE or replace procedure exists_proc_insert(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5         
+  6 sqlst := 'insert into ' || tname ||' select id+'||i||',c_int+'||i||',c_real+'||i||',c_float+'||i||',c_decimal+'||i||',c_number+'||i||',c_char'||',c_vchar||'||i||',c_vchar2||'||i||',c_clob||'||i||',c_long||'||i||',c_blob'||',c_raw,c_date+TO_DSINTERVAL('''||i|| ' 00:00:00'''||'),c_timestamp+TO_DSINTERVAL('''||i|| ' 00:00:00'''||') from '||tname|| ' where id=1';
+  7         execute immediate sqlst;
+  8   END LOOP;
+  9 END;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> call exists_proc_insert('exists_t_001',1, 10);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> explain 
+  2  select t1.c_int  from exists_t_001 t1 where exists (select t1.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int) order by 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |                  |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY        |       |                  |      |      |       |        |
+| 2   |     HASH JOIN SEMI(L)        |       |                  |      |      |       |        |
+| 3   |       SUBSELECT              |       |                  |      |      |       |        |
+| 4   |         MERGE JOIN           |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | EXISTS_T_001 T11 |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | EXISTS_T_001 T12 |      |      |       |        |
+| 7   |       TABLE ACCESS FULL      | SYS   | EXISTS_T_001 T1  |      |      |       |        |
+------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: NA = NA                                          
+   4 - access: T11.C_INT < T12.C_INT                            
+
+16 rows fetched.
+
+SQL> select t1.c_int  from exists_t_001 t1 where exists (select t1.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int) order by 1;
+
+C_INT       
+------------
+1000        
+1001        
+1002        
+1003        
+1004        
+1005        
+1006        
+1007        
+1008        
+1009        
+1010        
+            
+
+12 rows fetched.
+
+SQL> 
+SQL> explain 
+  2  select t1.c_int  from exists_t_001 t1 where exists (select t1.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int limit 0) order by 1; 
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |                  |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY              |       |                  |      |      |       |        |
+| 2   |     KERNEL FILTER                  |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL            | SYS   | EXISTS_T_001 T1  |      |      |       |        |
+| 4   |       QUERY LIMIT                  |       |                  |      |      |       |        |
+| 5   |         QUERY SORT ORDER BY ROWNUM |       |                  |      |      |       |        |
+| 6   |           NESTED LOOPS             |       |                  |      |      |       |        |
+| 7   |             TABLE ACCESS FULL      | SYS   | EXISTS_T_001 T11 |      |      |       |        |
+| 8   |             TABLE ACCESS FULL      | SYS   | EXISTS_T_001 T12 |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: EXISTS(SELECT 1 FROM EXISTS_T_001 T11 INNER JOIN EXISTS_T_001 T12 WHERE T11.C_INT < T12.C_INT ORDER BY 
+               T1.C_INT LIMIT 0)                                
+   8 - filter: T11.C_INT < T12.C_INT                            
+
+18 rows fetched.
+
+SQL>  select t1.c_int  from exists_t_001 t1 where exists (select t1.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int limit 0) order by 1;
+
+C_INT       
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> explain 
+  2  select t1.c_int  from exists_t_001 t1 where exists (select t1.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int limit 1) order by 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |                  |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY              |       |                  |      |      |       |        |
+| 2   |     KERNEL FILTER                  |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL            | SYS   | EXISTS_T_001 T1  |      |      |       |        |
+| 4   |       QUERY LIMIT                  |       |                  |      |      |       |        |
+| 5   |         QUERY SORT ORDER BY ROWNUM |       |                  |      |      |       |        |
+| 6   |           NESTED LOOPS             |       |                  |      |      |       |        |
+| 7   |             TABLE ACCESS FULL      | SYS   | EXISTS_T_001 T11 |      |      |       |        |
+| 8   |             TABLE ACCESS FULL      | SYS   | EXISTS_T_001 T12 |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - filter: EXISTS(SELECT 1 FROM EXISTS_T_001 T11 INNER JOIN EXISTS_T_001 T12 WHERE T11.C_INT < T12.C_INT ORDER BY 
+               T1.C_INT LIMIT 1)                                
+   8 - filter: T11.C_INT < T12.C_INT                            
+
+18 rows fetched.
+
+SQL>  select t1.c_int  from exists_t_001 t1 where exists (select t1.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int limit 1) order by 1;
+
+C_INT       
+------------
+1000        
+1001        
+1002        
+1003        
+1004        
+1005        
+1006        
+1007        
+1008        
+1009        
+1010        
+            
+
+12 rows fetched.
+
+SQL> 
+SQL> explain 
+  2  select t1.c_int  from exists_t_001 t1 where exists (select distinct t1.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int) order by 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |                  |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY        |       |                  |      |      |       |        |
+| 2   |     HASH JOIN SEMI(L)        |       |                  |      |      |       |        |
+| 3   |       SUBSELECT              |       |                  |      |      |       |        |
+| 4   |         MERGE JOIN           |       |                  |      |      |       |        |
+| 5   |           TABLE ACCESS FULL  | SYS   | EXISTS_T_001 T11 |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | EXISTS_T_001 T12 |      |      |       |        |
+| 7   |       TABLE ACCESS FULL      | SYS   | EXISTS_T_001 T1  |      |      |       |        |
+------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: NA = NA                                          
+   4 - access: T11.C_INT < T12.C_INT                            
+
+16 rows fetched.
+
+SQL> select t1.c_int  from exists_t_001 t1 where exists (select distinct t1.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int) order by 1;
+
+C_INT       
+------------
+1000        
+1001        
+1002        
+1003        
+1004        
+1005        
+1006        
+1007        
+1008        
+1009        
+1010        
+            
+
+12 rows fetched.
+
+SQL> 
+SQL> select t1.c_int  from exists_t_001 t1 where exists (select distinct t1.c_int+1, t12.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int) order by 1;
+
+CT-00601, [1:167]Sql syntax error: expression not in distinct list
+SQL> select t1.c_int  from exists_t_001 t1 where exists (select distinct t1.c_int+1, t11.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int order by t1.c_int) order by 1;
+
+CT-00601, [1:167]Sql syntax error: expression not in distinct list
+SQL> select t1.c_int  from exists_t_001 t1 where exists (select t11.c_int from exists_t_001 t11 join exists_t_001 t12 on t11.c_int<t12.c_int group by t11.c_int order by t1.c_int) order by 1;
+
+C_INT       
+------------
+1000        
+1001        
+1002        
+1003        
+1004        
+1005        
+1006        
+1007        
+1008        
+1009        
+1010        
+            
+
+12 rows fetched.
+
+SQL> 
+SQL> drop table exists_t_001;
+
+Succeed.
+
+SQL> drop procedure exists_proc_insert;
+
+Succeed.
+
+SQL> drop table if exists t_not_in_1;
+
+Succeed.
+
+SQL> drop table if exists t_not_in_2;
+
+Succeed.
+
+SQL> 
+SQL> create table t_not_in_1(a int not null, b int);
+
+Succeed.
+
+SQL> create table t_not_in_2(a int not null, b int);
+
+Succeed.
+
+SQL> explain select * from t_not_in_1 t1 where t1.b not in (select t2.b from t_not_in_2 t2 where t2.a=t1.a);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |               |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.B NOT IN((SELECT B FROM T_NOT_IN_2 T2 WHERE T2.A = T1.A))
+   3 - filter: T2.A = T1.A                                      
+
+12 rows fetched.
+
+SQL> explain select * from t_not_in_1 t1 where t1.a not in (select t2.b from t_not_in_2 t2 where t2.a=t1.b);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |               |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.A NOT IN((SELECT B FROM T_NOT_IN_2 T2 WHERE T2.A = T1.B))
+   3 - filter: T2.A = T1.B                                      
+
+12 rows fetched.
+
+SQL> explain select * from t_not_in_1 t1 where t1.b not in (select t2.a from t_not_in_2 t2 where t2.b=t1.a);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |               |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.B NOT IN((SELECT A FROM T_NOT_IN_2 T2 WHERE T2.B = T1.A))
+   3 - filter: T2.B = T1.A                                      
+
+12 rows fetched.
+
+SQL> explain select * from t_not_in_1 t1 where t1.a not in (select t2.b+1 from t_not_in_2 t2 where t2.b=t1.a);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |               |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.A NOT IN((SELECT T2.B + 1 FROM T_NOT_IN_2 T2 WHERE T2.B = T1.A))
+   3 - filter: T2.B = T1.A                                      
+
+12 rows fetched.
+
+SQL> explain select * from t_not_in_1 t1 where t1.a not in (select t2.a+t1.b from t_not_in_2 t2 where t2.b=t1.a);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |               |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+---------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.A NOT IN((SELECT T2.A + T1.B FROM T_NOT_IN_2 T2 WHERE T2.B = T1.A))
+   3 - filter: T2.B = T1.A                                      
+
+12 rows fetched.
+
+SQL> explain select * from t_not_in_1 t1 where t1.a not in (select t2.a from t_not_in_2 t2 where t2.b=t1.b);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name          | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |               |      |      |       |        |
+| 1   |   HASH JOIN ANTI(R)      |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL    | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     SUBSELECT            |       |               |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+-----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.A = T2.A AND T1.B = T2.B                      
+
+12 rows fetched.
+
+SQL> explain select * from t_not_in_1 t1 where t1.a not in (select t1.a from t_not_in_2 t2 where t2.b=t1.b);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name          | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |               |      |      |       |        |
+| 1   |   HASH JOIN ANTI(R)      |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL    | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     SUBSELECT            |       |               |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+-----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.B = T2.B                                      
+
+12 rows fetched.
+
+SQL> explain select * from t_not_in_1 t1 where t1.a not in (select t1.a from t_not_in_2 t2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name          | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |               |      |      |       |        |
+| 1   |   HASH JOIN ANTI(R)      |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL    | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     SUBSELECT            |       |               |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+-----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: NA = NA                                          
+
+12 rows fetched.
+
+SQL> explain select * from t_not_in_1 t1 where t1.b not in (select t1.b from t_not_in_2 t2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name          | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |               |      |      |       |        |
+| 1   |   HASH JOIN ANTI(R)      |       |               |      |      |       |        |
+| 2   |     TABLE ACCESS FULL    | SYS   | T_NOT_IN_1 T1 |      |      |       |        |
+| 3   |     SUBSELECT            |       |               |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | T_NOT_IN_2 T2 |      |      |       |        |
+-----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: NA = NA                                          
+
+12 rows fetched.
+
+SQL> drop table t_not_in_1;
+
+Succeed.
+
+SQL> drop table t_not_in_2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_join_base_001;
+
+Succeed.
+
+SQL> drop table if exists t_join_base_101;
+
+Succeed.
+
+SQL> drop table if exists t_join_base_102;
+
+Succeed.
+
+SQL> create table t_join_base_001(id int,c_int int not null,c_vchar varchar(100) not null,c_clob clob not null,c_blob blob not null,c_date date) ;
+
+Succeed.
+
+SQL> create table t_join_base_101(id int,c_int int not null,c_vchar varchar(100) not null,c_clob clob not null,c_blob blob not null,c_date date) ;
+
+Succeed.
+
+SQL> create table t_join_base_102(id int,c_int int not null,c_vchar varchar(100) not null,c_clob clob not null,c_blob blob not null,c_date date) ;
+
+Succeed.
+
+SQL> create index idx_join_base_001_1 on t_join_base_001(c_int);
+
+Succeed.
+
+SQL> create index idx_join_base_001_2 on t_join_base_001(c_int,c_vchar);
+
+Succeed.
+
+SQL> create index idx_join_base_001_3 on t_join_base_001(c_int,c_vchar,c_date);
+
+Succeed.
+
+SQL> create index idx_join_base_101_1 on t_join_base_101(c_int);
+
+Succeed.
+
+SQL> create index idx_join_base_101_2 on t_join_base_101(c_int,c_vchar);
+
+Succeed.
+
+SQL> create index idx_join_base_101_3 on t_join_base_101(c_int,c_vchar,c_date);
+
+Succeed.
+
+SQL> create index idx_join_base_102_1 on t_join_base_102(c_int);
+
+Succeed.
+
+SQL> create index idx_join_base_102_2 on t_join_base_102(c_int,c_vchar);
+
+Succeed.
+
+SQL> create index idx_join_base_102_3 on t_join_base_102(c_int,c_vchar,c_date);
+
+Succeed.
+
+SQL> explain plan for select count(*) from (select * from t_join_base_001) t1 inner join (select * from (select * from t_join_base_101)) t2 on t1.c_vchar=t2.c_vchar inner join (select * from t_join_base_102) t3 on t1.c_int<>t2.c_int and t1.c_int is not null where t1.c_vchar not in (select c_vchar from (select * from t_join_base_102) t4 where t1.c_int=t4.c_int or t2.c_int=t4.c_int );
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+| Id  | Description                             | Owner | Name                | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                        |       |                     |      |      |       |        |
+| 1   |   AGGR                                  |       |                     |      |      |       |        |
+| 2   |     NESTED LOOPS                        |       |                     |      |      |       |        |
+| 3   |       HASH JOIN(L)                      |       |                     |      |      |       |        |
+| 4   |         KERNEL FILTER                   |       |                     |      |      |       |        |
+| 5   |           SUBSELECT                     |       | T1                  |      |      |       |        |
+| 6   |             TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_001     |      |      |       |        |
+| 7   |               INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_001_2 |      |      |       |        |
+| 8   |           TABLE ACCESS BY INDEX ONLY    | SYS   | T_JOIN_BASE_102     |      |      |       |        |
+| 9   |             INDEX RANGE SCAN            | SYS   | IDX_JOIN_BASE_102_2 |      |      |       |        |
+| 10  |         KERNEL FILTER                   |       |                     |      |      |       |        |
+| 11  |           SUBSELECT                     |       | T2                  |      |      |       |        |
+| 12  |             TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_101     |      |      |       |        |
+| 13  |               INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_101_2 |      |      |       |        |
+| 14  |           TABLE ACCESS BY INDEX ONLY    | SYS   | T_JOIN_BASE_102     |      |      |       |        |
+| 15  |             INDEX RANGE SCAN            | SYS   | IDX_JOIN_BASE_102_2 |      |      |       |        |
+| 16  |       KERNEL FILTER                     |       |                     |      |      |       |        |
+| 17  |         SUBSELECT                       |       | T3                  |      |      |       |        |
+| 18  |           TABLE ACCESS BY INDEX ONLY    | SYS   | T_JOIN_BASE_102     |      |      |       |        |
+| 19  |             INDEX FAST FULL SCAN        | SYS   | IDX_JOIN_BASE_102_1 |      |      |       |        |
+| 20  |         TABLE ACCESS BY INDEX ONLY      | SYS   | T_JOIN_BASE_102     |      |      |       |        |
+| 21  |           INDEX RANGE SCAN              | SYS   | IDX_JOIN_BASE_102_2 |      |      |       |        |
+--------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - access: T1.C_VCHAR = T2.C_VCHAR                          
+       filter: NOT EXISTS(SELECT 1 FROM T_JOIN_BASE_102 WHERE T1.C_VCHAR = T_JOIN_BASE_102.C_VCHAR AND 
+               T1.C_INT = T_JOIN_BASE_102.C_INT OR T2.C_INT = T_JOIN_BASE_102.C_INT) AND T1.C_INT != T2.C_INT
+   6 - filter: T_JOIN_BASE_001.C_INT IS NOT NULL                
+   9 - access: T1.C_VCHAR = T_JOIN_BASE_102.C_VCHAR AND T1.C_INT = T_JOIN_BASE_102.C_INT OR T2.C_INT = T_JOIN_BASE_102.C_INT
+   15 - access: T1.C_VCHAR = T_JOIN_BASE_102.C_VCHAR AND T1.C_INT = T_JOIN_BASE_102.C_INT OR T2.C_INT = T_JOIN_BASE_102.C_INT
+   21 - access: T1.C_VCHAR = T_JOIN_BASE_102.C_VCHAR AND T1.C_INT = T_JOIN_BASE_102.C_INT OR T2.C_INT = T_JOIN_BASE_102.C_INT
+
+35 rows fetched.
+
+SQL> 
+SQL> explain SELECT * FROM t_join_base_001 T1 WHERE (t1.id,t1.c_int) not in(select id, c_int from t_join_base_001) AND T1.c_vchar LIKE '%ANBCD' AND t1.id < 11 and t1.id > 11;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name               | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                    |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |                    |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_JOIN_BASE_001 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_JOIN_BASE_001    |      |      |       |        |
+--------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: T1.C_VCHAR LIKE '%ANBCD' AND T1.ID > 11 AND T1.ID < 11 AND (T1.ID,T1.C_INT) NOT IN((SELECT 
+               ID, C_INT FROM T_JOIN_BASE_001))                 
+
+12 rows fetched.
+
+SQL> alter system set _OPTIM_PRED_REORDER=false;
+
+Succeed.
+
+SQL> explain SELECT * FROM t_join_base_001 T1 WHERE (t1.id,t1.c_int) not in(select id, c_int from t_join_base_001) AND T1.c_vchar LIKE '%ANBCD' AND t1.id < 11 and t1.id > 11   ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+| Id  | Description            | Owner | Name               | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT       |       |                    |      |      |       |        |
+| 1   |   KERNEL FILTER        |       |                    |      |      |       |        |
+| 2   |     TABLE ACCESS FULL  | SYS   | T_JOIN_BASE_001 T1 |      |      |       |        |
+| 3   |     TABLE ACCESS FULL  | SYS   | T_JOIN_BASE_001    |      |      |       |        |
+--------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: (T1.ID,T1.C_INT) NOT IN((SELECT ID, C_INT FROM T_JOIN_BASE_001)) AND T1.ID < 11 AND T1.C_VCHAR LIKE '%ANBCD' AND 
+               T1.ID > 11                                       
+
+12 rows fetched.
+
+SQL> alter system set _OPTIM_PRED_REORDER=true;
+
+Succeed.
+
+SQL> 
+SQL> explain SELECT
+  2   REF_0.id AS C0,
+  3   REF_0.c_int AS C1,
+  4   REF_0.c_vchar AS C2
+  5 FROM
+  6   t_join_base_001 AS REF_0
+  7 WHERE (SELECT ID FROM t_join_base_101 LIMIT 1 OFFSET 29)
+  8    > ANY(
+  9   SELECT
+ 10       REF_2.ID AS C1
+ 11     FROM
+ 12       (t_join_base_102 AS REF_1)
+ 13         INNER JOIN (t_join_base_001 AS REF_2)
+ 14         ON (REF_1.c_vchar LIKE '%'));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+| Id  | Description                         | Owner | Name                  | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                    |       |                       |      |      |       |        |
+| 1   |   KERNEL FILTER                     |       |                       |      |      |       |        |
+| 2   |     TABLE ACCESS FULL               | SYS   | T_JOIN_BASE_001 REF_0 |      |      |       |        |
+| 3   |     QUERY LIMIT                     |       |                       |      |      |       |        |
+| 4   |       TABLE ACCESS FULL             | SYS   | T_JOIN_BASE_101       |      |      |       |        |
+| 5   |     AGGR                            |       |                       |      |      |       |        |
+| 6   |       NESTED LOOPS                  |       |                       |      |      |       |        |
+| 7   |         SUBSELECT                   |       | REF_2                 |      |      |       |        |
+| 8   |           AGGR                      |       |                       |      |      |       |        |
+| 9   |             TABLE ACCESS FULL       | SYS   | T_JOIN_BASE_001 REF_2 |      |      |       |        |
+| 10  |         TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_102 REF_1 |      |      |       |        |
+| 11  |           INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_102_2   |      |      |       |        |
+------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: (SELECT ID FROM T_JOIN_BASE_101 LIMIT 1 OFFSET 29) > (SELECT MIN(REF_2.MIN(REF_2.ID)) AS C1 FROM 
+               T_JOIN_BASE_102 REF_1 INNER JOIN (SELECT MIN(REF_2.ID) FROM T_JOIN_BASE_001 REF_2) REF_2 WHERE REF_1.C_VCHAR LIKE '%')
+   10 - filter: REF_1.C_VCHAR LIKE '%'                          
+
+21 rows fetched.
+
+SQL> alter system set  _OPTIM_ANY_TRANSFORM = false;
+
+Succeed.
+
+SQL> explain SELECT
+  2   REF_0.id AS C0,
+  3   REF_0.c_int AS C1,
+  4   REF_0.c_vchar AS C2
+  5 FROM
+  6   t_join_base_001 AS REF_0
+  7 WHERE (SELECT ID FROM t_join_base_101 LIMIT 1 OFFSET 29)
+  8    > ANY(
+  9   SELECT
+ 10       REF_2.ID AS C1
+ 11     FROM
+ 12       (t_join_base_102 AS REF_1)
+ 13         INNER JOIN (t_join_base_001 AS REF_2)
+ 14         ON (REF_1.c_vchar LIKE '%'))   ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                  | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                       |      |      |       |        |
+| 1   |   KERNEL FILTER                   |       |                       |      |      |       |        |
+| 2   |     TABLE ACCESS FULL             | SYS   | T_JOIN_BASE_001 REF_0 |      |      |       |        |
+| 3   |     QUERY LIMIT                   |       |                       |      |      |       |        |
+| 4   |       TABLE ACCESS FULL           | SYS   | T_JOIN_BASE_101       |      |      |       |        |
+| 5   |     NESTED LOOPS                  |       |                       |      |      |       |        |
+| 6   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_102 REF_1 |      |      |       |        |
+| 7   |         INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_102_2   |      |      |       |        |
+| 8   |       TABLE ACCESS FULL           | SYS   | T_JOIN_BASE_001 REF_2 |      |      |       |        |
+----------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: (SELECT ID FROM T_JOIN_BASE_101 LIMIT 1 OFFSET 29) > ANY((SELECT C1 FROM T_JOIN_BASE_102 REF_1 INNER JOIN 
+               T_JOIN_BASE_001 REF_2 WHERE REF_1.C_VCHAR LIKE '%'))
+   6 - filter: REF_1.C_VCHAR LIKE '%'                           
+
+18 rows fetched.
+
+SQL> alter system set  _OPTIM_ANY_TRANSFORM = true;
+
+Succeed.
+
+SQL> 
+SQL> explain SELECT
+  2   REF_0.id AS C0,
+  3   REF_0.c_int AS C1,
+  4   REF_0.c_vchar AS C2
+  5 FROM
+  6   t_join_base_001 AS REF_0
+  7 WHERE (SELECT ID FROM t_join_base_101 LIMIT 1 OFFSET 29)
+  8    > all(
+  9   SELECT
+ 10       REF_2.ID AS C1
+ 11     FROM
+ 12       (t_join_base_102 AS REF_1)
+ 13         INNER JOIN (t_join_base_001 AS REF_2)
+ 14         ON (REF_1.c_vchar LIKE '%'));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+| Id  | Description                         | Owner | Name                  | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                    |       |                       |      |      |       |        |
+| 1   |   KERNEL FILTER                     |       |                       |      |      |       |        |
+| 2   |     TABLE ACCESS FULL               | SYS   | T_JOIN_BASE_001 REF_0 |      |      |       |        |
+| 3   |     QUERY LIMIT                     |       |                       |      |      |       |        |
+| 4   |       TABLE ACCESS FULL             | SYS   | T_JOIN_BASE_101       |      |      |       |        |
+| 5   |     AGGR                            |       |                       |      |      |       |        |
+| 6   |       NESTED LOOPS                  |       |                       |      |      |       |        |
+| 7   |         SUBSELECT                   |       | REF_2                 |      |      |       |        |
+| 8   |           AGGR                      |       |                       |      |      |       |        |
+| 9   |             TABLE ACCESS FULL       | SYS   | T_JOIN_BASE_001 REF_2 |      |      |       |        |
+| 10  |         TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_102 REF_1 |      |      |       |        |
+| 11  |           INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_102_2   |      |      |       |        |
+------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: (SELECT ID FROM T_JOIN_BASE_101 LIMIT 1 OFFSET 29) > ALL((SELECT MAX(REF_2.MAX(REF_2.ID)) AS C1 FROM 
+               T_JOIN_BASE_102 REF_1 INNER JOIN (SELECT MAX(REF_2.ID) FROM T_JOIN_BASE_001 REF_2) REF_2 WHERE REF_1.C_VCHAR LIKE '%'))
+   10 - filter: REF_1.C_VCHAR LIKE '%'                          
+
+21 rows fetched.
+
+SQL> alter system set  _OPTIM_ALL_TRANSFORM = false;
+
+Succeed.
+
+SQL> explain SELECT
+  2   REF_0.id AS C0,
+  3   REF_0.c_int AS C1,
+  4   REF_0.c_vchar AS C2
+  5 FROM
+  6   t_join_base_001 AS REF_0
+  7 WHERE (SELECT ID FROM t_join_base_101 LIMIT 1 OFFSET 29)
+  8    > all(
+  9   SELECT
+ 10       REF_2.ID AS C1
+ 11     FROM
+ 12       (t_join_base_102 AS REF_1)
+ 13         INNER JOIN (t_join_base_001 AS REF_2)
+ 14         ON (REF_1.c_vchar LIKE '%'))   ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
+| Id  | Description                       | Owner | Name                  | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                  |       |                       |      |      |       |        |
+| 1   |   KERNEL FILTER                   |       |                       |      |      |       |        |
+| 2   |     TABLE ACCESS FULL             | SYS   | T_JOIN_BASE_001 REF_0 |      |      |       |        |
+| 3   |     QUERY LIMIT                   |       |                       |      |      |       |        |
+| 4   |       TABLE ACCESS FULL           | SYS   | T_JOIN_BASE_101       |      |      |       |        |
+| 5   |     NESTED LOOPS                  |       |                       |      |      |       |        |
+| 6   |       TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_102 REF_1 |      |      |       |        |
+| 7   |         INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_102_2   |      |      |       |        |
+| 8   |       TABLE ACCESS FULL           | SYS   | T_JOIN_BASE_001 REF_2 |      |      |       |        |
+----------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: (SELECT ID FROM T_JOIN_BASE_101 LIMIT 1 OFFSET 29) > ALL((SELECT C1 FROM T_JOIN_BASE_102 REF_1 INNER JOIN 
+               T_JOIN_BASE_001 REF_2 WHERE REF_1.C_VCHAR LIKE '%'))
+   6 - filter: REF_1.C_VCHAR LIKE '%'                           
+
+18 rows fetched.
+
+SQL> alter system set  _OPTIM_ALL_TRANSFORM = true;		
+
+Succeed.
+
+SQL> 
+SQL> insert into t_join_base_001 (id, c_int, c_vchar, c_clob, c_blob) values(1, 100, 'a', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> insert into t_join_base_001 (id, c_int, c_vchar, c_clob, c_blob) values(2, 100, 'b', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> insert into t_join_base_001 (id, c_int, c_vchar, c_clob, c_blob) values(3, 100, 'c', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> insert into t_join_base_101 (id, c_int, c_vchar, c_clob, c_blob) values(1, 100, 'd', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> insert into t_join_base_101 (id, c_int, c_vchar, c_clob, c_blob) values(2, 100, '3', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> insert into t_join_base_101 (id, c_int, c_vchar, c_clob, c_blob) values(3, 100, 't', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> insert into t_join_base_102 (id, c_int, c_vchar, c_clob, c_blob) values(1, 100, 'p', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> insert into t_join_base_102 (id, c_int, c_vchar, c_clob, c_blob) values(2, 100, 'y', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> insert into t_join_base_102 (id, c_int, c_vchar, c_clob, c_blob) values(3, 100, 'z', 'abc' , 'abc' );
+
+1 rows affected.
+
+SQL> alter system set  _OPTIM_ANY_TRANSFORM = FALSE;	
+
+Succeed.
+
+SQL> EXPLAIN SELECT * FROM t_join_base_001 T1 WHERE T1.ID = ANY(SELECT T2.ID FROM t_join_base_001 T2) ORDER BY 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name               | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                    |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY      |       |                    |      |      |       |        |
+| 2   |     HASH JOIN SEMI(L)      |       |                    |      |      |       |        |
+| 3   |       SUBSELECT            |       |                    |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T_JOIN_BASE_001 T2 |      |      |       |        |
+| 5   |       TABLE ACCESS FULL    | SYS   | T_JOIN_BASE_001 T1 |      |      |       |        |
+------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: ID = T1.ID                                       
+
+13 rows fetched.
+
+SQL> SELECT * FROM t_join_base_001 T1 WHERE T1.ID = ANY(SELECT T2.ID FROM t_join_base_001 T2) ORDER BY 1;
+
+ID           C_INT        C_VCHAR                                                          C_CLOB                                                           C_BLOB                                                           C_DATE                
+------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------
+1            100          a                                                                abc                                                              0ABC                                                                                   
+2            100          b                                                                abc                                                              0ABC                                                                                   
+3            100          c                                                                abc                                                              0ABC                                                                                   
+
+3 rows fetched.
+
+SQL> alter system set  _OPTIM_ANY_TRANSFORM = TRUE;	
+
+Succeed.
+
+SQL> explain select ref_0.id from t_join_base_001 as ref_0 where EXISTS (
+  2           select  
+  3               ref_7.id as c3
+  4             from 
+  5               t_join_base_101 as ref_6
+  6                 right join t_join_base_001 as ref_7
+  7                 on ((ref_7.c_int is not NULL) )
+  8             where (
+  9 			     EXISTS ( select  
+ 10                             ref_8.id as c0, 
+ 11                             ref_6.id as c1
+ 12                           from 
+ 13                             t_join_base_102 as ref_8
+ 14                           where (ref_7.c_vchar is NULL))
+ 15 						) 
+ 16                 or (ref_0.c_int is not NULL));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name                  | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |                       |      |      |       |        |
+| 1   |   KERNEL FILTER            |       |                       |      |      |       |        |
+| 2   |     TABLE ACCESS FULL      | SYS   | T_JOIN_BASE_001 REF_0 |      |      |       |        |
+| 3   |     FILTER                 |       |                       |      |      |       |        |
+| 4   |       NESTED LOOPS OUTER   |       |                       |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_JOIN_BASE_001 REF_7 |      |      |       |        |
+| 6   |         TABLE ACCESS FULL  | SYS   | T_JOIN_BASE_101 REF_6 |      |      |       |        |
+| 7   |     TABLE ACCESS FULL      | SYS   | T_JOIN_BASE_102 REF_8 |      |      |       |        |
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: EXISTS(SELECT 1 FROM T_JOIN_BASE_001 REF_7 LEFT JOIN T_JOIN_BASE_101 REF_6 ON REF_7.C_INT IS NOT NULL)
+   3 - filter: EXISTS(SELECT 1 FROM T_JOIN_BASE_102 REF_8 WHERE REF_7.C_VCHAR IS NULL) OR REF_0.C_INT IS NOT NULL
+   6 - filter: REF_7.C_INT IS NOT NULL                          
+   7 - filter: REF_7.C_VCHAR IS NULL                            
+
+18 rows fetched.
+
+SQL> 
+SQL> select ref_0.id from t_join_base_001 as ref_0 where EXISTS (
+  2           select  
+  3               ref_7.id as c3
+  4             from 
+  5               t_join_base_101 as ref_6
+  6                 right join t_join_base_001 as ref_7
+  7                 on ((ref_7.c_int is not NULL) )
+  8             where (
+  9 			     EXISTS ( select  
+ 10                             ref_8.id as c0, 
+ 11                             ref_6.id as c1
+ 12                           from 
+ 13                             t_join_base_102 as ref_8
+ 14                           where (ref_7.c_vchar is NULL))
+ 15 						) 
+ 16                 or (ref_0.c_int is not NULL));
+
+ID          
+------------
+1           
+2           
+3           
+
+3 rows fetched.
+
+SQL> 
+SQL> explain select /*+rule*/ 
+  2   subq_0.c2 as c0, 
+  3   subq_0.c0 as c3,  
+  4   subq_0.c0 as c5
+  5 from 
+  6   (select  
+  7         6 as c0, 
+  8         ref_2.c_int as c2
+  9       from 
+ 10         (t_join_base_001 as ref_0)
+ 11           inner join ((
+ 12 		  ((t_join_base_001 as ref_1)
+ 13                 left join (t_join_base_001 as ref_2)
+ 14                 on (true))
+ 15 			  )
+ 16             right join (t_join_base_001 as ref_9)
+ 17             on (ref_2.c_int = ref_9.c_int ))
+ 18           on ((true))
+ 19 				
+ 20       where 
+ 21 	    (EXISTS 
+ 22 			(
+ 23 				select  
+ 24 					ref_1.id as c0
+ 25 				from 
+ 26 					(t_join_base_101 as ref_17)
+ 27 					inner join (t_join_base_001 as ref_18)
+ 28 					on ((ref_1.c_int is not NULL))
+ 29 				where ((true) or (ref_9.c_int is not NULL) )			
+ 30 			)				
+ 31 		)
+ 32          ) as subq_0;		
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Description                             | Owner | Name                   | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                        |       |                        |      |      |       |        |
+| 1   |   SUBSELECT                             |       | SUBQ_0                 |      |      |       |        |
+| 2   |     NESTED LOOPS                        |       |                        |      |      |       |        |
+| 3   |       NESTED LOOPS                      |       |                        |      |      |       |        |
+| 4   |         TABLE ACCESS BY INDEX ONLY      | SYS   | T_JOIN_BASE_001 REF_9  |      |      |       |        |
+| 5   |           INDEX FAST FULL SCAN          | SYS   | IDX_JOIN_BASE_001_1    |      |      |       |        |
+| 6   |         TABLE ACCESS BY INDEX ONLY      | SYS   | T_JOIN_BASE_001 REF_2  |      |      |       |        |
+| 7   |           INDEX RANGE SCAN              | SYS   | IDX_JOIN_BASE_001_1    |      |      |       |        |
+| 8   |       HASH JOIN SEMI(R)                 |       |                        |      |      |       |        |
+| 9   |         NESTED LOOPS                    |       |                        |      |      |       |        |
+| 10  |           TABLE ACCESS BY INDEX ONLY    | SYS   | T_JOIN_BASE_001 REF_0  |      |      |       |        |
+| 11  |             INDEX FAST FULL SCAN        | SYS   | IDX_JOIN_BASE_001_1    |      |      |       |        |
+| 12  |           TABLE ACCESS FULL             | SYS   | T_JOIN_BASE_001 REF_1  |      |      |       |        |
+| 13  |         SUBSELECT                       |       |                        |      |      |       |        |
+| 14  |           NESTED LOOPS                  |       |                        |      |      |       |        |
+| 15  |             TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_101 REF_17 |      |      |       |        |
+| 16  |               INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_101_1    |      |      |       |        |
+| 17  |             TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_001 REF_18 |      |      |       |        |
+| 18  |               INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_001_1    |      |      |       |        |
+-----------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   7 - access: REF_2.C_INT = REF_9.C_INT                        
+   8 - access: NA = NA                                          
+   12 - filter: REF_1.C_INT IS NOT NULL                         
+
+28 rows fetched.
+
+SQL> 
+SQL> select /*+rule*/ 
+  2   subq_0.c2 as c0, 
+  3   subq_0.c0 as c3,  
+  4   subq_0.c0 as c5
+  5 from 
+  6   (select  
+  7         6 as c0, 
+  8         ref_2.c_int as c2
+  9       from 
+ 10         (t_join_base_001 as ref_0)
+ 11           inner join ((
+ 12 		  ((t_join_base_001 as ref_1)
+ 13                 left join (t_join_base_001 as ref_2)
+ 14                 on (true))
+ 15 			  )
+ 16             right join (t_join_base_001 as ref_9)
+ 17             on (ref_2.c_int = ref_9.c_int ))
+ 18           on ((true))
+ 19 				
+ 20       where 
+ 21 	    (EXISTS 
+ 22 			(
+ 23 				select  
+ 24 					ref_1.id as c0
+ 25 				from 
+ 26 					(t_join_base_101 as ref_17)
+ 27 					inner join (t_join_base_001 as ref_18)
+ 28 					on ((ref_1.c_int is not NULL))
+ 29 				where ((true) or (ref_9.c_int is not NULL) )			
+ 30 			)				
+ 31 		)
+ 32 		limit 5
+ 33          ) as subq_0;
+
+C0           C3           C5          
+------------ ------------ ------------
+100          6            6           
+100          6            6           
+100          6            6           
+100          6            6           
+100          6            6           
+
+5 rows fetched.
+
+SQL> 
+SQL> 
+SQL> explain SELECT
+  2   1
+  3 FROM
+  4   (SELECT DISTINCT
+  5         REF_0.c_vchar AS C4,
+  6         DECODE(
+  7           REF_0.c_vchar,
+  8           REF_0.c_int,
+  9           REF_0.c_vchar,
+ 10           REF_0.c_date) AS C5
+ 11       FROM
+ 12         t_join_base_001 AS REF_0
+ 13       WHERE (EXISTS (
+ 14           SELECT
+ 15               REF_1.c_vchar AS C0,
+ 16               REF_1.c_vchar AS C1
+ 17             FROM
+ 18               t_join_base_001 AS REF_1
+ 19             ))
+ 20         OR ((EXISTS (
+ 21             SELECT
+ 22                 REF_0.c_vchar AS C0,
+ 23 				REF_2.c_vchar AS C1
+ 24               FROM
+ 25                 t_join_base_001 AS REF_2)))) AS SUBQ_0
+ 26 WHERE DECODE(
+ 27     SUBQ_0.C4 ,
+ 28     SUBQ_0.C5 ,
+ 29     'll,Uz<1g}}Nkf~uy,;JOv0BjPNSsn8-7xRLR4OG4.ci o?M-:1',
+SQL>     SUBQ_0.C4) <> SUBQ_0.C4
+  2 LIMIT 108;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+| Id  | Description                           | Owner | Name                  | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                      |       |                       |      |      |       |        |
+| 1   |   QUERY LIMIT                         |       |                       |      |      |       |        |
+| 2   |     SUBSELECT                         |       | SUBQ_0                |      |      |       |        |
+| 3   |       HASH DISTINCT                   |       |                       |      |      |       |        |
+| 4   |         KERNEL FILTER                 |       |                       |      |      |       |        |
+| 5   |           TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_001 REF_0 |      |      |       |        |
+| 6   |             INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_001_3   |      |      |       |        |
+| 7   |           TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_001 REF_1 |      |      |       |        |
+| 8   |             INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_001_2   |      |      |       |        |
+| 9   |           TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_001 REF_2 |      |      |       |        |
+| 10  |             INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_001_2   |      |      |       |        |
+--------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - filter: DECODE(REF_0.C_VCHAR, DECODE(REF_0.C_VCHAR, REF_0.C_INT, REF_0.C_VCHAR, REF_0.C_DATE), 'll,Uz<1g}}Nkf~uy,;JOv0BjPNSsn8-7xRLR4OG4.ci o?M-:1', 
+               REF_0.C_VCHAR) != REF_0.C_VCHAR AND EXISTS(SELECT 1 FROM T_JOIN_BASE_001 REF_1) OR EXISTS(SELECT 1 FROM 
+               T_JOIN_BASE_001 REF_2)                           
+
+20 rows fetched.
+
+SQL> 
+SQL> alter system set _OPTIM_OR_EXPANSION = false;
+
+Succeed.
+
+SQL> 
+SQL> explain SELECT
+  2   1
+  3 FROM
+  4   (SELECT DISTINCT
+  5         REF_0.c_vchar AS C4,
+  6         DECODE(
+  7           REF_0.c_vchar,
+  8           REF_0.c_int,
+  9           REF_0.c_vchar,
+ 10           REF_0.c_date) AS C5
+ 11       FROM
+ 12         t_join_base_001 AS REF_0
+ 13       WHERE (EXISTS (
+ 14           SELECT
+ 15               REF_1.c_vchar AS C0,
+ 16               REF_1.c_vchar AS C1
+ 17             FROM
+ 18               t_join_base_001 AS REF_1
+ 19             ))
+ 20         OR ((EXISTS (
+ 21             SELECT
+ 22                 REF_0.c_vchar AS C0,
+ 23 				REF_2.c_vchar AS C1
+ 24               FROM
+ 25                 t_join_base_001 AS REF_2)))) AS SUBQ_0
+ 26 WHERE DECODE(
+ 27     SUBQ_0.C4 ,
+ 28     SUBQ_0.C5 ,
+ 29     'll,Uz<1g}}Nkf~uy,;JOv0BjPNSsn8-7xRLR4OG4.ci o?M-:1',
+SQL>     SUBQ_0.C4) <> SUBQ_0.C4
+  2 LIMIT 108    ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+| Id  | Description                           | Owner | Name                  | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                      |       |                       |      |      |       |        |
+| 1   |   QUERY LIMIT                         |       |                       |      |      |       |        |
+| 2   |     SUBSELECT                         |       | SUBQ_0                |      |      |       |        |
+| 3   |       HASH DISTINCT                   |       |                       |      |      |       |        |
+| 4   |         KERNEL FILTER                 |       |                       |      |      |       |        |
+| 5   |           TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_001 REF_0 |      |      |       |        |
+| 6   |             INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_001_3   |      |      |       |        |
+| 7   |           TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_001 REF_1 |      |      |       |        |
+| 8   |             INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_001_2   |      |      |       |        |
+| 9   |           TABLE ACCESS BY INDEX ONLY  | SYS   | T_JOIN_BASE_001 REF_2 |      |      |       |        |
+| 10  |             INDEX FAST FULL SCAN      | SYS   | IDX_JOIN_BASE_001_2   |      |      |       |        |
+--------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - filter: DECODE(REF_0.C_VCHAR, DECODE(REF_0.C_VCHAR, REF_0.C_INT, REF_0.C_VCHAR, REF_0.C_DATE), 'll,Uz<1g}}Nkf~uy,;JOv0BjPNSsn8-7xRLR4OG4.ci o?M-:1', 
+               REF_0.C_VCHAR) != REF_0.C_VCHAR AND EXISTS(SELECT 1 FROM T_JOIN_BASE_001 REF_1) OR EXISTS(SELECT 1 FROM 
+               T_JOIN_BASE_001 REF_2)                           
+
+20 rows fetched.
+
+SQL> 
+SQL> alter system set _OPTIM_OR_EXPANSION = true;
+
+Succeed.
+
+SQL> 
+SQL> drop table t_join_base_001;
+
+Succeed.
+
+SQL> drop table t_join_base_101;
+
+Succeed.
+
+SQL> drop table t_join_base_102;
+
+Succeed.
+
+SQL> --20200618
+SQL> drop table if exists user_history_temp;
+
+Succeed.
+
+SQL> drop index if exists idx_user_history_temp on user_history_temp;
+
+CT-00843, The table or view SYS.USER_HISTORY_TEMP does not exist.
+SQL> create table user_history_temp (USER# int NOT NULL,PASSWORD varchar(512),PASSWORD_DATE DATE);
+
+Succeed.
+
+SQL> create index idx_user_history_temp on user_history_temp (USER#, PASSWORD_DATE);
+
+Succeed.
+
+SQL> insert into user_history_temp values (0,'dsabfdsf',to_date(to_char('2000-01-01'),'yyyy-mm-dd'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select
+  2   subq_0.PASSWORD as c1
+  3 from user_history_temp  as subq_0
+  4 where EXISTS (
+  5   select
+  6       ref_7.PASSWORD as c3
+  7     from
+  8       user_history_temp as ref_7
+  9     where (case when subq_0.PASSWORD is NULL then (select PASSWORD from user_history_temp limit 1 offset 5)
+ 10              else (select PASSWORD from user_history_temp limit 1 offset 5)
+ 11              end is NULL)
+ 12       or ((select PASSWORD from user_history_temp limit 1 offset 4) is not NULL));
+
+C1
+----------------------------------------------------------------
+dsabfdsf
+
+1 rows fetched.
+
+SQL> select
+  2   subq_0.c0 as c0,
+  3   subq_0.c1 as c1,
+  4   (select USER# from user_history_temp limit 1 offset 19)
+  5      as c2,
+  6   (select PASSWORD from user_history_temp limit 1 offset 2)
+  7      as c3,
+  8
+  9     max(
+ 10       cast(cast(null as BINARY_UINT32) as BINARY_UINT32)) over (partition by subq_0.c3 order by subq_0.c0) as c4
+ 11 from
+ 12   (select
+ 13         98 as c0,
+ 14         ref_0.PASSWORD as c1,
+ 15         ref_1.USER# as c2,
+ 16         ref_2.PASSWORD as c3,
+ 17
+ 18           stddev(
+ 19             cast(cast(null as BINARY_DOUBLE) as BINARY_DOUBLE)) over (partition by ref_0.USER# order by ref_2.PASSWORD) as c4
+ 20       from
+ 21         (user_history_temp as ref_0)
+ 22           inner join ((((user_history_temp as ref_1)
+ 23                 inner join (user_history_temp as ref_2)
+ 24                 on (((false)
+ 25                       and (((true)
+ 26                           or ((false)
+ 27                             and (ref_1.USER# is not NULL)))
+ 28                         and (false)))
+ 29                     or ((((((ref_2.PASSWORD is not NULL)
+ 30                               and (true))
+ 31                             or ((true)
+ 32                               and (false)))
+ 33                           or (((true)
+ 34                               or ((ref_1.PASSWORD is not NULL)
+ 35                                 and ((((true)
+ 36                                       or (false))
+ 37                                     or ((EXISTS (
+ 38                                         select
+ 39                                             (select PASSWORD from user_history_temp limit 1 offset 4)
+ 40                                                as c0,
+ 41                                             ref_1.PASSWORD as c1,
+ 42                                             ref_2.USER# as c2,
+ 43                                             ref_3.PASSWORD as c3,
+ 44                                             ref_2.PASSWORD as c4,
+ 45                                             ref_1.PASSWORD as c5,
+ 46                                             ref_1.PASSWORD as c6,
+ 47                                             ref_1.USER# as c7,
+ 48                                             (select USER# from user_history_temp limit 1 offset 5)
+ 49                                                as c8,
+ 50                                             ref_3.PASSWORD as c9,
+ 51                                             ref_2.PASSWORD as c10
+ 52                                           from
+ 53                                             user_history_temp as ref_3
+ 54                                           where false))
+ 55                                       or (true)))
+ 56                                   or (false))))
+ 57                             and ((EXISTS (
+ 58                                 select
+ 59                                     ref_2.PASSWORD as c0,
+ 60                                     ref_4.STMTID as c1,
+ 61                                     (select USER# from user_history_temp limit 1 offset 6)
+ 62                                        as c2,
+ 63                                     56 as c3,
+ 64                                     ref_1.USER# as c4,
+ 65                                     ref_1.USER# as c5,
+ 66                                     ref_2.USER# as c6,
+ 67                                     ref_4.STMTID as c7,
+ 68                                     ref_4.STMTID as c8,
+ 69                                     ref_2.PASSWORD as c9,
+ 70                                     ref_2.PASSWORD as c10,
+ 71                                     ref_1.PASSWORD as c11,
+ 72                                     ref_2.PASSWORD as c12,
+ 73                                     ref_2.USER# as c13,
+ 74                                     ref_4.SESSIONID as c14,
+ 75                                     ref_2.PASSWORD as c15,
+ 76                                     ref_1.USER# as c16
+ 77                                   from
+ 78                                     SYS.SYS_AUDIT as ref_4
+ 79                                   where (select PASSWORD from user_history_temp limit 1 offset 97)
+ 80                                        is NULL
+ 81                                   limit 132))
+ 82                               and (ref_1.USER# is not NULL))))
+ 83                         or (true))
+ 84                       or (ref_2.PASSWORD is NULL))))
+ 85               left join (user_history_temp as ref_5)
+ 86               on (true))
+ 87             inner join (user_history_temp as ref_6)
+ 88             on (true))
+ 89           on (ref_0.PASSWORD = ref_5.PASSWORD )
+ 90       where ref_2.USER# is not NULL
+ 91       limit 76) as subq_0
+ 92 where EXISTS (
+ 93   select
+ 94       ref_7.PASSWORD as c0,
+ 95       ref_7.PASSWORD as c1,
+ 96       ref_7.PASSWORD as c2,
+ 97       ref_7.PASSWORD as c3
+ 98     from
+ 99       user_history_temp as ref_7
+100     where (case when subq_0.c1 is NULL then (select PASSWORD from user_history_temp limit 1 offset 5)
+101              else (select PASSWORD from user_history_temp limit 1 offset 5)
+102              end
+103            is NULL)
+104       or ((select PASSWORD from user_history_temp limit 1 offset 4)
+105            is not NULL))
+106 limit 71;
+
+C0           C1                                                               C2           C3                                                               C4
+------------ ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------
+98           dsabfdsf
+
+1 rows fetched.
+
+SQL> drop table user_history_temp;
+
+Succeed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS "SALARIES";
+
+Succeed.
+
+SQL> CREATE TABLE "SALARIES"
+  2 (
+  3   "EMP_NO" BINARY_INTEGER NOT NULL,
+  4   "SALARY" BINARY_INTEGER NOT NULL,
+  5   "FROM_DATE" DATE NOT NULL,
+  6   "TO_DATE" DATE NOT NULL
+  7 );
+
+Succeed.
+
+SQL> INSERT INTO "SALARIES" values(10001,5000,'1986-06-26 00:00:00','9999-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> SELECT
+  2    1
+  3    FROM
+  4       SALARIES AS SUBQ_0
+  5    WHERE (SUBQ_0.EMP_NO, SUBQ_0.EMP_NO) not IN (
+  6       SELECT
+  7          SUBQ_0.EMP_NO AS C2,
+  8          SUBQ_0.EMP_NO AS C3
+  9          FROM
+ 10             SALARIES AS REF_3
+ 11          ORDER BY
+ 12             REF_3.TO_DATE);
+
+1
+------------
+
+0 rows fetched.
+
+SQL> DROP TABLE "SALARIES";
+
+Succeed.
+SQL>
+SQL> drop table if exists sub_in_cond_1;
+
+Succeed.
+
+SQL> drop table if exists sub_in_cond_2;
+
+Succeed.
+
+SQL> create table sub_in_cond_1(a int, b int , c varchar(10));
+
+Succeed.
+
+SQL> create table sub_in_cond_2(a int, b int , c varchar(10));
+
+Succeed.
+
+SQL> insert into sub_in_cond_1 values(1, 1, 'aa');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_1 values(2, null, 'bbb');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_1 values(3, 2, 'aaa');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_1 values(null, 5, 'b');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_1 values(5, 5, 'aa');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_2 values(1, 1, 'aa');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_2 values(2, null, 'bbb');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_2 values(3, 2, 'aaa');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_2 values(4, 1, 'b');
+
+1 rows affected.
+
+SQL> insert into sub_in_cond_2 values(null, 3, 'aa');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> select * from sub_in_cond_1 t where exists (select distinct b, count(a) from sub_in_cond_1 group  by b order by count(a));
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+2                         bbb
+3            2            aaa
+             5            b
+5            5            aa
+
+5 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists (select t.b from sub_in_cond_1 where t.b = 1 group  by t.b order by count(t.b));
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+
+1 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists (select t.b, count(t.a) from sub_in_cond_1 order by count(t.b));
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+2                         bbb
+3            2            aaa
+             5            b
+5            5            aa
+
+5 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists (select count(t.a) from sub_in_cond_1 having count(t.a) = 1 order by count(t.a))   ;
+
+A            B            C
+------------ ------------ ----------
+
+0 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists(select array[b] from sub_in_cond_1 t1 start with a = 1 connect by nocycle prior a = b order siblings by a);
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+2                         bbb
+3            2            aaa
+             5            b
+5            5            aa
+
+5 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists (select (select t1.b from sub_in_cond_2 where rownum < 1 ) from sub_in_cond_1 t1 LEFT join sub_in_cond_2 t2 on t1.a = t2.a order by (select t1.b from sub_in_cond_2 where rownum < 1 ));
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+2                         bbb
+3            2            aaa
+             5            b
+5            5            aa
+
+5 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists(select distinct a from sub_in_cond_1 t1 start with a = 1 connect by nocycle prior a = b order siblings by a);
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+2                         bbb
+3            2            aaa
+             5            b
+5            5            aa
+
+5 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists (select count(t.b), t.b, sum(a+t.b) from sub_in_cond_1 where t.b = 1 group  by t.b, a having count(t.b) = 1 and sum(t.b +10) > 0 order by count(t.b), count(a), count(t.b+1),count(t.b+a));
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+
+1 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists (select distinct count(t.b), t.b, sum(a+t.b) from sub_in_cond_1 where t.b = 1 group  by t.b, a having count(t.b) = 1 and sum(t.b +10) > 0 order by count(t.b));
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+
+1 rows fetched.
+
+SQL> select * from sub_in_cond_1 t where exists(select * from sub_in_cond_1 t1 left join sub_in_cond_2 t2 on  t1.a = t2.a
+  2 connect by prior t1.a = t2.b order by sys_connect_by_path(t1.a,'/'));
+
+A            B            C
+------------ ------------ ----------
+1            1            aa
+2                         bbb
+3            2            aaa
+             5            b
+5            5            aa
+
+5 rows fetched.
+
+SQL> select count(*) from sub_in_cond_2 t1 where (a,b) in (select t1.a,b  from sub_in_cond_1 t2 order by t1.a);
+
+COUNT(*)
+--------------------
+3
+
+1 rows fetched.
+
+SQL> select a from sub_in_cond_1 t where exists(
+  2     select distinct listagg(((select rownum rn from sub_in_cond_1 where rownum < 2 and t.a = 1))) within group(order by b) over(partition by b)
+  3     from sub_in_cond_1 t1
+  4     where rowid in (select rowid from sub_in_cond_1 where t.a = t1.a)
+  5     order by (select count(rowid) from sub_in_cond_1 where t.a = a)) group by a order by a;
+
+A
+------------
+1
+2
+3
+5
+
+4 rows fetched.
+
+SQL> SELECT
+  2   1
+  3 FROM
+  4   sub_in_cond_1 PIVOT(CORR(
+  5       CAST(NULL AS BINARY_INTEGER),
+  6       CAST(sub_in_cond_1.a AS BINARY_INTEGER)) AS AGGR_0
+  7      FOR (c)
+  8     IN (('王五') AS PEXPR_0))  REF_0
+  9 WHERE EXISTS (
+ 10   SELECT
+ 11       CAST('4863-1' AS INTERVAL YEAR(4) TO MONTH) AS C0
+ 12     FROM
+ 13       (SELECT
+ 14             REF_0.b AS C0
+ 15           FROM
+ 16             sub_in_cond_2 AS REF_1
+ 17         ) AS SUBQ_0
+ 18     WHERE NVL2(
+ 19         CAST(NULL AS DATE),
+ 20         CAST(19 AS BINARY_INTEGER),
+ 21         CAST(72 AS BINARY_INTEGER)) IS NULL
+ 22     START WITH EXISTS (
+ 23         SELECT
+ 24             SUBQ_0.C0 AS C6
+ 25           FROM
+ 26             sub_in_cond_2 AS REF_2
+ 27           WHERE (0.01 BETWEEN
+ 28               NULL AND
+ 29               REF_0.PEXPR_0_AGGR_0))
+ 30       CONNECT BY SUBQ_0.C0 LIKE '%');
+
+1
+------------
+
+0 rows fetched.
+
+SQL> drop table sub_in_cond_1;
+
+Succeed.
+
+SQL> drop table sub_in_cond_2;
+
+Succeed.

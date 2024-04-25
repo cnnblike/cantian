@@ -1,0 +1,211 @@
+
+
+SQL> --remove group by
+SQL> drop table if exists t_remove_group_by;
+
+Succeed.
+
+SQL> drop table if exists t1_remove_group_by;
+
+Succeed.
+
+SQL> drop table if exists t2_remove_group_by;
+
+Succeed.
+
+SQL> drop table if exists t3_remove_group_by;
+
+Succeed.
+
+SQL> -- primary key
+SQL> --primary  key
+SQL> create table t_remove_group_by (a int constraint cons1_remove_group_by primary key,b int,c int);
+
+Succeed.
+
+SQL> insert into t_remove_group_by values(1,1,1);
+
+1 rows affected.
+
+SQL> insert into t_remove_group_by values(2,2,1);
+
+1 rows affected.
+
+SQL> insert into t_remove_group_by values(3,3,1);
+
+1 rows affected.
+
+SQL> insert into t_remove_group_by values(4,1,1);
+
+1 rows affected.
+
+SQL> insert into t_remove_group_by values(5,3,4);
+
+1 rows affected.
+
+SQL> insert into t_remove_group_by values(6,2,1);
+
+1 rows affected.
+
+SQL> insert into t_remove_group_by values(7,3,3);
+
+1 rows affected.
+
+SQL> -- unique index
+SQL> create table t1_remove_group_by(a int not null,b int not null,c int);
+
+Succeed.
+
+SQL> create unique index index_remove_group on t1_remove_group_by(a,b);
+
+Succeed.
+
+SQL> insert into t1_remove_group_by values(1,1,1);
+
+1 rows affected.
+
+SQL> insert into t1_remove_group_by values(1,2,1);
+
+1 rows affected.
+
+SQL> insert into t1_remove_group_by values(1,3,1);
+
+1 rows affected.
+
+SQL> insert into t1_remove_group_by values(2,1,1);
+
+1 rows affected.
+
+SQL> insert into t1_remove_group_by values(2,3,4);
+
+1 rows affected.
+
+SQL> insert into t1_remove_group_by values(2,2,1);
+
+1 rows affected.
+
+SQL> insert into t1_remove_group_by values(3,3,3);
+
+1 rows affected.
+
+SQL> -- subselect
+SQL> create table t2_remove_group_by(a int,b int,c int);
+
+Succeed.
+
+SQL> insert into t2_remove_group_by values(1,1,1);
+
+1 rows affected.
+
+SQL> insert into t2_remove_group_by values(1,4,1);
+
+1 rows affected.
+
+SQL> insert into t2_remove_group_by values(1,2,1);
+
+1 rows affected.
+
+SQL> insert into t2_remove_group_by values(2,1,1);
+
+1 rows affected.
+
+SQL> insert into t2_remove_group_by values(2,2,3);
+
+1 rows affected.
+
+SQL> --unique index nullable
+SQL> create table t3_remove_group_by(a int,b int,c int);
+
+Succeed.
+
+SQL> create unique index index_remove_group_2 on t3_remove_group_by(a,b);
+
+Succeed.
+
+SQL>
+SQL>
+SQL> --DTS2019112505152
+SQL> alter table t_remove_group_by add column d bool;
+
+Succeed.
+
+SQL> insert into t_remove_group_by values(8,3,null,true);
+
+1 rows affected.
+
+SQL> select group_concat(d) from t_remove_group_by group by a;
+
+GROUP_CONCAT(D)                                                 
+----------------------------------------------------------------
+                                                                
+                                                                
+                                                                
+                                                                
+                                                                
+                                                                
+                                                                
+TRUE                                                            
+
+8 rows fetched.
+
+SQL> --DTS2019112614950
+SQL> select COVAR_POP(b,c),group_concat(2) from t_remove_group_by group by a;
+
+COVAR_POP(B,C)                           GROUP_CONCAT(2)                                                 
+---------------------------------------- ----------------------------------------------------------------
+0                                        2                                                               
+0                                        2                                                               
+0                                        2                                                               
+0                                        2                                                               
+0                                        2                                                               
+0                                        2
+                                         2                                                               
+0                                        2
+8 rows fetched.
+
+SQL> select rank(2) within group(order by a) from t_remove_group_by group by a;
+
+RANK(2) WITHIN GROUP(ORDER BY A)
+--------------------------------
+1
+1                               
+1                               
+1                               
+1                               
+2
+1
+1                               
+
+8 rows fetched.
+
+SQL>
+SQL> --DTS2019121906665
+SQL> drop view if exists v_remove_group_by;
+
+Succeed.
+
+SQL> create view v_remove_group_by as select * from t_remove_group_by;
+
+Succeed.
+
+SQL> drop view v_remove_group_by;
+
+Succeed.
+
+SQL>
+SQL> drop table t_remove_group_by;
+
+Succeed.
+
+SQL> drop table t1_remove_group_by;
+
+Succeed.
+
+SQL> drop table t2_remove_group_by;
+Succeed.
+
+SQL> drop table t3_remove_group_by;
+Succeed.
+
+
+

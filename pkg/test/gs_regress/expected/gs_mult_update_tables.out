@@ -1,0 +1,309 @@
+
+
+SQL> 
+SQL> drop table if exists mult_update_t1;
+
+Succeed.
+
+SQL> drop table if exists mult_update_t2;
+
+Succeed.
+
+SQL> 
+SQL> create table mult_update_t1(c1 int,c2 int,c3 int) crmode row;
+
+Succeed.
+
+SQL> create table mult_update_t2(c1 int,c2 int,c3 int) crmode row;
+
+Succeed.
+
+SQL> 
+SQL> create index mult_update_t1_x1 on mult_update_t1(c2,c3);
+
+Succeed.
+
+SQL> create index mult_update_t2_x1 on mult_update_t2(c2,c3);
+
+Succeed.
+
+SQL> 
+SQL> insert into mult_update_t1 values(1,1,1);
+
+1 rows affected.
+
+SQL> insert into mult_update_t1 values(2,2,2);
+
+1 rows affected.
+
+SQL> insert into mult_update_t1 values(3,3,3);
+
+1 rows affected.
+
+SQL> 
+SQL> 
+SQL> insert into mult_update_t2 values(1,1,1);
+
+1 rows affected.
+
+SQL> insert into mult_update_t2 values(2,2,2);
+
+1 rows affected.
+
+SQL> insert into mult_update_t2 values(3,3,3);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> update mult_update_t1 set c2=0,c3=0;
+
+3 rows affected.
+
+SQL> update mult_update_t1,mult_update_t2 set mult_update_t1.c2=100,mult_update_t1.c3=100,mult_update_t2.c2=200,mult_update_t2.c3=200;
+
+6 rows affected.
+
+SQL> update mult_update_t1,mult_update_t2 set mult_update_t1.c2=100,mult_update_t1.c3=300,mult_update_t2.c2=200,mult_update_t2.c3=400;
+
+6 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists mult_update_t1;
+
+Succeed.
+
+SQL> drop table if exists mult_update_t2;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists mult_update_t3;
+
+Succeed.
+
+SQL> drop table if exists mult_update_t4;
+
+Succeed.
+
+SQL> 
+SQL> create table mult_update_t3(c1 int,c2 int,c3 int) crmode page;
+
+Succeed.
+
+SQL> create table mult_update_t4(c1 int,c2 int,c3 int) crmode page;
+
+Succeed.
+
+SQL> 
+SQL> create index mult_update_t3_x1 on mult_update_t3(c2,c3);
+
+Succeed.
+
+SQL> create index mult_update_t4_x1 on mult_update_t4(c2,c3);
+
+Succeed.
+
+SQL> 
+SQL> insert into mult_update_t3 values(1,1,1);
+
+1 rows affected.
+
+SQL> insert into mult_update_t3 values(2,2,2);
+
+1 rows affected.
+
+SQL> insert into mult_update_t3 values(3,3,3);
+
+1 rows affected.
+
+SQL> 
+SQL> 
+SQL> insert into mult_update_t4 values(1,1,1);
+
+1 rows affected.
+
+SQL> insert into mult_update_t4 values(2,2,2);
+
+1 rows affected.
+
+SQL> insert into mult_update_t4 values(3,3,3);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> update mult_update_t3 set c2=0,c3=0;
+
+3 rows affected.
+
+SQL> update mult_update_t3,mult_update_t4 set mult_update_t3.c2=100,mult_update_t3.c3=100,mult_update_t4.c2=200,mult_update_t4.c3=200;
+
+6 rows affected.
+
+SQL> update mult_update_t3,mult_update_t4 set mult_update_t3.c2=100,mult_update_t3.c3=300,mult_update_t4.c2=200,mult_update_t4.c3=400;
+
+6 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists mult_update_t3;
+
+Succeed.
+
+SQL> drop table if exists mult_update_t4;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists mult_update_tt;
+
+Succeed.
+
+SQL> CREATE TABLE mult_update_tt (c_id int, c_first varchar(8000), c_first2 varchar(8000), c_first3 varchar(8000));
+
+Succeed.
+
+SQL> insert into mult_update_tt values(1, lpad(' ', 1000, 'a'), lpad(' ', 2000, 'a'), lpad(' ', 8000, 'a'));
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> update mult_update_tt t1,mult_update_tt t2 set t1.c_first2 = lpad(' ', 8000, 'a'), t2.c_first2 = lpad(' ', 7000, 'a');
+
+1 rows affected.
+
+SQL> drop table if exists mult_update_tt;
+
+Succeed.
+
+SQL> 
+SQL> --bugfix: update rewrite error with global TEMPORARY table
+SQL> alter system set cbo = on;
+
+Succeed.
+
+SQL> DROP TABLE if exists t_update_unnest3;
+
+Succeed.
+
+SQL> DROP TABLE if exists t_update_unnest4;
+
+Succeed.
+
+SQL> 
+SQL> CREATE or replace procedure proc_mul_upd_insert(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5         sqlst := 'insert into ' || tname ||' select id+'||i||',c_js||'||i||',c_vchar||'||i||',c_int+'||i||',c_num+'||i||',c_date from '||tname|| ' where id=1';
+  6         execute immediate sqlst;
+  7   END LOOP;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE t_update_unnest3(id INT,c_js varchar(150),c_vchar varchar(10),c_int int,c_num number,c_date date)
+  2 partition by range(id) interval(5) 
+  3 subpartition by hash(c_js)
+  4 (partition p1 values less than(10)
+  5 (subpartition p11, subpartition p12,subpartition p13),
+  6 partition p2 values less than(20)
+  7 (subpartition p21,subpartition p22,subpartition p23)
+  8 );
+
+Succeed.
+
+SQL> insert into t_update_unnest3 values(1,lpad('123abc',100,'abc'),'11',1,1.23,to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> call proc_mul_upd_insert('t_update_unnest3',1,18);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> CREATE GLOBAL TEMPORARY TABLE t_update_unnest4(id INT,c_js varchar(150),c_vchar varchar(10),c_int int,c_num number,c_date date) ON COMMIT PRESERVE ROWS;
+
+Succeed.
+
+SQL> insert into t_update_unnest4 values(1,lpad('123abc',100,'abc'),'11',1,1.23,to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> call proc_mul_upd_insert('t_update_unnest4',1,18);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> alter system set _OPTIM_UNNEST_SET_SUBQUERY = false; 
+
+Succeed.
+
+SQL> ALTER SYSTEM FLUSH SQLPOOL;
+
+Succeed.
+
+SQL> UPDATE t_update_unnest4 t1 SET t1.id = (SELECT t2.id FROM t_update_unnest3 partition(p2) t2,t_update_unnest3 t3 WHERE t2.id=t1.id);
+
+CT-00915, More than one return value of SELECT INTO, EXECUTE IMMEDIATE, or a cursor was assigned to a common variable.
+SQL> alter system set _OPTIM_UNNEST_SET_SUBQUERY = true; 
+
+Succeed.
+
+SQL> ALTER SYSTEM FLUSH SQLPOOL;
+
+Succeed.
+
+SQL> UPDATE t_update_unnest4 t1 SET t1.id = (SELECT t2.id FROM t_update_unnest3 partition(p2) t2,t_update_unnest3 t3 WHERE t2.id=t1.id);
+
+CT-00915, More than one return value of SELECT INTO, EXECUTE IMMEDIATE, or a cursor was assigned to a common variable.
+SQL> rollback;
+
+Succeed.
+
+SQL> 
+SQL> drop table t_update_unnest3;
+
+Succeed.
+
+SQL> drop table t_update_unnest4;
+
+Succeed.
+
+SQL> alter system set cbo = off;
+
+Succeed.
+
+SQL> 
+
+

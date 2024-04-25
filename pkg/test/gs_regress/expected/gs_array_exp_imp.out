@@ -1,0 +1,1221 @@
+
+
+SQL> --1. create user
+SQL> drop user if exists wg1 cascade;
+
+Succeed.
+
+SQL> drop user if exists wg2 cascade;
+
+Succeed.
+
+SQL> create user wg1 identified by Changeme_123;
+
+Succeed.
+
+SQL> grant dba to wg1;
+
+Succeed.
+
+SQL> create user wg2 identified by Changeme_123;
+
+Succeed.
+
+SQL> grant dba to wg2;
+
+Succeed.
+
+SQL> 
+SQL> --2. create table which inclues array, and export
+SQL> conn wg1/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists wg_t2;
+
+Succeed.
+
+SQL> drop table if exists wg_t1;
+
+Succeed.
+
+SQL> drop table if exists emp;
+
+Succeed.
+
+SQL> drop table if exists exp_imp_noarr_test;
+
+Succeed.
+
+SQL> drop table if exists exp_imp_arr_test;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE wg_t1(id1 int, id2 int, constraint pk_id1 primary key(id1));
+
+Succeed.
+
+SQL> CREATE TABLE wg_t2(t_id int, t_num int, CONSTRAINT t_id_fk FOREIGN KEY(t_id) REFERENCES wg_t1(id1));
+
+Succeed.
+
+SQL> alter table wg_t2 add constraint t_num_fk foreign key(t_num) references wg_t1(id1);
+
+Succeed.
+
+SQL> insert into wg_t1 values(1,2);
+
+1 rows affected.
+
+SQL> insert into wg_t2 values(1,1);
+
+1 rows affected.
+
+SQL> 
+SQL> create table emp(id int, age int, ename varchar(20), gongzi int default 10000);
+
+Succeed.
+
+SQL> alter table emp add constraint pkpk1 primary key(id);
+
+Succeed.
+
+SQL> alter table emp add constraint chch1 check(age>20);
+
+Succeed.
+
+SQL> alter table emp add constraint unun1 unique(ename);
+
+Succeed.
+
+SQL> alter table emp modify gongzi default 10001;
+
+Succeed.
+
+SQL> insert into emp values(1,21,'ghost', 10001);
+
+1 rows affected.
+
+SQL> 
+SQL> create table exp_imp_arr_test(
+  2 f0 int              ,
+  3 f1 BINARY_INTEGER[] ,
+  4 f2 BINARY_DOUBLE[]  ,
+  5 f3 BINARY_UINT32[]  ,
+  6 f4 BINARY_BIGINT[]  ,
+  7 f6 CHAR(456)[]      ,
+  8 f7 VARCHAR(123)[]   ,
+  9 f8 DATE[]           ,
+ 10 f9 TIMESTAMP[]      ,
+ 11 f10 BOOLEAN[]       ,
+ 12 constraint pk_f0 primary key(f0));
+
+Succeed.
+
+SQL> create table exp_imp_noarr_test(a int);
+
+Succeed.
+
+SQL> alter table exp_imp_noarr_test add constraint a_fk foreign key(a) references exp_imp_arr_test(f0);
+
+Succeed.
+
+SQL> insert into exp_imp_arr_test values(
+  2 1,
+  3 array[99], 
+  4 array[99.0], 
+  5 array[12345], 
+  6 array[543216], 
+  7 array['Iron Man'], 
+  8 array['Hospitial'], 
+  9 array['2020-05-08 10:48:25'], 
+ 10 array['2020-05-08 10:48:25'], 
+ 11 array['TRUE']);
+
+1 rows affected.
+
+SQL> insert into exp_imp_noarr_test values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> desc wg_t2;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+T_ID                                         BINARY_INTEGER                      
+T_NUM                                        BINARY_INTEGER                      
+
+SQL> desc wg_t1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+ID1                                 NOT NULL BINARY_INTEGER                      
+ID2                                          BINARY_INTEGER                      
+
+SQL> desc emp;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+ID                                  NOT NULL BINARY_INTEGER                      
+AGE                                          BINARY_INTEGER                      
+ENAME                                        VARCHAR(20 BYTE)                    
+GONGZI                                       BINARY_INTEGER                      
+
+SQL> desc exp_imp_noarr_test;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+A                                            BINARY_INTEGER                      
+
+SQL> desc exp_imp_arr_test;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+F0                                  NOT NULL BINARY_INTEGER                      
+F1                                           BINARY_INTEGER[]                    
+F2                                           BINARY_DOUBLE[]                     
+F3                                           BINARY_UINT32[]                     
+F4                                           BINARY_BIGINT[]                     
+F6                                           CHAR(456 BYTE)[]                    
+F7                                           VARCHAR(123 BYTE)[]                 
+F8                                           DATE[]                              
+F9                                           TIMESTAMP(6)[]                      
+F10                                          BOOLEAN[]                           
+
+SQL> select * from wg_t2;
+
+T_ID         T_NUM       
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> select * from wg_t1;
+
+ID1          ID2         
+------------ ------------
+1            2           
+
+1 rows fetched.
+
+SQL> select * from emp;
+
+ID           AGE          ENAME                GONGZI      
+------------ ------------ -------------------- ------------
+1            21           ghost                10001       
+
+1 rows fetched.
+
+SQL> select * from exp_imp_noarr_test;
+
+A           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from exp_imp_arr_test;
+
+F0           F1                                                               F2                                                               F3                                                               F4                                                               F6                                                               F7                                                               F8                                                               F9                                                               F10                                                             
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {99}                                                             {99}                                                             {12345}                                                          {543216}                                                         {Iron Man                                                                                                                                                                                                                                                                                                                                                                                                                                                                } {Hospitial}                                                      {2020-05-08 10:48:25}                                            {2020-05-08 10:48:25.000000}                                     {TRUE}                                                          
+
+1 rows fetched.
+
+SQL> select * from MY_CONSTRAINTS order by CONSTRAINT_NAME;
+
+OWNER                                                            CONSTRAINT_NAME                                                  CONSTRAINT_TYPE TABLE_NAME                                                       SEARCH_CONDITION                                                 R_OWNER                                                          R_TABLE_NAME                                                     R_CONSTRAINT_NAME                                                DELETE_RULE    STATUS   DEFERRABLE     DEFERRED  VALIDATED     BAD RELY INDEX_OWNER                                                      INDEX_NAME                                                       INVALID VIEW_RELATED CONS_COLS                                                        REF_COLS                                                         SYS_GENERATE IS_DUPLICATE
+---------------------------------------------------------------- ---------------------------------------------------------------- --------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------- -------- -------------- --------- ------------- --- ---- ---------------------------------------------------------------- ---------------------------------------------------------------- ------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+WG1                                                              A_FK                                                             R               EXP_IMP_NOARR_TEST                                                                                                                WG1                                                              EXP_IMP_ARR_TEST                                                 PK_F0                                                            NOT ALLOWED    ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED                                                                                                                                                FALSE                A                                                                F0                                                               N            N           
+WG1                                                              CHCH1                                                            C               EMP                                                              age>20                                                                                                                                                                                                                                                                             ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED                                                                                                                                                FALSE                AGE                                                                                                                               N            N           
+WG1                                                              PKPK1                                                            P               EMP                                                                                                                                                                                                                                                                                                                                                 ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED              WG1                                                              PKPK1                                                            FALSE                ID                                                                                                                                N            N           
+WG1                                                              PK_F0                                                            P               EXP_IMP_ARR_TEST                                                                                                                                                                                                                                                                                                                                    ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED              WG1                                                              PK_F0                                                            FALSE                F0                                                                                                                                N            N           
+WG1                                                              PK_ID1                                                           P               WG_T1                                                                                                                                                                                                                                                                                                                                               ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED              WG1                                                              PK_ID1                                                           FALSE                ID1                                                                                                                               N            N           
+WG1                                                              T_ID_FK                                                          R               WG_T2                                                                                                                             WG1                                                              WG_T1                                                            PK_ID1                                                           NOT ALLOWED    ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED                                                                                                                                                FALSE                T_ID                                                             ID1                                                              N            N           
+WG1                                                              T_NUM_FK                                                         R               WG_T2                                                                                                                             WG1                                                              WG_T1                                                            PK_ID1                                                           NOT ALLOWED    ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED                                                                                                                                                FALSE                T_NUM                                                            ID1                                                              N            N           
+WG1                                                              UNUN1                                                            U               EMP                                                                                                                                                                                                                                                                                                                                                 ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED              WG1                                                              UNUN1                                                            FALSE                ENAME                                                                                                                             N            N           
+
+8 rows fetched.
+
+SQL> exp users=wg1 filetype=bin file="./data/test.exp" content=METADATA_ONLY;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = WG1
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test.exp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = METADATA_ONLY
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema WG1 ...
+Exporting sequence of schema WG1 ...
+Exporting profile of schema WG1 ...
+Exporting type of schema WG1 ...
+Exporting tables of schema WG1 ...
+Reading table objects of WG1
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+WG_T1                                                            1         
+WG_T2                                                            2         
+EMP                                                              3         
+EXP_IMP_ARR_TEST                                                 4         
+EXP_IMP_NOARR_TEST                                               5         
+
+Exporting tables (scripts or data) of WG1
+exporting table WG1.WG_T1 ...
+  exporting DDL of WG1.WG_T1 ...
+
+  exporting indexes on WG1.WG_T1 ...
+  exporting constraints on WG1.WG_T1 ...
+
+exporting table WG1.WG_T2 ...
+  exporting DDL of WG1.WG_T2 ...
+
+  exporting indexes on WG1.WG_T2 ...
+  exporting constraints on WG1.WG_T2 ...
+
+exporting table WG1.EMP ...
+  exporting DDL of WG1.EMP ...
+
+  exporting indexes on WG1.EMP ...
+  exporting constraints on WG1.EMP ...
+
+exporting table WG1.EXP_IMP_ARR_TEST ...
+  exporting DDL of WG1.EXP_IMP_ARR_TEST ...
+
+  exporting indexes on WG1.EXP_IMP_ARR_TEST ...
+  exporting constraints on WG1.EXP_IMP_ARR_TEST ...
+
+exporting table WG1.EXP_IMP_NOARR_TEST ...
+  exporting DDL of WG1.EXP_IMP_NOARR_TEST ...
+
+  exporting indexes on WG1.EXP_IMP_NOARR_TEST ...
+  exporting constraints on WG1.EXP_IMP_NOARR_TEST ...
+
+Exporting procedures/functions/triggers of schema WG1 ...
+Exporting views of schema WG1 ...
+Exporting synonyms of schema WG1 ...
+Exporting package of schema WG1 ...
+End of export schema WG1 ...
+
+Logical export succeeded.
+
+SQL> 
+SQL> --2. import metadata from wg1 to wg2, and use Anonymous copy data from wg1 to wg2
+SQL> conn wg2/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists wg_t2;
+
+Succeed.
+
+SQL> drop table if exists wg_t1;
+
+Succeed.
+
+SQL> drop table if exists emp;
+
+Succeed.
+
+SQL> drop table if exists exp_imp_noarr_test;
+
+Succeed.
+
+SQL> drop table if exists exp_imp_arr_test;
+
+Succeed.
+
+SQL> 
+SQL> imp remap_schema=WG1:WG2 filetype=bin file="./data/test.exp";
+Parsing import options ... 
+Verify options ...
+  verify remap schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = REMAP_SCHEMA
+-- REMAP SCHEMA = WG1:WG2
+-- DUMP FILE = ./data/test.exp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema WG1 ... 
+  Importing sequence of schema WG1 ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema WG1 ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema WG1 ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema WG1 ,total number : 5 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+  Importing foreign key of schema WG1 ...
+    Foreign key importing success, 2 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema WG1 ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema WG1 ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema WG1 ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema WG1 ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 0 rows are loaded.
+Logical import succeeded.
+
+SQL> declare
+  2 str varchar(1000);
+  3 cur_scn number(38);
+  4 begin
+  5 	--0. obtain current scn
+  6 	select current_scn into cur_scn from dv_database;
+  7 	
+  8 	--1. disable all foreign key
+  9 	for item in (select table_name, constraint_name 
+ 10 	             from MY_CONSTRAINTS 
+ 11 				 where constraint_type = 'R';)
+ 12 	loop
+ 13 	str := 'alter table ' || item.table_name || ' disable constraint ' || item.constraint_name;
+ 14 	execute immediate str;
+ 15 	end loop;
+ 16 	
+ 17 	--2. copy data from userA to userB
+ 18 	for item in (select table_name from my_tables;)
+ 19 	loop
+ 20 	str := 'insert into wg2.' || item.table_name || ' select * from wg1.' || item.table_name || ' as of scn(' || cur_scn || ')';
+ 21 	execute immediate str;
+ 22 	end loop;
+ 23 	
+ 24 	--3. enable all foreign key
+ 25 	for item in (select table_name, constraint_name 
+ 26 	             from MY_CONSTRAINTS 
+ 27 				 where constraint_type = 'R';)
+ 28 	loop
+ 29 	str := 'alter table ' || item.table_name || ' enable constraint ' || item.constraint_name;
+ 30 	execute immediate str;
+ 31 	end loop;
+ 32 end;
+ 33 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> desc wg_t2;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+T_ID                                         BINARY_INTEGER                      
+T_NUM                                        BINARY_INTEGER                      
+
+SQL> desc wg_t1;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+ID1                                 NOT NULL BINARY_INTEGER                      
+ID2                                          BINARY_INTEGER                      
+
+SQL> desc emp;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+ID                                  NOT NULL BINARY_INTEGER                      
+AGE                                          BINARY_INTEGER                      
+ENAME                                        VARCHAR(20 BYTE)                    
+GONGZI                                       BINARY_INTEGER                      
+
+SQL> desc exp_imp_noarr_test;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+A                                            BINARY_INTEGER                      
+
+SQL> desc exp_imp_arr_test;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+F0                                  NOT NULL BINARY_INTEGER                      
+F1                                           BINARY_INTEGER[]                    
+F2                                           BINARY_DOUBLE[]                     
+F3                                           BINARY_UINT32[]                     
+F4                                           BINARY_BIGINT[]                     
+F6                                           CHAR(456 BYTE)[]                    
+F7                                           VARCHAR(123 BYTE)[]                 
+F8                                           DATE[]                              
+F9                                           TIMESTAMP(6)[]                      
+F10                                          BOOLEAN[]                           
+
+SQL> select * from wg_t2;
+
+T_ID         T_NUM       
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> select * from wg_t1;
+
+ID1          ID2         
+------------ ------------
+1            2           
+
+1 rows fetched.
+
+SQL> select * from emp;
+
+ID           AGE          ENAME                GONGZI      
+------------ ------------ -------------------- ------------
+1            21           ghost                10001       
+
+1 rows fetched.
+
+SQL> select * from exp_imp_noarr_test;
+
+A           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from exp_imp_arr_test;
+
+F0           F1                                                               F2                                                               F3                                                               F4                                                               F6                                                               F7                                                               F8                                                               F9                                                               F10                                                             
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {99}                                                             {99}                                                             {12345}                                                          {543216}                                                         {Iron Man                                                                                                                                                                                                                                                                                                                                                                                                                                                                } {Hospitial}                                                      {2020-05-08 10:48:25}                                            {2020-05-08 10:48:25.000000}                                     {TRUE}                                                          
+
+1 rows fetched.
+
+SQL> select * from MY_CONSTRAINTS order by CONSTRAINT_NAME;
+
+OWNER                                                            CONSTRAINT_NAME                                                  CONSTRAINT_TYPE TABLE_NAME                                                       SEARCH_CONDITION                                                 R_OWNER                                                          R_TABLE_NAME                                                     R_CONSTRAINT_NAME                                                DELETE_RULE    STATUS   DEFERRABLE     DEFERRED  VALIDATED     BAD RELY INDEX_OWNER                                                      INDEX_NAME                                                       INVALID VIEW_RELATED CONS_COLS                                                        REF_COLS                                                         SYS_GENERATE IS_DUPLICATE
+---------------------------------------------------------------- ---------------------------------------------------------------- --------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------- -------- -------------- --------- ------------- --- ---- ---------------------------------------------------------------- ---------------------------------------------------------------- ------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------
+WG2                                                              A_FK                                                             R               EXP_IMP_NOARR_TEST                                                                                                                WG2                                                              EXP_IMP_ARR_TEST                                                 PK_F0                                                            NOT ALLOWED    ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED                                                                                                                                                FALSE                A                                                                F0                                                               N            N           
+WG2                                                              CHCH1                                                            C               EMP                                                              age>20                                                                                                                                                                                                                                                                             ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED                                                                                                                                                FALSE                AGE                                                                                                                               N            N           
+WG2                                                              PKPK1                                                            P               EMP                                                                                                                                                                                                                                                                                                                                                 ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED              WG2                                                              PKPK1                                                            FALSE                ID                                                                                                                                N            N           
+WG2                                                              PK_F0                                                            P               EXP_IMP_ARR_TEST                                                                                                                                                                                                                                                                                                                                    ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED              WG2                                                              PK_F0                                                            FALSE                F0                                                                                                                                N            N           
+WG2                                                              PK_ID1                                                           P               WG_T1                                                                                                                                                                                                                                                                                                                                               ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED              WG2                                                              PK_ID1                                                           FALSE                ID1                                                                                                                               N            N           
+WG2                                                              T_ID_FK                                                          R               WG_T2                                                                                                                             WG2                                                              WG_T1                                                            PK_ID1                                                           NOT ALLOWED    ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED                                                                                                                                                FALSE                T_ID                                                             ID1                                                              N            N           
+WG2                                                              T_NUM_FK                                                         R               WG_T2                                                                                                                             WG2                                                              WG_T1                                                            PK_ID1                                                           NOT ALLOWED    ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED                                                                                                                                                FALSE                T_NUM                                                            ID1                                                              N            N           
+WG2                                                              UNUN1                                                            U               EMP                                                                                                                                                                                                                                                                                                                                                 ENABLED  NOT DEFERRABLE IMMEDIATE VALIDATED              WG2                                                              UNUN1                                                            FALSE                ENAME                                                                                                                             N            N           
+
+8 rows fetched.
+
+SQL> 
+SQL> --4.delete user
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists wg1 cascade;
+
+Succeed.
+
+SQL> drop user if exists wg2 cascade;
+
+Succeed.
+
+SQL> 
+SQL> -- exp/imp support array datatype bin format
+SQL> drop user if exists wg cascade;
+
+Succeed.
+
+SQL> create user wg identified by Changeme_123;
+
+Succeed.
+
+SQL> grant dba to wg;
+
+Succeed.
+
+SQL> conn wg/Changeme_123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists array_imp_exp_1;
+
+Succeed.
+
+SQL> drop table if exists array_imp_exp_2;
+
+Succeed.
+
+SQL> create table array_imp_exp_1 (
+  2     f1 integer[10],
+  3     f2 binary_uint32[],
+  4     f3 bigint[],
+  5 	f3_1 varchar(8000)[],
+  6     f4 binary_double[],
+  7     f5 double[],
+  8     f6 float[],
+  9     f7 real[],
+ 10 	f7_1 varchar(8000)[],
+ 11     f8 number(12,3)[],
+ 12     f9 decimal(20,5)[],
+ 13     f10 char(30)[],
+ 14 	f10_1 varchar(8000)[],
+ 15     f11 nchar(30)[],
+ 16     f12 varchar(30)[],
+ 17     f13 nvarchar(30)[],
+ 18     f14 date[],
+ 19     f15 datetime[],
+ 20     f16 timestamp[],
+ 21 	f16_1 varchar(8000)[],
+ 22     f17 timestamp(3) with time zone[],
+ 23     --f18 timestamp(3) with local time zone[],
+ 24     f19 boolean[],
+ 25     f20 interval year(4) to month[],
+ 26     f21 interval day(7) to second(6)[],
+ 27     f22 integer,
+ 28 	f23 varchar(8000)[]
+ 29 );
+
+Succeed.
+
+SQL> 
+SQL> insert into array_imp_exp_1 values (
+  2     array[1, '2'::integer, null],
+  3     array[null, '2'::binary_uint32],
+  4     '{null,1,2,3,null}',
+  5 	'{' || rpad('1234567890',5000,'1234567890') || '}',
+  6     array[1.23, 3.2123, null, 0],
+  7     array[null, '1.23', 3.2123, null],
+  8     array[null, '1.23', 3.2123, null],
+  9     array[null, '1.23', 3.2123, null],
+ 10 	'{' || rpad('1234567890',5000,'1234567890') || '}',
+ 11     array[null, '1234567.89', 1234567.89, null],
+ 12     array[1234567.12345, '1234567.89', 1234567.89, null],	
+ 13     array['abc', 'def', 'abc''def', null],
+ 14 	'{' || rpad('1234567890',5000,'1234567890') || '}',
+ 15     array[],
+ 16     '{}',
+ 17     array['abc', 'def', 'abc''def', null],
+ 18     array[null, '0001-01-01 00:00:00', '9999-12-31 23:59:59', null],
+ 19     array['0001-01-01 00:00:00', null, '9999-12-31 23:59:59', null],
+ 20     array['0001-01-01 00:00:00.000000', null, '9999-12-31 23:59:59.999999', null],
+ 21     '{' || rpad('1234567890',5000,'1234567890') || '}',
+ 22     array['2019-06-15 14:36:25.046731'],
+ 23     --array['2019-06-15 14:36:25.046731'],
+ 24     array[true, false, 1::bool, 0::bool, null],
+ 25     array['-9999-11', '+9999-11', null],
+ 26     array['-P99DT655M999.99999S', '1231 12:3:4.1234', 'P1231DT16H3.3333333S', '-0 00:19:7.7777777777', '-1234 0:0:0.0004', 'PT12H', null],
+ 27     1,
+ 28 	'{' || rpad('1234567890',5000,'1234567890') || '}'
+ 29 );
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table array_imp_exp_2 as select * from array_imp_exp_1;
+
+Succeed.
+
+SQL> 
+SQL> exp tables=array_imp_exp_1 filetype=txt file="array_imp_exp_1_txt";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ARRAY_IMP_EXP_1
+-- FILE TYPE = TXT
+-- DUMP FILE = array_imp_exp_1_txt
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table WG.ARRAY_IMP_EXP_1 ...
+  exporting DDL of WG.ARRAY_IMP_EXP_1 ...
+  exporting data of WG.ARRAY_IMP_EXP_1 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on WG.ARRAY_IMP_EXP_1 ...
+  exporting constraints on WG.ARRAY_IMP_EXP_1 ...
+
+Logical export succeeded.
+
+SQL> imp tables=array_imp_exp_1 filetype=txt file="array_imp_exp_1_txt";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ARRAY_IMP_EXP_1
+-- DUMP FILE = array_imp_exp_1_txt
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 1 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> select 1 from array_imp_exp_2 a, array_imp_exp_1 b where to_char(a.f1)  = to_char(b.f1)  and
+  2  to_char(a.f2 ) = to_char(b.f2 ) and
+  3  to_char(a.f3 ) = to_char(b.f3 ) and
+  4  to_char(a.f3_1 ) = to_char(b.f3_1 ) and
+  5  to_char(a.f4 ) = to_char(b.f4 ) and
+  6  to_char(a.f5 ) = to_char(b.f5 ) and
+  7  to_char(a.f6 ) = to_char(b.f6 ) and
+  8  to_char(a.f7 ) = to_char(b.f7 ) and
+  9  to_char(a.f7_1 ) = to_char(b.f7_1 ) and
+ 10  to_char(a.f8 ) = to_char(b.f8 ) and
+ 11  to_char(a.f9 ) = to_char(b.f9 ) and
+ 12  to_char(a.f10) = to_char(b.f10) and
+ 13  to_char(a.f10_1) = to_char(b.f10_1) and 
+ 14  to_char(a.f11) = to_char(b.f11) and
+ 15  to_char(a.f12) = to_char(b.f12) and
+ 16  to_char(a.f13) = to_char(b.f13) and
+ 17  to_char(a.f14) = to_char(b.f14) and
+ 18  to_char(a.f15) = to_char(b.f15) and
+ 19  to_char(a.f16) = to_char(b.f16) and
+ 20  to_char(a.f16_1) = to_char(b.f16_1) and 
+ 21  to_char(a.f17) = to_char(b.f17) and
+ 22  --to_char(a.f18) = to_char(b.f18) and
+ 23  to_char(a.f19) = to_char(b.f19) and
+ 24  to_char(a.f20) = to_char(b.f20) and
+ 25  to_char(a.f21) = to_char(b.f21) and
+ 26  to_char(a.f22) = to_char(b.f22) and
+ 27  to_char(a.f23) = to_char(b.f23);
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> exp tables=array_imp_exp_1 filetype=bin file="array_imp_exp_1_bin";
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ARRAY_IMP_EXP_1
+-- FILE TYPE = BIN
+-- DUMP FILE = array_imp_exp_1_bin
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table WG.ARRAY_IMP_EXP_1 ...
+  exporting DDL of WG.ARRAY_IMP_EXP_1 ...
+  exporting data of WG.ARRAY_IMP_EXP_1 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on WG.ARRAY_IMP_EXP_1 ...
+  exporting constraints on WG.ARRAY_IMP_EXP_1 ...
+
+Logical export succeeded.
+
+SQL> imp tables=array_imp_exp_1 filetype=bin file="array_imp_exp_1_bin";
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ARRAY_IMP_EXP_1
+-- DUMP FILE = array_imp_exp_1_bin
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema WG ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema WG ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema WG ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema WG ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    ARRAY_IMP_EXP_1                                                  1         
+
+  Importing foreign key of schema WG ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema WG ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema WG ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema WG ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema WG ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 1 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> select 1 from array_imp_exp_2 a, array_imp_exp_1 b where to_char(a.f1)  = to_char(b.f1)  and
+  2  to_char(a.f2 ) = to_char(b.f2 ) and
+  3  to_char(a.f3 ) = to_char(b.f3 ) and
+  4  to_char(a.f3_1 ) = to_char(b.f3_1 ) and
+  5  to_char(a.f4 ) = to_char(b.f4 ) and
+  6  to_char(a.f5 ) = to_char(b.f5 ) and
+  7  to_char(a.f6 ) = to_char(b.f6 ) and
+  8  to_char(a.f7 ) = to_char(b.f7 ) and
+  9  to_char(a.f7_1 ) = to_char(b.f7_1 ) and
+ 10  to_char(a.f8 ) = to_char(b.f8 ) and
+ 11  to_char(a.f9 ) = to_char(b.f9 ) and
+ 12  to_char(a.f10) = to_char(b.f10) and
+ 13  to_char(a.f10_1) = to_char(b.f10_1) and 
+ 14  to_char(a.f11) = to_char(b.f11) and
+ 15  to_char(a.f12) = to_char(b.f12) and
+ 16  to_char(a.f13) = to_char(b.f13) and
+ 17  to_char(a.f14) = to_char(b.f14) and
+ 18  to_char(a.f15) = to_char(b.f15) and
+ 19  to_char(a.f16) = to_char(b.f16) and
+ 20  to_char(a.f16_1) = to_char(b.f16_1) and 
+ 21  to_char(a.f17) = to_char(b.f17) and
+ 22  --to_char(a.f18) = to_char(b.f18) and
+ 23  to_char(a.f19) = to_char(b.f19) and
+ 24  to_char(a.f20) = to_char(b.f20) and
+ 25  to_char(a.f21) = to_char(b.f21) and
+ 26  to_char(a.f22) = to_char(b.f22) and
+ 27  to_char(a.f23) = to_char(b.f23);
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> --data_type in db_tab_cols should be end with "[]", or is_arr_type in gsql_export.c will be wrong
+SQL> select 1 from db_tab_cols where COLUMN_NAME = 'F1' and table_name = 'ARRAY_IMP_EXP_1' and substr(data_type,-2,2) = '[]';
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> --update array
+SQL> drop table if exists array_imp_exp_3;
+
+Succeed.
+
+SQL> create table array_imp_exp_3(f1 int[]);
+
+Succeed.
+
+SQL> insert into array_imp_exp_3 values(array[1,2,3]);
+
+1 rows affected.
+
+SQL> update array_imp_exp_3 set f1[1] = NULL;
+
+1 rows affected.
+
+SQL> select * from array_imp_exp_3;
+
+F1                                                              
+----------------------------------------------------------------
+{NULL,2,3}                                                      
+
+1 rows fetched.
+
+SQL> update array_imp_exp_3 set f1[2:3] = '{NULL, null}';
+
+1 rows affected.
+
+SQL> select * from array_imp_exp_3;
+
+F1                                                              
+----------------------------------------------------------------
+{NULL,NULL,NULL}                                                
+
+1 rows fetched.
+
+SQL> update array_imp_exp_3 set f1[1:3] = '{1, 2, 3}';
+
+1 rows affected.
+
+SQL> select * from array_imp_exp_3;
+
+F1                                                              
+----------------------------------------------------------------
+{1,2,3}                                                         
+
+1 rows fetched.
+
+SQL> 
+SQL> --DTS202103170JZ37VP1J00
+SQL> drop table if exists ARRAY_TEST_004_01;
+
+Succeed.
+
+SQL> CREATE TABLE ARRAY_TEST_004_01
+  2 (
+  3   "COL1" CHAR(200 BYTE)[],
+  4   "COL2" VARCHAR(2000 BYTE)[],
+  5   "COL3" VARCHAR(8000 BYTE)[],
+  6   "COL4" CHAR(90 CHAR)[],
+  7   "COL5" VARCHAR(200 CHAR)[],
+  8   "COL6" VARCHAR(8000 CHAR)[],
+  9   "COL7" VARCHAR(8000 CHAR)[],
+ 10   "COL8" VARCHAR(8000 CHAR)[]
+ 11 );
+
+Succeed.
+
+SQL> insert into array_test_004_01 values(array[NULL , ' ' , '' ],array['_char' ,' _varchar(100)' ,'123'], '{2019-6-20,111111}' ,'{asdfasdfrtyrty, mnop, '' ,'' , _a%}', array[ '123 ', 'abcdef'], array[lpad('1234567890', 8000, '1234567890')], '{""}', array['''""""""""""""""''''''''''''''''''''''''''''''''''''''''''''''''''''''''''']);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from ARRAY_TEST_004_01;
+
+COL1                                                             COL2                                                             COL3                                                             COL4                                                             COL5                                                             COL6                                                             COL7                                                             COL8                                                            
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+{NULL,                                                                                                                                                                                                        ,NULL} {_char, _varchar(100),123}                                       {2019-6-20,111111}                                               {asdfasdfrtyrty                                                                            ,mnop                                                                                      ,'                                                                                         ,'                                                                                         ,_a%                                                                                       } {123 ,abcdef}                                                    {12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890} {""}                                                             {'""""""""""""""'''''''''''''''''''''''''''''}                  
+
+1 rows fetched.
+
+SQL> drop table if exists ARRAY_TEST_004_01_bk;
+
+Succeed.
+
+SQL> create table ARRAY_TEST_004_01_bk as select * from ARRAY_TEST_004_01;
+
+Succeed.
+
+SQL> exp tables=ARRAY_TEST_004_01;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ARRAY_TEST_004_01
+-- FILE TYPE = TXT
+-- DUMP FILE = EXPDAT.DMP
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table WG.ARRAY_TEST_004_01 ...
+  exporting DDL of WG.ARRAY_TEST_004_01 ...
+  exporting data of WG.ARRAY_TEST_004_01 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on WG.ARRAY_TEST_004_01 ...
+  exporting constraints on WG.ARRAY_TEST_004_01 ...
+
+Logical export succeeded.
+
+SQL> imp tables=ARRAY_TEST_004_01;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ARRAY_TEST_004_01
+-- DUMP FILE = EXPDAT.DMP
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 1 rows are loaded.
+Logical import succeeded.
+
+SQL> select a.col7, b.col7 from ARRAY_TEST_004_01 a, ARRAY_TEST_004_01_bk b where 
+  2 to_char(a.col1) = to_char(b.col1)
+  3 and lengthb(to_char(a.col1)) = lengthb(to_char(b.col1))
+  4 and to_char(a.col2) = to_char(b.col2)
+  5 and to_char(a.col3) = to_char(b.col3)
+  6 and to_char(a.col4) = to_char(b.col4)
+  7 and lengthb(to_char(a.col4)) = lengthb(to_char(b.col4))
+  8 and to_char(a.col5) = to_char(b.col5)
+  9 and to_char(a.col6) = to_char(b.col6)
+ 10 and to_char(a.col8) = to_char(b.col8);
+
+COL7                                                             COL7                                                            
+---------------------------------------------------------------- ----------------------------------------------------------------
+{""}                                                             {""}                                                            
+
+1 rows fetched.
+
+SQL> exp tables=ARRAY_TEST_004_01 filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify tables ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = TABLE
+-- EXPORT OBJECTS = ARRAY_TEST_004_01
+-- FILE TYPE = BIN
+-- DUMP FILE = EXPDAT.DMP
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT = N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+exporting table WG.ARRAY_TEST_004_01 ...
+  exporting DDL of WG.ARRAY_TEST_004_01 ...
+  exporting data of WG.ARRAY_TEST_004_01 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on WG.ARRAY_TEST_004_01 ...
+  exporting constraints on WG.ARRAY_TEST_004_01 ...
+
+Logical export succeeded.
+
+SQL> imp tables=ARRAY_TEST_004_01 filetype=bin;
+Parsing import options ... 
+Verify options ...
+  verify tables ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = TABLE
+-- IMPORT OBJECTS = ARRAY_TEST_004_01
+-- DUMP FILE = EXPDAT.DMP
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+  Importing sequence of schema WG ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema WG ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema WG ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema WG ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    ARRAY_TEST_004_01                                                1         
+
+  Importing foreign key of schema WG ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema WG ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema WG ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema WG ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema WG ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 1 rows are loaded.
+Logical import succeeded.
+
+SQL> select a.col7, b.col7 from ARRAY_TEST_004_01 a, ARRAY_TEST_004_01_bk b where 
+  2 to_char(a.col1) = to_char(b.col1)
+  3 and lengthb(to_char(a.col1)) = lengthb(to_char(b.col1))
+  4 and to_char(a.col2) = to_char(b.col2)
+  5 and to_char(a.col3) = to_char(b.col3)
+  6 and to_char(a.col4) = to_char(b.col4)
+  7 and lengthb(to_char(a.col4)) = lengthb(to_char(b.col4))
+  8 and to_char(a.col5) = to_char(b.col5)
+  9 and to_char(a.col6) = to_char(b.col6)
+ 10 and to_char(a.col8) = to_char(b.col8);
+
+COL7                                                             COL7                                                            
+---------------------------------------------------------------- ----------------------------------------------------------------
+{""}                                                             {""}                                                            
+
+1 rows fetched.
+
+SQL> 
+SQL> --DTS2021033105JZE1P0K00
+SQL> exp -v;
+New functions or features for EXP and IMP in this version:
+---------------------------------------------------------------------------------------------------------------------------
+* support jsonb and support subpartion format csf for EXP and IMP
+* support export and import compress attribution of table or partition table
+* support binary format of array datatype
+* support subpartition
+* support create or replace force view
+
+
+
+

@@ -1,0 +1,527 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists plsql_package_error_backtrace cascade;
+
+Succeed.
+
+SQL> create user plsql_package_error_backtrace identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to plsql_package_error_backtrace;
+
+Succeed.
+
+SQL> 
+SQL> conn plsql_package_error_backtrace/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> --normal test
+SQL> select DBE_UTIL.GET_ERROR_BACKTRACE from dual;
+
+GET_ERROR_BACKTRACE
+-------------------
+                   
+
+1 rows fetched.
+
+SQL> select DBE_UTIL.GET_ERROR_BACKTRACE() from dual;
+
+DBE_UTIL.GET_ERROR_BACKTRACE()
+------------------------------
+                              
+
+1 rows fetched.
+
+SQL> select DBE_UTIL.GET_ERROR_BACKTRACE(1) from dual;
+
+CT-00615, [1:8]Invalid argument number for GET_ERROR_BACKTRACE, min=0, max=0
+SQL> select DBE_UTIL.GET_ERROR_BACKTRACE('') from dual;
+
+CT-00615, [1:8]Invalid argument number for GET_ERROR_BACKTRACE, min=0, max=0
+SQL> select DBE_UTIL.GET_ERROR_BACKTRACE('a','b') from dual;
+
+CT-00615, [1:8]Invalid argument number for GET_ERROR_BACKTRACE, min=0, max=0
+SQL> 
+SQL> --basic test
+SQL> begin
+  2 dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+  3 end;
+  4 /
+
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare 
+  2 sqla varchar(100);
+  3 begin
+  4 sqla := DBE_UTIL.GET_ERROR_BACKTRACE;
+  5 dbe_output.print_line(sqla);
+  6 end;
+  7 /
+
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 tmp int :=1;
+  3 begin
+  4 tmp := tmp/0;
+  5 exception
+  6 when others then
+  7 dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+  8 end;
+  9 /
+
+[4:1] CT-00637, PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --nested test 
+SQL> create or replace procedure p1_test_nested_exception
+  2 is 
+  3 tmp int :=0;
+  4 begin
+  5 tmp := tmp+'1oo';
+  6 exception
+  7    when others then 
+  8     begin
+  9         dbe_output.print_line('Second: '||DBE_UTIL.GET_ERROR_BACKTRACE);
+ 10         tmp := tmp/0;
+ 11     exception
+ 12         when others then
+ 13             dbe_output.print_line('Third: '||DBE_UTIL.GET_ERROR_BACKTRACE);
+ 14             begin
+ 15                 begin
+ 16                     begin
+ 17                         dbe_output.print_line('Third: '||DBE_UTIL.GET_ERROR_BACKTRACE);
+ 18                     end;
+ 19                 end;
+ 20             end;
+ 21     end;
+ 22 end;
+ 23 /
+
+Succeed.
+
+SQL> call p1_test_nested_exception();
+
+Second: [4:1] CT-00636, PLSQL_PACKAGE_ERROR_BACKTRACE.P1_TEST_NESTED_EXCEPTION
+
+Third: [9:9] CT-00637, PLSQL_PACKAGE_ERROR_BACKTRACE.P1_TEST_NESTED_EXCEPTION
+
+Third: [9:9] CT-00637, PLSQL_PACKAGE_ERROR_BACKTRACE.P1_TEST_NESTED_EXCEPTION
+
+
+PL/SQL procedure successfully completed.
+
+SQL> begin
+  2 p1_test_nested_exception();
+  3 exception
+  4 when others then
+  5 dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+  6 end;
+  7 /
+
+Second: [4:1] CT-00636, PLSQL_PACKAGE_ERROR_BACKTRACE.P1_TEST_NESTED_EXCEPTION
+
+Third: [9:9] CT-00637, PLSQL_PACKAGE_ERROR_BACKTRACE.P1_TEST_NESTED_EXCEPTION
+
+Third: [9:9] CT-00637, PLSQL_PACKAGE_ERROR_BACKTRACE.P1_TEST_NESTED_EXCEPTION
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure exec_a
+  2 is
+  3 past_due     EXCEPTION;
+  4 tmp int :=1;
+  5 begin
+  6     raise past_due;
+  7 end ;
+  8 /
+
+Succeed.
+
+SQL> create or replace procedure exec_b
+  2 is
+  3 begin
+  4     exec_a();
+  5 end ;
+  6 /
+
+Succeed.
+
+SQL> create or replace procedure exec_c
+  2 is
+  3 begin
+  4     exec_b();
+  5 end ;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 exec_c();
+  3 exception
+  4 when others then
+  5 dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+  6 end;
+  7 /
+
+[5:5] CT-00931, PLSQL_PACKAGE_ERROR_BACKTRACE.EXEC_A
+[3:5] CT-00931, PLSQL_PACKAGE_ERROR_BACKTRACE.EXEC_B
+[3:5] CT-00931, PLSQL_PACKAGE_ERROR_BACKTRACE.EXEC_C
+[2:1] CT-00931, PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace function func_aa return int
+  2 is
+  3 tmp int :=1;
+  4 begin
+  5     tmp := tmp+'1oo';
+  6     return 10;
+  7 end ;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 a int;
+  3 begin
+  4 a := func_aa();
+  5 exception
+  6     when others then
+  7     dbe_output.print_line('First: '||DBE_UTIL.GET_ERROR_BACKTRACE);
+  8 end;
+  9 /
+
+First: [5:5] CT-00636, PLSQL_PACKAGE_ERROR_BACKTRACE.FUNC_AA
+[4:1] CT-00636, PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure p1_test_nested_exception
+  2 is 
+  3 tmp int :=0;
+  4 begin
+  5 tmp := tmp+'1oo';
+  6 exception
+  7    when others then 
+  8        dbe_output.print_line('One trace: '||DBE_UTIL.GET_ERROR_BACKTRACE);
+  9        begin
+ 10        exec_c();
+ 11        exception
+ 12        when others then
+ 13             dbe_output.print_line('The other trace: '||DBE_UTIL.GET_ERROR_BACKTRACE);
+ 14        end;
+ 15 end;
+ 16 /
+
+Succeed.
+
+SQL> 
+SQL> exec p1_test_nested_exception();
+
+One trace: [4:1] CT-00636, PLSQL_PACKAGE_ERROR_BACKTRACE.P1_TEST_NESTED_EXCEPTION
+
+The other trace: [9:8] CT-00931, PLSQL_PACKAGE_ERROR_BACKTRACE.P1_TEST_NESTED_EXCEPTION
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure c
+  2 is
+  3 begin
+  4  dbe_output.print_line('In procedure c');
+  5  RAISE NO_DATA_FOUND;
+  6 end c;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create or replace procedure b
+  2 is
+  3 begin
+  4  dbe_output.print_line('In procedure b');
+  5  c();
+  6 end b;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> create or replace procedure a
+  2 is
+  3 begin
+  4  dbe_output.print_line('In procedure a');
+  5  b();
+  6 exception
+  7  when no_data_found then
+  8  dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+  9 end a;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> call a();
+
+In procedure a
+In procedure b
+In procedure c
+[4:2] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.C
+[4:2] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.B
+[4:2] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.A
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure proc_nested_loop_temp(myinput int)
+  2 is
+  3 begin
+  4 RAISE NO_DATA_FOUND;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure proc_nested_loop(myloop int)
+  2 is
+  3 temp_loop int;
+  4 begin
+  5 temp_loop := myloop-1;
+  6 if (myloop > 0) then
+  7     proc_nested_loop(temp_loop);
+  8 else
+  9     proc_nested_loop_temp(myloop);
+ 10 end if;
+ 11 dbe_output.print_line('Current: '|| myloop);
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 proc_nested_loop(5);
+  3 exception
+  4     when others then
+  5     dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+  6 end;
+  7 /
+
+[4:1] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP_TEMP
+[9:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[2:1] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> begin
+  2 proc_nested_loop(20);
+  3 exception
+  4     when others then
+  5     dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+  6 end;
+  7 /
+
+[4:1] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP_TEMP
+[9:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[2:1] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --dynamic sql
+SQL> declare
+  2 dy_sql varchar(100);
+  3 begin
+  4 dy_sql := 'declare
+  5  a int :=1; 
+  6  begin 
+  7  a:=a/0; 
+  8  end;';
+  9 execute immediate dy_sql;
+ 10 exception
+ 11     when others then
+ 12     begin
+ 13     dy_sql := DBE_UTIL.GET_ERROR_BACKTRACE;
+ 14     dbe_output.print_line(dy_sql);
+ 15     end;
+ 16 end;
+ 17 /
+
+CT-00932, [13:5] PL/SQL(PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK) terminated with execute errors
+[13:5] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> declare
+  2 dy_sql varchar(100);
+  3 begin
+  4 dy_sql := 'begin
+  5  proc_nested_loop(5);
+  6  end;';
+  7 execute immediate dy_sql;
+  8 exception
+  9     when others then
+ 10     begin
+ 11     dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+ 12     end;
+ 13 end;
+ 14 /
+
+[4:1] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP_TEMP
+[9:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[7:5] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.PROC_NESTED_LOOP
+[2:2] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK
+[7:1] CT-00906, PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure a_ret2(b OUT sys_refcursor)
+  2 is
+  3 a sys_refcursor;
+  4 begin
+  5 open a for select 2 from dual;
+  6 dbe_sql.return_cursor(a);
+  7 b := a;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 a sys_refcursor;
+  3 begin
+  4 open a for select 10 from dual;
+  5 a_ret2(a);
+  6 dbe_sql.return_cursor(a);
+  7 exception
+  8     when others then
+  9     dbe_output.print_line(DBE_UTIL.GET_ERROR_BACKTRACE);
+ 10 end;
+ 11 /
+
+[6:1] CT-00905, DBE_SQL.RETURN_CURSOR
+[6:1] CT-00905, PLSQL_PACKAGE_ERROR_BACKTRACE.ANONYMOUS BLOCK
+
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+
+SQL> 
+SQL> create or replace procedure testa()
+  2 as
+  3 begin
+  4 DBE_UTIL.GET_ERROR_BACKTRACE;
+  5 end;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(PLSQL_PACKAGE_ERROR_BACKTRACE.TESTA) terminated with compiling errors
+[4:1] PLC-00916 PL/SQL:syntax error(an undefined procedure was called)
+
+
+SQL> 
+SQL> 
+SQL> create or replace procedure testa()
+  2 as
+  3 begin
+  4 DBE_UTIL.GET_ERROR_BACKTRACE();
+  5 end;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(PLSQL_PACKAGE_ERROR_BACKTRACE.TESTA) terminated with compiling errors
+[4:1] PLC-00916 PL/SQL:syntax error(an undefined procedure was called)
+
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user plsql_package_error_backtrace cascade;
+
+Succeed.
+
+SQL> set serveroutput off;
+
+OFF
+SQL> 
+
+

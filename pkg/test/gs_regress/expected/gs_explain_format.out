@@ -1,0 +1,1544 @@
+
+
+SQL> drop table if exists test_display_format;
+
+Succeed.
+
+SQL> create table test_display_format(c1 int);
+
+Succeed.
+
+SQL> 
+SQL> ------------ system ------------
+SQL> -- error
+SQL> alter system set plan_display_format = ;
+
+CT-00601, Sql syntax error: Invalid value for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = basic,;
+
+CT-00601, Sql syntax error: Invalid value for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = bacic;
+
+CT-00601, Sql syntax error: Invalid value bacic for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = basic, ;
+
+CT-00601, Sql syntax error: Invalid value for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = basic, , predicate;
+
+CT-00601, Sql syntax error: Invalid value for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = "basic";
+
+CT-00601, Sql syntax error: Invalid value "basic" for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = '"basic"';
+
+CT-00601, Sql syntax error: Invalid value "basic" for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = ''basic'';
+
+CT-00601, Sql syntax error: Invalid value for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = basic, 123;
+
+CT-00601, Sql syntax error: Invalid value 123 for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = basic, typical;
+
+CT-00601, Sql syntax error: TYPICAL and BASIC cannot be set at the same time
+SQL> alter system set plan_display_format = typical, all;
+
+CT-00601, Sql syntax error: ALL and TYPICAL cannot be set at the same time
+SQL> alter system set plan_display_format = basic, all, typical;
+
+CT-00601, Sql syntax error: ALL and BASIC cannot be set at the same time
+SQL> 
+SQL> -- defalut
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL                                                          TYPICAL                                                          TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> -- basic
+SQL> alter system set plan_display_format = basic;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC                                                            BASIC                                                            TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> -- basic + predicate = typical
+SQL> alter system set plan_display_format = basic,predicate;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC,PREDICATE                                                  BASIC,PREDICATE                                                  TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = typical;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL                                                          TYPICAL                                                          TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> -- basic + predicate + query_block = typical + query_block
+SQL> alter system set plan_display_format = basic,predicate,query_block;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC,PREDICATE,QUERY_BLOCK                                      BASIC,PREDICATE,QUERY_BLOCK                                      TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+12 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = typical,query_block;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL,QUERY_BLOCK                                              TYPICAL,QUERY_BLOCK                                              TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+12 rows fetched.
+
+SQL> 
+SQL> -- basic + predicate + query_block + outline = typical + query_block + outline = all
+SQL> alter system set plan_display_format = basic,predicate,query_block,outline;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC,PREDICATE,QUERY_BLOCK,OUTLINE                              BASIC,PREDICATE,QUERY_BLOCK,OUTLINE                              TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+22 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = typical,query_block,outline;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL,QUERY_BLOCK,OUTLINE                                      TYPICAL,QUERY_BLOCK,OUTLINE                                      TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+22 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = all;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              ALL                                                              ALL                                                              TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+22 rows fetched.
+
+SQL> 
+SQL> -- duplicate format
+SQL> alter system set plan_display_format = basic,basic;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC                                                            BASIC                                                            TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = typical,typical;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL                                                          TYPICAL                                                          TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = all,all;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              ALL                                                              ALL                                                              TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+22 rows fetched.
+
+SQL> 
+SQL> -- duplicate option
+SQL> alter system set plan_display_format = basic, predicate, predicate;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC,PREDICATE                                                  BASIC,PREDICATE                                                  TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = typical, typical, query_block, query_block;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL,QUERY_BLOCK                                              TYPICAL,QUERY_BLOCK                                              TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+12 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = typical, outline, outline;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL,OUTLINE                                                  TYPICAL,OUTLINE                                                  TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+19 rows fetched.
+
+SQL> 
+SQL> -- only option, then defalut format is basic
+SQL> alter system set plan_display_format = predicate;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC,PREDICATE                                                  BASIC,PREDICATE                                                  TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = query_block;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC,QUERY_BLOCK                                                BASIC,QUERY_BLOCK                                                TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+
+9 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = outline;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              BASIC,OUTLINE                                                    BASIC,OUTLINE                                                    TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+
+16 rows fetched.
+
+SQL> 
+SQL> -- with scope
+SQL> -- error
+SQL> alter system set plan_display_format = typical,scope scope=memory;
+
+CT-00601, Sql syntax error: Invalid value for PLAN_DISPLAY_FORMAT
+SQL> alter system set plan_display_format = 'typical,scope' scope=memory;
+
+CT-00601, Sql syntax error: Invalid value scope for PLAN_DISPLAY_FORMAT
+SQL> 
+SQL> alter system set plan_display_format = typical scope=memory;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL                                                          TYPICAL                                                          TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter system set plan_display_format = 'typical,query_block' scope=memory;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL,QUERY_BLOCK                                              TYPICAL,QUERY_BLOCK                                              TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+12 rows fetched.
+
+SQL> 
+SQL> -- _SHOW_EXPLAIN_PREDICATE
+SQL> alter system set plan_display_format = typical;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='_SHOW_EXPLAIN_PREDICATE';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+_SHOW_EXPLAIN_PREDICATE                                          TRUE                                                             TRUE                                                             TRUE                                                            
+
+1 rows fetched.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL                                                          TYPICAL                                                          TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> alter system set _show_explain_predicate=false;
+
+Succeed.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='_SHOW_EXPLAIN_PREDICATE';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+_SHOW_EXPLAIN_PREDICATE                                          FALSE                                                            FALSE                                                            TRUE                                                            
+
+1 rows fetched.
+
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL                                                          TYPICAL                                                          TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> -- reset
+SQL> alter system set _show_explain_predicate=true;
+
+Succeed.
+
+SQL> alter system set plan_display_format = typical;
+
+Succeed.
+
+SQL> ------------ session ------------
+SQL> -- error, the same as system value
+SQL> alter session set plan_display_format = basic, ;
+
+CT-00601, Sql syntax error: Invalid value for PLAN_DISPLAY_FORMAT
+SQL> alter session set plan_display_format = basic, typical;
+
+CT-00601, Sql syntax error: TYPICAL and BASIC cannot be set at the same time
+SQL> 
+SQL> -- current system value
+SQL> select name, value, runtime_value, default_value from DV_PARAMETERS where name='PLAN_DISPLAY_FORMAT';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                   
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PLAN_DISPLAY_FORMAT                                              TYPICAL                                                          TYPICAL                                                          TYPICAL                                                         
+
+1 rows fetched.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic , predicate;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic, predicate, query_block;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+12 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical, query_block;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+12 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic, query_block, predicate, outline;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+22 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical, predicate, outline;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+19 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = all;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+
+22 rows fetched.
+
+SQL> 
+SQL> ------------ test prefetch rows ------------
+SQL> alter system set _prefetch_rows = 5;
+
+Succeed.
+
+SQL> 
+SQL> alter session set plan_display_format = basic;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < ?                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic,query_block;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+
+9 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical,query_block;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < ?                                           
+
+12 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic,outline;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+
+16 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical,outline;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < ?                                           
+
+19 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic,query_block,outline;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+
+19 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = all;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < ?                                           
+
+22 rows fetched.
+
+SQL> 
+SQL> --NOTE
+SQL> alter system set _prefetch_rows = 5;
+
+Succeed.
+
+SQL> call DBE_SPM.create_sql_outline(schema=>user, dst_sql=>'select * from test_display_format where c1 < 1', sql_id=>'1491693019', signature=>'52891C32F69938F15360555694C7EF4E');
+
+PL/SQL procedure successfully completed.
+
+SQL> alter session set plan_display_format = basic , predicate;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+Note:                                                           
+-----                                                           
+ - SPM fixed plan "52891C32F69938F15360555694C7EF4E" used for this statement
+
+12 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+Note:                                                           
+-----                                                           
+ - SPM fixed plan "52891C32F69938F15360555694C7EF4E" used for this statement
+
+12 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic, predicate, query_block;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+Note:                                                           
+-----                                                           
+ - SPM fixed plan "52891C32F69938F15360555694C7EF4E" used for this statement
+
+15 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical, query_block;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+Note:                                                           
+-----                                                           
+ - SPM fixed plan "52891C32F69938F15360555694C7EF4E" used for this statement
+
+15 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = basic, query_block, predicate, outline;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Query Block Name / Object Alias (identified by operation id):   
+-------------------------------------------------------------   
+   1 - SEL$1 / TEST_DISPLAY_FORMAT@SEL$1                        
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+Note:                                                           
+-----                                                           
+ - SPM fixed plan "52891C32F69938F15360555694C7EF4E" used for this statement
+
+25 rows fetched.
+
+SQL> 
+SQL> alter session set plan_display_format = typical, predicate, outline;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < 1;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < 1                                           
+Note:                                                           
+-----                                                           
+ - SPM fixed plan "52891C32F69938F15360555694C7EF4E" used for this statement
+
+22 rows fetched.
+
+SQL> 
+SQL> alter system set _prefetch_rows = 1;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Outline Data:                                                   
+-------------                                                   
+  /*+                                                           
+      BEGIN_OUTLINE_DATA                                        
+      DB_VERSION('NONE')                                        
+      OUTLINE_FEATURES_ENABLE('NONE')                           
+      FULL(@"SEL$1" "TEST_DISPLAY_FORMAT"@"SEL$1")              
+      OPTIMIZER_MODE('RBO')                                     
+      END_OUTLINE_DATA                                          
+  */                                                            
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < ?                                           
+
+19 rows fetched.
+
+SQL> 
+SQL> alter system set _prefetch_rows = 100;
+
+Succeed.
+
+SQL> 
+SQL> -- _SHOW_EXPLAIN_PREDICATE
+SQL> alter session set plan_display_format = basic;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> alter session set _show_explain_predicate = true;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C1 < ?                                           
+
+9 rows fetched.
+
+SQL> 
+SQL> alter session set _show_explain_predicate = false;
+
+Succeed.
+
+SQL> explain select * from test_display_format where c1 < ?;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description          | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | SYS   | TEST_DISPLAY_FORMAT |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> -- reset
+SQL> alter session set _show_explain_predicate = true;
+
+Succeed.
+
+SQL> alter session set plan_display_format = typical;
+
+Succeed.
+
+SQL> drop table test_display_format;
+Succeed.
+
+
+
+

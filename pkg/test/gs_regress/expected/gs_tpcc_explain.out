@@ -1,0 +1,1247 @@
+
+
+SQL> drop table if exists bmsql_config;
+
+Succeed.
+
+SQL> drop table if exists bmsql_new_order;
+
+Succeed.
+
+SQL> drop table if exists bmsql_order_line;
+
+Succeed.
+
+SQL> drop table if exists bmsql_oorder;
+
+Succeed.
+
+SQL> drop table if exists bmsql_history;
+
+Succeed.
+
+SQL> drop table if exists bmsql_customer;
+
+Succeed.
+
+SQL> drop table if exists bmsql_stock;
+
+Succeed.
+
+SQL> drop table if exists bmsql_item;
+
+Succeed.
+
+SQL> drop table if exists bmsql_district;
+
+Succeed.
+
+SQL> drop table if exists bmsql_warehouse;
+
+Succeed.
+
+SQL> drop sequence if exists bmsql_hist_id_seq;
+
+Succeed.
+
+SQL> create table bmsql_config (
+  2   cfg_name    varchar(30),
+  3   cfg_value   varchar(50)
+  4 );
+
+Succeed.
+
+SQL> 
+SQL> create index cfg_name_index on bmsql_config(cfg_name);
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_warehouse (
+  2   w_id        integer   not null,
+  3   w_ytd       decimal(12,2),
+  4   w_tax       decimal(4,4),
+  5   w_name      varchar(10),
+  6   w_street_1  varchar(20),
+  7   w_street_2  varchar(20),
+  8   w_city      varchar(20),
+  9   w_state     char(2),
+ 10   w_zip       char(9)
+ 11 );
+
+Succeed.
+
+SQL> create table bmsql_district (
+  2   d_w_id       integer       not null,
+  3   d_id         integer       not null,
+  4   d_ytd        decimal(12,2),
+  5   d_tax        decimal(4,4),
+  6   d_next_o_id  integer,
+  7   d_name       varchar(10),
+  8   d_street_1   varchar(20),
+  9   d_street_2   varchar(20),
+ 10   d_city       varchar(20),
+ 11   d_state      char(2),
+ 12   d_zip        char(9)
+ 13 );
+
+Succeed.
+
+SQL> create table bmsql_customer (
+  2   c_w_id         integer        not null,
+  3   c_d_id         integer        not null,
+  4   c_id           integer        not null,
+  5   c_discount     decimal(4,4),
+  6   c_credit       char(2),
+  7   c_last         varchar(16),
+  8   c_first        varchar(16),
+  9   c_credit_lim   decimal(12,2),
+ 10   c_balance      decimal(12,2),
+ 11   c_ytd_payment  decimal(12,2),
+ 12   c_payment_cnt  integer,
+ 13   c_delivery_cnt integer,
+ 14   c_street_1     varchar(20),
+ 15   c_street_2     varchar(20),
+ 16   c_city         varchar(20),
+ 17   c_state        char(2),
+ 18   c_zip          char(9),
+ 19   c_phone        char(16),
+ 20   c_since        timestamp,
+ 21   c_middle       char(2),
+ 22   c_data         varchar(500)
+ 23 );
+
+Succeed.
+
+SQL> create sequence bmsql_hist_id_seq;
+
+Succeed.
+
+SQL> create table bmsql_history (
+  2   hist_id  integer,
+  3   h_c_id   integer,
+  4   h_c_d_id integer,
+  5   h_c_w_id integer,
+  6   h_d_id   integer,
+  7   h_w_id   integer,
+  8   h_date   timestamp,
+  9   h_amount decimal(6,2),
+ 10   h_data   varchar(24)
+ 11 );
+
+Succeed.
+
+SQL> create table bmsql_new_order (
+  2   no_w_id  integer   not null,
+  3   no_d_id  integer   not null,
+  4   no_o_id  integer   not null
+  5 );
+
+Succeed.
+
+SQL> create table bmsql_oorder (
+  2   o_w_id       integer      not null,
+  3   o_d_id       integer      not null,
+  4   o_id         integer      not null,
+  5   o_c_id       integer,
+  6   o_carrier_id integer,
+  7   o_ol_cnt     integer,
+  8   o_all_local  integer,
+  9   o_entry_d    timestamp
+ 10 );
+
+Succeed.
+
+SQL> create table bmsql_order_line (
+  2   ol_w_id         integer   not null,
+  3   ol_d_id         integer   not null,
+  4   ol_o_id         integer   not null,
+  5   ol_number       integer   not null,
+  6   ol_i_id         integer   not null,
+  7   ol_delivery_d   timestamp,
+  8   ol_amount       decimal(6,2),
+  9   ol_supply_w_id  integer,
+ 10   ol_quantity     integer,
+ 11   ol_dist_info    char(24)
+ 12 );
+
+Succeed.
+
+SQL> create table bmsql_item (
+  2   i_id     integer      not null,
+  3   i_name   varchar(24),
+  4   i_price  decimal(5,2),
+  5   i_data   varchar(50),
+  6   i_im_id  integer
+  7 );
+
+Succeed.
+
+SQL> create table bmsql_stock (
+  2   s_w_id       integer       not null,
+  3   s_i_id       integer       not null,
+  4   s_quantity   integer,
+  5   s_ytd        integer,
+  6   s_order_cnt  integer,
+  7   s_remote_cnt integer,
+  8   s_data       varchar(50),
+  9   s_dist_01    char(24),
+ 10   s_dist_02    char(24),
+ 11   s_dist_03    char(24),
+ 12   s_dist_04    char(24),
+ 13   s_dist_05    char(24),
+ 14   s_dist_06    char(24),
+ 15   s_dist_07    char(24),
+ 16   s_dist_08    char(24),
+ 17   s_dist_09    char(24),
+ 18   s_dist_10    char(24)
+ 19 );
+
+Succeed.
+
+SQL> alter table bmsql_warehouse add constraint bmsql_warehouse_pkey
+  2   primary key (w_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_district add constraint bmsql_district_pkey
+  2   primary key (d_w_id, d_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_customer add constraint bmsql_customer_pkey
+  2   primary key (c_w_id, c_d_id, c_id);
+
+Succeed.
+
+SQL> 
+SQL> create index bmsql_customer_idx1
+  2   on  bmsql_customer (c_w_id, c_d_id, c_last, c_first);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_oorder add constraint bmsql_oorder_pkey
+  2   primary key (o_w_id, o_d_id, o_id);
+
+Succeed.
+
+SQL> 
+SQL> create unique index bmsql_oorder_idx1
+  2   on  bmsql_oorder (o_w_id, o_d_id, o_carrier_id, o_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_new_order add constraint bmsql_new_order_pkey
+  2   primary key (no_w_id, no_d_id, no_o_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_order_line add constraint bmsql_order_line_pkey
+  2   primary key (ol_w_id, ol_d_id, ol_o_id, ol_number);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_stock add constraint bmsql_stock_pkey
+  2   primary key (s_w_id, s_i_id);
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_item add constraint bmsql_item_pkey
+  2   primary key (i_id);
+
+Succeed.
+
+SQL> 
+SQL>  --以下为标准执行计划，切勿擅自改动！！！
+SQL> 
+SQL> explain SELECT cfg_value FROM bmsql_config  WHERE cfg_name = 'p1';
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name           | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CONFIG   |      |      |       |        |
+| 2   |     INDEX RANGE SCAN           | SYS   | CFG_NAME_INDEX |      |      |       |        |
+------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: CFG_NAME = 'p1'                                  
+
+10 rows fetched.
+
+SQL> explain SELECT d_tax, d_next_o_id FROM bmsql_district WHERE d_w_id = 'p1' AND d_id = 2 FOR UPDATE;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |                     |      |      |       |        |
+| 1   |   FOR UPDATE                     |       |                     |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_DISTRICT      |      |      |       |        |
+| 3   |       INDEX UNIQUE SCAN          | SYS   | BMSQL_DISTRICT_PKEY |      |      |       |        |
+-------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - access: D_ID = 2 AND D_W_ID = 'p1'                       
+
+11 rows fetched.
+
+SQL> explain UPDATE bmsql_district SET d_ytd = d_ytd + 'p1' WHERE d_w_id = 2 AND d_id = 3;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_DISTRICT      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_DISTRICT_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: D_ID = 3 AND D_W_ID = 2                          
+
+10 rows fetched.
+
+SQL> explain SELECT c_id FROM bmsql_customer WHERE c_w_id = 'p1' AND c_d_id = 2 AND c_last = 3 ORDER BY c_first;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |                     |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY            |       |                     |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 3   |       INDEX RANGE SCAN           | SYS   | BMSQL_CUSTOMER_PKEY |      |      |       |        |
+-------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: C_LAST = 3                                       
+   3 - access: C_D_ID = 2 AND C_W_ID = 'p1'                     
+
+12 rows fetched.
+
+SQL> explain SELECT count(*) AS low_stock FROM ( SELECT s_w_id, s_i_id, s_quantity FROM bmsql_stock WHERE s_w_id = 'p1' AND s_quantity < 2 AND s_i_id IN ( SELECT ol_i_id  FROM bmsql_district JOIN bmsql_order_line ON ol_w_id = d_w_id AND ol_d_id = d_id AND ol_o_id >= d_next_o_id - 20 AND ol_o_id < d_next_o_id WHERE d_w_id = 3 AND d_id = 4 ));
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------
+| Id  | Description                                | Owner | Name                  | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                           |       |                       |      |      |       |        |
+| 1   |   AGGR                                     |       |                       |      |      |       |        |
+| 2   |     NESTED LOOPS                           |       |                       |      |      |       |        |
+| 3   |       SUBSELECT                            |       |                       |      |      |       |        |
+| 4   |         HASH DISTINCT                      |       |                       |      |      |       |        |
+| 5   |           NESTED LOOPS                     |       |                       |      |      |       |        |
+| 6   |             NESTED LOOPS                   |       |                       |      |      |       |        |
+| 7   |               TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_DISTRICT        |      |      |       |        |
+| 8   |                 INDEX UNIQUE SCAN          | SYS   | BMSQL_DISTRICT_PKEY   |      |      |       |        |
+| 9   |               TABLE ACCESS BY INDEX ONLY   | SYS   | BMSQL_ORDER_LINE      |      |      |       |        |
+| 10  |                 INDEX RANGE SCAN           | SYS   | BMSQL_ORDER_LINE_PKEY |      |      |       |        |
+| 11  |             TABLE ACCESS BY ROWID          | SYS   | BMSQL_ORDER_LINE      |      |      |       |        |
+| 12  |               ROWID SCAN                   |       |                       |      |      |       |        |
+| 13  |       TABLE ACCESS BY INDEX ROWID          | SYS   | BMSQL_STOCK           |      |      |       |        |
+| 14  |         INDEX UNIQUE SCAN                  | SYS   | BMSQL_STOCK_PKEY      |      |      |       |        |
+-------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   8 - access: D_W_ID = 3 AND D_ID = 4                          
+   10 - access: OL_W_ID = 3 AND OL_D_ID = 4 AND D_W_ID = OL_W_ID AND OL_D_ID = D_ID AND OL_O_ID >= D_NEXT_O_ID - 
+               20 AND OL_O_ID < D_NEXT_O_ID                     
+   13 - filter: S_W_ID = 'p1' AND S_QUANTITY < 2                
+   14 - access: S_I_ID = BMSQL_ORDER_LINE.OL_I_ID               
+
+26 rows fetched.
+
+SQL> explain SELECT d_name, d_street_1, d_street_2, d_city,d_state, d_zip FROM bmsql_district WHERE d_w_id = 'p1' AND d_id = 2;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_DISTRICT      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_DISTRICT_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: D_W_ID = 'p1'                                    
+   2 - access: D_ID = 2                                         
+
+11 rows fetched.
+
+SQL> explain SELECT c_first, c_middle, c_last, c_balance FROM bmsql_customer WHERE c_w_id = 'p1' AND c_d_id = 2 AND c_id = 3;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_CUSTOMER_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C_W_ID = 'p1'                                    
+   2 - access: C_ID = 3 AND C_D_ID = 2                          
+
+11 rows fetched.
+
+SQL> explain UPDATE bmsql_warehouse SET w_ytd = w_ytd + 'p1' WHERE w_id = 2;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                 | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                      |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_WAREHOUSE      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_WAREHOUSE_PKEY |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: W_ID = 2                                         
+
+10 rows fetched.
+
+SQL> explain SELECT w_name, w_street_1, w_street_2, w_city,w_state, w_zip FROM bmsql_warehouse  WHERE w_id = 'p1';
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                 | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                      |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_WAREHOUSE      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_WAREHOUSE_PKEY |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: W_ID = 'p1'                                      
+
+10 rows fetched.
+
+SQL> explain SELECT no_o_id FROM bmsql_new_order WHERE no_w_id = 'p1' AND no_d_id = 2 ORDER BY no_o_id ASC;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                   | Owner | Name                 | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT              |       |                      |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ONLY  | SYS   | BMSQL_NEW_ORDER      |      |      |       |        |
+| 2   |     INDEX RANGE SCAN          | SYS   | BMSQL_NEW_ORDER_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: NO_D_ID = 2 AND NO_W_ID = 'p1'                   
+
+10 rows fetched.
+
+SQL> explain SELECT c_first, c_middle, c_last, c_street_1, c_street_2,c_city, c_state, c_zip, c_phone, c_since, c_credit,c_credit_lim, c_discount, c_balance FROM bmsql_customer WHERE c_w_id = 'p1' AND c_d_id = 2 AND c_id = 3 FOR UPDATE;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |                     |      |      |       |        |
+| 1   |   FOR UPDATE                     |       |                     |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 3   |       INDEX UNIQUE SCAN          | SYS   | BMSQL_CUSTOMER_PKEY |      |      |       |        |
+-------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - access: C_ID = 3 AND C_D_ID = 2 AND C_W_ID = 'p1'        
+
+11 rows fetched.
+
+SQL> explain SELECT c_discount, c_last, c_credit, w_tax FROM bmsql_customer JOIN bmsql_warehouse ON (w_id = c_w_id) WHERE c_w_id = 'p1' AND c_d_id = 2 AND c_id = 3;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name                 | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |                      |      |      |       |        |
+| 1   |   NESTED LOOPS                   |       |                      |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CUSTOMER       |      |      |       |        |
+| 3   |       INDEX UNIQUE SCAN          | SYS   | BMSQL_CUSTOMER_PKEY  |      |      |       |        |
+| 4   |     TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_WAREHOUSE      |      |      |       |        |
+| 5   |       INDEX UNIQUE SCAN          | SYS   | BMSQL_WAREHOUSE_PKEY |      |      |       |        |
+--------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: C_W_ID = 'p1'                                    
+   3 - access: C_ID = 3 AND C_D_ID = 2                          
+   5 - access: W_ID = 'p1' AND C_W_ID = W_ID                    
+
+15 rows fetched.
+
+SQL> explain DELETE FROM bmsql_new_order WHERE no_w_id = 'p1' AND no_d_id = 2 AND no_o_id = 3;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                 | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | DELETE STATEMENT               |       |                      |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_NEW_ORDER      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_NEW_ORDER_PKEY |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: NO_O_ID = 3 AND NO_D_ID = 2 AND NO_W_ID = 'p1'   
+
+10 rows fetched.
+
+SQL> explain UPDATE bmsql_customer SET c_balance = c_balance - 'p1',c_ytd_payment = c_ytd_payment + 2,c_payment_cnt = c_payment_cnt + 1 WHERE c_w_id = 3 AND c_d_id = 4 AND c_id = 5;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_CUSTOMER_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: C_ID = 5 AND C_D_ID = 4 AND C_W_ID = 3           
+
+10 rows fetched.
+
+SQL> explain SELECT c_data FROM bmsql_customer WHERE c_w_id = 'p1' AND c_d_id = 2 AND c_id = 3;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_CUSTOMER_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: C_W_ID = 'p1'                                    
+   2 - access: C_ID = 3 AND C_D_ID = 2                          
+
+11 rows fetched.
+
+SQL> explain UPDATE bmsql_district SET d_next_o_id = d_next_o_id + 1 WHERE d_w_id = 'p1' AND d_id = 2;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_DISTRICT      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_DISTRICT_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: D_ID = 2 AND D_W_ID = 'p1'                       
+
+10 rows fetched.
+
+SQL> explain UPDATE bmsql_customer SET c_balance = c_balance - 'p1', c_ytd_payment = c_ytd_payment + 2, c_payment_cnt = c_payment_cnt + 1, c_data = 3 WHERE c_w_id = 4 AND c_d_id = 5 AND c_id = 6;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_CUSTOMER_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: C_ID = 6 AND C_D_ID = 5 AND C_W_ID = 4           
+
+10 rows fetched.
+
+SQL> explain SELECT o_id, o_entry_d, o_carrier_id FROM bmsql_oorder WHERE o_w_id = 'p1' AND o_d_id = 2 AND o_c_id = 3  AND o_id = (SELECT max(o_id) FROM bmsql_oorder WHERE o_w_id = 4 AND o_d_id = 5 AND o_c_id = 6);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+| Id  | Description                         | Owner | Name              | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                    |       |                   |      |      |       |        |
+| 1   |   KERNEL FILTER                     |       |                   |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ROWID     | SYS   | BMSQL_OORDER      |      |      |       |        |
+| 3   |       INDEX UNIQUE SCAN             | SYS   | BMSQL_OORDER_PKEY |      |      |       |        |
+| 4   |     INDEX AGGR                      |       |                   |      |      |       |        |
+| 5   |       TABLE ACCESS BY INDEX ROWID   | SYS   | BMSQL_OORDER      |      |      |       |        |
+| 6   |         INDEX RANGE SCAN DESCENDING | SYS   | BMSQL_OORDER_PKEY |      |      |       |        |
+--------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - filter: O_W_ID = 'p1' AND O_C_ID = 3                     
+   3 - access: O_D_ID = 2 AND O_ID = (SELECT MAX(O_ID) FROM BMSQL_OORDER WHERE O_C_ID = 6 AND O_ID IS NOT NULL)
+   5 - filter: O_C_ID = 6                                       
+   6 - access: O_D_ID = 5 AND O_W_ID = 4 AND O_ID IS NOT NULL   
+
+17 rows fetched.
+
+SQL> explain UPDATE bmsql_oorder SET o_carrier_id = 'p1' WHERE o_w_id = 2 AND o_d_id = 3 AND o_id = 4;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name              | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                   |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_OORDER      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_OORDER_PKEY |      |      |       |        |
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: O_ID = 4 AND O_D_ID = 3 AND O_W_ID = 2           
+
+10 rows fetched.
+
+SQL> explain INSERT INTO bmsql_oorder (o_id, o_d_id, o_w_id, o_c_id, o_entry_d,o_ol_cnt, o_all_local) VALUES (1, 2, 3, 4, '2011-11-11 11:11:11.1', 6, 7);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name         | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------
+| 0   | INSERT STATEMENT           |       |              |      |      |       |        |
+| 1   |   LOAD TABLE CONVENTIONAL  | SYS   | BMSQL_OORDER |      |      |       |        |
+------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain SELECT ol_i_id, ol_supply_w_id, ol_quantity,ol_amount, ol_delivery_d FROM bmsql_order_line WHERE ol_w_id = 'p1' AND ol_d_id = 2 AND ol_o_id = 3 ORDER BY ol_w_id, ol_d_id, ol_o_id, ol_number;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                  | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                       |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_ORDER_LINE      |      |      |       |        |
+| 2   |     INDEX RANGE SCAN           | SYS   | BMSQL_ORDER_LINE_PKEY |      |      |       |        |
+-------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: OL_O_ID = 3 AND OL_D_ID = 2 AND OL_W_ID = 'p1'   
+
+10 rows fetched.
+
+SQL> explain SELECT o_c_id FROM bmsql_oorder WHERE o_w_id = 'p1' AND o_d_id = 2 AND o_id = 3;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name              | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                   |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_OORDER      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_OORDER_PKEY |      |      |       |        |
+---------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: O_W_ID = 'p1'                                    
+   2 - access: O_ID = 3 AND O_D_ID = 2                          
+
+11 rows fetched.
+
+SQL> explain UPDATE bmsql_order_line SET ol_delivery_d = 'p1' WHERE ol_w_id = 2 AND ol_d_id = 3 AND ol_o_id = 4;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                  | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                       |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_ORDER_LINE      |      |      |       |        |
+| 2   |     INDEX RANGE SCAN           | SYS   | BMSQL_ORDER_LINE_PKEY |      |      |       |        |
+-------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: OL_O_ID = 4 AND OL_D_ID = 3 AND OL_W_ID = 2      
+
+10 rows fetched.
+
+SQL> explain SELECT sum(ol_amount) AS sum_ol_amount FROM bmsql_order_line WHERE ol_w_id = 'p1' AND ol_d_id = 2 AND ol_o_id = 3;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name                  | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |                       |      |      |       |        |
+| 1   |   AGGR                           |       |                       |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_ORDER_LINE      |      |      |       |        |
+| 3   |       INDEX RANGE SCAN           | SYS   | BMSQL_ORDER_LINE_PKEY |      |      |       |        |
+---------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - access: OL_O_ID = 3 AND OL_D_ID = 2 AND OL_W_ID = 'p1'   
+
+11 rows fetched.
+
+SQL> explain INSERT INTO bmsql_new_order (no_o_id, no_d_id, no_w_id) VALUES ('p1', 2, 3);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name            | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | INSERT STATEMENT           |       |                 |      |      |       |        |
+| 1   |   LOAD TABLE CONVENTIONAL  | SYS   | BMSQL_NEW_ORDER |      |      |       |        |
+---------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain INSERT INTO bmsql_history (h_c_id, h_c_d_id, h_c_w_id, h_d_id, h_w_id,h_date, h_amount, h_data) VALUES ('p1', 2, 3, 4, 5, '2011-11-11 11:11:11.1', 7, 'p8');
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | INSERT STATEMENT           |       |               |      |      |       |        |
+| 1   |   LOAD TABLE CONVENTIONAL  | SYS   | BMSQL_HISTORY |      |      |       |        |
+-------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> explain UPDATE bmsql_customer SET c_balance = c_balance + 'p1',c_delivery_cnt = c_delivery_cnt + 1 WHERE c_w_id = 2 AND c_d_id = 3 AND c_id = 4;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name                | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                     |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_CUSTOMER_PKEY |      |      |       |        |
+-----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: C_ID = 4 AND C_D_ID = 3 AND C_W_ID = 2           
+
+10 rows fetched.
+
+SQL> explain SELECT i_price, i_name, i_data FROM bmsql_item WHERE i_id = 'p1';
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name            | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |                 |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_ITEM      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_ITEM_PKEY |      |      |       |        |
+-------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: I_ID = 'p1'                                      
+
+10 rows fetched.
+
+SQL> explain SELECT s_quantity, s_data,s_dist_01, s_dist_02, s_dist_03, s_dist_04,s_dist_05, s_dist_06, s_dist_07, s_dist_08,s_dist_09, s_dist_10 FROM bmsql_stock WHERE s_w_id = 'p1' AND s_i_id = 2 FOR UPDATE;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |                  |      |      |       |        |
+| 1   |   FOR UPDATE                     |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_STOCK      |      |      |       |        |
+| 3   |       INDEX UNIQUE SCAN          | SYS   | BMSQL_STOCK_PKEY |      |      |       |        |
+----------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   3 - access: S_I_ID = 2 AND S_W_ID = 'p1'                     
+
+11 rows fetched.
+
+SQL> explain UPDATE bmsql_stock SET s_quantity = 'p1', s_ytd = s_ytd + 2, s_order_cnt = s_order_cnt + 1, s_remote_cnt = s_remote_cnt + 3 WHERE s_w_id = 4 AND s_i_id = 5;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------
+| 0   | UPDATE STATEMENT               |       |                  |      |      |       |        |
+| 1   |   TABLE ACCESS BY INDEX ROWID  | SYS   | BMSQL_STOCK      |      |      |       |        |
+| 2   |     INDEX UNIQUE SCAN          | SYS   | BMSQL_STOCK_PKEY |      |      |       |        |
+--------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: S_I_ID = 5 AND S_W_ID = 4                        
+
+10 rows fetched.
+
+SQL> explain INSERT INTO bmsql_order_line (ol_o_id, ol_d_id, ol_w_id, ol_number,ol_i_id, ol_supply_w_id, ol_quantity,ol_amount, ol_dist_info) VALUES ('p1', 2, 3, 4, 5, 6, 7, 8, 'p'); 
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | INSERT STATEMENT           |       |                  |      |      |       |        |
+| 1   |   LOAD TABLE CONVENTIONAL  | SYS   | BMSQL_ORDER_LINE |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> 
+SQL> alter table bmsql_warehouse drop constraint bmsql_warehouse_pkey;
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_district drop constraint bmsql_district_pkey;
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_customer drop constraint bmsql_customer_pkey;
+
+Succeed.
+
+SQL> drop index bmsql_customer_idx1 on bmsql_customer;
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_oorder drop constraint bmsql_oorder_pkey;
+
+Succeed.
+
+SQL> drop index bmsql_oorder_idx1 on bmsql_oorder;
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_new_order drop constraint bmsql_new_order_pkey;
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_order_line drop constraint bmsql_order_line_pkey;
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_stock drop constraint bmsql_stock_pkey;
+
+Succeed.
+
+SQL> 
+SQL> alter table bmsql_item drop constraint bmsql_item_pkey;
+
+Succeed.
+
+SQL> 
+SQL> drop table bmsql_config;
+
+Succeed.
+
+SQL> drop table bmsql_new_order;
+
+Succeed.
+
+SQL> drop table bmsql_order_line;
+
+Succeed.
+
+SQL> drop table bmsql_oorder;
+
+Succeed.
+
+SQL> drop table bmsql_history;
+
+Succeed.
+
+SQL> drop table bmsql_customer;
+
+Succeed.
+
+SQL> drop table bmsql_stock;
+
+Succeed.
+
+SQL> drop table bmsql_item;
+
+Succeed.
+
+SQL> drop table bmsql_district;
+
+Succeed.
+
+SQL> drop table bmsql_warehouse;
+
+Succeed.
+
+SQL> drop sequence bmsql_hist_id_seq;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> -- 以下是分区表TPCC执行计划,请勿乱动
+SQL> drop table if exists bmsql_order_line;
+
+Succeed.
+
+SQL> drop table if exists bmsql_oorder;
+
+Succeed.
+
+SQL> create table bmsql_order_line (
+  2   ol_w_id         integer   not null,
+  3   ol_d_id         integer   not null,
+  4   ol_o_id         integer   not null,
+  5   ol_number       integer   not null,
+  6   ol_i_id         integer   not null,
+  7   ol_delivery_d   timestamp,
+  8   ol_amount       decimal(6,2),
+  9   ol_supply_w_id  integer,
+ 10   ol_quantity     integer,
+ 11   ol_dist_info    char(24)
+ 12 ) CRMODE ROW PCTFREE 20
+ 13 partition by hash(ol_w_id) partitions 32;
+
+Succeed.
+
+SQL> alter table bmsql_order_line add constraint bmsql_order_line_pkey
+  2   primary key (ol_w_id, ol_d_id, ol_o_id, ol_number) using index(create unique index order_line_index on bmsql_order_line(ol_w_id, ol_d_id, ol_o_id, ol_number) CRMODE PAGE LOCAL PCTFREE 20);
+
+Succeed.
+
+SQL> 
+SQL> create table bmsql_oorder (
+  2   o_w_id       integer      not null,
+  3   o_d_id       integer      not null,
+  4   o_id         integer      not null,
+  5   o_c_id       integer,
+  6   o_carrier_id integer,
+  7   o_ol_cnt     integer,
+  8   o_all_local  integer,
+  9   o_entry_d    timestamp
+ 10 ) CRMODE ROW PCTFREE 20;
+
+Succeed.
+
+SQL> create unique index bmsql_oorder_idx1
+  2   on  bmsql_oorder (o_w_id, o_d_id, o_carrier_id, o_id) CRMODE PAGE PCTFREE 20;
+
+Succeed.
+
+SQL> 
+SQL> explain SELECT ol_w_id, ol_d_id, ol_o_id, COUNT(*) count_ol
+  2                  FROM bmsql_order_line 
+  3                   GROUP BY ol_w_id, ol_d_id, ol_o_id;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
+| Id  | Description                                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                             |       |                  |      |      |       |        |
+| 1   |   HASH GROUP BY                              |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY Filter:[0,32) | SYS   | BMSQL_ORDER_LINE |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN                   | SYS   | ORDER_LINE_INDEX |      |      |       |        |
+----------------------------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> 
+SQL> explain SELECT ol_w_id, ol_d_id, ol_o_id, COUNT(*) count_ol
+  2                  FROM bmsql_order_line 
+  3                   GROUP BY ol_w_id, ol_d_id, ol_o_id
+  4 				  order by ol_w_id, ol_d_id, ol_o_id;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------
+| Id  | Description                                  | Owner | Name             | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                             |       |                  |      |      |       |        |
+| 1   |   SORT GROUP BY                              |       |                  |      |      |       |        |
+| 2   |     TABLE ACCESS BY INDEX ONLY Filter:[0,32) | SYS   | BMSQL_ORDER_LINE |      |      |       |        |
+| 3   |       INDEX FAST FULL SCAN                   | SYS   | ORDER_LINE_INDEX |      |      |       |        |
+----------------------------------------------------------------------------------------------------------------
+
+8 rows fetched.
+
+SQL> 
+SQL> -- Condition 6: For any row in the ORDER table, O_OL_CNT must equal the number
+SQL> -- of rows in the ORDER-LINE table for the corresponding order
+SQL> explain SELECT * FROM (SELECT o.o_w_id, o.o_d_id, o.o_id, o.o_ol_cnt, ol.count_ol
+  2            FROM bmsql_oorder o,
+  3                 (SELECT ol_w_id, ol_d_id, ol_o_id, COUNT(*) count_ol
+  4                  FROM bmsql_order_line
+  5                  GROUP BY ol_w_id, ol_d_id, ol_o_id) ol
+  6            WHERE o.o_w_id = ol.ol_w_id AND
+  7                  o.o_d_id = ol.ol_d_id AND
+  8                  o.o_id = ol.ol_o_id) as x
+  9 WHERE o_ol_cnt != count_ol;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Description                                      | Owner | Name              | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                                 |       |                   |      |      |       |        |
+| 1   |   NESTED LOOPS                                   |       |                   |      |      |       |        |
+| 2   |     SUBSELECT                                    |       | OL                |      |      |       |        |
+| 3   |       HASH GROUP BY                              |       |                   |      |      |       |        |
+| 4   |         TABLE ACCESS BY INDEX ONLY Filter:[0,32) | SYS   | BMSQL_ORDER_LINE  |      |      |       |        |
+| 5   |           INDEX FAST FULL SCAN                   | SYS   | ORDER_LINE_INDEX  |      |      |       |        |
+| 6   |     TABLE ACCESS BY INDEX ROWID                  | SYS   | BMSQL_OORDER O    |      |      |       |        |
+| 7   |       INDEX RANGE SCAN                           | SYS   | BMSQL_OORDER_IDX1 |      |      |       |        |
+---------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   6 - filter: O_OL_CNT != COUNT_OL                             
+   7 - access: O.O_D_ID = OL.OL_D_ID AND O.O_W_ID = OL.OL_W_ID AND O.O_ID = OL.OL_O_ID
+
+16 rows fetched.
+
+SQL> drop table if exists bmsql_order_line;
+
+Succeed.
+
+SQL> drop table if exists bmsql_oorder;
+
+Succeed.
+
+SQL> 
+SQL> --bugfix for tpch5
+SQL> drop table if exists nation;
+
+Succeed.
+
+SQL> drop table if exists region;
+
+Succeed.
+
+SQL> drop table if exists supplier;
+
+Succeed.
+
+SQL> drop table if exists customer;
+
+Succeed.
+
+SQL> drop table if exists orders;
+
+Succeed.
+
+SQL> drop table if exists lineitem;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE NATION  ( N_NATIONKEY  INTEGER NOT NULL,
+  2                             N_NAME       CHAR(25) NOT NULL,
+  3                             N_REGIONKEY  INTEGER NOT NULL,
+  4                             N_COMMENT    VARCHAR(152));
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE REGION  ( R_REGIONKEY  INTEGER NOT NULL,
+  2                             R_NAME       CHAR(25) NOT NULL,
+  3                             R_COMMENT    VARCHAR(152));
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE SUPPLIER ( S_SUPPKEY     INTEGER NOT NULL,
+  2                              S_NAME        CHAR(25) NOT NULL,
+  3                              S_ADDRESS     VARCHAR(40) NOT NULL,
+  4                              S_NATIONKEY   INTEGER NOT NULL,
+  5                              S_PHONE       CHAR(15) NOT NULL,
+  6                              S_ACCTBAL     DECIMAL(15,2) NOT NULL,
+  7                              S_COMMENT     VARCHAR(101) NOT NULL);
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE CUSTOMER ( C_CUSTKEY     INTEGER NOT NULL,
+  2                              C_NAME        VARCHAR(25) NOT NULL,
+  3                              C_ADDRESS     VARCHAR(40) NOT NULL,
+  4                              C_NATIONKEY   INTEGER NOT NULL,
+  5                              C_PHONE       CHAR(15) NOT NULL,
+  6                              C_ACCTBAL     DECIMAL(15,2)   NOT NULL,
+  7                              C_MKTSEGMENT  CHAR(10) NOT NULL,
+  8                              C_COMMENT     VARCHAR(117) NOT NULL);
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE ORDERS  ( O_ORDERKEY       INTEGER NOT NULL,
+  2                            O_CUSTKEY        INTEGER NOT NULL,
+  3                            O_ORDERSTATUS    CHAR(1) NOT NULL,
+  4                            O_TOTALPRICE     DECIMAL(15,2) NOT NULL,
+  5                            O_ORDERDATE      DATE NOT NULL,
+  6                            O_ORDERPRIORITY  CHAR(15) NOT NULL,  
+  7                            O_CLERK          CHAR(15) NOT NULL, 
+  8                            O_SHIPPRIORITY   INTEGER NOT NULL,
+  9                            O_COMMENT        VARCHAR(79) NOT NULL);
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE LINEITEM ( L_ORDERKEY    INTEGER NOT NULL,
+  2                              L_PARTKEY     INTEGER NOT NULL,
+  3                              L_SUPPKEY     INTEGER NOT NULL,
+  4                              L_LINENUMBER  INTEGER NOT NULL,
+  5                              L_QUANTITY    DECIMAL(15,2) NOT NULL,
+  6                              L_EXTENDEDPRICE  DECIMAL(15,2) NOT NULL,
+  7                              L_DISCOUNT    DECIMAL(15,2) NOT NULL,
+  8                              L_TAX         DECIMAL(15,2) NOT NULL,
+  9                              L_RETURNFLAG  CHAR(1) NOT NULL,
+ 10                              L_LINESTATUS  CHAR(1) NOT NULL,
+ 11                              L_SHIPDATE    DATE NOT NULL,
+ 12                              L_COMMITDATE  DATE NOT NULL,
+ 13                              L_RECEIPTDATE DATE NOT NULL,
+ 14                              L_SHIPINSTRUCT CHAR(25) NOT NULL,
+ 15                              L_SHIPMODE     CHAR(10) NOT NULL,
+ 16                              L_COMMENT      VARCHAR(44) NOT NULL);
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> ALTER TABLE REGION
+  2 ADD CONSTRAINT PK_REGIONKEY PRIMARY KEY (R_REGIONKEY);
+
+Succeed.
+
+SQL> ALTER TABLE NATION
+  2 ADD CONSTRAINT PK_NATIONKEY PRIMARY KEY (N_NATIONKEY);
+
+Succeed.
+
+SQL> ALTER TABLE SUPPLIER
+  2 ADD CONSTRAINT PK_SUPPKEY PRIMARY KEY (S_SUPPKEY);
+
+Succeed.
+
+SQL> ALTER TABLE CUSTOMER
+  2 ADD CONSTRAINT PK_CUSTKEY PRIMARY KEY (C_CUSTKEY);
+
+Succeed.
+
+SQL> ALTER TABLE LINEITEM
+  2 ADD CONSTRAINT PK_LINEITEMKEY PRIMARY KEY (L_ORDERKEY,L_LINENUMBER);
+
+Succeed.
+
+SQL> ALTER TABLE ORDERS
+  2 ADD CONSTRAINT PK_ORDERKEY PRIMARY KEY (O_ORDERKEY);
+
+Succeed.
+
+SQL> 
+SQL> explain plan for
+  2 select n_name, sum(l_extendedprice * (1 - l_discount)) as revenue
+  3   from customer, orders, lineitem, supplier, nation, region
+  4  where c_custkey = o_custkey
+  5    and l_orderkey = o_orderkey
+  6    and l_suppkey = s_suppkey
+  7    and c_nationkey = s_nationkey
+  8    and s_nationkey = n_nationkey
+  9    and n_regionkey = r_regionkey
+ 10    and r_name = 'MIDDLE EAST'
+ 11    and o_orderdate >= date '1996-01-01'
+ 12    and o_orderdate < date '1996-01-01' + interval '1' year
+ 13  group by n_name
+ 14  order by revenue desc;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+| Id  | Description                                  | Owner | Name           | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                             |       |                |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY                        |       |                |      |      |       |        |
+| 2   |     HASH GROUP BY                            |       |                |      |      |       |        |
+| 3   |       NESTED LOOPS                           |       |                |      |      |       |        |
+| 4   |         NESTED LOOPS                         |       |                |      |      |       |        |
+| 5   |           HASH JOIN(L)                       |       |                |      |      |       |        |
+| 6   |             NESTED LOOPS                     |       |                |      |      |       |        |
+| 7   |               NESTED LOOPS                   |       |                |      |      |       |        |
+| 8   |                 TABLE ACCESS FULL            | SYS   | CUSTOMER       |      |      |       |        |
+| 9   |                 TABLE ACCESS BY INDEX ROWID  | SYS   | NATION         |      |      |       |        |
+| 10  |                   INDEX UNIQUE SCAN          | SYS   | PK_NATIONKEY   |      |      |       |        |
+| 11  |               TABLE ACCESS BY INDEX ROWID    | SYS   | REGION         |      |      |       |        |
+| 12  |                 INDEX UNIQUE SCAN            | SYS   | PK_REGIONKEY   |      |      |       |        |
+| 13  |             TABLE ACCESS FULL                | SYS   | ORDERS         |      |      |       |        |
+| 14  |           TABLE ACCESS BY INDEX ROWID        | SYS   | LINEITEM       |      |      |       |        |
+| 15  |             INDEX RANGE SCAN                 | SYS   | PK_LINEITEMKEY |      |      |       |        |
+| 16  |         TABLE ACCESS BY INDEX ROWID          | SYS   | SUPPLIER       |      |      |       |        |
+| 17  |           INDEX UNIQUE SCAN                  | SYS   | PK_SUPPKEY     |      |      |       |        |
+--------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - access: C_CUSTKEY = O_CUSTKEY                            
+       filter: S_NATIONKEY = N_NATIONKEY AND C_NATIONKEY = S_NATIONKEY
+   10 - access: C_NATIONKEY = N_NATIONKEY                       
+   11 - filter: R_NAME = 'MIDDLE EAST'                          
+   12 - access: N_REGIONKEY = R_REGIONKEY                       
+   13 - filter: O_ORDERDATE >= to_date('1996-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND O_ORDERDATE < to_date('1997-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+   15 - access: L_ORDERKEY = O_ORDERKEY                         
+   17 - access: L_SUPPKEY = S_SUPPKEY                           
+
+32 rows fetched.
+
+SQL> 
+SQL> drop table if exists nation;
+
+Succeed.
+
+SQL> drop table if exists region;
+
+Succeed.
+
+SQL> drop table if exists supplier;
+
+Succeed.
+
+SQL> drop table if exists customer;
+
+Succeed.
+
+SQL> drop table if exists orders;
+
+Succeed.
+
+SQL> drop table if exists lineitem;
+
+Succeed.
+
+SQL> 
+
+
