@@ -2214,9 +2214,9 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
         }
         if (rcy_node->recover_read_done) {
             bool32 has_left = CT_FALSE;
-            for(int j = rcy_node->read_buf_read_index ;j < read_buf_size ;j++){
-                log_batch_t *tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, j, rcy_node->read_buf_write_index);
-                uint32 left_size =0;
+            for(int j = 0 ;j < read_buf_size ;j++){
+                log_batch_t *tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, i, rcy_node->read_buf_read_index);
+                uint32 left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
                 if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
                     CT_LOG_RUN_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
                     rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
