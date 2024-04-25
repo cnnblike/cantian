@@ -2062,7 +2062,7 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
 }
 
 static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
-    CT_LOG_RUN_INF("[DTC RCY] start find max lsn and move point idx=%u size_read=%u", idx , size_read);
+    CT_LOG_DEBUG_INF("[DTC RCY] start find max lsn and move point idx=%u size_read=%u", idx , size_read);
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[idx];
     // find last lsn in log
@@ -2072,7 +2072,7 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
         CT_LOG_RUN_ERR("[DTC RCY] find max lsn and move point batch is invalidate, read_size=%d",size_read);
         return;
     }
-    CT_LOG_RUN_INF("[DTC RCY] start find max lsn and move point , tmp batch lsn=%llu,block_id=%u",
+    CT_LOG_DEBUG_INF("[DTC RCY] start find max lsn and move point , tmp batch lsn=%llu,block_id=%u",
                    tmp_batch->lsn,tmp_batch->head.point.block_id);
     reform_rcy_node_t *rcy_log_point = &dtc_rcy->rcy_log_points[idx];
     uint32 left_size;
@@ -3281,7 +3281,7 @@ static inline status_t dtc_rcy_try_to_read_last_failed_node_log(knl_session_t *s
 }
 
 void try_to_read_failed_node(bool32 *failed_node, uint32 *failed_node_cnt, thread_t *thread){
-    CT_LOG_RUN_INF("[DTC RCY] dtc rcy try to read failed node");
+    CT_LOG_DEBUG_INF("[DTC RCY] dtc rcy try to read failed node");
     uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     knl_session_t *session = (knl_session_t *)thread->argument;
@@ -3309,7 +3309,7 @@ void try_to_read_failed_node(bool32 *failed_node, uint32 *failed_node_cnt, threa
             break;
         }
     }
-    CT_LOG_RUN_INF("[DTC RCY] dtc rcy finish try to read failed node");
+    CT_LOG_DEBUG_INF("[DTC RCY] dtc rcy finish try to read failed node");
 }
 
 void dtc_rcy_read_node_log_proc(thread_t *thread)
