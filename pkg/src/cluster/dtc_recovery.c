@@ -2190,7 +2190,6 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
     reform_rcy_node_t *rcy_log_point = NULL;
     uint64 curr_batch_lsn = CT_INVALID_ID64;
     uint8 curr_node;
-    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     *batch_out = NULL;
 
     for (uint32 i = 0; i < dtc_rcy->node_count; i++) {
