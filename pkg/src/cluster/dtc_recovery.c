@@ -179,7 +179,6 @@ static status_t wait_for_read_buf_finish_read(uint32 index){
     // wait for read buf ready
     CT_LOG_DEBUG_INF("[DTC RCY] dtc fetch log start wait for read buf node_id = %u", rcy_node->node_id);
     uint32 time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
-    rcy_node->is_waiting = CT_TRUE;
     for (;;) {
         if(SECUREC_UNLIKELY(rcy_node->read_size[rcy_node->read_buf_read_index] == CT_INVALID_ID32)){
             cm_sleep(CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME);
@@ -398,7 +397,6 @@ void check_node_read_end(uint32 node_id){
             rcy_node->latest_rcy_end_lsn = rcy_node->recovery_read_end_point.lsn;
         }
     }
-    rcy_node->is_waiting = CT_FALSE;
 }
 
 status_t dtc_rcy_record_page(knl_session_t *session, page_id_t page_id, uint64 lsn, uint32 pcn)
@@ -2050,9 +2048,6 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
 
     wait_for_read_buf_finish_read(node_id);
     check_node_read_end(node_id);
-    if (rcy_node->recover_done == CT_TRUE) {
-        return CT_SUCCESS;
-    }
     batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, node_id, rcy_node->read_buf_read_index);
     left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
     if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
@@ -2063,6 +2058,10 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
                        rcy_node->node_id , rcy_node->read_buf_read_index);
         wait_for_read_buf_finish_read(node_id);
         check_node_read_end(node_id);
+        if((cm_dbs_is_enable_dbs() && rcy_node->read_size[rcy_node->read_buf_read_index] != 0) ||
+            (!cm_dbs_is_enable_dbs() && rcy_node->not_finished)){
+            rcy_node->recover_done = CT_FALSE;
+        }
     }
     return CT_SUCCESS;
 }
@@ -3302,24 +3301,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             }
             node->read_size[node->read_buf_write_index] = read_size;
             if (read_size == 0){
-                for(int j = 0 ; j < read_buf_size ;++j){
-                    if(node->read_size[j] == CT_INVALID_ID32){
-                        node->read_size[j] = 0;
-                    }
-                }
-                uint32 time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
-                for (;;) {
-                    if(SECUREC_UNLIKELY(node->is_waiting == CT_TRUE)){
-                        cm_sleep(CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME);
-                        time_out -= CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME;
-                        if(time_out <= 0){
-                            CM_ABORT(0, "[DTC RCY] ABORT INFO: wait reply proc time out");
-                        }
-                    }else{
-                        break;
-                    }
-                }
-                cm_spin_sleep();
+                node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
                 continue;
             }
 
@@ -3352,7 +3334,6 @@ static inline void dtc_rcy_next_phase(knl_session_t *session)
         dtc_rcy->rcy_nodes[i].recover_done = CT_FALSE;
         dtc_rcy->rcy_nodes[i].ulog_exist_data = CT_TRUE;
         dtc_rcy->rcy_nodes[i].not_finished = CT_TRUE;
-        dtc_rcy->rcy_nodes[i].is_waiting = CT_FALSE;
         for(int j = 0 ; j < read_buf_size ; ++j){
             dtc_rcy->rcy_nodes[i].read_pos[j] = 0;
             dtc_rcy->rcy_nodes[i].write_pos[j] = 0;
@@ -3706,7 +3687,6 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     rcy_node->read_buf_read_index = 0;
     rcy_node->read_buf_write_index = 0;
     rcy_node->not_finished = CT_TRUE;
-    rcy_node->is_waiting = CT_FALSE;
 
     rcy_log_point->node_id = node_id;
     rcy_log_point->lsn = ctrl->lsn;
