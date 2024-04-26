@@ -3302,6 +3302,11 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             }
             node->read_size[node->read_buf_write_index] = read_size;
             if (read_size == 0){
+                for(int j = 0 ; j < read_buf_size ;++j){
+                    if(node->read_size[j] == CT_INVALID_ID32){
+                        node->read_size[j] = 0;
+                    }
+                }
                 uint32 time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
                 for (;;) {
                     if(SECUREC_UNLIKELY(node->is_waiting == CT_TRUE)){
@@ -3314,6 +3319,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
                         break;
                     }
                 }
+                cm_spin_sleep();
                 continue;
             }
 
