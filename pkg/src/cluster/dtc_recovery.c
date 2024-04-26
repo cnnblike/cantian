@@ -2203,10 +2203,6 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
             continue;
         }
 
-        if (wait_for_read_buf_ready(i) != CT_SUCCESS){
-            CT_LOG_RUN_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
-            continue;
-        }
         // get batch from log buffer
         CT_RETURN_IFERR(dtc_update_batch(session, i));
         if (rcy_node->recover_done == CT_TRUE) {
