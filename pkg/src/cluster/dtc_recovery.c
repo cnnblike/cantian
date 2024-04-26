@@ -184,7 +184,7 @@ static status_t wait_for_read_buf_finish_read(uint32 index){
             cm_sleep(CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME);
             time_out -= CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME;
             if(time_out <= 0){
-                CT_LOG_RUN_ERR("[DTC RCY] dtc rcy fetch log batch wait for read buf time out");
+                CT_LOG_RUN_ERR("[DTC RCY] dtc rcy fetch log batch wait for read buf time out node_id =%u",index);
                 CM_ABORT(0, "[DTC RCY] ABORT INFO: wait read node log proc time out");
             }
         }else{
@@ -378,7 +378,7 @@ void check_node_read_end(uint32 node_id){
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[node_id];
     // if no more log, set recover done
-    if (!rcy_node->not_finished || *rcy_node->read_size == 0) {
+    if (!rcy_node->not_finished || rcy_node->read_size[rcy_node->read_buf_read_index] == 0) {
         rcy_node->recover_done = CT_TRUE;
         if (dtc_rcy->phase == PHASE_ANALYSIS) {
             CT_LOG_RUN_INF(
@@ -3283,7 +3283,6 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             //wait for read buf not ready
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc start wait for read buf sleep node_id=%u read_buf_write_index=%u", node->node_id,node->read_buf_write_index);
             if(node->read_buf_ready[node->read_buf_write_index]){
-                cm_spin_sleep();
                 CT_LOG_DEBUG_INF("[DTC RCY] read node read buffer is ready node_id = %u read_buf_write_index=%u", i,node->read_buf_write_index);
                 continue;
             }
