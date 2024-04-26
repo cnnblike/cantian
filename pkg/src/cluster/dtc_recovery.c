@@ -3253,6 +3253,11 @@ void try_to_read_failed_node(thread_t *thread){
         if(node->last_failed == CT_FALSE){
             continue;
         }
+        if(node->read_buf_ready[node->read_buf_write_index]){
+            cm_spin_sleep();
+            CT_LOG_DEBUG_INF("[DTC RCY] read node read buffer is ready node_id = %u read_buf_write_index=%u", i,node->read_buf_write_index);
+            continue;
+        }
         CT_LOG_DEBUG_INF("[DTC RCY] read node log proc read last failed node log last_failed_id=%u", j);
         uint32 read_size = 0;
         // try to read last failed node log
@@ -3296,7 +3301,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
                 continue;
             }
             ELAPSED_END(begin_time, sleep_time);
-            CT_LOG_RUN_INF("[DTC RCY] read node log proc finish wait for read buf sleep time = %llu node_id=%u buf_size=%llu read_buf_write_index=%u",
+            CT_LOG_DEBUG_INF("[DTC RCY] read node log proc finish wait for read buf sleep time = %llu node_id=%u buf_size=%llu read_buf_write_index=%u",
                            sleep_time, node->node_id, node->read_buf[node->read_buf_write_index].buf_size,node->read_buf_write_index);
 
             uint32 read_size = 0;
