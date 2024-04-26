@@ -2132,6 +2132,7 @@ status_t dtc_read_node_log(dtc_rcy_context_t *dtc_rcy, knl_session_t *session, u
         // try to advance log point to next file
         bool32 not_finished = CT_TRUE;
         dtc_rcy_next_file(session, node_id, &not_finished);
+        rcy_node->not_finished = not_finished;
         if (not_finished) {
             // read log again after advancing the log point
             if (dtc_rcy_read_node_log(session, node_id, read_size) != CT_SUCCESS) {
@@ -2139,7 +2140,6 @@ status_t dtc_read_node_log(dtc_rcy_context_t *dtc_rcy, knl_session_t *session, u
                 return CT_ERROR;
             }
         }
-        rcy_node->not_finished = not_finished;
     }else{
         find_max_lsn_and_move_point(node_id, *read_size);
     }
