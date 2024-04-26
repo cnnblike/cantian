@@ -3251,11 +3251,9 @@ void try_to_read_failed_node(bool32 *failed_node, thread_t *thread){
         if(failed_node[j] == CT_FALSE){
             continue;
         }
+        CT_LOG_DEBUG_INF("[DTC RCY] read node log proc read last failed node log last_failed_id=%u", j);
         dtc_rcy_node_t *node = &dtc_rcy->rcy_nodes[j];
         uint32 read_size = 0;
-        CT_LOG_DEBUG_INF("[DTC RCY] read node log proc read last failed node log last_failed_id=%u", j);
-        status_t status = dtc_rcy_try_to_read_last_failed_node_log(session,dtc_rcy,j,&read_size);
-
         // try to read last failed node log
         if (dtc_read_node_log(dtc_rcy,session,j,&read_size) != CT_SUCCESS) {
             CT_LOG_RUN_ERR("[DTC RCY] read node lod proc failed to load redo log of last failed node=%u",j);
