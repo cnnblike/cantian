@@ -14,8 +14,8 @@ echo $DFT_WORKSPACE " " $WORKSPACE
 if [[ "$WORKSPACE" == *"regress"* ]]; then
     echo $DFT_WORKSPACE " eq " $WORKSPACE
 else
-    export OPEN_SOURCE=${WORKSPACE}/daac/open_source
-    export LIBRARY=${WORKSPACE}/daac/library
+    export OPEN_SOURCE=${WORKSPACE}/cantian/open_source
+    export LIBRARY=${WORKSPACE}/cantian/library
 fi
 
 #pcre
