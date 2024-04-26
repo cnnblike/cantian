@@ -1521,7 +1521,7 @@ status_t dtc_rcy_read_online_log(knl_session_t *session, uint32 file_id, uint32 
         CT_LOG_DEBUG_INF("[DTC RCY] dtc_rcy_read_online_log cm_dbs_is_enable_dbs() == CT_TRUE offset=%llu",offset);
     }
     if (rcy_node->latest_lsn != offset) {
-        CT_LOG_DEBUG_INF("[DTC RCY] start read online redo log point %u/%u/%lld from %s", point->asn, point->block_id,
+        CT_LOG_RUN_INF("[DTC RCY] start read online redo log point %u/%u/%lld from %s", point->asn, point->block_id,
                        offset, file->ctrl->name);
         rcy_node->latest_lsn = offset;
     }
@@ -1841,11 +1841,11 @@ status_t dtc_rcy_read_node_log(knl_session_t *session, uint32 idx, uint32 *size_
         cantian_record_io_stat_end(IO_RECORD_EVENT_RECOVERY_READ_ONLINE_LOG, &tv_begin,
             status == CT_SUCCESS ? IO_STAT_SUCCESS : IO_STAT_FAILED);
         if (!DB_IS_PRIMARY(&session->kernel->db) && (*size_read == 0)) {
-            CT_LOG_DEBUG_INF("[DTC RCY] finish read online redo log of crashed node=%u, logfile_id=%u, size_read=%u",
+            CT_LOG_RUN_INF("[DTC RCY] finish read online redo log of crashed node=%u, logfile_id=%u, size_read=%u",
                             rcy_node->node_id, logfile_id, *size_read);
         } else {
             dtc_standby_update_lrp(session, idx, *size_read);
-            CT_LOG_DEBUG_INF("[DTC RCY] finish read online redo log of crashed node=%u, logfile_id=%u, size_read=%u",
+            CT_LOG_RUN_INF("[DTC RCY] finish read online redo log of crashed node=%u, logfile_id=%u, size_read=%u",
                            rcy_node->node_id, logfile_id, *size_read);
         }
     } else {
@@ -2081,7 +2081,7 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
         left_size = size_read - rcy_node->read_pos[rcy_node->read_buf_write_index];
         tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx, rcy_node->read_buf_write_index);
         if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
-            CT_LOG_RUN_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
+            CT_LOG_DEBUG_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
             break;
         }
         CT_LOG_DEBUG_INF("[DTC RCY] process find max lsn idx=%u size_read=%u "
@@ -3321,7 +3321,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
 
             // try to read last failed node log
             try_to_read_failed_node(thread);
-            CT_LOG_RUN_INF("[DTC RCY] read node log proc finish read node log node_id=%u read_buf_write_index=%u", node->node_id, node->read_buf_write_index);
+            CT_LOG_DEBUG_INF("[DTC RCY] read node log proc finish read node log node_id=%u read_buf_write_index=%u", node->node_id, node->read_buf_write_index);
             node->read_buf_ready[node->read_buf_write_index] = CT_TRUE;
             node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
         }
