@@ -145,6 +145,7 @@ static inline void reset_read_buffer(){
         }
         rcy_node->read_buf_read_index = 0;
         rcy_node->read_buf_write_index = 0;
+        rcy_node->last_failed = CT_FALSE;
     }
 }
 
@@ -1313,7 +1314,7 @@ status_t dtc_init_node_logset(knl_session_t *session, uint8 idx)
 
 void dtc_rcy_next_file(knl_session_t *session, uint32 idx, bool32 *need_more_log)
 {
-    CT_LOG_RUN_INF("[DTC RCY] dtc rcy next file");
+    CT_LOG_DEBUG_INF("[DTC RCY] dtc rcy next file");
     reset_log_t *reset_log = &session->kernel->db.ctrl.core.resetlogs;
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     reform_rcy_node_t *rcy_log_point = &dtc_rcy->rcy_log_points[idx];
@@ -3242,17 +3243,17 @@ static status_t dtc_rcy_replay_batches_paral(knl_session_t *session)
     return status;
 }
 
-void try_to_read_failed_node(bool32 *failed_node, thread_t *thread){
+void try_to_read_failed_node(thread_t *thread){
     CT_LOG_DEBUG_INF("[DTC RCY] dtc rcy try to read failed node");
-    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     knl_session_t *session = (knl_session_t *)thread->argument;
-    for(int j = 0; j < read_buf_size; ++j){
-        if(failed_node[j] == CT_FALSE){
+    uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
+    for(int j = 0; j < dtc_rcy->node_count; ++j){
+        dtc_rcy_node_t *node = &dtc_rcy->rcy_nodes[j];
+        if(node->last_failed == CT_FALSE){
             continue;
         }
         CT_LOG_DEBUG_INF("[DTC RCY] read node log proc read last failed node log last_failed_id=%u", j);
-        dtc_rcy_node_t *node = &dtc_rcy->rcy_nodes[j];
         uint32 read_size = 0;
         // try to read last failed node log
         if (dtc_read_node_log(dtc_rcy,session,j,&read_size) != CT_SUCCESS) {
@@ -3261,10 +3262,10 @@ void try_to_read_failed_node(bool32 *failed_node, thread_t *thread){
             return;
         }
         if(read_size != 0){
-            CT_LOG_RUN_INF("[DTC RCY] read node lod proc last failed log read_size = 0 node=%u", j);
-            failed_node[j] = CT_FALSE;
+            node->last_failed = CT_FALSE;
             node->read_buf_ready[node->read_buf_write_index] = CT_TRUE;
             node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
+            CT_LOG_RUN_INF("[DTC RCY] read node lod proc last node log success read_size = %u node=%u write_index=%u" ,read_size, j , node->read_buf_write_index);
         }
     }
     CT_LOG_DEBUG_INF("[DTC RCY] dtc rcy finish try to read failed node");
@@ -3275,10 +3276,6 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
     uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
     knl_session_t *session = (knl_session_t *)thread->argument;
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
-    bool32 failed_node[read_buf_size];
-    for(int i = 0; i < read_buf_size; ++i){
-        failed_node[i] = CT_FALSE;
-    }
     CT_LOG_RUN_INF("[DTC RCY] rcy read node log thread start");
     while (!thread->closed) {
         for (uint32 i = 0; i < dtc_rcy->node_count; i++) {
@@ -3310,15 +3307,15 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             }
 
             if (read_size == 0){
-                try_to_read_failed_node(failed_node,thread);
-                failed_node[i] = CT_TRUE;
+                try_to_read_failed_node(thread);
+                node->last_failed = CT_TRUE;
                 continue;
             }else{
-                failed_node[i] = CT_FALSE;
+                node->last_failed = CT_FALSE;
             }
 
             // try to read last failed node log
-            try_to_read_failed_node(failed_node,thread);
+            try_to_read_failed_node(thread);
             CT_LOG_RUN_INF("[DTC RCY] read node log proc finish read node log node_id=%u read_buf_write_index=%u", node->node_id, node->read_buf_write_index);
             node->read_buf_ready[node->read_buf_write_index] = CT_TRUE;
             node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
@@ -3345,6 +3342,7 @@ static inline void dtc_rcy_next_phase(knl_session_t *session)
         dtc_rcy->rcy_log_points[i].rcy_write_point = dtc_rcy->rcy_log_points[i].rcy_point_saved;
         dtc_rcy->rcy_nodes[i].recover_done = CT_FALSE;
         dtc_rcy->rcy_nodes[i].ulog_exist_data = CT_TRUE;
+        dtc_rcy->rcy_nodes[i].last_failed = CT_FALSE;
         for(int j = 0 ; j < read_buf_size ; ++j){
             dtc_rcy->rcy_nodes[i].read_pos[j] = 0;
             dtc_rcy->rcy_nodes[i].write_pos[j] = 0;
@@ -3697,6 +3695,7 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     rcy_node->latest_rcy_end_lsn = 0;
     rcy_node->read_buf_read_index = 0;
     rcy_node->read_buf_write_index = 0;
+    rcy_node->last_failed = CT_FALSE;
 
     rcy_log_point->node_id = node_id;
     rcy_log_point->lsn = ctrl->lsn;

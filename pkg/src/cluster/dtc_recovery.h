@@ -146,6 +146,7 @@ typedef struct st_dtc_rcy_node {
     uint8 read_buf_write_index;
     bool32 *read_buf_ready;
     bool32 recover_done;
+    bool32 last_failed;
     bool32 ulog_exist_data;
     uint64 pitr_lfn;  // pitr use
     uint64 ddl_lsn_pitr;  // pitr use
