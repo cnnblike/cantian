@@ -1389,7 +1389,7 @@ uint32 dtc_rcy_get_logfile_by_node(knl_session_t *session, uint32 idx)
     logfile_set_t *log_set = LOGFILE_SET(session, rcy_log_point->node_id);
     log_point_t *point = &rcy_log_point->rcy_write_point;
     log_file_t *file = NULL;
-    CT_LOG_RUN_INF("[DTC RCY] dtc_rcy_get_logfile_by_node point->rst_id = %u, point->asn = %u siz log_set->logfile_hwm = %u",
+    CT_LOG_DEBUG_INF("[DTC RCY] dtc_rcy_get_logfile_by_node point->rst_id = %u, point->asn = %u siz log_set->logfile_hwm = %u",
                    point->rst_id, point->asn,log_set->logfile_hwm);
     for (uint32 i = 0; i < log_set->logfile_hwm; i++) {
         file = &log_set->items[i];
@@ -1517,10 +1517,10 @@ status_t dtc_rcy_read_online_log(knl_session_t *session, uint32 file_id, uint32 
     if (cm_dbs_is_enable_dbs() == CT_TRUE) {
         offset = point->lsn + 1;   // read redo data after rcy_point.
         size_need_read = buf_size; // read as much data as possible.
-        CT_LOG_RUN_INF("[DTC RCY] dtc_rcy_read_online_log cm_dbs_is_enable_dbs() == CT_TRUE offset=%llu",offset);
+        CT_LOG_DEBUG_INF("[DTC RCY] dtc_rcy_read_online_log cm_dbs_is_enable_dbs() == CT_TRUE offset=%llu",offset);
     }
     if (rcy_node->latest_lsn != offset) {
-        CT_LOG_RUN_INF("[DTC RCY] start read online redo log point %u/%u/%lld from %s", point->asn, point->block_id,
+        CT_LOG_DEBUG_INF("[DTC RCY] start read online redo log point %u/%u/%lld from %s", point->asn, point->block_id,
                        offset, file->ctrl->name);
         rcy_node->latest_lsn = offset;
     }
@@ -1763,16 +1763,16 @@ bool8 dtc_rcy_check_recovery_is_done(knl_session_t *session, uint32 idx)
 
 void dtc_standby_update_lrp(knl_session_t *session, uint32 idx, uint32 size_read)
 {
-    CT_LOG_RUN_INF("[DTC RCY] dtc start standby update lrp idx=%u size_read=%u",idx,size_read);
+    CT_LOG_DEBUG_INF("[DTC RCY] dtc start standby update lrp idx=%u size_read=%u",idx,size_read);
     if (DB_IS_PRIMARY(&session->kernel->db)) {
-        CT_LOG_RUN_INF("[DTC RCY] dtc standby update lrp idx=%u size_read=%u DB_IS_PRIMARY",idx,size_read);
+        CT_LOG_DEBUG_INF("[DTC RCY] dtc standby update lrp idx=%u size_read=%u DB_IS_PRIMARY",idx,size_read);
         return;
     }
 
     // just update ctrl lrp point in lrpl_proc
     lrpl_context_t *lrpl_ctx = &session->kernel->lrpl_ctx;
     if (lrpl_ctx->is_replaying == CT_FALSE) {
-        CT_LOG_RUN_INF("[DTC RCY] dtc standby update lrp idx=%u size_read=%u is not replaying ",idx,size_read);
+        CT_LOG_DEBUG_INF("[DTC RCY] dtc standby update lrp idx=%u size_read=%u is not replaying ",idx,size_read);
         return;
     }
 
@@ -1844,7 +1844,7 @@ status_t dtc_rcy_read_node_log(knl_session_t *session, uint32 idx, uint32 *size_
                             rcy_node->node_id, logfile_id, *size_read);
         } else {
             dtc_standby_update_lrp(session, idx, *size_read);
-            CT_LOG_RUN_INF("[DTC RCY] finish read online redo log of crashed node=%u, logfile_id=%u, size_read=%u",
+            CT_LOG_DEBUG_INF("[DTC RCY] finish read online redo log of crashed node=%u, logfile_id=%u, size_read=%u",
                            rcy_node->node_id, logfile_id, *size_read);
         }
     } else {
@@ -2102,7 +2102,7 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
     if (cm_dbs_is_enable_dbs() == CT_TRUE) {
         rcy_log_point->rcy_write_point.lsn = batch->lsn;
     }
-    CT_LOG_RUN_INF("[DTC RCY] finish find max lsn and move point "
+    CT_LOG_DEBUG_INF("[DTC RCY] finish find max lsn and move point "
                    "idx=%u size_read=%u lsn=%llu block_id=%u",
                    idx , size_read, rcy_log_point->lsn,
                    rcy_log_point->rcy_point.block_id);
