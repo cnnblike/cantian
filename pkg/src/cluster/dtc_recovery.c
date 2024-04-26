@@ -3255,7 +3255,7 @@ void try_to_read_failed_node(thread_t *thread){
         }
         if(node->read_buf_ready[node->read_buf_write_index]){
             cm_spin_sleep();
-            CT_LOG_DEBUG_INF("[DTC RCY] read node read buffer is ready node_id = %u read_buf_write_index=%u", i,node->read_buf_write_index);
+            CT_LOG_DEBUG_INF("[DTC RCY] read node read buffer is ready node_id = %u read_buf_write_index=%u", j,node->read_buf_write_index);
             continue;
         }
         CT_LOG_DEBUG_INF("[DTC RCY] read node log proc read last failed node log last_failed_id=%u", j);
