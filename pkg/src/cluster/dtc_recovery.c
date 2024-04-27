@@ -378,7 +378,7 @@ void check_node_read_end(uint32 node_id){
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[node_id];
     // if no more log, set recover done
-    if (!rcy_node->not_finished || rcy_node->read_size[rcy_node->read_buf_read_index] == 0) {
+    if (!rcy_node->not_finished[rcy_node->read_buf_read_index] || rcy_node->read_size[rcy_node->read_buf_read_index] == 0) {
         rcy_node->recover_done = CT_TRUE;
         if (dtc_rcy->phase == PHASE_ANALYSIS) {
             CT_LOG_RUN_INF(
@@ -1210,6 +1210,7 @@ void dtc_recovery_close(knl_session_t *session)
             CM_FREE_PTR(dtc_rcy->rcy_nodes[i].read_pos);
             CM_FREE_PTR(dtc_rcy->rcy_nodes[i].write_pos);
             CM_FREE_PTR(dtc_rcy->rcy_nodes[i].read_size);
+            CM_FREE_PTR(dtc_rcy->rcy_nodes[i].not_finished);
         }
     }
     // [reformer] release memroy malloced in dtc_rcy_init_context
@@ -2051,16 +2052,19 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
     batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, node_id, rcy_node->read_buf_read_index);
     left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
     if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
-        rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
-        rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
-        CT_LOG_DEBUG_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
-                       " node_id = %u read_buf_read_index = %u",
-                       rcy_node->node_id , rcy_node->read_buf_read_index);
-        wait_for_read_buf_finish_read(node_id);
-        check_node_read_end(node_id);
-        if((cm_dbs_is_enable_dbs() && rcy_node->read_size[rcy_node->read_buf_read_index] != 0) ||
-            (!cm_dbs_is_enable_dbs() && rcy_node->not_finished)){
-            rcy_node->recover_done = CT_FALSE;
+        for(int i = 0 ; i < read_buf_size - 1 ;++i){
+            rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
+            rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
+            CT_LOG_DEBUG_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
+                             " node_id = %u read_buf_read_index = %u",
+                             rcy_node->node_id , rcy_node->read_buf_read_index);
+            wait_for_read_buf_finish_read(node_id);
+            check_node_read_end(node_id);
+            if((cm_dbs_is_enable_dbs() && rcy_node->read_size[rcy_node->read_buf_read_index] != 0) ||
+                (!cm_dbs_is_enable_dbs() && rcy_node->not_finished[rcy_node->read_buf_read_index])){
+                rcy_node->recover_done = CT_FALSE;
+                break ;
+            }
         }
     }
     return CT_SUCCESS;
@@ -2133,7 +2137,7 @@ status_t dtc_read_node_log(dtc_rcy_context_t *dtc_rcy, knl_session_t *session, u
         // try to advance log point to next file
         bool32 not_finished = CT_TRUE;
         dtc_rcy_next_file(session, node_id, &not_finished);
-        rcy_node->not_finished = not_finished;
+        rcy_node->not_finished[rcy_node->read_buf_write_index] = not_finished;
         if (not_finished) {
             // read log again after advancing the log point
             if (dtc_rcy_read_node_log(session, node_id, read_size) != CT_SUCCESS) {
@@ -3333,10 +3337,10 @@ static inline void dtc_rcy_next_phase(knl_session_t *session)
         dtc_rcy->rcy_log_points[i].rcy_write_point = dtc_rcy->rcy_log_points[i].rcy_point_saved;
         dtc_rcy->rcy_nodes[i].recover_done = CT_FALSE;
         dtc_rcy->rcy_nodes[i].ulog_exist_data = CT_TRUE;
-        dtc_rcy->rcy_nodes[i].not_finished = CT_TRUE;
         for(int j = 0 ; j < read_buf_size ; ++j){
             dtc_rcy->rcy_nodes[i].read_pos[j] = 0;
             dtc_rcy->rcy_nodes[i].write_pos[j] = 0;
+            dtc_rcy->rcy_nodes[i].not_finished[j] = CT_TRUE;
         }
         dtc_rcy->rcy_nodes[i].latest_lsn = 0;
         dtc_rcy->rcy_nodes[i].latest_rcy_end_lsn = 0;
@@ -3686,7 +3690,6 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     rcy_node->latest_rcy_end_lsn = 0;
     rcy_node->read_buf_read_index = 0;
     rcy_node->read_buf_write_index = 0;
-    rcy_node->not_finished = CT_TRUE;
 
     rcy_log_point->node_id = node_id;
     rcy_log_point->lsn = ctrl->lsn;
@@ -3699,11 +3702,13 @@ status_t dtc_rcy_init_rcynode(knl_session_t *session, instance_list_t *recover_l
     rcy_node->write_pos = (uint32 *)malloc(read_buf_size * sizeof(uint32));
     rcy_node->read_buf_ready = (bool32 *)malloc(read_buf_size * sizeof(bool32));
     rcy_node->read_size = (uint32 *)malloc(read_buf_size * sizeof(uint32));
+    rcy_node->not_finished = (bool32 *)malloc(read_buf_size * sizeof(bool32));
     for(int i = 0 ; i < read_buf_size ; ++i){
         rcy_node->write_pos[i] = 0;
         rcy_node->read_pos[i] = 0;
         rcy_node->read_buf_ready[i] = CT_FALSE;
         rcy_node->read_size[i] = CT_INVALID_ID32;
+        rcy_node->not_finished[i] = CT_TRUE;
     }
 
     dtc_update_scn(session, ctrl->scn);
