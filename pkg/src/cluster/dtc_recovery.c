@@ -1338,6 +1338,7 @@ void dtc_rcy_next_file(knl_session_t *session, uint32 idx, bool32 *need_more_log
     reform_rcy_node_t *rcy_log_point = &dtc_rcy->rcy_log_points[idx];
     dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[idx];
     log_point_t *point = &rcy_log_point->rcy_write_point;
+    log_point_t *reply_point = &rcy_log_point->rcy_point;
     dtc_node_ctrl_t *ctrl = dtc_get_ctrl(session, rcy_log_point->node_id);
 
     if (cm_dbs_is_enable_dbs() == CT_FALSE) {
@@ -1353,6 +1354,9 @@ void dtc_rcy_next_file(knl_session_t *session, uint32 idx, bool32 *need_more_log
         point->rst_id++;
         point->asn++;
         point->block_id = 0;
+        reply_point->rst_id++;
+        reply_point->asn++;
+        reply_point->block_id = 0;
         *need_more_log = CT_TRUE;
         if (rcy_node->latest_rcy_end_lsn != rcy_node->recovery_read_end_point.lsn) {
             CT_LOG_RUN_INF("[DTC RCY] Move log point to [%u-%u/%u/%llu]", (uint32)point->rst_id, point->asn,
@@ -1361,6 +1365,8 @@ void dtc_rcy_next_file(knl_session_t *session, uint32 idx, bool32 *need_more_log
     } else {
         point->asn++;
         point->block_id = 0;
+        reply_point->asn++;
+        reply_point->block_id = 0;
         *need_more_log = CT_TRUE;
         if (rcy_node->latest_rcy_end_lsn != rcy_node->recovery_read_end_point.lsn) {
             CT_LOG_RUN_INF("[DTC RCY] Move log point to [%u-%u/%u/%llu]", (uint32)point->rst_id, point->asn,
@@ -2146,7 +2152,8 @@ status_t dtc_read_node_log(dtc_rcy_context_t *dtc_rcy, knl_session_t *session, u
                 return CT_ERROR;
             }
         }
-    }else{
+    }
+    if(*read_size != 0){
         find_max_lsn_and_move_point(node_id, *read_size);
     }
     return CT_SUCCESS;
@@ -2314,8 +2321,7 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
         rcy_log_point->lsn = curr_batch_lsn;
         rcy_log_point->rcy_point.lfn = (*batch_out)->head.point.lfn;
         rcy_log_point->rcy_point.block_id += (*batch_out)->space_size / rcy_node->blk_size;
-        rcy_log_point->rcy_point.asn = (*batch_out)->head.point.asn;
-        rcy_log_point->rcy_point.rst_id = (*batch_out)->head.point.rst_id;
+
         rcy_node->read_pos[rcy_node->read_buf_read_index] += (*batch_out)->space_size;
         rcy_node->curr_file_length += (*batch_out)->space_size;
         if (cm_dbs_is_enable_dbs() == CT_TRUE) {
