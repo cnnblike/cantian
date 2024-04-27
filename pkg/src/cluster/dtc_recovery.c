@@ -2051,20 +2051,24 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
     check_node_read_end(node_id);
     batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, node_id, rcy_node->read_buf_read_index);
     left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
-    if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
-        for(int i = 0 ; i < read_buf_size - 1 ;++i){
-            rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
-            rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
-            CT_LOG_DEBUG_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
-                             " node_id = %u read_buf_read_index = %u",
-                             rcy_node->node_id , rcy_node->read_buf_read_index);
-            wait_for_read_buf_finish_read(node_id);
-            check_node_read_end(node_id);
-            if((cm_dbs_is_enable_dbs() && rcy_node->read_size[rcy_node->read_buf_read_index] != 0) ||
-                (!cm_dbs_is_enable_dbs() && rcy_node->not_finished[rcy_node->read_buf_read_index])){
-                rcy_node->recover_done = CT_FALSE;
-                break ;
-            }
+    for(int i = 0; i < read_buf_size; ++i){
+        rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
+        rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
+        CT_LOG_DEBUG_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
+                         " node_id = %u read_buf_read_index = %u",
+                         rcy_node->node_id , rcy_node->read_buf_read_index);
+        wait_for_read_buf_finish_read(node_id);
+        check_node_read_end(node_id);
+        batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, node_id, rcy_node->read_buf_read_index);
+        left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
+        if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
+            continue;
+        } else{
+            rcy_node->recover_done = CT_FALSE;
+            break;
+        }
+        if(rcy_node->read_buf_read_index == rcy_node->read_buf_write_index){
+            break;
         }
     }
     return CT_SUCCESS;
@@ -2313,6 +2317,8 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
         rcy_log_point->lsn = curr_batch_lsn;
         rcy_log_point->rcy_point.lfn = (*batch_out)->head.point.lfn;
         rcy_log_point->rcy_point.block_id += (*batch_out)->space_size / rcy_node->blk_size;
+        rcy_log_point->rcy_point.asn = (*batch_out)->head.point.asn;
+        rcy_log_point->rcy_point.rst_id = (*batch_out)->head.point.rst_id;
         rcy_node->read_pos[rcy_node->read_buf_read_index] += (*batch_out)->space_size;
         rcy_node->curr_file_length += (*batch_out)->space_size;
         if (cm_dbs_is_enable_dbs() == CT_TRUE) {
