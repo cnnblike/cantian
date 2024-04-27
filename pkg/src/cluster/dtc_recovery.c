@@ -2049,21 +2049,18 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
 
     wait_for_read_buf_finish_read(node_id);
     check_node_read_end(node_id);
-    batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, node_id, rcy_node->read_buf_read_index);
-    left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
     for(int i = 0; i < read_buf_size; ++i){
-        rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
-        rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
-        CT_LOG_DEBUG_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
-                         " node_id = %u read_buf_read_index = %u",
-                         rcy_node->node_id , rcy_node->read_buf_read_index);
-        wait_for_read_buf_finish_read(node_id);
-        check_node_read_end(node_id);
         batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, node_id, rcy_node->read_buf_read_index);
         left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
         if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
-            continue;
-        } else{
+            rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
+            rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
+            CT_LOG_DEBUG_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
+                             " node_id = %u read_buf_read_index = %u",
+                             rcy_node->node_id , rcy_node->read_buf_read_index);
+            wait_for_read_buf_finish_read(node_id);
+            check_node_read_end(node_id);
+        }else{
             rcy_node->recover_done = CT_FALSE;
             break;
         }
