@@ -3340,6 +3340,7 @@ static inline void dtc_rcy_next_phase(knl_session_t *session)
         for(int j = 0 ; j < read_buf_size ; ++j){
             dtc_rcy->rcy_nodes[i].read_pos[j] = 0;
             dtc_rcy->rcy_nodes[i].write_pos[j] = 0;
+            dtc_rcy->rcy_nodes[i].read_size[j] = CT_INVALID_ID32;
             dtc_rcy->rcy_nodes[i].not_finished[j] = CT_TRUE;
         }
         dtc_rcy->rcy_nodes[i].latest_lsn = 0;
