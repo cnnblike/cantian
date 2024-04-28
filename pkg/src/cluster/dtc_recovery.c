@@ -2198,7 +2198,7 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
         rcy_node = &dtc_rcy->rcy_nodes[i];
         rcy_log_point = &dtc_rcy->rcy_log_points[i];
         if (rcy_node->recover_done) {
-            CT_LOG_RUN_INF("[DTC RCY] dtc fetch log recover done node_id = %u", rcy_node->node_id);
+            CT_LOG_DEBUG_INF("[DTC RCY] dtc fetch log recover done node_id = %u", rcy_node->node_id);
             if (!dtc_rcy->full_recovery && dtc_rcy->phase == PHASE_RECOVERY &&
                 dtc_rcy_verify_analysis_and_recovery_log_point(rcy_node->analysis_read_end_point,
                 rcy_node->recovery_read_end_point) != CT_SUCCESS) {
