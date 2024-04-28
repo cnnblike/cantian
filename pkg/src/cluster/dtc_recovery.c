@@ -1865,7 +1865,7 @@ status_t dtc_rcy_read_node_log(knl_session_t *session, uint32 idx, uint32 *size_
         cantian_record_io_stat_end(IO_RECORD_EVENT_RECOVERY_READ_ONLINE_LOG, &tv_begin,
             status == CT_SUCCESS ? IO_STAT_SUCCESS : IO_STAT_FAILED);
         if (!DB_IS_PRIMARY(&session->kernel->db) && (*size_read == 0)) {
-            CT_LOG_RUN_INF("[DTC RCY] finish read online redo log of crashed node=%u, logfile_id=%u, size_read=%u",
+            CT_LOG_DEBUG_INF("[DTC RCY] finish read online redo log of crashed node=%u, logfile_id=%u, size_read=%u",
                             rcy_node->node_id, logfile_id, *size_read);
         } else {
             dtc_standby_update_lrp(session, idx, *size_read);
