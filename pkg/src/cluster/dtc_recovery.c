@@ -2084,6 +2084,11 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
     // find last lsn in log
     log_batch_t *batch = NULL;
     log_batch_t *tmp_batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, idx, rcy_node->read_buf_write_index);
+    uint32 left_size = size_read - rcy_node->read_pos[rcy_node->read_buf_write_index];
+    if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
+        CT_LOG_RUN_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
+        return;
+    }
     if (dtc_rcy_validate_batch(tmp_batch) == CT_FALSE){
         CT_LOG_RUN_ERR("[DTC RCY] find max lsn and move point batch is invalidate, read_size=%d",size_read);
         return;
@@ -2091,7 +2096,6 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
     CT_LOG_DEBUG_INF("[DTC RCY] start find max lsn and move point , tmp batch lsn=%llu,block_id=%u",
                    tmp_batch->lsn,tmp_batch->head.point.block_id);
     reform_rcy_node_t *rcy_log_point = &dtc_rcy->rcy_log_points[idx];
-    uint32 left_size;
     for (;;) {
         left_size = size_read - rcy_node->read_pos[rcy_node->read_buf_write_index];
         if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
@@ -3285,6 +3289,9 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
     CT_LOG_RUN_INF("[DTC RCY] rcy read node log thread start");
     while (!thread->closed) {
         for (uint32 i = 0; i < dtc_rcy->node_count; i++) {
+            if(thread->closed){
+                break;
+            }
             dtc_rcy_node_t *node = &dtc_rcy->rcy_nodes[i];
             if(node == NULL){
                 CT_LOG_RUN_INF("[DTC RCY] read node log proc node == NULL node_id = %u", i);
