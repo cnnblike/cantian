@@ -1699,9 +1699,9 @@ status_t dtc_rcy_read_archived_log(knl_session_t *session, uint32 idx, uint32 *s
     dtc_rcy_node_t *rcy_node = &dtc_rcy->rcy_nodes[idx];
     reform_rcy_node_t *rcy_log_point = &dtc_rcy->rcy_log_points[idx];
     arch_file_t *file = &rcy_node->arch_file;
-    char *buf = rcy_node->read_buf[rcy_node->read_buf_read_index].aligned_buf;
-    int64 buf_size = rcy_node->read_buf[rcy_node->read_buf_read_index].buf_size;
-    log_point_t *point = &rcy_log_point->rcy_point;
+    char *buf = rcy_node->read_buf[rcy_node->read_buf_write_index].aligned_buf;
+    int64 buf_size = rcy_node->read_buf[rcy_node->read_buf_write_index].buf_size;
+    log_point_t *point = &rcy_log_point->rcy_write_point;
     bool8 is_find_start = CT_TRUE;
 
     if (dtc_rcy_load_archfile(session, idx, file, point) != CT_SUCCESS) {
