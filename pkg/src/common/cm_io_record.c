@@ -115,18 +115,12 @@ status_t record_io_stat_init(void)
 
 void record_io_stat_begin(timeval_t *tv_begin, atomic_t *start)
 {
-    if (!g_cm_io_record_open) {
-        return;
-    }
     (void)cm_gettimeofday(tv_begin);
     cm_atomic_inc(start);
 }
 
 void record_io_stat_end(timeval_t *tv_begin, int stat, io_record_detail_t *detail)
 {
-    if (!g_cm_io_record_open || cm_atomic_get(&(detail->start)) == 0) {
-        return;
-    }
     timeval_t tv_end;
     (void)cm_gettimeofday(&tv_end);
     uint64 cost_time = TIMEVAL_DIFF_US(tv_begin, &tv_end);
