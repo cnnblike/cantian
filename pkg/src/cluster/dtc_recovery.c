@@ -3308,17 +3308,9 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             //wait for read buf not ready
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc start wait for read buf sleep node_id=%u read_buf_write_index=%u", node->node_id,node->read_buf_write_index);
             uint32 time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
-            for (;;) {
-                if(SECUREC_UNLIKELY(node->read_buf_ready[node->read_buf_write_index] || node->read_size[node->read_buf_write_index] != CT_INVALID_ID32)){
-                    cm_sleep(CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME);
-                    time_out -= CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME;
-                    if(time_out <= 0){
-                        CT_LOG_RUN_ERR("[DTC RCY] read log thread wait for read buf time out node_id =%u",i);
-                        CM_ABORT(0, "[DTC RCY] ABORT INFO: wait reply log proc time out");
-                    }
-                }else{
-                    break;
-                }
+            if(node->read_buf_ready[node->read_buf_write_index]){
+                CT_LOG_DEBUG_INF("[DTC RCY] read log thread wait for read buf ready node_id =%u",i);
+                continue;
             }
             ELAPSED_END(begin_time, sleep_time);
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc finish wait for read buf sleep time = %llu node_id=%u buf_size=%llu read_buf_write_index=%u",
