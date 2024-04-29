@@ -2035,6 +2035,7 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
     uint32 left_size;
     if (!DB_IS_PRIMARY(&session->kernel->db) && (DB_NOT_READY(session) || !dtc_rcy->full_recovery) && dtc_standby_rcy_end(session)) {
         rcy_node->recover_done = CT_TRUE;
+        rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
         if (dtc_rcy->phase == PHASE_ANALYSIS) {
             CT_LOG_RUN_INF(
                 "[DTC RCY] analysis read end point[asn(%u)-block_id(%u)-rst_id(%llu)-lfn(%llu)-lsn(%llu)]",
@@ -3333,7 +3334,6 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             node->read_size[node->read_buf_write_index] = read_size;
             if (read_size == 0){
                 last_nod_log_buffer_index[i] = node->read_buf_write_index;
-                cm_sleep(10);
                 continue;
             }
 
