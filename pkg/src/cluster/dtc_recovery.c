@@ -3242,12 +3242,12 @@ static status_t dtc_rcy_replay_batches_paral(knl_session_t *session)
     return status;
 }
 
-void try_to_read_no_log_node(thread_t *thread, uint32* last_nod_log_buffer_index){
+void try_to_read_no_log_node(thread_t *thread, uint32* last_nod_log_buffer_index,uint32 index){
     CT_LOG_DEBUG_INF("[DTC RCY] dtc rcy try to read failed node");
     dtc_rcy_context_t *dtc_rcy = DTC_RCY_CONTEXT;
     knl_session_t *session = (knl_session_t *)thread->argument;
     uint32 read_buf_size = g_instance->kernel.attr.rcy_node_read_buf_size;
-    for(int j = 0; j < dtc_rcy->node_count; ++j){
+    for(int j = 0; j < index; ++j){
         dtc_rcy_node_t *node = &dtc_rcy->rcy_nodes[j];
         if(node->read_size[node->read_buf_write_index] != 0){
             continue;
@@ -3330,7 +3330,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
 
             // try to read last failed node log
             last_nod_log_buffer_index[i] = CT_INVALID_ID32;
-            try_to_read_no_log_node(thread,last_nod_log_buffer_index);
+            try_to_read_no_log_node(thread,last_nod_log_buffer_index,i);
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc finish read node log node_id=%u read_buf_write_index=%u", node->node_id, node->read_buf_write_index);
             node->read_buf_ready[node->read_buf_write_index] = CT_TRUE;
             node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
