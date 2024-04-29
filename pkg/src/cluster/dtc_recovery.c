@@ -1886,7 +1886,9 @@ status_t dtc_rcy_read_node_log(knl_session_t *session, uint32 idx, uint32 *size_
     }
 
     rcy_node->write_pos[rcy_node->read_buf_write_index] += *size_read;
-    rcy_node->recover_done = CT_FALSE;
+    if(*size_read != 0){
+        rcy_node->recover_done = CT_FALSE;
+    }
 
     if (dtc_rcy->rcy_stat.last_rcy_set_num <= 0) {
         dtc_rcy->rcy_stat.last_rcy_log_size += *size_read;
