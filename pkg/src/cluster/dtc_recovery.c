@@ -3307,7 +3307,6 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             ELAPSED_BEGIN(begin_time);
             //wait for read buf not ready
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc start wait for read buf sleep node_id=%u read_buf_write_index=%u", node->node_id,node->read_buf_write_index);
-            uint32 time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
             if(node->read_buf_ready[node->read_buf_write_index]){
                 CT_LOG_DEBUG_INF("[DTC RCY] read log thread wait for read buf ready node_id =%u",i);
                 continue;
