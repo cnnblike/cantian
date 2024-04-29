@@ -2035,6 +2035,7 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
     uint32 left_size;
     if (!DB_IS_PRIMARY(&session->kernel->db) && (DB_NOT_READY(session) || !dtc_rcy->full_recovery) && dtc_standby_rcy_end(session)) {
         rcy_node->recover_done = CT_TRUE;
+        rcy_node->read_size[rcy_node->read_buf_read_index] = CT_INVALID_ID32;
         rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
         if (dtc_rcy->phase == PHASE_ANALYSIS) {
             CT_LOG_RUN_INF(
