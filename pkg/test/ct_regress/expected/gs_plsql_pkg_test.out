@@ -1,0 +1,2307 @@
+
+
+SQL> --from gsql_test/sql_empty_string.sql
+SQL> select DBE_LOB.get_length('123') from dual;
+
+DBE_LOB.GET_LENGTH('123')
+-------------------------
+3                        
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.get_length('') is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.get_length('') = 0;
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('123',1,3) from dual;
+
+DBE_LOB.SUBSTR('123',1,3)
+-------------------------
+3                        
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.SUBSTR('123',-10,1) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.SUBSTR('123',-10,1) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.SUBSTR('123',2,5) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.SUBSTR('123',2,5) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.SUBSTR('',1,3) is null;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual where DBE_LOB.SUBSTR('',1,3) = '';
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --from gsql_test/sql_upper_lower.sql
+SQL> --DTS2019062809663
+SQL> select DBE_LOB.SUBSTR('șșțăîțîâîă',1,5) from dual;
+
+DBE_LOB.SUBSTR('șșțăîțîâîă',1,5)
+------------------------------------------
+î                                        
+
+1 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('șșțăîțîâîă',30,9)  from dual;
+
+DBE_LOB.SUBSTR('șșțăîțîâîă',30,9)
+-------------------------------------------
+îă                                       
+
+1 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('șșțăîțîâîă',30,11)  from dual;
+
+DBE_LOB.SUBSTR('șșțăîțîâîă',30,11)
+--------------------------------------------
+                                            
+
+1 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('ⅰ南京  ⅱ  研究所  ⅲ  雨花台  ⅳ  软件大道  ⅴ、ⅵ、ⅶ、ⅷ、ⅸ、ⅹ',10,5) from dual;
+
+DBE_LOB.SUBSTR('ⅰ南京  ⅱ  研究所  ⅲ  雨花台  ⅳ  
+----------------------------------------------------------------
+ ⅱ  研究所  ⅲ                                            
+
+1 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('А а Б б В в Г г Д д Е е',-1,9)  from dual;
+
+DBE_LOB.SUBSTR('А а Б б В в Г г Д д Е е',-1,9)
+----------------------------------------------------------
+                                                          
+
+1 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('А а Б б В в Г г Д д Е е',1,-1)  from dual;
+
+DBE_LOB.SUBSTR('А а Б б В в Г г Д д Е е',1,-1)
+----------------------------------------------------------
+                                                          
+
+1 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('А а Б б В в Г г Д д Е е',0,9)  from dual;
+
+DBE_LOB.SUBSTR('А а Б б В в Г г Д д Е е',0,9)
+---------------------------------------------------------
+                                                         
+
+1 rows fetched.
+
+SQL> select DBE_LOB.SUBSTR('А а Б б В в Г г Д д Е е',1,0)  from dual;
+
+DBE_LOB.SUBSTR('А а Б б В в Г г Д д Е е',1,0)
+---------------------------------------------------------
+                                                         
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --from gsql_test/sql_proc_1.sql
+SQL> --DTS2019062100657
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> drop table if exists fvt_pragma_table_03;
+
+Succeed.
+
+SQL> create table fvt_pragma_table_03 (c_int int,c_number number,c_varchar varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_pragma_table_03 values(1,1.25,'abcd');
+
+1 rows affected.
+
+SQL> insert into fvt_pragma_table_03 values(2,2.25,'efgh');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop procedure if exists fvt_pragma_proc_03;
+
+Succeed.
+
+SQL> create or replace procedure fvt_pragma_proc_03 is
+  2 pragma autonomous_transaction;
+  3 begin
+  4     update fvt_pragma_table_03 set c_int = 100 where c_int < 10;
+  5 	for i in 1..10
+  6 	loop
+  7 		insert into fvt_pragma_table_03 values(i,3.25,'hijk');
+  8 	end loop;
+  9 commit;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> declare 
+  2 pragma autonomous_transaction;
+  3 TYPE tcur IS REF CURSOR;
+  4 cursor_k tcur;
+  5 b number := 0;
+  6 b_number number := 0;
+  7 cursor c_job is select c_varchar from fvt_pragma_table_03 where c_varchar='hijk';
+  8 c varchar(100) := 'abc';
+  9 begin
+ 10 	fvt_pragma_proc_03;
+ 11 	execute immediate 'alter table fvt_pragma_table_03 rename column c_int to c_id';
+ 12 	delete from fvt_pragma_table_03 where c_varchar = 'hijk';
+ 13 	open cursor_k for select c_number from fvt_pragma_table_03;
+ 14 	fetch cursor_k into b;
+ 15 	dbe_output.print_line(b);
+ 16 	close cursor_k;
+ 17 	open c_job;
+ 18 	fetch c_job into c;
+ 19 	rollback;
+ 20 	dbe_output.print_line(b);
+ 21 	close c_job;
+ 22 rollback;
+ 23 end;
+ 24 /
+
+1.25
+1.25
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from fvt_pragma_table_03 order by c_id desc;
+
+C_ID         C_NUMBER                                 C_VARCHAR                                                       
+------------ ---------------------------------------- ----------------------------------------------------------------
+100          1.25                                     abcd                                                            
+100          2.25                                     efgh                                                            
+10           3.25                                     hijk                                                            
+9            3.25                                     hijk                                                            
+8            3.25                                     hijk                                                            
+7            3.25                                     hijk                                                            
+6            3.25                                     hijk                                                            
+5            3.25                                     hijk                                                            
+4            3.25                                     hijk                                                            
+3            3.25                                     hijk                                                            
+2            3.25                                     hijk                                                            
+1            3.25                                     hijk                                                            
+
+12 rows fetched.
+
+SQL> drop table fvt_pragma_table_03;
+
+Succeed.
+
+SQL> drop procedure fvt_pragma_proc_03;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --from gsql_test/sql_proc.sql
+SQL> -- 5 anonymous_block
+SQL> DECLARE
+  2     grade CHAR(1) := 'B';
+  3     appraisal VARCHAR2(20);
+  4 BEGIN    
+  5     appraisal := CASE grade
+  6             WHEN 'A' THEN  'Excellent'
+  7             WHEN 'B' THEN  'Very Good'
+  8             WHEN 'C' THEN  'Good'
+  9             WHEN 'D' THEN  'Fair'
+ 10             WHEN 'F' THEN  'Poor'
+ 11             ELSE 'No such grade'
+ 12         END ;
+ 13     dbe_output.print_line(appraisal);
+ 14 END;
+ 15 /
+
+Very Good
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --6
+SQL> declare
+  2    v_bool boolean;
+  3 begin
+  4   v_bool:=(1+2+3+4+5=3*5);
+  5 	if(v_bool)
+  6 	then
+  7      dbe_output.print_line('The condition is true');
+  8   end if;
+  9 end;
+ 10 /
+
+The condition is true
+
+PL/SQL procedure successfully completed.
+
+SQL> --7
+SQL> declare
+  2 v_sal int;
+  3 begin
+  4 v_sal := 1;
+  5 v_sal := v_sal + 1;
+  6 dbe_output.print_line('value1:'||v_sal);
+  7 if v_sal < 2 then
+  8    dbe_output.print_line('value2:'||v_sal);
+  9 elsif v_sal = 2 then
+ 10    if v_sal != 2 then
+ 11      dbe_output.print_line('value3:'||v_sal);
+ 12    else
+ 13      dbe_output.print_line('value3x:'||v_sal);
+ 14    end if;
+ 15 elsif v_sal = 4 then
+ 16    dbe_output.print_line('value4:'||v_sal);
+ 17 else
+ 18    dbe_output.print_line('value5:'||v_sal);
+ 19 end if;
+ 20 dbe_output.print_line('value6:'||to_char(v_sal+2));
+ 21 end;
+ 22 /
+
+value1:2
+value3x:2
+value6:4
+
+PL/SQL procedure successfully completed.
+
+SQL> --8
+SQL> DECLARE
+  2 x NUMBER;
+  3 BEGIN
+  4 x := 0;
+  5 LOOP
+  6   dbe_output.print_line ('Inside loop: x = ' || x);
+  7   x := x + 1;
+  8   IF x > 3 THEN
+  9      dbe_output.print_line(' BEGIN EXIT ');
+ 10      EXIT WHEN x > 4;
+ 11      dbe_output.print_line(' AFTER EXIT ');
+ 12   END IF;
+ 13 END LOOP;
+ 14 dbe_output.print_line(' After loop: x = ' || x);
+ 15 END;
+ 16 /
+
+Inside loop: x = 0
+Inside loop: x = 1
+Inside loop: x = 2
+Inside loop: x = 3
+ BEGIN EXIT 
+ AFTER EXIT 
+Inside loop: x = 4
+ BEGIN EXIT 
+ After loop: x = 5
+
+PL/SQL procedure successfully completed.
+
+SQL> --9
+SQL> DECLARE
+  2 x NUMBER;
+  3 BEGIN
+  4 x := 0;
+  5 while x <= 1 LOOP
+  6 dbe_output.print_line ('here:' || x);
+  7 x := x + 1;
+  8 END LOOP;
+  9 END;
+ 10 /
+
+here:0
+here:1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --10 cursor
+SQL> drop table if exists emp;
+
+Succeed.
+
+SQL> create table emp(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into emp values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into emp values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into emp values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into emp values(1,'zhansi','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into emp values(2,'lisiabc','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into emp values(123,'zhangwu123','doctor3',10000);
+
+1 rows affected.
+
+SQL> --commit;
+SQL> 
+SQL> declare
+  2    cursor cv(v_empno int,v_job varchar2) is select * from emp where empno=v_empno and job =v_job;
+  3 BEGIN
+  4         for i in cv(1,'doctor1')
+  5         loop
+  6         dbe_output.print_line('ename ='||i.ename);
+  7         end loop;
+  8 end;
+  9 /
+
+ename =zhangsan
+ename =zhansi
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --11
+SQL> create or replace function syscur_028(v_num int) return sys_refcursor
+  2 is
+  3         cv1 SYS_REFCURSOR;
+  4         v_empno NUMBER(10,0);
+  5 begin
+  6         select count(*) INTO v_empno from emp;
+  7         if v_empno <> v_num then
+  8                 open cv1 for select 1 from dual;
+  9         else
+ 10                 open cv1 for select 0 from dual;
+ 11         end if;
+ 12         RETURN cv1;
+ 13 end;
+ 14 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cv sys_refcursor;
+  3 v_empno emp.empno%type;
+  4 begin
+  5 cv :=syscur_028(10);
+  6 loop
+  7 fetch cv into v_empno;
+  8 exit when cv%notfound;
+  9 dbe_output.print_line('v_empno is '|| v_empno);
+ 10 end loop;
+ 11 close cv;
+ 12 end;
+ 13 /
+
+v_empno is 1
+
+PL/SQL procedure successfully completed.
+
+SQL> --12
+SQL> DECLARE
+  2    v_emp_test     emp%ROWTYPE;
+  3    cursor cv is SELECT * FROM emp where empno=1 for update;
+  4    BEGIN
+  5    OPEN cv;
+  6    FETCH cv INTO v_emp_test;
+  7    while cv%FOUND LOOP
+  8        update emp set sal=sal+1000 where current of cv;
+  9        dbe_output.print_line(rpad(v_emp_test.empno,15,' ')||rpad(v_emp_test.ename,15,' ')||v_emp_test.sal);
+ 10        FETCH cv INTO v_emp_test;       
+ 11    END LOOP;   
+ 12    dbe_output.print_line( '-------------------------------------' );
+ 13    CLOSE cv;
+ 14 END;
+ 15 /
+
+1              zhangsan       10000
+1              zhansi         10000
+-------------------------------------
+
+PL/SQL procedure successfully completed.
+
+SQL> --13
+SQL> DECLARE
+  2    v_emp_test     emp%ROWTYPE;
+  3    cursor cv is SELECT * FROM emp where empno=1 for update;
+  4    BEGIN
+  5    OPEN cv;
+  6    FETCH cv INTO v_emp_test;
+  7    while cv%FOUND LOOP
+  8        delete from emp where current of cv;
+  9        dbe_output.print_line(rpad(v_emp_test.empno,15,' ')||rpad(v_emp_test.ename,15,' ')||v_emp_test.sal);
+ 10        FETCH cv INTO v_emp_test;       
+ 11    END LOOP;   
+ 12    dbe_output.print_line( '-------------------------------------' );
+ 13    CLOSE cv;
+ 14 END;
+ 15 /
+
+1              zhangsan       11000
+1              zhansi         11000
+-------------------------------------
+
+PL/SQL procedure successfully completed.
+
+SQL> --14
+SQL> declare
+  2 type syscur is record (
+  3   a int,
+  4   b varchar2(20)
+  5 );
+  6 cv sys_refcursor;
+  7 cv1 syscur;
+  8 begin
+  9 open cv for select empno,ename from emp where job like '%1%' order by empno;
+ 10 loop
+ 11 fetch cv into cv1;
+ 12 exit when cv%notfound;
+ 13 dbe_output.print_line('empno is ' || cv1.a||'---->'||'ename is '|| cv1.b);
+ 14 end loop;
+ 15 close cv;
+ 16 end;
+ 17 /
+
+PL/SQL procedure successfully completed.
+
+SQL> --15
+SQL> begin
+  2 for a  in  (select * from emp where ename like '%zhangsan%' and sal > 9000 order by empno)
+  3 loop
+  4 dbe_output.print_line('a is emp:'||a.empno||'name:'||a.ename||'job:'||a.job||'sal:'||a.sal);
+  5 dbe_output.print_line(sql%rowcount);
+  6 end loop;
+  7 end;
+  8 /
+
+a is emp:2name:zhangsan2job:doctor2sal:10000
+
+a is emp:123name:zhangsan3job:doctor3sal:10000
+
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table emp;
+
+Succeed.
+
+SQL> drop function syscur_028;
+
+Succeed.
+
+SQL> 
+SQL> --cann't use bind param after using
+SQL> DECLARE
+  2 a INT;
+  3 b CHAR(16);
+  4 c VARCHAR(16);
+  5 BEGIN
+  6 a := 10;
+  7 b := 'abc';
+  8 c := 'efc';
+  9 EXECUTE IMMEDIATE 'BEGIN 
+ 10 :x := 11; :y := ''aaa''; :z := ''bbb'';
+ 11 dbe_output.print_line(''a=''||:x);dbe_output.print_line(''b=''||:y);dbe_output.print_line(''c=''||:z);
+ 12 END;'
+ 13 USING 7,'efg','opq';
+ 14 dbe_output.print_line('a='||a);
+ 15 dbe_output.print_line('b='||b);
+ 16 dbe_output.print_line('c='||c);
+ 17 END;
+ 18 /
+
+CT-00932, [9:1] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[9:1] CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[2:1] PLC-00922 PL/SQL: illegal line(unexpected param)
+[2:1] PLC-00922 PL/SQL: illegal line(unexpected param)
+[2:1] PLC-00922 PL/SQL: illegal line(unexpected param)
+
+
+SQL> 
+SQL> --test bind param in cursor clause of dynamic sql
+SQL> declare
+  2 xx int := 1;
+  3 begin
+  4 execute immediate '
+  5 declare
+  6    a sys_refcursor;
+  7    b int := 1;
+  8    p int;
+  9 begin
+ 10    open a for select b from dual;
+ 11    open a for select b + :1 from dual;
+ 12    fetch a into p;
+ 13    dbe_output.print_line(p);
+ 14 end;' using in xx;
+ 15 end;
+ 16 /
+
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> --testcase 11
+SQL> drop procedure if exists proc;
+
+Succeed.
+
+SQL> create or replace procedure proc(b in out number, c in out int)
+  2 as
+  3 begin
+  4   dbe_output.print_line(b);
+  5   dbe_output.print_line(c);
+  6   b:=3;
+  7   c:=4;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 b number;
+  3 c int;
+  4 begin
+  5 b:=1;
+  6 c:=2;
+  7 proc(b,c);
+  8 dbe_output.print_line(b);
+  9 dbe_output.print_line(c);
+ 10 end;
+ 11 /
+
+1
+2
+3
+4
+
+PL/SQL procedure successfully completed.
+
+SQL> drop procedure proc;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --from gsql_test/gs_plsql_type_dts.sql
+SQL> declare
+  2     TYPE nt_type IS TABLE OF varchar(10);
+  3     nt nt_type := nt_type('a','s','null','w','e');
+  4 BEGIN
+  5     if nt.exists(null) then
+  6         dbe_output.print_line('ok');
+  7     else
+  8         dbe_output.print_line('end');
+  9     end if;
+ 10 end;
+ 11 /
+
+end
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2     TYPE nt_type IS TABLE OF varchar(10);
+  3     nt nt_type := nt_type('a','s','null','w','e');
+  4 BEGIN
+  5     dbe_output.print_line(nt.prior(null) || 'ok');
+  6 end;
+  7 /
+
+ok
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2     TYPE nt_type IS TABLE OF varchar(10);
+  3     nt nt_type := nt_type('a','s','null','w','e');
+  4 BEGIN
+  5     dbe_output.print_line(nt.next(null) || 'ok');
+  6 end;
+  7 /
+
+ok
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --from gsql_test/sql_merge_into.sql
+SQL> drop table if exists merge_t1;
+
+Succeed.
+
+SQL> drop table if exists merge_t2;
+
+Succeed.
+
+SQL> create table merge_t1(f1 int, f2 varchar2(20));
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2     i number;
+  3 begin
+  4     i := 0;
+  5     while i < 100000 loop
+  6         insert into merge_t1(f1) values(i+1);
+  7         if mod(i+1, 10000) = 0 then
+  8             commit;
+  9         end if;
+ 10         i := i+1;
+ 11     end loop;
+ 12     commit;
+ 13 end;
+ 14 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create table merge_t2 as select * from merge_t1;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2    v_sdate timestamp;
+  3    v_edate timestamp;
+  4 begin
+  5     select systimestamp into v_sdate from dual;
+  6     merge into merge_t1 a using(select * from merge_t2) b on (a.f1=b.f1+10000000) 
+  7         when matched then update set a.f2='bbb';
+  8     select systimestamp into v_edate from dual;
+  9     if v_edate - v_sdate > interval '2' second then
+ 10         THROW_EXCEPTION(-20123, 'SQL elapsed too much time');
+ 11     end if;
+ 12 end;
+ 13 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table merge_t1;
+
+Succeed.
+
+SQL> drop table merge_t2;
+
+Succeed.
+
+SQL> 
+SQL> --package compile error
+SQL> --sub_proc has no parameter
+SQL> drop table if exists pkg_t222222;
+
+Succeed.
+
+SQL> create table pkg_t222222(a varchar2(10),b varchar2(10));
+
+Succeed.
+
+SQL> 
+SQL> drop PACKAGE if exists COMP_PACK02;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE COMP_PACK02 IS PROCEDURE PROCEDURE001; END;
+  2 /
+
+Succeed.
+
+SQL> drop PACKAGE body if exists COMP_PACK02;
+
+Succeed.
+
+SQL> create or replace package body COMP_PACK02
+  2 IS PROCEDURE PROCEDURE001 as  BEGIN  insert into pkg_t222222 values('1','bbb'); commit ;end PROCEDURE001;end COMP_PACK02;
+  3 /
+
+Succeed.
+
+SQL> EXEC COMP_PACK02.PROCEDURE001;
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace package
+  2 body COMP_PACK02 IS PROCEDURE PROCEDURE001 as
+  3 BEGIN
+  4 insert into pkg_t222222 values('2','bbb'); commit ;
+  5 end PROCEDURE001;
+  6 end COMP_PACK02;
+  7 /
+
+Succeed.
+
+SQL> EXEC COMP_PACK02.PROCEDURE001;
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace package body COMP_PACK02 IS PROCEDURE PROCEDURE001 as  BEGIN  insert into pkg_t222222 values('3','bbb'); commit ;end PROCEDURE001;end COMP_PACK02;
+  2 /
+
+Succeed.
+
+SQL> select source from sys_procs where name = 'COMP_PACK02';
+
+SOURCE                                                          
+----------------------------------------------------------------
+IS PROCEDURE PROCEDURE001; END;
+/
+                              
+IS PROCEDURE PROCEDURE001 as  BEGIN  insert into pkg_t222222 values('3','bbb'); commit ;end PROCEDURE001;end COMP_PACK02;
+/
+
+
+2 rows fetched.
+
+SQL> EXEC COMP_PACK02.PROCEDURE001;
+
+PL/SQL procedure successfully completed.
+
+SQL> drop package if exists COMP_PACK02;
+
+Succeed.
+
+SQL> 
+SQL> ----sub_proc has parameters
+SQL> DROP PACKAGE IF EXISTS COMP_PACK01;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE COMP_PACK01
+  2 IS
+  3  PROCEDURE PROCEDURE001(PARAM1 IN VARCHAR2,PARAM2 IN VARCHAR2);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package
+  2 body
+  3 COMP_PACK01 IS PROCEDURE PROCEDURE001 (PARAM1 IN VARCHAR2, PARAM2 IN VARCHAR2) as BEGIN
+  4 insert into pkg_t222222 values(PARAM1,PARAM2); commit ;
+  5 end PROCEDURE001;
+  6 end COMP_PACK01;
+  7 /
+
+Succeed.
+
+SQL> EXEC COMP_PACK01.PROCEDURE001('4','bbb');
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop PACKAGE body if exists COMP_PACK01;
+
+Succeed.
+
+SQL> create or replace package body COMP_PACK01 IS PROCEDURE PROCEDURE001 (PARAM1 IN VARCHAR2, PARAM2 IN VARCHAR2) as BEGIN insert into pkg_t222222 values(PARAM1,PARAM2); commit ; end PROCEDURE001; end COMP_PACK01;
+  2 /
+
+Succeed.
+
+SQL> EXEC COMP_PACK01.PROCEDURE001('5','bbb');
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP PACKAGE IF EXISTS COMP_PACK01;
+
+Succeed.
+
+SQL> 
+SQL> --multiple sub_procs
+SQL> DROP PACKAGE IF EXISTS COMP_PACK03;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE COMP_PACK03
+  2 IS
+  3  PROCEDURE PROCEDURE001(PARAM1 IN VARCHAR2,PARAM2 IN VARCHAR2);
+  4  PROCEDURE PROCEDURE002;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package body COMP_PACK03 IS
+  2 PROCEDURE PROCEDURE001 (PARAM1 IN VARCHAR2, PARAM2 IN VARCHAR2) as 
+  3 BEGIN 
+  4 insert into pkg_t222222 values(PARAM1,PARAM2);
+  5 commit ;
+  6 end PROCEDURE001;PROCEDURE PROCEDURE002 as  BEGIN  insert into pkg_t222222 values('6','bbb'); commit ;end PROCEDURE002;
+  7 end COMP_PACK03;
+  8 /
+
+Succeed.
+
+SQL> EXEC COMP_PACK03.PROCEDURE002;
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace package 
+  2 body COMP_PACK03 IS PROCEDURE PROCEDURE001 (PARAM1 IN VARCHAR2, PARAM2 IN VARCHAR2) as BEGIN insert into pkg_t222222 values(PARAM1,PARAM2); commit ; end PROCEDURE001;PROCEDURE PROCEDURE002 as  BEGIN  insert into pkg_t222222 values('7','bbb');
+  3 commit ;end PROCEDURE002;
+  4 end COMP_PACK03;
+  5 /
+
+Succeed.
+
+SQL> EXEC COMP_PACK03.PROCEDURE002;
+
+PL/SQL procedure successfully completed.
+
+SQL> EXEC COMP_PACK03.PROCEDURE001('8','bbb');
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from pkg_t222222;
+
+A          B         
+---------- ----------
+1          bbb       
+2          bbb       
+3          bbb       
+4          bbb       
+5          bbb       
+6          bbb       
+7          bbb       
+8          bbb       
+
+8 rows fetched.
+
+SQL> DROP PACKAGE IF EXISTS PACK03;
+
+Succeed.
+
+SQL> drop table if exists pkg_t222222;
+
+Succeed.
+
+SQL> 
+SQL> --DTS202008240R60APP0G00
+SQL> DROP PACKAGE IF EXISTS CASE_PAK_1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE CASE_PAK_1
+  2 IS
+  3  PROCEDURE proc_tt1("aQWQ" int, `b` int);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY CASE_PAK_1
+  2 IS
+  3 procedure proc_tt1("aQWQ" int, `b` int) is
+  4   p int := "aQWQ";
+  5   q int := "b";
+  6 begin
+  7   dbe_output.print_line('p = ' || p);
+  8   dbe_output.print_line('q = ' || q);
+  9 end;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> select OBJECT_NAME, ARGUMENT_NAME from sys_proc_args where object_name = 'PROC_TT1' ORDER BY SEQUENCE;
+
+OBJECT_NAME                                                      ARGUMENT_NAME                                                   
+---------------------------------------------------------------- ----------------------------------------------------------------
+PROC_TT1                                                         aQWQ                                                            
+PROC_TT1                                                         b                                                               
+
+2 rows fetched.
+
+SQL> select OBJECT_NAME, ARGUMENT_NAME from db_arguments where object_name = 'PROC_TT1' ORDER BY SEQUENCE;
+
+OBJECT_NAME                                                      ARGUMENT_NAME                                                   
+---------------------------------------------------------------- ----------------------------------------------------------------
+PROC_TT1                                                         aQWQ                                                            
+PROC_TT1                                                         b                                                               
+
+2 rows fetched.
+
+SQL> call CASE_PAK_1.proc_tt1(1, 2);
+
+p = 1
+q = 2
+
+PL/SQL procedure successfully completed.
+
+SQL> call CASE_PAK_1.proc_tt1("AQWQ"=>1, `b`=>2);
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:30] PLC-00699 Argument AQWQ is not found in procedure/function
+
+SQL> call CASE_PAK_1.proc_tt1("aqwQ"=>1, `b`=>2);
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:30] PLC-00699 Argument aqwQ is not found in procedure/function
+
+SQL> call CASE_PAK_1.proc_tt1("aQWQ"=>1, `B`=>2);
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:38] PLC-00699 Argument B is not found in procedure/function
+
+SQL> call CASE_PAK_1.proc_tt1("aQWQ"=>1, `b`=>2);
+
+p = 1
+q = 2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE CASE_PAK_1
+  2 IS
+  3  PROCEDURE proc_tt1("sWER" int, "Qsq" int);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY CASE_PAK_1
+  2 IS
+  3 procedure proc_tt1("swer" int, "qsp" int) is
+  4 begin
+  5   dbe_output.print_line('p = ' || 1);
+  6 end;
+  7 END;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.CASE_PAK_1) terminated with compiling errors
+[3:20] PLC-00967 Subprogram or variant 'PROC_TT1' has defined in package body, but not matched with package specification
+
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE CASE_PAK_1
+  2 IS
+  3  FUNCTION proc_tt1(aQWQ int, "B" int) RETURN INT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY CASE_PAK_1
+  2 IS
+  3 FUNCTION proc_tt1(aqwq int, "B" int)  RETURN INT is
+  4   p int := 1;
+  5   q int :=2;
+  6 begin
+  7   dbe_output.print_line('p = ' || p);
+  8 RETURN q;
+  9 end;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> select OBJECT_NAME, ARGUMENT_NAME from db_arguments where object_name = 'PROC_TT1' ORDER BY SEQUENCE;
+
+OBJECT_NAME                                                      ARGUMENT_NAME                                                   
+---------------------------------------------------------------- ----------------------------------------------------------------
+PROC_TT1                                                                                                                         
+PROC_TT1                                                         AQWQ                                                            
+PROC_TT1                                                         B                                                               
+
+3 rows fetched.
+
+SQL> select CASE_PAK_1.proc_tt1(2,3) from sys_dummy;
+
+CASE_PAK_1.PROC_TT1(2,3)
+------------------------
+2                       
+
+1 rows fetched.
+
+p = 1
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE CASE_PAK_1
+  2 IS
+  3  PROCEDURE proc_tt1(a int, A int);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.CASE_PAK_1) terminated with compiling errors
+[3:28] PLC-00604 Duplicate argument name A
+
+
+SQL> CREATE OR REPLACE PACKAGE CASE_PAK_1
+  2 IS
+  3  PROCEDURE proc_tt1(a int, "A" int);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.CASE_PAK_1) terminated with compiling errors
+[3:28] PLC-00604 Duplicate argument name A
+
+
+SQL> CREATE OR REPLACE PACKAGE CASE_PAK_1
+  2 IS
+  3  PROCEDURE proc_tt1(a int, "a" int);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE CASE_PAK_1
+  2 IS
+  3  PROCEDURE PROC_TT1("a" INT, "A" INT);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY CASE_PAK_1
+  2 IS
+  3 PROCEDURE PROC_TT1("a" INT, "A" INT) IS
+  4   P INT := "a";
+  5   Q INT := "A";
+  6 BEGIN
+  7   dbe_output.print_line(P);
+  8   dbe_output.print_line(Q);
+  9 END;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> call CASE_PAK_1.proc_tt1("a"=>1, "A"=>2);
+
+1
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> call CASE_PAK_1.proc_tt1("A"=>1, "a"=>2);
+
+2
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> call CASE_PAK_1.proc_tt1("a"=>1, "a"=>2);
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:27] PLC-00948 Duplicate argument a in PROC_TT1
+
+SQL> call CASE_PAK_1.proc_tt1("a"=>1);
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00644 Too few arguments for procedure/function
+
+SQL> call CASE_PAK_1.proc_tt1( a =>1, "A"=>2);
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[1:27] PLC-00948 Duplicate argument A in PROC_TT1
+
+SQL> call CASE_PAK_1.proc_tt1( a =>1, "a"=>2);
+
+2
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE PROC_TT2("a" INT, "A" INT) IS
+  2 BEGIN
+  3   dbe_output.print_line("a");
+  4   dbe_output.print_line("A");
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> call proc_tt2("a"=>1, "A"=>2);
+
+1
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> call proc_tt2("A"=>1, "a"=>2);
+
+2
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP PROCEDURE if exists PROC_TT2;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE CASE_PAK_1
+  2 IS
+  3  PROCEDURE proc_tt1(`a` int, "A" int);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY CASE_PAK_1
+  2 IS
+  3 procedure proc_tt1(`a` int, A int) is
+  4   p int := `a`;
+  5   q int := A;
+  6 begin
+  7   dbe_output.print_line('p = ' || p);
+  8   dbe_output.print_line('q = ' || q);
+  9 end;
+ 10 END;
+ 11 /
+
+Succeed.
+
+SQL> call CASE_PAK_1.proc_tt1("a"=>1, "A"=>2);
+
+p = 1
+q = 2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace package CASE_PAK_1 is
+  2 function a return int;
+  3 function "A" return int;
+  4 end;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.CASE_PAK_1) terminated with compiling errors
+[3:10] PLC-00753 The object function or procedure A already exists.
+
+
+SQL> create or replace package CASE_PAK_1 is
+  2 function a return int;
+  3 function "a" return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package CASE_PAK_1 is
+  2 function `a` return int;
+  3 function "A" return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace package body CASE_PAK_1 is
+  2 function `a` return int
+  3 is
+  4 begin
+  5 return 3;
+  6 end;
+  7 function "A" return int
+  8 is
+  9 begin
+ 10 return 4;
+ 11 end;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> select OBJECT_NAME, ARGUMENT_NAME from db_arguments where PACKAGE_NAME = 'CASE_PAK_1' ORDER BY OBJECT_NAME;
+
+OBJECT_NAME                                                      ARGUMENT_NAME                                                   
+---------------------------------------------------------------- ----------------------------------------------------------------
+A                                                                                                                                
+a                                                                                                                                
+
+2 rows fetched.
+
+SQL> select CASE_PAK_1.`A` from sys_dummy;
+
+A           
+------------
+4           
+
+1 rows fetched.
+
+SQL> select CASE_PAK_1."a" from sys_dummy;
+
+a           
+------------
+3           
+
+1 rows fetched.
+
+SQL> select CASE_PAK_1.a from sys_dummy;
+
+A           
+------------
+4           
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace package CASE_PAK_1 is
+  2 function "aBRT" return int;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> create or replace package body CASE_PAK_1 is
+  2 function aBRT return int
+  3 is
+  4 begin
+  5 return 3;
+  6 end;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.CASE_PAK_1) terminated with compiling errors
+PLC-00966 Subprogram or variant 'aBRT' has declared in package, but not defined in package body
+
+
+SQL> 
+SQL> create or replace package CASE_PAK_1 is
+  2 function "aBRT" return int;
+  3 function "Aaat" return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package body CASE_PAK_1 is
+  2 function "aBRT" return int
+  3 is
+  4 begin
+  5 return 3;
+  6 end;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.CASE_PAK_1) terminated with compiling errors
+PLC-00966 Subprogram or variant 'Aaat' has declared in package, but not defined in package body
+
+
+SQL> 
+SQL> create or replace package CASE_PAK_1 is
+  2 function "aBRT" return int;
+  3 function "Aaat" return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace package body CASE_PAK_1 is
+  2 function "aBRT" return int
+  3 is
+  4 begin
+  5 return 3;
+  6 end;
+  7 function "AAAT" return int
+  8 is
+  9 begin
+ 10 return 4;
+ 11 end;
+ 12 end;
+ 13 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.CASE_PAK_1) terminated with compiling errors
+PLC-00966 Subprogram or variant 'Aaat' has declared in package, but not defined in package body
+
+
+SQL> select CASE_PAK_1."Aaat" from sys_dummy;
+
+CT-00944, [1:8]PL/SQL(SYS.CASE_PAK_1) terminated with compiling errors
+PLC-00966 Subprogram or variant 'Aaat' has declared in package, but not defined in package body
+
+SQL> select CASE_PAK_1."AAAT" from sys_dummy;
+
+CT-00828, [1:8]function CASE_PAK_1.AAAT does not exist
+SQL> 
+SQL> create or replace package CASE_PAK_1 is
+  2 function aBRT return int;
+  3 function Aaat return int;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace package body CASE_PAK_1 is
+  2 function abRT return int
+  3 is
+  4 begin
+  5 return 3;
+  6 end;
+  7 function AAAT return int
+  8 is
+  9 begin
+ 10 return 4;
+ 11 end;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> select CASE_PAK_1.AAAT from sys_dummy;
+
+AAAT        
+------------
+4           
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> create or replace package CASE_PAK_1 is
+  2 function "aBRT" return int;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> create or replace package body CASE_PAK_1 is
+  2 function "AAAT" return int
+  3 is
+  4 begin
+  5 return 4;
+  6 end;
+  7 function "aBRT" return int
+  8 is
+  9 a int;
+ 10 begin
+ 11 a := 5;
+ 12 return a;
+ 13 end;
+ 14 end;
+ 15 /
+
+Succeed.
+
+SQL> drop package if exists CASE_PAK_1;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput off;
+
+OFF
+SQL> 
+SQL> --DTS20210428041KVWP1M00
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS DTS20210428041KVWP1M00_USER CASCADE;
+
+Succeed.
+
+SQL> CREATE USER DTS20210428041KVWP1M00_USER IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> CREATE TABLE DTS20210428041KVWP1M00_USER.T1(C1 INT);
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS20210428041KVWP1M00_PROCEDURE() IS
+  2 BEGIN
+  3  DBE_MASK_DATA.ADD_POLICY(
+  4     object_schema => 'DTS20210428041KVWP1M00_USER',
+  5     object_name => 'T1',
+  6     column_name => 'C1',
+  7     policy_name => 'DTS20210428041KVWP1M00_RULE',
+  8     policy_type => 'FULL',
+  9     mask_value=> '7');
+ 10  DBE_MASK_DATA.DROP_POLICY('DTS20210428041KVWP1M00_USER', 'T1', 'DTS20210428041KVWP1M00_RULE');
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> call DTS20210428041KVWP1M00_PROCEDURE();
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP USER DTS20210428041KVWP1M00_USER CASCADE;
+
+Succeed.
+
+SQL> DROP PROCEDURE DTS20210428041KVWP1M00_PROCEDURE;
+
+Succeed.
+
+SQL> 
+SQL> --Add the dependency of package body on package START
+SQL> DROP USER IF EXISTS PKG_DP_USER1 CASCADE;
+
+Succeed.
+
+SQL> CREATE USER PKG_DP_USER1 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> GRANT DBA TO PKG_DP_USER1;
+
+Succeed.
+
+SQL> CONN PKG_DP_USER1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE FUNCTION F1(V1 INT) RETURN INT IS
+  2 BEGIN
+  3  RETURN 1;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE PKG1 IS
+  2  FUNCTION PKG1_F1(V1 INT) RETURN INT;
+  3 END;
+  4 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PKG1 IS
+  2  FUNCTION PKG1_F1(V1 INT) RETURN INT IS
+  3  BEGIN
+  4   RETURN F1(V1);
+  5  END;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> SELECT * FROM MY_DEPENDENCIES ORDER BY REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+PKG_DP_USER1                                                     PKG1                                                             PACKAGE BODY PKG_DP_USER1                                                     F1                                                               FUNCTION       
+PKG_DP_USER1                                                     PKG1                                                             PACKAGE BODY PKG_DP_USER1                                                     PKG1                                                             PACKAGE        
+
+2 rows fetched.
+
+SQL> SELECT OBJECT_NAME,OBJECT_TYPE,STATUS FROM MY_OBJECTS ORDER BY OBJECT_TYPE;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+F1                                                               FUNCTION           VALID  
+PKG1                                                             PACKAGE BODY       VALID  
+PKG1                                                             PACKAGE SPEC       VALID  
+
+3 rows fetched.
+
+SQL> SELECT PKG1.PKG1_F1(1) FROM SYS_DUMMY;
+
+PKG1.PKG1_F1(1)
+---------------
+1              
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PKG1 IS
+  2  FUNCTION PKG1_F1(V1 INT) RETURN INT IS
+  3  BEGIN
+  4   RETURN 2;
+  5  END;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> SELECT PKG1.PKG1_F1(1) FROM SYS_DUMMY;
+
+PKG1.PKG1_F1(1)
+---------------
+2              
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE PACKAGE PKG1 IS
+  2  FUNCTION PKG1_F2(V1 INT) RETURN INT;
+  3 END;
+  4 /
+
+Succeed.
+
+SQL> SELECT * FROM MY_DEPENDENCIES ORDER BY REFERENCED_NAME;
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+PKG_DP_USER1                                                     PKG1                                                             PACKAGE BODY PKG_DP_USER1                                                     PKG1                                                             PACKAGE        
+
+1 rows fetched.
+
+SQL> SELECT OBJECT_NAME,OBJECT_TYPE,STATUS FROM MY_OBJECTS ORDER BY OBJECT_TYPE;
+
+OBJECT_NAME                                                      OBJECT_TYPE        STATUS 
+---------------------------------------------------------------- ------------------ -------
+F1                                                               FUNCTION           VALID  
+PKG1                                                             PACKAGE BODY       UNKNOWN
+PKG1                                                             PACKAGE SPEC       VALID  
+
+3 rows fetched.
+
+SQL> SELECT PKG1.PKG1_F1(1) FROM SYS_DUMMY;
+
+CT-00828, [1:8]function PKG1.PKG1_F1 does not exist
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS PKG_DP_USER1 CASCADE;
+
+Succeed.
+
+SQL> --Add the dependency of package body on package END
+SQL> 
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('shackleford') FROM DUAL;
+
+CT-00615, [1:8]Invalid argument number for EDIT_DISTANCE, min=2, max=2
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY('shackleford') FROM DUAL;
+
+CT-00615, [1:8]Invalid argument number for EDIT_DISTANCE_SIMILARITY, min=2, max=2
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('shackleford', 'shackelford','asdckef') FROM DUAL;
+
+CT-00615, [1:8]Invalid argument number for EDIT_DISTANCE, min=2, max=2
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY('shackleford', 'shackelford','asdckef') FROM DUAL;
+
+CT-00615, [1:8]Invalid argument number for EDIT_DISTANCE_SIMILARITY, min=2, max=2
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('shackleford', 'shackelford') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('SHACKLEFORD', 'SHACKELFORD')
+----------------------------------------------------
+2                                                   
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY('shackleford', 'shackelford') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY('SHACKLEFORD', 'SHACKELFORD')
+---------------------------------------------------------------
+82                                                             
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(NULL, 'shackelford') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE(NULL, 'SHACKELFORD')
+-------------------------------------------
+-1                                         
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(NULL, 'shackelford') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(NULL, 'SHACKELFORD')
+------------------------------------------------------
+0                                                     
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('shackleford', NULL) FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('SHACKLEFORD', NULL)
+-------------------------------------------
+-1                                         
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY('shackleford', NULL) FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY('SHACKLEFORD', NULL)
+------------------------------------------------------
+0                                                     
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('shackleford', '') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('SHACKLEFORD', '')
+-----------------------------------------
+-1                                       
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY('shackleford', '') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY('SHACKLEFORD', '')
+----------------------------------------------------
+0                                                   
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('', 'shackelford') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('', 'SHACKELFORD')
+-----------------------------------------
+-1                                       
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY('', 'shackelford') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY('', 'SHACKELFORD')
+----------------------------------------------------
+0                                                   
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(NULL, 'NULL') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE(NULL, 'NULL')
+------------------------------------
+-1                                  
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(NULL, 'NULL') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(NULL, 'NULL')
+-----------------------------------------------
+0                                              
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('', '') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('', '')
+------------------------------
+-1                            
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY('', '') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY('', '')
+-----------------------------------------
+100                                      
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('sdfg','SDFG') FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('SDFG','SDFG')
+-------------------------------------
+4                                    
+
+1 rows fetched.
+
+SQL> drop table if exists test_EDIT_DISTANCE_tb;
+
+Succeed.
+
+SQL> create table test_EDIT_DISTANCE_tb(f_index int,f_varchar1 varchar(100),f_varchar2 varchar(200),f_int BINARY_INTEGER,F_BIGINT BINARY_BIGINT,
+  2 F_BOOL BOOLEAN,F_NUM NUMBER,F_FLOAT BINARY_DOUBLE,F_CHAR  CHAR(128),F_DATE DATE,F_TIMESTAMP TIMESTAMP,F_BINARY BINARY(150),F_BLOB BLOB,F_CLOB CLOB);
+
+Succeed.
+
+SQL> insert into test_EDIT_DISTANCE_tb values(0,
+  2 'This is a test case which test new function EDIT_DISTANCE!', 
+  3 'attention,This is a test case,i hope its EDIT_DISTANCE all clear!',
+  4 152,
+  5 1215454848412154,
+  6 TRUE,
+  7 123.012345678987654321,
+  8 13.01234597054321,
+  9 'F_CHAR EDIT_DISTANCE test',
+ 10 '2021-06-16',
+ 11 '2021-06-16 10:59:26:123456',
+ 12 '10100101010100111111111111111111111111100000000000000000000000000011111111111111111111',
+ 13 TO_BLOB(LPAD('A12',16325,'A12')),
+ 14 TO_CLOB(LPAD('A12',16326,'A12')));
+
+1 rows affected.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.f_varchar1, tb.f_varchar2) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_VARCHAR1, TB.F_VARCHAR2)
+----------------------------------------------------
+39                                                  
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.f_varchar1, tb.f_varchar2) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_VARCHAR1, TB.F_VARCHAR2)
+---------------------------------------------------------------
+40                                                             
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.F_BIGINT, tb.f_int) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_BIGINT, TB.F_INT)
+---------------------------------------------
+13                                           
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.F_BIGINT, tb.f_int) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_BIGINT, TB.F_INT)
+--------------------------------------------------------
+19                                                      
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.F_BIGINT, tb.f_varchar2) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_BIGINT, TB.F_VARCHAR2)
+--------------------------------------------------
+65                                                
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.F_BIGINT, tb.f_varchar2) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_BIGINT, TB.F_VARCHAR2)
+-------------------------------------------------------------
+0                                                            
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.F_BOOL, tb.f_int) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_BOOL, TB.F_INT)
+-------------------------------------------
+4                                          
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.F_BOOL, tb.f_int) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_BOOL, TB.F_INT)
+------------------------------------------------------
+0                                                     
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.F_NUM, tb.F_FLOAT) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_NUM, TB.F_FLOAT)
+--------------------------------------------
+7                                           
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.F_NUM, tb.F_FLOAT) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_NUM, TB.F_FLOAT)
+-------------------------------------------------------
+68                                                     
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.F_NUM, tb.f_varchar2) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_NUM, TB.F_VARCHAR2)
+-----------------------------------------------
+65                                             
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.F_NUM, tb.f_varchar2) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_NUM, TB.F_VARCHAR2)
+----------------------------------------------------------
+0                                                         
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.F_CHAR, tb.F_DATE) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_CHAR, TB.F_DATE)
+--------------------------------------------
+127                                         
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.F_CHAR, tb.F_DATE) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_CHAR, TB.F_DATE)
+-------------------------------------------------------
+1                                                      
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.F_DATE, tb.F_TIMESTAMP) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_DATE, TB.F_TIMESTAMP)
+-------------------------------------------------
+12                                               
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.F_DATE, tb.F_TIMESTAMP) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_DATE, TB.F_TIMESTAMP)
+------------------------------------------------------------
+54                                                          
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.F_BINARY, tb.f_varchar1) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_BINARY, TB.F_VARCHAR1)
+--------------------------------------------------
+150                                               
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.F_BINARY, tb.f_varchar1) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_BINARY, TB.F_VARCHAR1)
+-------------------------------------------------------------
+0                                                            
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.f_varchar1, tb.F_BLOB) FROM test_EDIT_DISTANCE_tb tb;
+
+CT-01304, Data type 'BLOB' is not supported
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(tb.f_varchar1, tb.F_CLOB) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE(TB.F_VARCHAR1, TB.F_CLOB)
+------------------------------------------------
+7999                                            
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(tb.f_varchar1, tb.F_CLOB) FROM test_EDIT_DISTANCE_tb tb;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(TB.F_VARCHAR1, TB.F_CLOB)
+-----------------------------------------------------------
+0                                                          
+
+1 rows fetched.
+
+SQL> drop table if exists test_EDIT_DISTANCE_tb_1;
+
+Succeed.
+
+SQL> drop table if exists test_EDIT_DISTANCE_tb_2;
+
+Succeed.
+
+SQL> create table test_EDIT_DISTANCE_tb_1(f1 int,f2 varchar(100));
+
+Succeed.
+
+SQL> insert into test_EDIT_DISTANCE_tb_1 values(1,'please input your name');
+
+1 rows affected.
+
+SQL> create table test_EDIT_DISTANCE_tb_2(f1 int,f2 varchar(100));
+
+Succeed.
+
+SQL> insert into test_EDIT_DISTANCE_tb_2 values(2,'ple put name');
+
+1 rows affected.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(t1.f2, t2.f2) from test_EDIT_DISTANCE_tb_1 t1 ,test_EDIT_DISTANCE_tb_2 t2;
+
+DBE_UTIL.EDIT_DISTANCE(T1.F2, T2.F2)
+------------------------------------
+10                                  
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(t1.f2, t2.f2) from test_EDIT_DISTANCE_tb_1 t1 ,test_EDIT_DISTANCE_tb_2 t2;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(T1.F2, T2.F2)
+-----------------------------------------------
+55                                             
+
+1 rows fetched.
+
+SQL> select * from test_EDIT_DISTANCE_tb_1 t1 inner join test_EDIT_DISTANCE_tb_2 t2 on DBE_UTIL.EDIT_DISTANCE(t1.f2, t2.f2) < 1;
+
+F1           F2                                                               F1           F2                                                              
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from test_EDIT_DISTANCE_tb_1 t1 inner join test_EDIT_DISTANCE_tb_2 t2 on DBE_UTIL.EDIT_DISTANCE_SIMILARITY(t1.f2, t2.f2) > 1;
+
+F1           F2                                                               F1           F2                                                              
+------------ ---------------------------------------------------------------- ------------ ----------------------------------------------------------------
+1            please input your name                                           2            ple put name                                                    
+
+1 rows fetched.
+
+SQL> drop table if exists test_EDIT_DISTANCE_tb_1;
+
+Succeed.
+
+SQL> drop table if exists test_EDIT_DISTANCE_tb_2;
+
+Succeed.
+
+SQL> drop table if exists test_EDIT_DISTANCE_tb;
+
+Succeed.
+
+SQL> ALTER SYSTEM SET UPPER_CASE_TABLE_NAMES=FALSE;
+
+Succeed.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('shackleford', 'shackelford')  FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('SHACKLEFORD', 'SHACKELFORD')
+----------------------------------------------------
+2                                                   
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('sdfg','SDFG')  FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('SDFG','SDFG')
+-------------------------------------
+4                                    
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE("sdfg","SDFG")  FROM DUAL;
+
+CT-00601, [1:31]Sql syntax error: invalid column name 'sdfg'
+SQL> ALTER SYSTEM SET UPPER_CASE_TABLE_NAMES=TRUE;
+
+Succeed.
+
+SQL> alter system set EMPTY_STRING_AS_NULL=false;
+
+Succeed.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('', '') FROM  DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('', '')
+------------------------------
+0                             
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY('', '') FROM  DUAL;
+
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY('', '')
+-----------------------------------------
+0                                        
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE('', 'aaa') FROM  DUAL;
+
+DBE_UTIL.EDIT_DISTANCE('', 'AAA')
+---------------------------------
+3                                
+
+1 rows fetched.
+
+SQL> alter system set EMPTY_STRING_AS_NULL=TRUE;
+Succeed.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE(NULL, NULL) FROM DUAL;
+
+DBE_UTIL.EDIT_DISTANCE(NULL, NULL)
+----------------------------------
+-1                                
+
+1 rows fetched.
+
+SQL> SELECT DBE_UTIL.EDIT_DISTANCE_SIMILARITY(NULL, NULL) FROM DUAL;
+DBE_UTIL.EDIT_DISTANCE_SIMILARITY(NULL, NULL)
+---------------------------------------------
+100                                          
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists myt1;
+
+Succeed.
+
+SQL> create table myt1(a int,b varchar(2000), 
+  2 c1 varchar(2000) default 'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl',
+  3 c2 varchar(2000) default 'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl',
+  4 c3 varchar(2000) default 'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl',
+  5 c4 varchar(2000) default 'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl',
+  6 c5 varchar(2000) default 'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl',
+  7 c6 varchar(2000) default 'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl')
+  8 partition by hash(a)
+  9 (
+ 10 PARTITION training1,
+ 11 PARTITION training2,
+ 12 PARTITION training3,
+ 13 PARTITION training4,
+ 14 PARTITION training5,
+ 15 PARTITION training6,
+ 16 PARTITION training7,
+ 17 PARTITION training8
+ 18 );
+
+Succeed.
+
+SQL> 
+SQL> create index gidx on myt1(b);
+
+Succeed.
+
+SQL> create index lidx on myt1(a) local;
+
+Succeed.
+
+SQL> select dbe_diagnose.dba_index_size(0, user,'myt1');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(0, USER,'MYT1')
+-------------------------------------------
+0                                          
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(1, user,'myt1');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(1, USER,'MYT1')
+-------------------------------------------
+0                                          
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(2, user,'myt1');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(2, USER,'MYT1')
+-------------------------------------------
+0                                          
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(0, user,'myt1','gidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(0, USER,'MYT1','GIDX')
+--------------------------------------------------
+0                                                 
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(1, user,'myt1','gidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(1, USER,'MYT1','GIDX')
+--------------------------------------------------
+0                                                 
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(2, user,'myt1','gidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(2, USER,'MYT1','GIDX')
+--------------------------------------------------
+0                                                 
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(0, user,'myt1','lidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(0, USER,'MYT1','LIDX')
+--------------------------------------------------
+0                                                 
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(1, user,'myt1','lidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(1, USER,'MYT1','LIDX')
+--------------------------------------------------
+0                                                 
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(2, user,'myt1','lidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(2, USER,'MYT1','LIDX')
+--------------------------------------------------
+0                                                 
+
+1 rows fetched.
+
+SQL> begin
+  2 for i in 1..1000 loop
+  3 insert into myt1(a,b) values(i,i+1);
+  4 end loop;
+  5 commit;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_diagnose.dba_index_size(0, user,'myt1');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(0, USER,'MYT1')
+-------------------------------------------
+655360                                     
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(1, user,'myt1');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(1, USER,'MYT1')
+-------------------------------------------
+80                                         
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(2, user,'myt1');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(2, USER,'MYT1')
+-------------------------------------------
+10                                         
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(0, user,'myt1','gidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(0, USER,'MYT1','GIDX')
+--------------------------------------------------
+131072                                            
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(1, user,'myt1','gidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(1, USER,'MYT1','GIDX')
+--------------------------------------------------
+16                                                
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(2, user,'myt1','gidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(2, USER,'MYT1','GIDX')
+--------------------------------------------------
+2                                                 
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(0, user,'myt1','lidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(0, USER,'MYT1','LIDX')
+--------------------------------------------------
+524288                                            
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(1, user,'myt1','lidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(1, USER,'MYT1','LIDX')
+--------------------------------------------------
+64                                                
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(2, user,'myt1','lidx');
+
+DBE_DIAGNOSE.DBA_INDEX_SIZE(2, USER,'MYT1','LIDX')
+--------------------------------------------------
+8                                                 
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_index_size(2, user,'myt1','not_exsits');
+
+CT-00830, [1:8]Index SYS.NOT_EXSITS does not exist
+SQL> drop table myt1;
+Succeed.
+
+
+
+
+
+
+

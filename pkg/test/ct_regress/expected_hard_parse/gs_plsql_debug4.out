@@ -1,0 +1,605 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> -- test prepare start
+SQL> drop user if exists gs_plsql_debug cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_debug identified by Abc123456;
+
+Succeed.
+
+SQL> grant dba to gs_plsql_debug;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_debug2 cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_debug2 identified by Abc123456;
+
+Succeed.
+
+SQL> grant create session to gs_plsql_debug2;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function is_debug_create_session_id_table() return boolean is
+  2 begin
+  3   execute immediate 'create table if not exists target_session_id_t(id int)';
+  4   return true;
+  5 exception
+  6   when others then
+  7     return false;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   for i in 1..100000 loop
+  3     if is_debug_create_session_id_table() then
+  4 	  exit;
+  5     end if;
+  6   end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace function is_target_session_init(id out int) return boolean is
+  2 begin
+  3   execute immediate 'select id from target_session_id_t where id != -1' into id;
+  4   return true;
+  5 exception
+  6   when others then
+  7     return false;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace PROCEDURE get_target_waiting() is
+  2 begin
+  3   for i in 1..1000000000 loop
+  4     if dbe_debug.get_status() = 2 then
+  5 	  exit;
+  6     end if;
+  7   end loop;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace PROCEDURE get_target_waiting_or_idle() is
+  2 begin
+  3   for i in 1..1000000000 loop
+  4     if dbe_debug.get_status() = 2 then
+  5 	  exit;
+  6     end if;
+  7     if dbe_debug.get_status() = 0 then
+  8 	  exit;
+  9     end if;
+ 10   end loop;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace PROCEDURE get_target_executing() is
+  2 begin
+  3   for i in 1..1000000000 loop
+  4     if dbe_debug.get_status() = 1 then
+  5 	  exit;
+  6     end if;
+  7   end loop;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> GRANT EXECUTE ON is_target_session_init TO gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_waiting TO gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_waiting_or_idle TO gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_executing TO gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT select on target_session_id_t to gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT insert on target_session_id_t to gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON is_target_session_init TO gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_waiting TO gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_waiting_or_idle TO gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_executing TO gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT select on target_session_id_t to gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT insert on target_session_id_t to gs_plsql_debug2;
+
+Succeed.
+
+SQL> 
+SQL> conn gs_plsql_debug2/Abc123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4   for i in 1..100000 loop
+  5     if sys.is_target_session_init(se_id) then
+  6       dbe_debug.attach(se_id, 9);
+  7 	  execute immediate 'insert into sys.target_session_id_t values(0)';
+  8 	  exit;
+  9     end if;
+ 10   end loop;
+ 11 end;
+ 12 /
+
+CT-00932, [6:7] PL/SQL(GS_PLSQL_DEBUG2.ANONYMOUS BLOCK) terminated with execute errors
+[6:7] PL/SQL(DBE_DEBUG.ATTACH) terminated with execute errors
+CT-01001, Permissions were insufficient
+
+SQL> 
+SQL> conn gs_plsql_debug/Abc123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4   for i in 1..100000 loop
+  5     if sys.is_target_session_init(se_id) then
+  6       dbe_debug.attach(se_id, 9);
+  7 	  execute immediate 'insert into sys.target_session_id_t values(0)';
+  8 	  execute immediate 'select id from sys.target_session_id_t where id = 0' into se_id;
+  9 	  dbe_output.print_line(se_id);
+ 10 	  commit;
+ 11 	  exit;
+ 12     end if;
+ 13   end loop;
+ 14 end;
+ 15 /
+
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(4, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test prepare end
+SQL> 
+SQL> -- test step1 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_debug.add_break('SYS','DROP_EXEC_FUNC','FUNCTION',5,0,'') from dual;
+
+DBE_DEBUG.ADD_BREAK('SYS','DROP_EXEC_FUNC','FUNCTION',5,0,'')
+-------------------------------------------------------------
+1                                                            
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7, 100);
+
+#2: SYS.DROP_EXEC_FUNC :5
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from SYS.DV_PLSQL_SHARED_LOCKS l where l.OBJECT='DROP_EXEC_FUNC';
+
+USER                                                             PACKAGE                                                          OBJECT                                                           PL_TYPE                                                          IX_SETTED    TOTAL_LOCKED_TIMES
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------------
+SYS                                                                                                                               DROP_EXEC_FUNC                                                   FUNCTION                                                         0            1                 
+
+1 rows fetched.
+
+SQL> drop table if exists drop_exec_func_id_t;
+
+Succeed.
+
+SQL> create table drop_exec_func_id_t(id int);
+
+Succeed.
+
+SQL> insert into drop_exec_func_id_t values(0);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> call sleep(3);
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_debug.add_break('SYS','DROP_EXEC_FUNC','FUNCTION',5,0,'') from dual;
+
+DBE_DEBUG.ADD_BREAK('SYS','DROP_EXEC_FUNC','FUNCTION',5,0,'')
+-------------------------------------------------------------
+2                                                            
+
+1 rows fetched.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+1            SYS                                                              DROP_EXEC_FUNC                                                   FUNCTION                                                         5            TRUE     TRUE                                                                        0           
+2            SYS                                                              DROP_EXEC_FUNC                                                   FUNCTION                                                         5            TRUE     TRUE                                                                        0           
+
+2 rows fetched.
+
+SQL> select * from SYS.DV_PLSQL_SHARED_LOCKS l where l.OBJECT='DROP_EXEC_FUNC';
+
+USER                                                             PACKAGE                                                          OBJECT                                                           PL_TYPE                                                          IX_SETTED    TOTAL_LOCKED_TIMES
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------------
+SYS                                                                                                                               DROP_EXEC_FUNC                                                   FUNCTION                                                         1            1                 
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table if exists drop_exec_func_id_t;
+
+Succeed.
+
+SQL> -- test step1 end
+SQL> 
+SQL> -- test2 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :5
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_debug.get_value(1,0,1,0) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,1,0)                                   
+----------------------------------------------------------------
+collect type is not supported                                   
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test2 end
+SQL> 
+SQL> -- test3 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :1
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :2
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_proc_callstack(0));
+
+STACK_ID     UID          OID                  OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ------------ -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                                                                2            LINE_END                        
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test3 end
+SQL> 
+SQL> -- test4 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :19
+
+PL/SQL procedure successfully completed.
+
+SQL> select NAME, TYPE, PARENT, VID_ID, VID_OFFSET, VALUE from table(dbg_show_values(0));
+
+NAME                                                             TYPE                                                             PARENT                                                           VID_ID       VID_OFFSET   VALUE                                                           
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ----------------------------------------------------------------
+W                                                                OBJECT                                                                                                                            0            0                                                                            
+OA                                                               BINARY_INTEGER                                                   W                                                                0            1            1                                                               
+OB                                                               VARCHAR                                                          W                                                                0            2            a                                                               
+OC                                                               NUMBER                                                           W                                                                0            3            0                                                               
+P                                                                COLLECTION                                                                                                                        1            0            collect type is not supported                                   
+V1                                                               RECORD                                                                                                                            4            0                                                                            
+X                                                                RECORD                                                           V1                                                               4            1                                                                            
+RE                                                               BINARY_INTEGER                                                   X                                                                4            2                                                                            
+RW                                                               BINARY_INTEGER                                                   X                                                                4            3                                                                            
+RT                                                               NUMBER                                                           X                                                                4            4                                                                            
+Y                                                                COLLECTION                                                       V1                                                               4            5                                                                            
+Z                                                                OBJECT                                                           V1                                                               4            6                                                                            
+OA                                                               BINARY_INTEGER                                                   Z                                                                4            7            1                                                               
+OB                                                               VARCHAR                                                          Z                                                                4            8            a                                                               
+OC                                                               NUMBER                                                           Z                                                                4            9            0                                                               
+Q                                                                BINARY_INTEGER                                                   V1                                                               4            10                                                                           
+D                                                                VARCHAR                                                          V1                                                               4            11           s                                                               
+E                                                                COLLECTION                                                       V1                                                               4            12                                                                           
+
+18 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,4,2) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,4,2)                                    
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select dbe_debug.set_value(1,0,4,2,'7') from dual;
+
+DBE_DEBUG.SET_VALUE(1,0,4,2,'7')                                
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,4,2) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,4,2)                                    
+----------------------------------------------------------------
+7                                                               
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,4,5) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,4,5)                                    
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,4,8) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,4,8)                                    
+----------------------------------------------------------------
+a                                                               
+
+1 rows fetched.
+
+SQL> select dbe_debug.set_value(1,0,4,8,'u') from dual;
+
+DBE_DEBUG.SET_VALUE(1,0,4,8,'U')                                
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,4,8) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,4,8)                                    
+----------------------------------------------------------------
+u                                                               
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,4,11) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,4,11)                                   
+----------------------------------------------------------------
+s                                                               
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,4,12) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,4,12)                                   
+----------------------------------------------------------------
+collect type is not supported                                   
+
+1 rows fetched.
+
+SQL> select NAME, TYPE, PARENT, VID_ID, VID_OFFSET, VALUE from table(dbg_show_values(0)) where VID_ID = 4;
+
+NAME                                                             TYPE                                                             PARENT                                                           VID_ID       VID_OFFSET   VALUE                                                           
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ----------------------------------------------------------------
+V1                                                               RECORD                                                                                                                            4            0                                                                            
+X                                                                RECORD                                                           V1                                                               4            1                                                                            
+RE                                                               BINARY_INTEGER                                                   X                                                                4            2            7                                                               
+RW                                                               BINARY_INTEGER                                                   X                                                                4            3                                                                            
+RT                                                               NUMBER                                                           X                                                                4            4                                                                            
+Y                                                                COLLECTION                                                       V1                                                               4            5                                                                            
+Z                                                                OBJECT                                                           V1                                                               4            6                                                                            
+OA                                                               BINARY_INTEGER                                                   Z                                                                4            7            1                                                               
+OB                                                               VARCHAR                                                          Z                                                                4            8            u                                                               
+OC                                                               NUMBER                                                           Z                                                                4            9            0                                                               
+Q                                                                BINARY_INTEGER                                                   V1                                                               4            10                                                                           
+D                                                                VARCHAR                                                          V1                                                               4            11           s                                                               
+E                                                                COLLECTION                                                       V1                                                               4            12                                                                           
+
+13 rows fetched.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test4 end
+SQL> 
+SQL> -- test5 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :4
+
+PL/SQL procedure successfully completed.
+
+SQL> select NAME, TYPE, PARENT, VID_ID, VID_OFFSET, VALUE from table(dbg_show_values(0));
+
+NAME                                                             TYPE                                                             PARENT                                                           VID_ID       VID_OFFSET   VALUE                                                           
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ----------------------------------------------------------------
+V1                                                               OBJECT                                                                                                                            0            0                                                                            
+OA                                                               BINARY_INTEGER                                                   V1                                                               0            1            1                                                               
+OB                                                               VARCHAR                                                          V1                                                               0            2            2                                                               
+OC                                                               NUMBER                                                           V1                                                               0            3            3                                                               
+
+4 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,0,1) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,0,1)                                    
+----------------------------------------------------------------
+1                                                               
+
+1 rows fetched.
+
+SQL> select dbe_debug.set_value(1,0,0,1,'5') from dual;
+
+DBE_DEBUG.SET_VALUE(1,0,0,1,'5')                                
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,0,1) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,0,1)                                    
+----------------------------------------------------------------
+5                                                               
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,0,4) from dual;
+
+CT-00985, The index 4 of m_offset is overflow, must be less than 3
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test5 end
+SQL> 
+SQL> -- test6 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :4
+
+PL/SQL procedure successfully completed.
+
+SQL> select NAME, TYPE, PARENT, VID_ID, VID_OFFSET, VALUE from table(dbg_show_values(0));
+
+NAME                                                             TYPE                                                             PARENT                                                           VID_ID       VID_OFFSET   VALUE                                                           
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ----------------------------------------------------------------
+V1                                                               OBJECT                                                                                                                            0            0                                                                            
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,0,0) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,0,0)                                    
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select dbe_debug.set_value(1,0,0,1, '1') from dual;
+
+CT-00985, The index 1 of m_offset is overflow, must be less than 0
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test6 end
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists target_session_id_t;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_debug cascade;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_debug2 cascade;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

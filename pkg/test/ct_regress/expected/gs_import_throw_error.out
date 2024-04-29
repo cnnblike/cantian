@@ -1,0 +1,163 @@
+
+
+SQL> -- DDL thread throws error
+SQL> drop user if exists ddl_thread_throws_error cascade ;
+
+Succeed.
+
+SQL> create user ddl_thread_throws_error identified by Test_123456;
+
+Succeed.
+
+SQL> grant create session to ddl_thread_throws_error;
+
+Succeed.
+
+SQL> grant SELECT ANY TABLE to ddl_thread_throws_error;
+
+Succeed.
+
+SQL> grant SELECT ANY DICTIONARY to ddl_thread_throws_error;
+
+Succeed.
+
+SQL> grant create table to ddl_thread_throws_error;
+
+Succeed.
+
+SQL> conn ddl_thread_throws_error/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table test1(results varchar(1024));
+
+Succeed.
+
+SQL> insert into test1 values('haha');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> revoke create table from ddl_thread_throws_error;
+
+Succeed.
+
+SQL> 
+SQL> conn ddl_thread_throws_error/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=ddl_thread_throws_error file="./data/ddl_thread_throws_error.dmp" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = DDL_THREAD_THROWS_ERROR
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/ddl_thread_throws_error.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema DDL_THREAD_THROWS_ERROR ...
+Exporting sequence of schema DDL_THREAD_THROWS_ERROR ...
+Exporting profile of schema DDL_THREAD_THROWS_ERROR ...
+Exporting type of schema DDL_THREAD_THROWS_ERROR ...
+Exporting tables of schema DDL_THREAD_THROWS_ERROR ...
+Reading table objects of DDL_THREAD_THROWS_ERROR
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TEST1                                                            1         
+
+Exporting tables (scripts or data) of DDL_THREAD_THROWS_ERROR
+exporting table DDL_THREAD_THROWS_ERROR.TEST1 ...
+  exporting DDL of DDL_THREAD_THROWS_ERROR.TEST1 ...
+  exporting data of DDL_THREAD_THROWS_ERROR.TEST1 ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on DDL_THREAD_THROWS_ERROR.TEST1 ...
+  exporting constraints on DDL_THREAD_THROWS_ERROR.TEST1 ...
+
+Exporting procedures/functions/triggers of schema DDL_THREAD_THROWS_ERROR ...
+Exporting views of schema DDL_THREAD_THROWS_ERROR ...
+Exporting synonyms of schema DDL_THREAD_THROWS_ERROR ...
+Exporting package of schema DDL_THREAD_THROWS_ERROR ...
+End of export schema DDL_THREAD_THROWS_ERROR ...
+
+Logical export succeeded.
+
+SQL> imp users=ddl_thread_throws_error file="./data/ddl_thread_throws_error.dmp" filetype=bin;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = DDL_THREAD_THROWS_ERROR
+-- DUMP FILE = ./data/ddl_thread_throws_error.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema DDL_THREAD_THROWS_ERROR ... 
+  Importing sequence of schema DDL_THREAD_THROWS_ERROR ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema DDL_THREAD_THROWS_ERROR ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema DDL_THREAD_THROWS_ERROR ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema DDL_THREAD_THROWS_ERROR ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+
+thread 1 : CT-01001, Permissions were insufficient
+CT-00520, Import error occur when check DDL thread, detail: DDL thread throws error
+Logical import failed.
+
+SQL> 
+
+

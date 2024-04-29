@@ -1,0 +1,304 @@
+
+
+SQL> select * from v$backup_process;
+
+TYPE                                                             PROGRESS     STAGE                                                            STATUS                                                           ERR_NO       ERR_MSG                                                          TOTAL_PROC   FREE_PROC   
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------
+backup                                                           0            start                                                            success                                                          0                                                                             0            0           
+
+1 rows fetched.
+
+SQL> backup database full;
+
+Succeed.
+
+SQL> select * from v$backup_process;
+
+TYPE                                                             PROGRESS     STAGE                                                            STATUS                                                           ERR_NO       ERR_MSG                                                          TOTAL_PROC   FREE_PROC   
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------
+backup                                                           100          end                                                              success                                                          0                                                                             0            0           
+
+1 rows fetched.
+
+SQL> backup database INCREMENTAL level 2;
+
+CT-00601, [1:35]Sql syntax error: level must be 0 or 1
+SQL> backup database INCREMENTAL not-level 2;
+
+CT-00601, [1:29]Sql syntax error: level expected
+SQL> backup database INCREMENTAL level a;
+
+CT-00601, [1:35]Sql syntax error: invalid integer
+SQL> backup database INCREMENTAL level 1 INCREMENTAL level 1;
+
+CT-00601, [1:49]Sql syntax error: can not contain backup type more than once
+SQL> backup database INCREMENTAL level 0;
+
+Succeed.
+
+SQL> 
+SQL> backup database FORMAT 'nbu';
+
+Succeed.
+
+SQL> backup database FORMAT 'nbu:abc';
+
+CT-00601, [1:24]Sql syntax error: invalid format, no dest path specified
+SQL> backup database FORMAT 'nbu:looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong';
+
+CT-00601, [1:24]Sql syntax error: policy name exceeded the maximum length 128
+SQL> backup database FORMAT 'nbu:abc:/home/a.txt';
+
+CT-00601, [1:45]Sql syntax error: tag is not specified in bakcup command
+SQL> backup database FORMAT 'disk:abc:/home/a.txt';
+
+CT-00601, [1:24]Sql syntax error: invalid format, /home/a.txt value is invalid
+SQL> backup database FORMAT 'nbu:abc:/home/a.txt:unexpected';
+
+CT-00601, [1:24]Sql syntax error: invalid format, unexpected value is invalid
+SQL> 
+SQL> backup database prepare;
+
+CT-00601, [1:24]Sql syntax error: tag is not specified in bakcup command
+SQL> backup database finish not_scn 20;
+
+CT-00601, [1:24]Sql syntax error: scn expected
+SQL> backup database finish scn -20;
+
+CT-00601, [1:28]Sql syntax error: invalid uint64
+SQL> backup database finish scn 20 prepare;
+
+CT-00601, [1:31]Sql syntax error: can not set prepare and finish at the same time
+SQL> backup database finish scn 20 finish scn 200;
+
+CT-00601, [1:31]Sql syntax error: can not set finish more than once
+SQL> 
+SQL> backup database tag abc;
+
+CT-00601, [1:24]Sql syntax error: '...' expected but abc found
+SQL> backup database tag 'abc';
+
+Succeed.
+
+SQL> backup database tag 'abc' tag 'def';
+
+CT-00601, [1:27]Sql syntax error: can not set tag more than once
+SQL> backup database tag 'loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong';
+
+CT-00601, [1:21]Sql syntax error: tag name exceed max name lengths 64
+SQL> backup database tag '';
+
+CT-00601, [1:21]Sql syntax error: tag name can not set empty string
+SQL> 
+SQL> backup database tag 'abc' finish scn 20 FORMAT 'nbu';
+
+CT-00601, [1:53]Sql syntax error: can not specify format when specified finish
+SQL> backup database tag 'abc' finish scn 20 full;
+
+CT-00601, [1:45]Sql syntax error: can not specify backup type when specified finish
+SQL> 
+SQL> backup database incremental level 0 cumulative format '?/cumu_incr0.bak' tag 'test_cumu_incr0';
+
+Succeed.
+
+SQL> backup database incremental level 1 cumulative format '?/cumu_incr1.bak' tag 'test_cumu_incr1';
+
+Succeed.
+
+SQL> backup database incremental level 1 cumulative format '?/cumu_incr2.bak' tag 'test_cumu_incr2';
+
+Succeed.
+
+SQL> backup database incremental level 1 cumulative format '?/cumu_incr3_compress_1.bak' tag 'test_cumu_incr3' as compressed backupset level 1;
+
+Succeed.
+
+SQL> backup database incremental level 1 format '?/cumu_incr4_compress_9.bak' tag 'test_cumu_incr4' as compressed backupset level 9;
+
+Succeed.
+
+SQL> backup database incremental level 1 format '?/paral_1' parallelism 1;
+
+Succeed.
+
+SQL> backup database incremental level 1 format '?/paral_16' parallelism 16;
+
+Succeed.
+
+SQL> backup database incremental level 1 format '?/section_128M' parallelism 5 section threshold 128M;
+
+Succeed.
+
+SQL> select * from v$backup_process;
+
+TYPE                                                             PROGRESS     STAGE                                                            STATUS                                                           ERR_NO       ERR_MSG                                                          TOTAL_PROC   FREE_PROC   
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------
+backup                                                           100          end                                                              success                                                          0                                                                             0            0           
+
+1 rows fetched.
+
+SQL> backup database incremental level 1 format '?/section_32T' section threshold 32T;
+
+Succeed.
+
+SQL> select * from v$backup_process;
+
+TYPE                                                             PROGRESS     STAGE                                                            STATUS                                                           ERR_NO       ERR_MSG                                                          TOTAL_PROC   FREE_PROC   
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------
+backup                                                           100          end                                                              success                                                          0                                                                             0            0           
+
+1 rows fetched.
+
+SQL> select * from dv_backup_process_stats limit 0;
+
+PROC_ID      READ_SIZE    READ_TIME    READ_SPEED   ENCODE_TIME  ENCODE_SPEED WRITE_SIZE   WRITE_TIME   WRITE_SPEED
+------------ ------------ ------------ ------------ ------------ ------------ ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> 
+SQL> backup database format '?/paral_0' parallelism 0;
+
+CT-00601, [1:36]Sql syntax error: parallelism value should be in [1, 16]
+SQL> backup database format '?/paral_9' parallelism 17;
+
+CT-00601, [1:36]Sql syntax error: parallelism value should be in [1, 16]
+SQL> backup database format '?/section_127M' section threshold 127M;
+
+CT-00601, [1:59]Sql syntax error: size value is smaller than minimum(134217728) required
+SQL> backup database format '?/section_33T' section threshold 33T;
+
+CT-00601, [1:58]Sql syntax error: size value is bigger than maximum(35184372088832) required
+SQL> 
+SQL> backup database format '?/paral_1_failed' parallelism 1 section threshold 128M parallelism 1;
+
+CT-00601, [1:80]Sql syntax error: can not set parallelism more than once
+SQL> backup database format '?/paral_8_failed' parallelism 16 section threshold 32T section threshold 32T;
+
+CT-00601, [1:80]Sql syntax error: can not set section threshold more than once
+SQL> backup database format '?/exc_spc' exclude for tablespace SYSTEM;
+
+CT-00882, Can not exclude space SYSTEM
+SQL> backup database format '?/exc_spc' exclude for tablespace TEMP;
+
+CT-00882, Can not exclude space TEMP
+SQL> backup database format '?/exc_spc' exclude for tablespace UNDO;
+
+CT-00882, Can not exclude space UNDO
+SQL> backup database format '?/exc_spc' exclude for tablespace USERS;
+
+CT-00882, Can not exclude space USERS
+SQL> backup database format '?/exc_spc' exclude for tablespace TEMP2;
+
+CT-00882, Can not exclude space TEMP2
+SQL> backup database format '?/exc_spc' exclude for tablespace TEMP2_UNDO;
+
+CT-00882, Can not exclude space TEMP2_UNDO
+SQL> backup database format '?/exc_spc' exclude for tablespace spc1 exclude for tablespace spc2;
+
+CT-00601, [1:64]Sql syntax error: can not set exclude more than once
+SQL> backup database format '?/exc_spc' exclude for tablespace bak_invalid_space;
+
+CT-00780, The tablespace BAK_INVALID_SPACE does not exist.
+SQL> 
+SQL> backup database format '?/compress_level_0.bak' as compressed backupset level 0;
+
+CT-00601, [1:49]Sql syntax error: level value should be in [1, 9]
+SQL> backup database format '?/compress_level_10.bak' as compressed backupset level 10;
+
+CT-00601, [1:50]Sql syntax error: level value should be in [1, 9]
+SQL> backup database incremental level 1 cumulative format '?/cumu_incr5_compress_1.bak' tag 'test_cumu_incr5' as zstd compressed backupset level 1;
+
+Succeed.
+
+SQL> backup database incremental level 1 format '?/cumu_incr6_compress_9.bak' tag 'test_cumu_incr6' as zstd compressed backupset level 9;
+
+Succeed.
+
+SQL> backup database incremental level 1 cumulative format '?/cumu_incr7_compress_1.bak' tag 'test_cumu_incr7' as lz4 compressed backupset level 1;
+
+Succeed.
+
+SQL> backup database incremental level 1 format '?/cumu_incr8_compress_9.bak' tag 'test_cumu_incr8' as lz4 compressed backupset level 9;
+
+Succeed.
+
+SQL> backup database format '?/compress_bak_0' level 6;
+
+CT-00601, [1:43]Sql syntax error: key word expected but level found
+SQL> backup database format '?/compress_zstd_level2' as compressed backupset level 2;
+
+Succeed.
+
+SQL> backup database format '?/compress_zstd_level10' as zstd compressed backupset level 10;
+
+CT-00601, [1:50]Sql syntax error: level value should be in [1, 9]
+SQL> backup database format '?/compress_zstd_default' as zstd compressed backupset;
+
+Succeed.
+
+SQL> backup database format '?/compress_lz4_level2' as lz4 compressed backupset level 2;
+
+Succeed.
+
+SQL> backup database format '?/compress_lz4_level10' as lz4 compressed backupset level 10;
+
+CT-00601, [1:49]Sql syntax error: level value should be in [1, 9]
+SQL> backup database format '?/compress_lz4_default' as lz4 compressed backupset;
+
+Succeed.
+
+SQL> select base_tag from SYS_BACKUP_SETS where tag = 'test_cumu_incr0';
+
+BASE_TAG                                                        
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select base_tag from SYS_BACKUP_SETS where tag = 'test_cumu_incr1';
+
+BASE_TAG                                                        
+----------------------------------------------------------------
+test_cumu_incr0                                                 
+
+1 rows fetched.
+
+SQL> select base_tag from SYS_BACKUP_SETS where tag = 'test_cumu_incr2';
+
+BASE_TAG                                                        
+----------------------------------------------------------------
+test_cumu_incr0                                                 
+
+1 rows fetched.
+
+SQL> backup database cumulative format '?/full_cumu';
+
+CT-00601, [1:48]Sql syntax error: can not specify cumulative without incremental
+SQL> backup database cumulative incremental level 0 cumulative format '?/cumu_incr3.bak';
+
+CT-00601, [1:48]Sql syntax error: can not set cumulative more than once
+SQL> validate backupset '?/cumu_incr2.bak';
+
+CT-00601, Sql syntax error: validate backupset not supported
+SQL> validate datafile 0 page 1;
+
+Succeed.
+
+SQL> validate datafile 3 page 3;
+
+Succeed.
+
+SQL> validate datafile 3 block 3;
+
+CT-00601, [1:21]Sql syntax error: page expected
+SQL> backup database incremental level 0 format '?/bak_ex_level0' as zstd compressed backupset exclude for tablespace USERS;
+
+CT-00601, [1:119]Sql syntax error: can not specify exclude with incremental
+SQL> backup database format '?/bak_ex_copy' exclude for tablespace USERS copy of tablespace USERS;
+
+CT-00601, [1:93]Sql syntax error: can not specify exclude with copy of
+SQL> backup database format '/root/mkdir_fail';
+
+CT-00008, Failed to create the path /root/mkdir_fail, error code 13
+SQL>

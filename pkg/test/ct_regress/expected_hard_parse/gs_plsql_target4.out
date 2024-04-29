@@ -1,0 +1,285 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> -- plsql debug tool test
+SQL> -- test prepare start
+SQL> create or replace function is_target_create_session_id_table() return boolean is
+  2 begin
+  3   execute immediate 'create table if not exists target_session_id_t(id int)';
+  4   return true;
+  5 exception
+  6   when others then
+  7     return false;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   for i in 1..100000 loop
+  3     if is_target_create_session_id_table() then
+  4       execute immediate 'delete target_session_id_t';
+  5 	  commit;
+  6 	  exit;
+  7     end if;
+  8   end loop;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4 se_id := dbe_debug.init(10000);
+  5 dbe_debug.uninit();
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4   se_id := dbe_debug.init(10000);
+  5   insert into target_session_id_t values(se_id);
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_control_info());
+
+NAME                             VALUE       
+-------------------------------- ------------
+timeout                          10000       
+curr_count                       0           
+status                           0           
+is_force_pause                   0           
+is_force_terminate               0           
+is_attached                      0           
+debug_id                         -1          
+brk_flag                         0           
+brk_flag_stack_id                -1          
+max_stack_id                     0           
+max_break_id                     0           
+
+11 rows fetched.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function is_debug_session_attaching() return boolean is
+  2 v1_id int;
+  3 begin
+  4   select id into v1_id from target_session_id_t where id = 0;
+  5   return true;
+  6 exception
+  7   when others then
+  8     return false;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   for i in 1..10000000 loop
+  3     if is_debug_session_attaching() then
+  4 	  exit;
+  5 	end if;
+  6   end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table target_session_id_t;
+
+Succeed.
+
+SQL> -- test prepare end
+SQL> 
+SQL> -- test step1 start
+SQL> create or replace function drop_exec_func(p1 int) return int
+  2 is
+  3 a int;
+  4 begin
+  5 	a := p1 + 1;
+  6 	return a; 
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 a int;
+  3 begin
+  4 	a := 5;
+  5 	a := drop_exec_func(a);
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step1 end
+SQL> 
+SQL> -- test2 start
+SQL> declare
+  2 type xxx is varray(20) of varchar2(10);
+  3 v1 xxx := xxx('1','1','1');
+  4 begin
+  5 dbe_output.print_line(v1(2));
+  6 end;
+  7 /
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test2 end
+SQL> 
+SQL> -- test3 start
+SQL> CREATE OR REPLACE PACKAGE PAKtest
+  2 IS
+  3  FUNCTION fun1 RETURN int;
+  4  PROCEDURE pro1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE PACKAGE BODY PAKtest
+  2 IS
+  3  FUNCTION fun1 RETURN int
+  4 IS
+  5  var1 int;
+  6  BEGIN
+  7   var1 := 1;
+  8   return var1;
+  9  END;
+ 10 PROCEDURE pro1 IS
+ 11  V1 INT;
+ 12  BEGIN
+ 13   V1:= fun1;
+ 14   dbe_output.print_line(V1);
+ 15  END;
+ 16 END;
+ 17 /
+
+Succeed.
+
+SQL> CALL PAKtest.pro1;
+
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> drop package if exists PAKtest;
+
+Succeed.
+
+SQL> -- test3 end
+SQL> 
+SQL> -- test4 start
+SQL> create or replace type tab01 FORCE is table of varchar2(10);
+  2 /
+
+Succeed.
+
+SQL> create or replace type obj01 FORCE AS OBJECT(
+  2 oa int,
+  3 ob varchar(100),
+  4 oc number) not final;
+  5 /
+
+Succeed.
+
+SQL> declare
+  2 w obj01:= obj01(1, 'a', 0);
+  3 p tab01:=tab01('r', 't');
+  4 TYPE record1 IS RECORD(
+  5 re int,
+  6 rw int,
+  7 rt number
+  8 );
+  9 TYPE record_test IS RECORD(
+ 10 x record1,
+ 11 y tab01,
+ 12 z obj01 default w,
+ 13 q int,
+ 14 d varchar(10) default 's',
+ 15 e tab01 default p
+ 16 );
+ 17 v1 record_test;
+ 18 begin
+ 19 dbe_output.print_line(v1.q);
+ 20 dbe_output.print_line(v1.d);
+ 21 dbe_output.print_line(v1.x.re);
+ 22 dbe_output.print_line(v1.z.ob);
+ 23 end;
+ 24 /
+
+
+s
+7
+u
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test4 end
+SQL> -- test5 start
+SQL> declare
+  2 v1 obj01 := obj01(1 ,2, 3);
+  3 begin
+  4 dbe_output.print_line(v1.oa);
+  5 dbe_output.print_line(v1.ob);
+  6 dbe_output.print_line(v1.oc);
+  7 end;
+  8 /
+
+5
+2
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test5 end
+SQL> -- test6 start
+SQL> declare
+  2 v1 obj01;
+  3 begin
+  4 dbe_output.print_line(v1.oa);
+  5 end;
+  6 /
+
+
+
+PL/SQL procedure successfully completed.
+
+SQL> drop type if exists tab01 force;
+
+Succeed.
+
+SQL> drop type if exists obj01 force;
+
+Succeed.
+
+SQL> -- test6 end
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

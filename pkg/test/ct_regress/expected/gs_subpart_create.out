@@ -1,0 +1,1187 @@
+
+
+SQL> --重名检测，分区名不能重复（父分区与父分区，子分区与子分区，父分区与子分区）
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p1 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+CT-01107, There were duplicate partition or subpartition names.
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p11 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+CT-01117, There were duplicate subpartition names.
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p1 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+CT-01107, There were duplicate partition or subpartition names.
+SQL> 
+SQL> --父分区键与子分区键重复
+SQL> drop table if exists test_subpart; 
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int) partition by range(id) subpartition by range(id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> --检测九种组合分区类型
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, name varchar(20)) partition by range(id) subpartition by list(name)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values('zhangsan'),
+  6 subpartition p12 values('lisi')
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values('wangwu')
+ 11 )
+ 12 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, name varchar(20)) partition by range(id) subpartition by hash(name)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11,
+  6 subpartition p12
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21,
+ 11 subpartition p22
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, name varchar(20)) partition by list(name) subpartition by range(id)
+  2 (
+  3 partition p1 values('zhangsan')
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values('lisi')
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, name varchar(20)) partition by list(id) subpartition by list(name)
+  2 (
+  3 partition p1 values(1, 2, 3)
+  4 (
+  5 subpartition p11 values('zhangsan'),
+  6 subpartition p12 values('lisi')
+  7 ),
+  8 partition p2 values(4, 5, 6)
+  9 (
+ 10 subpartition p21 values('wangwu'),
+ 11 subpartition p22 values('zhaoliu')
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, name varchar(20)) partition by list(id) subpartition by hash(name)
+  2 (
+  3 partition p1 values(1, 2, 3)
+  4 (
+  5 subpartition p11,
+  6 subpartition p12
+  7 ),
+  8 partition p2 values(4, 5, 6)
+  9 (
+ 10 subpartition p21,
+ 11 subpartition p22
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, name varchar(20)) partition by hash(name) subpartition by range(id)
+  2 (
+  3 partition p1
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, name varchar(20)) partition by hash(name) subpartition by list(id)
+  2 (
+  3 partition p1
+  4 (
+  5 subpartition p11 values(1, 2, 3),
+  6 subpartition p12 values(4, 5, 6)
+  7 ),
+  8 partition p2
+  9 (
+ 10 subpartition p21 values(1, 2, 3),
+ 11 subpartition p22 values(4, 5, 6)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, name varchar(20)) partition by hash(name) subpartition by hash(id)
+  2 (
+  3 partition p1
+  4 (
+  5 subpartition p11,
+  6 subpartition p12
+  7 ),
+  8 partition p2
+  9 (
+ 10 subpartition p21,
+ 11 subpartition p22
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> --interval检测,只有父分区支持interval
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id) interval(50)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+CT-00601, [1:122]Sql syntax error: (...) expected but interval found
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) interval(50) subpartition by range(c_id) interval(50)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+CT-00601, [1:135]Sql syntax error: (...) expected but interval found
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) interval(50) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> --检测as select方式创建表
+SQL> drop table if exists data_source;
+
+Succeed.
+
+SQL> create table data_source(id int, c_id int, name varchar(20));
+
+Succeed.
+
+SQL> insert into data_source values(10, 10, 'zhangsan');
+
+1 rows affected.
+
+SQL> insert into data_source values(10, 60, 'lisi');
+
+1 rows affected.
+
+SQL> insert into data_source values(60, 10, 'wangwu');
+
+1 rows affected.
+
+SQL> insert into data_source values(60, 60, 'zhaoliu');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 ) as select * from data_source;
+
+Succeed.
+
+SQL> 
+SQL> create table test_subpart partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 ) as select id, c_id from data_source;
+
+CT-01301, SYS.TEST_SUBPART already exists
+SQL> drop table if exists data_source;
+
+Succeed.
+
+SQL> 
+SQL> --hash分区创建方式检测(store in),对于组合分区，只能是子分区以store in方式
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by hash(id) partitions 4 subpartition by hash(name) subpartitions 4;
+
+CT-00601, [1:98]Sql syntax error: unexpected text subpartition
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by hash(id) subpartition by hash(name) partitions 4 subpartitions 4;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by hash(id) subpartition by hash(name) partitions 4 
+  2 (
+  3 subpartition p11,
+  4 subpartition p12
+  5 );
+
+CT-00601, [2:1]Sql syntax error: expected end but subpartition p11,
+subpartition p12
+ found
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by hash(id) subpartition by hash(name) subpartitions 4
+  2 (
+  3 partition p1,
+  4 partition p2
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by hash(name) subpartitions 4
+  2 (
+  3 partition p1 values less than(50),
+  4 partition p2 values less than(100)
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) interval(50) subpartition by hash(name) subpartitions 4
+  2 (
+  3 partition p1 values less than(50),
+  4 partition p2 values less than(100)
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by list(id) subpartition by hash(name) subpartitions 4
+  2 (
+  3 partition p1 values(1),
+  4 partition p2 values(2)
+  5 );
+
+Succeed.
+
+SQL> 
+SQL> --测试分区tablespace属性，父分区没有指定，则继承自表；子分区没有指定，继承自父分区
+SQL> create tablespace test_space_1 datafile 'test_datafile_1' size 8M;
+
+Succeed.
+
+SQL> create tablespace test_space_2 datafile 'test_datafile_2' size 8M;
+
+Succeed.
+
+SQL> create tablespace test_space_3 datafile 'test_datafile_3' size 8M;
+
+Succeed.
+
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50) tablespace test_space_2
+  4 (
+  5 subpartition p11 values less than(50) tablespace test_space_3,
+  6 subpartition p12 values less than(100) tablespace test_space_3
+  7 ),
+  8 partition p2 values less than(100) tablespace test_space_2
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 ),
+ 13 partition p3 values less than(150)
+ 14 (
+ 15 subpartition p31 values less than(50),
+ 16 subpartition p32 values less than(100)
+ 17 )
+ 18 )tablespace test_space_1;
+
+Succeed.
+
+SQL> 
+SQL> insert into test_subpart values(10, 10, 'zhangsan');
+
+1 rows affected.
+
+SQL> insert into test_subpart values(10, 60, 'lisi');
+
+1 rows affected.
+
+SQL> insert into test_subpart values(60, 10, 'wangwu');
+
+1 rows affected.
+
+SQL> insert into test_subpart values(60, 60, 'zhaoliu');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --子分区只支持tablespace，pctfree、initrans、storage不支持
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50) tablespace test_space_1 pctfree 8 initrans 2 storage( initial 2M maxsize 10M )
+  4 (
+  5 subpartition p11 values less than(50) tablespace test_space_2,
+  6 subpartition p12 values less than(100) tablespace test_space_3
+  7 ),
+  8 partition p2 values less than(100) tablespace test_space_1 pctfree 8 initrans 2 storage( initial 2M maxsize 10M )
+  9 (
+ 10 subpartition p21 values less than(50) tablespace test_space_2,
+ 11 subpartition p22 values less than(100) tablespace test_space_3
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> drop tablespace test_space_1 including contents and datafiles;
+
+Succeed.
+
+SQL> drop tablespace test_space_2 including contents and datafiles;
+
+Succeed.
+
+SQL> drop tablespace test_space_3 including contents and datafiles;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists test_interval;
+
+Succeed.
+
+SQL> create table test_interval(id int) PARTITION BY RANGE(ID) INTERVAL(50) SUBPARTITION BY RANGE(id)
+  2 (
+  3 PARTITION P1 VALUES LESS THAN(50)
+  4 (
+  5 SUBPARTITION p2 VALUES LESS THAN (2),
+  6 SUBPARTITION p3 VALUES LESS THAN (4),
+  7 SUBPARTITION P4 VALUES LESS THAN(MAXVALUE)
+  8 )
+  9 );
+
+Succeed.
+
+SQL> drop table test_interval;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists test_add_subpart;
+
+Succeed.
+
+SQL> create table test_add_subpart(id int) PARTITION BY RANGE(ID) INTERVAL(50) SUBPARTITION BY RANGE(id)
+  2 (
+  3 PARTITION P1 VALUES LESS THAN(50)
+  4 (
+  5 SUBPARTITION p11 VALUES LESS THAN (2),
+  6 SUBPARTITION p12 VALUES LESS THAN (4),
+  7 SUBPARTITION P13 VALUES LESS THAN (6)
+  8 )
+  9 );
+
+Succeed.
+
+SQL>
+SQL> alter table test_add_subpart modify partition p1 add subpartition p1 values less than(8);
+
+CT-01107, There were duplicate partition or subpartition names.
+SQL> drop table test_add_subpart;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists t_range_subparts_range_009;
+
+Succeed.
+
+SQL> create table t_range_subparts_range_009(id int, c_int int[], c_real real, c_float float, c_decimal decimal, c_number number, c_char char(100), c_vchar varchar(100) not null, c_vchar2 varchar2(100), c_clob clob, c_long varchar(200), c_blob blob, c_raw raw(100), c_date date, c_timestamp timestamp) partition by range(c_float) subpartition by range(c_date)
+  2 (
+  3 partition p1 values less than(2185.456)
+  4 (
+  5 subpartition p11 values less than ('2020-02-01'),
+  6 subpartition p12 values less than ('2020-03-01'),
+  7 subpartition p13 values less than (maxvalue)
+  8 ),
+  9 partition p2 values less than(4369.456)
+ 10 (
+ 11 subpartition p21 values less than ('2020-05-01'),
+ 12 subpartition p22 values less than ('2020-06-01'),
+ 13 subpartition p23 values less than ('2020-07-01')
+ 14 ),
+ 15 partition p3 values less than(6577.456)
+ 16 (
+ 17 subpartition p31 values less than ('2020-08-01'),
+ 18 subpartition p32 values less than ('2020-09-01'),
+ 19 subpartition p33 values less than (maxvalue)
+ 20 ),
+ 21 partition p4 values less than(8785.456)
+ 22 (
+ 23 subpartition p41 values less than ('2020-11-01'),
+ 24 subpartition p42 values less than ('2020-12-01'),
+ 25 subpartition p43 values less than ('2021-01-01')
+ 26 ),
+ 27 partition p5 values less than(maxvalue)
+ 28 (
+ 29 subpartition p51 values less than ('2021-02-01'),
+ 30 subpartition p55 values less than (maxvalue)
+ 31 )
+ 32 );
+
+Succeed.
+
+SQL> drop table if exists t_range_subparts_range_009;
+Succeed.
+
+SQL>
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, c_d_id int, c_w_id int) partition by range(id, c_id) subpartition by range(c_d_id, c_w_id)
+  2 (
+  3 partition p1 values less than(50, 60)
+  4 (
+  5 subpartition p11 values less than(50, 60),
+  6 subpartition p12 values less than(100, 110)
+  7 ),
+  8 partition p2 values less than(100, 110)
+  9 (
+ 10 subpartition p21 values less than(50, 60),
+ 11 subpartition p22 values less than(100, 110)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL>
+SQL> insert into test_subpart values(10, 11, 12, 13);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(21, 22, 23, 24);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(31, 32, 61, 62);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(41, 42, 71, 72);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(50, 51, 11, 12);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(50, 51, 73, 74);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(53, 54, 50, 51);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(55, 56, 71, 72);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(57, 58, 100, 102);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(61, 62, 21, 22);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(71, 72, 50, 51);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(81, 82, 83, 84);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(91, 92, 100, 103);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> -- 查询指定子分区
+SQL> select * from test_subpart subpartition(p11);
+
+ID           C_ID         C_D_ID       C_W_ID
+------------ ------------ ------------ ------------
+10           11           12           13
+21           22           23           24
+50           51           11           12
+
+3 rows fetched.
+
+SQL> select * from test_subpart partition(p2);
+
+ID           C_ID         C_D_ID       C_W_ID
+------------ ------------ ------------ ------------
+53           54           50           51
+61           62           21           22
+71           72           50           51
+55           56           71           72
+57           58           100          102
+81           82           83           84
+91           92           100          103
+
+7 rows fetched.
+
+SQL>
+SQL> -- 相同父分区之间子分区切换
+SQL> select * from test_subpart where id < 50;
+
+ID           C_ID         C_D_ID       C_W_ID
+------------ ------------ ------------ ------------
+10           11           12           13
+21           22           23           24
+31           32           61           62
+41           42           71           72
+
+4 rows fetched.
+
+SQL> select max(id) from test_subpart where id < 50;
+
+MAX(ID)
+------------
+41
+
+1 rows fetched.
+
+SQL>
+SQL> -- 不同父分区之间子分区切换
+SQL> select * from test_subpart where id > 30 and id < 81;
+
+ID           C_ID         C_D_ID       C_W_ID
+------------ ------------ ------------ ------------
+50           51           11           12
+31           32           61           62
+41           42           71           72
+50           51           73           74
+53           54           50           51
+61           62           21           22
+71           72           50           51
+55           56           71           72
+57           58           100          102
+
+9 rows fetched.
+
+SQL> select max(id) from test_subpart where id > 30 and id < 81;
+
+MAX(ID)
+------------
+71
+
+1 rows fetched.
+
+SQL>
+SQL> -- 带多个分区键的扫描
+SQL> select * from test_subpart where id >= 50 and id <= 61 and c_id >= 50 and c_id <= 58;
+
+ID           C_ID         C_D_ID       C_W_ID
+------------ ------------ ------------ ------------
+50           51           11           12
+50           51           73           74
+53           54           50           51
+55           56           71           72
+57           58           100          102
+
+5 rows fetched.
+
+SQL> select max(id) from test_subpart where id >= 50 and id <= 61 and c_id >= 50 and c_id <= 58;
+
+MAX(ID)
+------------
+57
+
+1 rows fetched.
+
+SQL> select * from test_subpart where id >= 30 and id <= 80 and c_id >= 30 and c_id <= 70 and c_d_id >= 20 and c_d_id <= 80 and c_w_id >= 30 and c_w_id <= 120;
+
+ID           C_ID         C_D_ID       C_W_ID
+------------ ------------ ------------ ------------
+31           32           61           62
+41           42           71           72
+50           51           73           74
+53           54           50           51
+55           56           71           72
+
+5 rows fetched.
+
+SQL> select max(c_d_id) from test_subpart where id >= 30 and id <= 80 and c_id >= 30 and c_id <= 70 and c_d_id >= 20 and c_d_id <= 80 and c_w_id >= 30 and c_w_id <= 120;
+
+MAX(C_D_ID)
+------------
+73
+
+1 rows fetched.
+
+SQL> drop table test_subpart;
+
+Succeed.
+
+SQL>
+SQL> --带interval空分区的分区切换
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int) partition by range(id) interval(5) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(10)
+  4 (
+  5 subpartition p11 values less than(10),
+  6 subpartition p12 values less than(maxvalue)
+  7 ),
+  8 partition p2 values less than(20)
+  9 (
+ 10 subpartition p21 values less than(20),
+ 11 subpartition p22 values less than(maxvalue)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL>
+SQL> insert into test_subpart values(10, 11);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(21, 22);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(31, 32);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(41, 42);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(50, 51);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(50, 51);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(53, 54);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(55, 56);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(57, 58);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(61, 62);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(71, 72);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(81, 82);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(91, 92);
+
+1 rows affected.
+
+SQL> insert into test_subpart values(20971500, 20971500);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> select * from test_subpart where id > 50;
+
+ID           C_ID
+------------ ------------
+53           54
+55           56
+57           58
+61           62
+71           72
+81           82
+91           92
+20971500     20971500
+
+8 rows fetched.
+
+SQL> select * from test_subpart where c_id > 50;
+
+ID           C_ID
+------------ ------------
+50           51
+50           51
+53           54
+55           56
+57           58
+61           62
+71           72
+81           82
+91           92
+20971500     20971500
+
+10 rows fetched.
+
+SQL> select max(id) from test_subpart;
+
+MAX(ID)
+------------
+20971500
+
+1 rows fetched.
+
+SQL> select max(c_id) from test_subpart;
+
+MAX(C_ID)
+------------
+20971500
+
+1 rows fetched.
+
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists test_scan_empty_interval;
+
+Succeed.
+
+SQL> CREATE TABLE test_scan_empty_interval(ID INT, NAME VARCHAR(20)) PARTITION BY RANGE(ID) INTERVAL(50) SUBPARTITION BY list(NAME) (
+  2 PARTITION P1 VALUES LESS THAN(50)
+  3 (
+  4 SUBPARTITION P11 values('OSS3:NE=my')
+  5 ),
+  6 PARTITION P2 VALUES LESS THAN(100)
+  7 (
+  8 SUBPARTITION P21 values('OSS3:NE=index')
+  9 ),
+ 10 PARTITION P3 VALUES LESS THAN(150)
+ 11 (
+ 12 SUBPARTITION P31 values('OSS3:NE=liker')
+ 13 )
+ 14 );
+
+Succeed.
+
+SQL> 
+SQL> create index index_04 on test_scan_empty_interval(id) parallel 2;
+
+Succeed.
+
+SQL>
+SQL> declare
+  2 v_id int;
+  3 begin
+  4 for i in 10001..20000 loop
+  5 v_id :=i;
+  6 insert into test_scan_empty_interval values (v_id,'OSS3:NE=index');
+  7 end loop;
+  8 commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> declare
+  2 v_id int;
+  3 begin
+  4 for i in 20001..30000 loop
+  5 v_id :=i;
+  6 insert into test_scan_empty_interval values (v_id,'OSS3:NE=liker');
+  7 end loop;
+  8 commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> select count(1) from (select * from test_scan_empty_interval where id>500 or id <200 and name like '%liker');
+
+COUNT(1)
+--------------------
+20000
+
+1 rows fetched.
+
+SQL> select MAX(id) from test_scan_empty_interval where id>500 or id <200 and name like '%liker';
+
+MAX(ID)
+------------
+30000
+
+1 rows fetched.
+
+SQL> delete from test_scan_empty_interval where id>= 10000;
+
+20000 rows affected.
+
+SQL> drop table if exists test_scan_empty_interval;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists test_interval_subpart;
+
+Succeed.
+
+SQL> create table test_interval_subpart(id int, c_id int) partition by range(id) interval(10) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 )
+  8 );
+
+Succeed.
+
+SQL> insert into test_interval_subpart values(10, 10);
+
+1 rows affected.
+
+SQL> insert into test_interval_subpart values(260, 260);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> update test_interval_subpart set id = id + 100;
+
+2 rows affected.
+
+SQL> drop table if exists test_interval_subpart;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists SUBPART_R_R_UPDATEALL_TBL_037;
+
+Succeed.
+
+SQL> create table SUBPART_R_R_UPDATEALL_TBL_037(num int,c_id int,c_d_id bigint NOT NULL,c_w_id tinyint unsigned NOT NULL,c_uint UINT not null,c_first varchar(16) NOT NULL,c_middle char(2),c_last varchar(16) NOT NULL,c_street_1 varchar(20) NOT NULL,c_street_2 varchar(20),c_zero timestamp NOT NULL,c_start date NOT NULL,c_zip char(9) NOT NULL,c_phone char(16) NOT NULL,c_since timestamp,c_credit char(2),c_credit_lim numeric,c_discount numeric(5,2),c_balance number(12,2),c_ytd_payment real NOT NULL,c_payment_cnt number,c_delivery_cnt bool NOT NULL,c_end date NOT NULL,c_data1 varchar(7744),c_data2 varchar(7744),c_data3 varchar(7744),c_data4 varchar(7744),c_data5 varchar(7744),c_data6 varchar(7744),c_data7 varchar(7744),c_data8 varchar(7744),c_clob clob,c_blob blob) PARTITION BY RANGE(c_zero) SUBPARTITION BY RANGE(C_W_ID) (PARTITION P1 VALUES LESS THAN('2018-06-10 10:51:47.000000') (SUBPARTITION P11 VALUES LESS THAN(3) ,SUBPARTITION P12 VALUES LESS THAN(5) ,SUBPARTITION P13 VALUES LESS THAN(7) ,SUBPARTITION P14 VALUES LESS THAN(9) ,SUBPARTITION P15 VALUES LESS THAN(11) ),PARTITION P2 VALUES LESS THAN('2018-11-17 10:51:47.000000') (SUBPARTITION P21 VALUES LESS THAN(3) ,SUBPARTITION P22 VALUES LESS THAN(5) ,SUBPARTITION P23 VALUES LESS THAN(7) ,SUBPARTITION P24 VALUES LESS THAN(9) ,SUBPARTITION P25 VALUES LESS THAN(11) ),PARTITION P3 VALUES LESS THAN('2019-04-26 10:51:47.000000') (SUBPARTITION P31 VALUES LESS THAN(3) ,SUBPARTITION P32 VALUES LESS THAN(5) ,SUBPARTITION P33 VALUES LESS THAN(7) ,SUBPARTITION P34 VALUES LESS THAN(9) ,SUBPARTITION P35 VALUES LESS THAN(11) ),PARTITION P4 VALUES LESS THAN('2019-10-03 10:51:47.000000') (SUBPARTITION P41 VALUES LESS THAN(3) ,SUBPARTITION P42 VALUES LESS THAN(5) ,SUBPARTITION P43 VALUES LESS THAN(7) ,SUBPARTITION P44 VALUES LESS THAN(9) ,SUBPARTITION P45 VALUES LESS THAN(11) ),PARTITION P5 VALUES LESS THAN('2020-03-11 10:51:47.000000') (SUBPARTITION P51 VALUES LESS THAN(3) ,SUBPARTITION P52 VALUES LESS THAN(5) ,SUBPARTITION P53 VALUES LESS THAN(7) ,SUBPARTITION P54 VALUES LESS THAN(9) ,SUBPARTITION P55 VALUES LESS THAN(11) ));
+
+Succeed.
+
+SQL> drop sequence if exists subpartition_seq_000;
+
+Succeed.
+
+SQL> drop sequence if exists subpartition_seq_000_1;
+
+Succeed.
+
+SQL> create sequence subpartition_seq_000 start with 1 MAXVALUE 10 increment by 1 CACHE 2 cycle;
+
+Succeed.
+
+SQL> create sequence subpartition_seq_000_1 start with 1 MAXVALUE 100 increment by 1 CACHE 2 cycle;
+
+Succeed.
+
+SQL> insert into SUBPART_R_R_UPDATEALL_TBL_037(num,C_ID,C_D_ID,C_W_ID,C_UINT,C_FIRST,C_MIDDLE,C_LAST,C_STREET_1,C_STREET_2,C_ZERO,C_START,C_ZIP,C_PHONE,C_SINCE,C_CREDIT,C_CREDIT_LIM,C_DISCOUNT,C_BALANCE,C_YTD_PAYMENT,C_PAYMENT_CNT,C_DELIVERY_CNT,C_END,C_DATA1,C_DATA2,C_DATA3,C_DATA4,C_DATA5,C_DATA6,C_DATA7,C_DATA8,C_CLOB,C_BLOB) select 0,0,0,0,0,'iscmRDs','OE','BARBar','RGF','SDG','2017-12-31 10:51:47','2017-12-31 10:51:47','4801','940215','2017-12-31 10:51:47','GC',50000.0,0.4361328,-10.0,10.0,1,true,'2017-12-31 10:51:47',lpad('QVBRfSCC3484942ZCSfjvCF',500,'QVLDBURhlhfrc484ZCSfjF'),lpad('QVBUflcHOQNvmgfvdPFZSF',500,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',500,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',500,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',500,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',500,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',500,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',500,'QVLDfscHOQgfvmPFZDSF'),lpad('QVBUflcHOQNvmgfvdPFZSF',500,'QVLDfscHOQgfvmPFZDSF'),lpad('12314315487569809',500,'1435764ABC7890abcdef');
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists SUBPART_R_R_UPDATEALL_TBL_037_1;
+
+Succeed.
+
+SQL> create table SUBPART_R_R_UPDATEALL_TBL_037_1(num int,c_id int primary key,id int);
+
+Succeed.
+
+SQL> insert into SUBPART_R_R_UPDATEALL_TBL_037_1 select num,c_id,1 from SUBPART_R_R_UPDATEALL_TBL_037;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table SUBPART_R_R_UPDATEALL_TBL_037 add constraint SUBPART_R_R_UPDATEALL_TBL_037_constraint1 foreign key(c_id) references SUBPART_R_R_UPDATEALL_TBL_037_1(c_id);
+
+Succeed.
+
+SQL> delete from SUBPART_R_R_UPDATEALL_TBL_037_1;
+
+CT-01223, Integrity constraint violated - child record found
+SQL> drop table if exists SUBPART_R_R_UPDATEALL_TBL_037;
+
+Succeed.
+
+SQL> drop table if exists SUBPART_R_R_UPDATEALL_TBL_037_1;
+
+Succeed.
+
+SQL> drop sequence if exists subpartition_seq_000;
+
+Succeed.
+
+SQL> drop sequence if exists subpartition_seq_000_1;
+
+Succeed.
+
+SQL> 

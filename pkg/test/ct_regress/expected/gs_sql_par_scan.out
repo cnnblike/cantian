@@ -1,0 +1,129 @@
+
+
+SQL> -- parallel full scan
+SQL> drop table if exists tbl_full_scan;
+
+Succeed.
+
+SQL> create table tbl_full_scan(a int, b varchar(256), c double, d clob, e bool, f number(8,6), g timestamp(6));
+
+Succeed.
+
+SQL> create or replace PROCEDURE GEN_DATA_TBL_FULL_SCAN(min_b IN INTEGER, max_b IN  INTEGER)
+  2 as
+  3     i  INTEGER := 0;
+  4 begin
+  5     FOR i IN min_b..max_b LOOP
+  6 	BEGIN
+  7 		IF (i % 10 = 0) THEN
+  8 		  insert into tbl_full_scan values(i, 'abc', 32.22228938, 'XXXXXXXXXXXXXXXXXXXXXXXXXYYYYYYYYYYYYYYYYYYYYYYYYY', true,  1.023, '2019-03-10 12:02:32.02832');
+  9 		ELSIF (i % 10 = 1) THEN
+ 10 		  insert into tbl_full_scan values(i, 'abcabcabcabc', 32.22228938, 'AAAAAAAAAAAAAAAAAA', false, 2.289, '2019-03-10 12:02:32.02832');
+ 11 		ELSIF (i % 10 = 2) THEN
+ 12 		  insert into tbl_full_scan values(i, 'abcabcabcabcabcabcabc', 32.22228938, 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD', true,  3.998, '2019-03-10 12:02:32.02832');
+ 13 		ELSIF (i % 10 = 3) THEN
+ 14 		  insert into tbl_full_scan values(i, 'abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc', 32.22228938, 'ABC', false, 4.231, '2019-03-10 12:02:32.02832');
+ 15 		ELSIF (i % 10 = 4) THEN
+ 16 		  insert into tbl_full_scan values(i, 'abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc', 32.22228938, 'ABCDEFGH', true,  5.2332, '2019-03-10 12:02:32.02832');
+ 17 		ELSIF (i % 10 = 5) THEN
+ 18 		  insert into tbl_full_scan values(i, 'abcabcabc', 32.22228938, 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD', false, 5.111, '2019-03-10 12:02:32.02832');
+ 19 		ELSIF (i % 10 = 6) THEN
+ 20 		  insert into tbl_full_scan values(i, 'abc', 32.22228938, 'aaaaaaaaaaaaaaaaaaaaaaaaaaa......aaaaaaaaaaaaaaaaaaa', true,  6.2222, '2019-03-10 12:02:32.02832');
+ 21 		ELSIF (i % 10 = 7) THEN
+ 22 		  insert into tbl_full_scan values(i, 'abcabcabc', 32.22228938, '33392739472946296439163946192346912364', false, 7.298982, '2019-03-10 12:02:32.02832');
+ 23 		ELSIF (i % 10 = 8) THEN
+ 24 		  insert into tbl_full_scan values(i, 'abcabcabcabcabc', 32.22228938, '7942739847982374982374927394690547akshdfohwioehofiqhiowehfoiashdf', true,  9.298, '2019-03-10 12:02:32.02832');
+ 25 		ELSIF (i % 10 = 9) THEN
+ 26 		  insert into tbl_full_scan values(i, 'abcabcabcabc', 32.22228938, 'asdhfoasdihfoashdfoihasdoipfhaoisdpfaiposdhfioash', false, 0.2324, '2019-03-10 12:02:32.02832');
+ 27 		ELSE
+ 28 		  insert into tbl_full_scan values(i, 'abcabcabc', 32.22228938, 'A', true,  1.2342342, '2019-03-10 12:02:32.02832');
+ 29 		END IF;
+ 30 	END;
+ 31     END LOOP;
+ 32     commit;
+ 33     RETURN;
+ 34 END ;
+ 35 /
+
+Succeed.
+
+SQL> 
+SQL> CALL gen_data_tbl_full_scan(1, 200);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select                  * from tbl_full_scan where a >= 100 and a < 101;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+100          abc                                                              32.22228938          XXXXXXXXXXXXXXXXXXXXXXXXXYYYYYYYYYYYYYYYYYYYYYYYYY               TRUE   1.023                                    2019-03-10 12:02:32.028320      
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ * from tbl_full_scan where a >= 100 and a < 101;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+100          abc                                                              32.22228938          XXXXXXXXXXXXXXXXXXXXXXXXXYYYYYYYYYYYYYYYYYYYYYYYYY               TRUE   1.023                                    2019-03-10 12:02:32.028320      
+
+1 rows fetched.
+
+SQL> 
+SQL> select /*+parallel(4)*/ * from tbl_full_scan where a = 1 limit 1;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+1            abcabcabcabc                                                     32.22228938          AAAAAAAAAAAAAAAAAA                                               FALSE  2.289                                    2019-03-10 12:02:32.028320      
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> -- parallel partition full scan
+SQL> drop table if exists tbl_full_scan;
+
+Succeed.
+
+SQL> CREATE TABLE tbl_full_scan(a int, b varchar(256), c double, d clob, e bool, f number(8,6), g timestamp(6))
+  2 PARTITION BY RANGE(a)
+  3 (
+  4 PARTITION training1 VALUES LESS than(100),
+  5 PARTITION training2 VALUES LESS than(200),
+  6 PARTITION training3 VALUES LESS than(300),
+  7 PARTITION training4 VALUES LESS than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> CALL gen_data_tbl_full_scan(1, 400);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select                  * from tbl_full_scan where a >= 201 and a <= 201;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+201          abcabcabcabc                                                     32.22228938          AAAAAAAAAAAAAAAAAA                                               FALSE  2.289                                    2019-03-10 12:02:32.028320      
+
+1 rows fetched.
+
+SQL> select /*+parallel(4)*/ * from tbl_full_scan where a >= 201 and a <= 201;
+
+A            B                                                                C                    D                                                                E      F                                        G                               
+------------ ---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ------ ---------------------------------------- --------------------------------
+201          abcabcabcabc                                                     32.22228938          AAAAAAAAAAAAAAAAAA                                               FALSE  2.289                                    2019-03-10 12:02:32.028320      
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists tbl_full_scan;
+
+Succeed.
+
+SQL> 
+SQL> 
+
+

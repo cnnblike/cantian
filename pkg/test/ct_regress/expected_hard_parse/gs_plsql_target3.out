@@ -1,0 +1,329 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> -- plsql debug tool test
+SQL> -- test prepare start
+SQL> drop user if exists gs_plsql_target cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_target identified by Abc123456;
+
+Succeed.
+
+SQL> grant create session to gs_plsql_target;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_target2 cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_target2 identified by Abc123456;
+
+Succeed.
+
+SQL> grant create session to gs_plsql_target2;
+
+Succeed.
+
+SQL> drop table if exists target_user_id_t;
+
+Succeed.
+
+SQL> create table target_user_id_t(id int);
+
+Succeed.
+
+SQL> insert into target_user_id_t values(0);
+
+1 rows affected.
+
+SQL> drop table if exists target_session_id_t;
+
+Succeed.
+
+SQL> create table target_session_id_t(id int);
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> GRANT select on target_session_id_t to gs_plsql_target;
+
+Succeed.
+
+SQL> GRANT insert on target_session_id_t to gs_plsql_target;
+
+Succeed.
+
+SQL> grant create table to gs_plsql_target;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function is_debug_session_attaching() return boolean is
+  2 v1_id int;
+  3 begin
+  4   select id into v1_id from target_session_id_t where id = 0;
+  5   return true;
+  6 exception
+  7   when others then
+  8     return false;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists gs_plsql_target.test_department_t;
+
+Succeed.
+
+SQL> create table gs_plsql_target.test_department_t(id int, name varchar(20), province varchar(20), register_time date);
+
+Succeed.
+
+SQL> insert into gs_plsql_target.test_department_t values(1, 'zyc', 'hunan', '2014-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into gs_plsql_target.test_department_t values(2, 'whf', 'fujian', '2010-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into gs_plsql_target.test_department_t values(3, 'pfa', 'sichuan', '2018-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into gs_plsql_target.test_department_t values(4, 'fc', 'jiangsu', '2015-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> insert into gs_plsql_target.test_department_t values(4, 'hsf', 'fujian', '2018-01-01 00:00:00');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function gs_plsql_target2.test_lv2_func1(p1 int) return int is
+  2 v1 int;
+  3 begin
+  4   <<test_lv2_func1_for>>
+  5   for i in 1..1 loop
+  6     v1 := p1 * 2;
+  7   end loop;
+  8   return v1;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> GRANT EXECUTE ON gs_plsql_target2.test_lv2_func1 TO gs_plsql_target;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function gs_plsql_target.test_lv1_func1(p1 int, p2 number) return int is
+  2 begin
+  3   return gs_plsql_target2.test_lv2_func1(p1) + p2;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE gs_plsql_target.test_lv2_proc1(p1 varchar, resultSet out sys_refcursor) is
+  2 begin
+  3   open resultSet for select * from test_department_t where province = p1;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE function gs_plsql_target.test_lv1_func2(p1 varchar) return boolean is
+  2 v1_cur sys_refcursor;
+  3 type place is record(
+  4   province varchar(20),
+  5   city varchar(20));
+  6 type employee is record(
+  7   id int,
+  8   name varchar(20),
+  9   home place,
+ 10   register_time date);
+ 11 v2_record employee;
+ 12 begin
+ 13   for item in (select * from test_department_t where province = p1) 
+ 14   loop
+ 15     if (item.name = p1) then
+ 16       return true;
+ 17     end if;
+ 18   end loop;
+ 19   test_lv2_proc1('fujian', v1_cur);
+ 20   fetch v1_cur into v2_record.id, v2_record.name, v2_record.home.province, v2_record.register_time;
+ 21   v2_record.home.city := 'fuzhou';
+ 22   return false;
+ 23 exception
+ 24   when others then
+ 25     return false;
+ 26 end;
+ 27 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger gs_plsql_target.test_lvx_trigger1 before insert on gs_plsql_target.test_department_t FOR EACH ROW is
+  2 v1 int;
+  3 begin
+  4   select count(*) into v1 from test_department_t;
+  5   :new.id := v1;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE gs_plsql_target.test_lv1_proc1(p1 varchar) is
+  2 begin
+  3   insert into test_department_t values(0, p1, 'fujian', '2019-01-01 00:00:00');
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> GRANT EXECUTE ON is_debug_session_attaching TO gs_plsql_target;
+
+Succeed.
+
+SQL> GRANT select on target_session_id_t to gs_plsql_target;
+
+Succeed.
+
+SQL> GRANT insert on target_session_id_t to gs_plsql_target;
+
+Succeed.
+
+SQL> 
+SQL> conn gs_plsql_target/Abc123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists waste_time_t;
+
+Succeed.
+
+SQL> create table waste_time_t(id int);
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4   se_id := dbe_debug.init(10000);
+  5   insert into sys.target_session_id_t values(se_id);
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 a int;
+  3 begin
+  4   for i in 1..10000000 loop
+  5     if sys.is_debug_session_attaching() then
+  6 	  exit;
+  7 	end if;
+  8   end loop;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- test prepare end
+SQL> 
+SQL> -- test step1 start
+SQL> 
+SQL> <<test_step1_begin>>
+  2 declare
+  3 v1_int int;
+  4 v2_num number(20,5);
+  5 v3_varc varchar(20);
+  6 v4_c char(20);
+  7 v5_date date;
+  8 v6_doub double;
+  9 begin
+ 10   v2_num := 6.7;
+ 11   v1_int := test_lv1_func1(3, v2_num);
+ 12   v3_varc := 'pfa';
+ 13   if test_lv1_func2(v3_varc) then
+ 14     return;
+ 15   end if;
+ 16   test_lv1_proc1(v3_varc);
+ 17 end;
+ 18 /
+
+CT-00932, [16:3] PL/SQL(GS_PLSQL_TARGET.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] PL/SQL(GS_PLSQL_TARGET.TEST_LV1_PROC1) terminated with execute errors
+[4:1] CT-00979, Program has been forced to terminate
+
+SQL> 
+SQL> drop trigger test_lvx_trigger1;
+
+Succeed.
+
+SQL> drop table if exists test_department_t;
+
+Succeed.
+
+SQL> -- test step1 end
+SQL> 
+SQL> delete waste_time_t;
+
+10000 rows affected.
+
+SQL> drop table waste_time_t;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists target_user_id_t;
+
+Succeed.
+
+SQL> drop table if exists target_session_id_t;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_target cascade;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_target2 cascade;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

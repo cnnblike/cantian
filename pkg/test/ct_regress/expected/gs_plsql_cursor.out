@@ -1,0 +1,722 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop user if exists gs_plsql_cursor cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_cursor identified by Cantian_234;
+
+Succeed.
+
+SQL> grant all privileges to gs_plsql_cursor;
+
+Succeed.
+
+SQL> conn gs_plsql_cursor/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> drop table if exists test2;
+
+Succeed.
+
+SQL> create table test2(a int primary key, b int,c int);
+
+Succeed.
+
+SQL> insert into test2 values(1,2,3);
+
+1 rows affected.
+
+SQL> insert into test2 values(3,4,5);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --test ref cursor leak 1
+SQL> alter system set OPEN_CURSORS=100;
+
+Succeed.
+
+SQL> create or replace procedure liuhangmyp() 
+  2 is
+  3 cur1 sys_refcursor;
+  4 begin
+  5     open cur1 for select 1 from sys_dummy; 
+  6     close cur1;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> declare 
+  2 begin
+  3 for i in 1..101 loop
+  4     liuhangmyp;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test ref cursor leak 2
+SQL> create or replace procedure liuhangmyp() 
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 begin
+  6     open cur1 for select 1 from sys_dummy;
+  7     cur2 := cur1;
+  8     close cur1;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> declare 
+  2 begin
+  3 for i in 1..101 loop
+  4     liuhangmyp;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test ref cursor leak 3
+SQL> --expect error
+SQL> create or replace procedure liuhangmyp(cur in out sys_refcursor)
+  2 is
+  3 begin
+  4 null;
+  5 end;
+  6 /
+
+Succeed.
+
+
+SQL> 
+SQL> create or replace procedure liuhangmyp(cur out sys_refcursor)
+  2 is
+  3 begin
+  4     open cur for select 1 from sys_dummy;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 begin
+  4 for i in 1..101 loop
+  5     liuhangmyp(cur);
+  6 end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure liuhangmyp(cur out sys_refcursor)
+  2 is
+  3 begin
+  4     open cur for select 1 from sys_dummy;
+  5     close cur;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 begin
+  4 for i in 1..101 loop
+  5     liuhangmyp(cur);
+  6 end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> create or replace procedure liuhangmyp(cur out sys_refcursor)
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 begin
+  6     open cur1 for select 1 from sys_dummy;
+  7     cur2 := cur1;
+  8     cur := cur2;
+  9     close cur1;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 begin
+  4 for i in 1..101 loop
+  5     liuhangmyp(cur);
+  6 end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test ref cursor leak 4
+SQL> create or replace procedure liuhangmyp(cur out sys_refcursor)
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 begin
+  6     open cur1 for select 1 from sys_dummy;
+  7     cur2 := cur1;
+  8     cur := cur2;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 tmp int := 0;
+  4 begin
+  5 for i in 1..101 loop
+  6     liuhangmyp(cur);
+  7     if(cur%isopen) then
+  8         tmp :=tmp+1;
+  9     end if;
+ 10 end loop;
+ 11 dbe_output.print(tmp);
+ 12 end;
+ 13 /
+
+101
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test ref cursor leak 5
+SQL> create or replace procedure liuhangmyp(cur out sys_refcursor)
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 begin
+  6     open cur1 for select 1 from sys_dummy;
+  7     cur2 := cur1;
+  8     cur := cur2;
+  9     close cur1;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 tmp int := 0;
+  4 begin
+  5 for i in 1..101 loop
+  6     liuhangmyp(cur);
+  7     if(cur%isopen) then
+  8         tmp :=tmp+1;
+  9     end if;
+ 10 end loop;
+ 11 dbe_output.print(tmp);
+ 12 end;
+ 13 /
+
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test ref cursor leak 6
+SQL> create or replace function liuhangmyf() return sys_refcursor
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 begin
+  6     open cur1 for select 1 from sys_dummy;
+  7     cur2 := cur1;
+  8     return cur2;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 tmp int := 0;
+  4 begin
+  5 for i in 1..101 loop
+  6     select liuhangmyf() into cur from sys_dummy;
+  7     if(cur%isopen) then
+  8         tmp :=tmp+1;
+  9     end if;
+ 10 end loop;
+ 11 dbe_output.print(tmp);
+ 12 end;
+ 13 /
+
+CT-00944, PL/SQL(GS_PLSQL_CURSOR.ANONYMOUS BLOCK) terminated with compiling errors
+[6:30] PLC-00951 The expression CUR was used as the assignment target of INTO.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 tmp int := 0;
+  4 begin
+  5 for i in 1..101 loop
+  6     cur := liuhangmyf();
+  7     if(cur%isopen) then
+  8         tmp :=tmp+1;
+  9     end if;
+ 10 end loop;
+ 11 dbe_output.print(tmp);
+ 12 end;
+ 13 /
+
+101
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> begin
+  2 liuhangmyf;
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(GS_PLSQL_CURSOR.ANONYMOUS BLOCK) terminated with compiling errors
+[2:1] PLC-00828 procedure GS_PLSQL_CURSOR.LIUHANGMYF does not exist
+
+SQL> 
+SQL> 
+SQL> --test ref cursor leak 7
+SQL> create or replace function liuhangmyf() return sys_refcursor
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 begin
+  6     open cur1 for select 1 from sys_dummy;
+  7     cur2 := cur1;
+  8     close cur1;
+  9     return cur2;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 tmp int := 0;
+  4 begin
+  5 for i in 1..101 loop
+  6     select liuhangmyf() into cur from sys_dummy;
+  7     if(cur%isopen) then
+  8         tmp :=tmp+1;
+  9     end if;
+ 10 end loop;
+ 11 dbe_output.print(tmp);
+ 12 end;
+ 13 /
+
+CT-00944, PL/SQL(GS_PLSQL_CURSOR.ANONYMOUS BLOCK) terminated with compiling errors
+[6:30] PLC-00951 The expression CUR was used as the assignment target of INTO.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 tmp int := 0;
+  4 begin
+  5 for i in 1..101 loop
+  6     cur := liuhangmyf();
+  7     if(cur%isopen) then
+  8         tmp :=tmp+1;
+  9     end if;
+ 10 end loop;
+ 11 dbe_output.print(tmp);
+ 12 end;
+ 13 /
+
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test ref cursor leak 8, not support, expect error
+SQL> declare
+  2 cur sys_refcursor;
+  3 tmp int := 0;
+  4 begin
+  5 for i in 1..101 loop
+  6 execute immediate'
+  7 begin
+  8 open :1 from select a from test2;
+  9 end;
+ 10 ' using out cur;
+ 11 if (cur%isopen) then
+ 12 tmp :=tmp+1;
+ 13 end if;
+ 14 end loop;
+ 15 dbe_output.print(tmp);
+ 16 end;
+ 17 /
+
+CT-00944, PL/SQL(GS_PLSQL_CURSOR.ANONYMOUS BLOCK) terminated with compiling errors
+[10:13] PLC-00916 PL/SQL:syntax error(out param of using clause only support normal variable, not cursor)
+
+SQL> 
+SQL> --test ref cursor leak 9, not support
+SQL> declare
+  2 cur sys_refcursor;
+  3 tmp int := 0;
+  4 begin
+  5 for i in 1..101 loop
+  6 open cur for select * from test2;
+  7 execute immediate'
+  8 declare
+  9 cur sys_refcursor;
+ 10 begin
+ 11 cur := :1;
+ 12 if(cur%isopen) then
+ 13 :2 := 1;
+ 14 else
+ 15 :2 := 2;
+ 16 end if;
+ 17 close cur;
+ 18 end;
+ 19 ' using in cur,out tmp;
+ 20 end loop;
+ 21 dbe_output.print(tmp);
+ 22 end;
+ 23 /
+
+CT-00932, [7:1] PL/SQL(GS_PLSQL_CURSOR.ANONYMOUS BLOCK) terminated with execute errors
+[5:1] PL/SQL(GS_PLSQL_CURSOR.ANONYMOUS BLOCK) terminated with execute errors
+[5:1] CT-00908, PL/SQL internal program error(only ref cursor can be assigned).
+
+SQL> 
+SQL> 
+SQL> --test ref cursor assignment 1
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 cur2 sys_refcursor;
+  4 val int;
+  5 begin
+  6 open cur1 for select a from test2;
+  7 cur2 := cur1;
+  8 close cur1;
+  9 close cur2; --expect error
+ 10 end;
+ 11 /
+
+CT-00932, [9:1] PL/SQL(GS_PLSQL_CURSOR.ANONYMOUS BLOCK) terminated with execute errors
+[9:1] CT-00905, The cursor was invalid.
+
+SQL> 
+SQL> 
+SQL> --test ref cursor assignment 2
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 cur2 sys_refcursor;
+  4 val int;
+  5 begin
+  6 open cur1 for select a from test2;
+  7 cur2 := cur1;
+  8 close cur2;
+  9 close cur1; --exepect error
+ 10 end;
+ 11 /
+
+CT-00932, [9:1] PL/SQL(GS_PLSQL_CURSOR.ANONYMOUS BLOCK) terminated with execute errors
+[9:1] CT-00905, The cursor was invalid.
+
+SQL> 
+SQL> --test ref cursor assignment 3
+SQL> create or replace function myfunction return sys_refcursor
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 val int;
+  6 begin
+  7 open cur1 for select a from test2;
+  8 cur2 := cur1;
+  9 close cur1;
+ 10 return cur2;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> select myfunction() from sys_dummy; --expect error
+
+CT-00905, The cursor was invalid.
+SQL> 
+SQL> --test ref cursor assignment 4
+SQL> create or replace function myfunction return sys_refcursor
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 val int;
+  6 begin
+  7 open cur1 for select a from test2 order by 1;
+  8 cur2 := cur1;
+  9 return cur2;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> select myfunction() from sys_dummy; 
+
+MYFUNCTION()                                                    
+----------------------------------------------------------------
+CURSOR STATEMENT                                                
+
+1 rows fetched.
+
+ResultSet #1
+
+A           
+------------
+1           
+3           
+
+2 rows fetched.
+
+
+SQL> 
+SQL> --test ref cursor assignment 5
+SQL> create or replace procedure myp return sys_refcursor
+  2 is
+  3 cur1 sys_refcursor;
+  4 cur2 sys_refcursor;
+  5 val int;
+  6 begin
+  7 open cur1 for select a from test2;
+  8 cur2 := cur1;
+  9 dbe_sql.return_cursor(cur2); --expect error
+ 10 return cur1;
+ 11 end;
+ 12 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_CURSOR.MYP) terminated with compiling errors
+[1:33] PLC-00601 Sql syntax error: IS or AS expected
+
+
+SQL> 
+SQL> --test ref cursor assignment 7
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 cur2 sys_refcursor;
+  4 val int;
+  5 begin
+  6 open cur1 for select a from test2 order by 1;
+  7 cur2 := cur1;
+  8 fetch cur2 into val;
+  9 dbe_output.print(val);
+ 10 fetch cur1 into val;
+ 11 dbe_output.print(val);
+ 12 close cur1;
+ 13 end;
+ 14 /
+
+1
+3
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test ref cursor assignment 8
+SQL> declare
+  2 cur1 sys_refcursor; 
+  3 cur2 sys_refcursor;
+  4 val int;
+  5 begin
+  6 open cur1 for select a from test2 order by 1;
+  7 cur2 := cur1;
+  8 loop
+  9 fetch cur2 into val;
+ 10 exit when cur2%notfound;
+ 11 dbe_output.print(val);
+ 12 end loop;
+ 13 dbe_output.print(cur1%isopen);
+ 14 dbe_output.print(cur1%found);
+ 15 dbe_output.print(cur2%isopen);
+ 16 dbe_output.print(cur2%found);
+ 17 close cur1;
+ 18 dbe_output.print(cur1%isopen);
+ 19 dbe_output.print(cur2%isopen);
+ 20 end;
+ 21 /
+
+1
+3
+TRUE
+FALSE
+TRUE
+FALSE
+FALSE
+FALSE
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test ref cursor assignment 8
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> drop table if exists IN_CURSOR_TABLE15;
+
+Succeed.
+
+SQL> create table IN_CURSOR_TABLE15(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into IN_CURSOR_TABLE15 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into IN_CURSOR_TABLE15 values(2,'zhangsan2','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into IN_CURSOR_TABLE15 values(123,'zhangsan3','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into IN_CURSOR_TABLE15 values(11,'zhansi','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into IN_CURSOR_TABLE15 values(22,'lisiabc','doctor2',10000);
+
+1 rows affected.
+
+SQL> insert into IN_CURSOR_TABLE15 values(33,'zhangwu123','doctor3',10000);
+
+1 rows affected.
+
+SQL> insert into IN_CURSOR_TABLE15 values(10,'abc','worker',9000);
+
+1 rows affected.
+
+SQL> insert into IN_CURSOR_TABLE15 values(716,'ZHANGSAN','leader',20000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create or replace procedure show_cur20(p1 varchar2, p2 number,p3 int, P_job varchar2,P_max_sal number,P_factor int)  
+  2 is 
+  3 cursor mycursor(job_real varchar2 ,max_sal in number := 9000, factor int ) is  select empno, sal, sal*factor exp_sal  from IN_CURSOR_TABLE15 where job=job_real and sal> max_sal  order by sal;
+  4 c_empno IN_CURSOR_TABLE15.empno%type;
+  5 b  int;
+  6 c int;
+  7 begin
+  8    begin
+  9    open mycursor(p1,factor=>p3);
+ 10    loop
+ 11    fetch mycursor into c_empno,b,c;
+ 12    if  mycursor%found  then 
+ 13    dbe_output.print_line('c_empno is emp:'||c_empno||' sal'||b||' ep_sal'||c);
+ 14    dbe_output.print_line(mycursor%rowcount);
+ 15    else 
+ 16      exit;
+ 17    end if;
+ 18    end loop;
+ 19    close mycursor;
+ 20    end;
+ 21    begin
+ 22    open mycursor(P_job,P_max_sal,P_factor);
+ 23    loop
+ 24    fetch mycursor into c_empno,b,c;
+ 25    exit when mycursor%notfound;
+ 26    dbe_output.print_line('doctor2 c_empno is :'||c_empno||' sal'||b||' ep_sal'||c);
+ 27    dbe_output.print_line(mycursor%rowcount);
+ 28    end loop;
+ 29    close mycursor;
+ 30    end;
+ 31 end;
+ 32 /
+
+Succeed.
+
+SQL> 
+SQL> exec show_cur20('doctor1',9000,p3=>2,P_job=>'doctor2',P_max_sal=>8000,P_factor=>3);
+
+c_empno is emp:1 sal10000 ep_sal20000
+1
+c_empno is emp:11 sal10000 ep_sal20000
+2
+doctor2 c_empno is :2 sal10000 ep_sal30000
+1
+doctor2 c_empno is :22 sal10000 ep_sal30000
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> exec show_cur20('doctor1',9000,2,'doctor2',8000,3);
+
+c_empno is emp:1 sal10000 ep_sal20000
+1
+c_empno is emp:11 sal10000 ep_sal20000
+2
+doctor2 c_empno is :2 sal10000 ep_sal30000
+1
+doctor2 c_empno is :22 sal10000 ep_sal30000
+2
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user gs_plsql_cursor cascade;
+
+Succeed.
+
+SQL> alter system set OPEN_CURSORS=2000;
+
+Succeed.
+
+SQL> 
+SQL> 
+
+

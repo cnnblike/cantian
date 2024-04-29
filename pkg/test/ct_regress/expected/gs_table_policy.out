@@ -1,0 +1,2249 @@
+
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> 
+SQL> -------------------- VPD ---------------------
+SQL> drop user if exists user1 cascade;
+
+Succeed.
+
+SQL> drop user if exists user2 cascade;
+
+Succeed.
+
+SQL> drop user if exists user3 cascade;
+
+Succeed.
+
+SQL> create user user1 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user user2 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user user3 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant connect,select any table,create procedure to user2;
+
+Succeed.
+
+SQL> grant dba to user3;
+
+Succeed.
+
+SQL> grant connect,create table, create view,select any table,create procedure,create synonym to user1;
+
+Succeed.
+
+SQL> 
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create table test (id int, tel varchar(20));
+
+Succeed.
+
+SQL> insert into test values(1, '15256566565');
+
+1 rows affected.
+
+SQL> insert into test values(2, '15856524324');
+
+1 rows affected.
+
+SQL> insert into test values(3, '13556568977');
+
+1 rows affected.
+
+SQL> insert into test values(4, '13556568900');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> conn user2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE function Fn_GetPolicy(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id>2';
+  5 end Fn_GetPolicy;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> CREATE OR REPLACE function function_test(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id>1';
+  5 end function_test;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> SET serveroutput ON
+
+ON
+SQL>
+SQL> conn user3/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create table t2(id int);
+
+Succeed.
+
+SQL> insert into t2 values(2);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from user1.test where id in (select id from t2);
+
+ID           TEL
+------------ --------------------
+2            15856524324
+
+1 rows fetched.
+
+SQL> select * from user1.test where id > 1;
+
+ID           TEL
+------------ --------------------
+2            15856524324
+3            13556568977
+4            13556568900
+
+3 rows fetched.
+
+SQL> select * from user1.test;
+
+ID           TEL
+------------ --------------------
+1            15256566565
+2            15856524324
+3            13556568977
+4            13556568900
+
+4 rows fetched.
+
+SQL> select user2.Fn_GetPolicy('aaa','table');
+
+USER2.FN_GETPOLICY('AAA','TABLE')
+----------------------------------------------------------------
+id>2
+
+1 rows fetched.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL>
+SQL> -------------dbe_ac_row.add_policy
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+
+0 rows fetched.
+
+SQL> grant execute on user2.Fn_GetPolicy to user1;
+
+Succeed.
+
+SQL> grant execute on user2.function_test to user1;
+
+Succeed.
+
+SQL>
+SQL> -- DTS2020020701431  sys table policy is forbidden
+SQL> create table test_sys (id int, tel varchar(2));
+
+Succeed.
+
+SQL> call dbe_ac_row.add_policy('sys','test_sys','policy_sys','user2','Fn_GetPolicy','select',TRUE);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-01001, Permissions were insufficient
+
+SQL> drop table test_sys;
+
+Succeed.
+
+SQL>
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test','user2','Fn_GetPolicy', 'select',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test23','user2','function_test', 'Select',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> -- 不存在的用户
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('aser3','table_test','policy_test','user2','function_test', 'Select',false);
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00781, The user ASER3 does not exist.
+
+SQL>
+SQL> -- 该用户不存在表table_test1234
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','table_test1234','policy_test_tmp','user2','function_test', 'Select',false);
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00843, The table or view USER1.TABLE_TEST1234 does not exist.
+
+SQL>
+SQL> -- 重复策略
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test','user2','Fn_GetPolicy', 'select',false);
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00604, Duplicate policy name POLICY_TEST
+
+SQL>
+SQL> -- 函数不存在
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test2','user2','function_test00', 'Select',false);
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00828, function USER2.FUNCTION_TEST00 does not exist
+
+SQL>
+SQL> -------------DBE_AC_ROW.DROP_POLICY
+SQL> conn / as sysdba
+
+connected.
+
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+USER1                                                            TEST                                                             POLICY_TEST                                                      USER2                                                            FN_GETPOLICY                                                     YES NO  NO  NO  YES
+USER1                                                            TEST                                                             POLICY_TEST23                                                    USER2                                                            FUNCTION_TEST                                                    YES NO  NO  NO  YES
+
+2 rows fetched.
+
+SQL>
+SQL> -- 参数过多
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','policy_test2','user2','function_test','aser3', 'Select',false,false);
+  4 end;
+  5 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[3:2] PLC-00615 Invalid argument number for DROP_POLICY, min=3, max=3
+
+SQL>
+SQL> -- 不存在的用户
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user123','table_test','policy_test');
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.DROP_POLICY) terminated with execute errors
+CT-00781, The user USER123 does not exist.
+
+SQL>
+SQL> -- 该用户不存在表table_test1234
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','table_test1234','policy_test');
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.DROP_POLICY) terminated with execute errors
+CT-00843, The table or view USER1.TABLE_TEST1234 does not exist.
+
+SQL>
+SQL> -- 不存在该策略
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','policy_test123');
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.DROP_POLICY) terminated with execute errors
+CT-00708, The object policy POLICY_TEST123 does not exist
+
+SQL>
+SQL> -------------DBE_AC_ROW.enable_policy
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+USER1                                                            TEST                                                             POLICY_TEST                                                      USER2                                                            FN_GETPOLICY                                                     YES NO  NO  NO  YES
+USER1                                                            TEST                                                             POLICY_TEST23                                                    USER2                                                            FUNCTION_TEST                                                    YES NO  NO  NO  YES
+
+2 rows fetched.
+
+SQL>
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','test','policy_test23',false );
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','test','POLICY_TEST',false);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> -- 参数过多
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','test','policy_test2','user2','function_test','aser3', 'Select',false,false);
+  4 end;
+  5 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[3:2] PLC-00615 Invalid argument number for ENABLE_POLICY, min=4, max=4
+
+SQL>
+SQL> -- 不存在的用户
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user123','table_test','policy_test',true);
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.ENABLE_POLICY) terminated with execute errors
+CT-00781, The user USER123 does not exist.
+
+SQL>
+SQL> -- 该用户不存在表table_test1234
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','table_test1234','policy_test',true);
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.ENABLE_POLICY) terminated with execute errors
+CT-00843, The table or view USER1.TABLE_TEST1234 does not exist.
+
+SQL>
+SQL> -- 不存在该策略
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','test','policy_test123',true);
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.ENABLE_POLICY) terminated with execute errors
+CT-00708, The object policy POLICY_TEST123 does not exist
+
+SQL>
+SQL>
+SQL> --------------------------------- 测试行级访问控制(VPD) --------------------------------
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+USER1                                                            TEST                                                             POLICY_TEST                                                      USER2                                                            FN_GETPOLICY                                                     YES NO  NO  NO  NO
+USER1                                                            TEST                                                             POLICY_TEST23                                                    USER2                                                            FUNCTION_TEST                                                    YES NO  NO  NO  NO
+
+2 rows fetched.
+
+SQL>
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> -- 策略enable=0，不生效
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+1            15256566565
+2            15856524324
+3            13556568977
+4            13556568900
+
+4 rows fetched.
+
+SQL>
+SQL> -- 设置策略为enable=true
+SQL> conn / as sysdba
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','test','POLICY_TEST23',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','test','POLICY_TEST',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+USER1                                                            TEST                                                             POLICY_TEST                                                      USER2                                                            FN_GETPOLICY                                                     YES NO  NO  NO  YES
+USER1                                                            TEST                                                             POLICY_TEST23                                                    USER2                                                            FUNCTION_TEST                                                    YES NO  NO  NO  YES
+
+2 rows fetched.
+
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> -- 策略enable=1，生效（id>1 and id >2）
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+3            13556568977
+4            13556568900
+
+2 rows fetched.
+
+SQL>
+SQL> -- DTS2020020705588  权限收回和重新赋权，测试软解析
+SQL> select * from user1.test;
+
+ID           TEL
+------------ --------------------
+3            13556568977
+4            13556568900
+
+2 rows fetched.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke execute on user2.Fn_GetPolicy from user1;
+
+Succeed.
+
+SQL> revoke execute on user2.function_test from user1;
+
+Succeed.
+
+SQL> grant create session to user1;
+
+Succeed.
+
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test;
+
+CT-01388, Unable to execute policy function, reason: Insufficient privilege or function invalid
+SQL> select * from user1.test;
+
+CT-01388, Unable to execute policy function, reason: Insufficient privilege or function invalid
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant execute on user2.Fn_GetPolicy to user1;
+
+Succeed.
+
+SQL> grant execute on user2.function_test to user1;
+
+Succeed.
+
+SQL> grant create session to user1;
+
+Succeed.
+
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+3            13556568977
+4            13556568900
+
+2 rows fetched.
+
+SQL> select * from user1.test;
+
+ID           TEL
+------------ --------------------
+3            13556568977
+4            13556568900
+
+2 rows fetched.
+
+SQL>
+SQL> create table tt2 as select * from test;
+
+Succeed.
+
+SQL> create or replace view t1_view as select * from test;
+
+Succeed.
+
+SQL> select * from tt2;
+
+ID           TEL
+------------ --------------------
+3            13556568977
+4            13556568900
+
+2 rows fetched.
+
+SQL> select * from t1_view;
+
+ID           TEL
+------------ --------------------
+3            13556568977
+4            13556568900
+
+2 rows fetched.
+
+SQL> drop table tt2;
+
+Succeed.
+
+SQL> drop view t1_view;
+
+Succeed.
+
+SQL> create table test_11 (id int, tel varchar(20));
+
+Succeed.
+
+SQL> insert into test_11(id, tel) select * from test;
+
+2 rows affected.
+
+SQL> drop table test_11;
+
+Succeed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> -- 删除user1.test的策略
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','policy_test23');
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','policy_test');
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> -- 增加user1.test策略，包含select、delete和update策略（update_check暂不支持）
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test23','user2','function_test', 'select,delete,update',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+2            15856524324
+3            13556568977
+4            13556568900
+
+3 rows fetched.
+
+SQL> -- 对于delete和update，并非全部行生效，只有策略函数条件内的会生效
+SQL> update test set TEL='18888888888';
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+2            18888888888
+3            18888888888
+4            18888888888
+
+3 rows fetched.
+
+SQL> delete from test;
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> -- 设置user1.test策略为enable=false
+SQL> conn / as sysdba
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','test','POLICY_TEST23',false);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> -- 策略外的行数据依然存在
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+1            15256566565
+
+1 rows fetched.
+
+SQL>
+SQL> conn user2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE function function_test(P_Schema in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id<3';
+  5 end function_test;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.ENABLE_POLICY('user1','test','POLICY_TEST23',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> -- 策略函数入参只有一个不合要求，报错
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test;
+
+CT-01388, Unable to execute policy function, reason: Insufficient privilege or function invalid
+SQL>
+SQL> conn user2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE function function_test(P_Schema in varchar2, P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id is where';
+  5 end function_test;
+  6 /
+
+Succeed.
+
+SQL> -- 策略函数返回的谓词语法不合要求，报错
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test;
+
+CT-01388, Unable to execute policy function, reason: function convert to condition failed
+SQL>
+SQL> conn user2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE function function_test(P_Schema in varchar2, P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id > 1';
+  5 end function_test;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> -- 权限收回，不能跨用户，执行策略函数失败
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke execute on user2.Fn_GetPolicy from user1;
+
+Succeed.
+
+SQL> revoke execute on user2.function_test from user1;
+
+Succeed.
+
+SQL> grant create session to user1;
+
+Succeed.
+
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test;
+
+CT-01388, Unable to execute policy function, reason: Insufficient privilege or function invalid
+SQL>
+SQL> -- 策略增加到2条：id>1 和 id < 4
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant execute on user2.Fn_GetPolicy to user1;
+
+Succeed.
+
+SQL> grant execute on user2.function_test to user1;
+
+Succeed.
+
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE function Fn_GetPolicy(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id>1';
+  5 end Fn_GetPolicy;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> conn user2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE function function_test(P_Schema in varchar2, P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id < 4';
+  5 end function_test;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','policy_test23');
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+
+0 rows fetched.
+
+SQL>
+SQL> -- 重新建表user1.test
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> drop table test;
+
+Succeed.
+
+SQL> create table test (id int, tel varchar(20));
+
+Succeed.
+
+SQL> insert into test values(1, '15256566565');
+
+1 rows affected.
+
+SQL> insert into test values(2, '15856524324');
+
+1 rows affected.
+
+SQL> insert into test values(3, '13556568977');
+
+1 rows affected.
+
+SQL> insert into test values(4, '13556568900');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+1            15256566565
+2            15856524324
+3            13556568977
+4            13556568900
+
+4 rows fetched.
+
+SQL>
+SQL> --  新增策略（select、delete类型），当前一共两条策略生效
+SQL> conn / as sysdba
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test','user2','function_test', 'select,delete',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test_user1','user1','Fn_GetPolicy', 'select,delete',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> --  select现在有两条策略生效（id > 1 and id < 4）
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+2            15856524324
+3            13556568977
+
+2 rows fetched.
+
+SQL> -- update类型不在策略里，所有记录都生效
+SQL> update test set TEL='1888888000';
+
+4 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> --  delete和select一样，有两条策略生效（id > 1 and id < 4）
+SQL> delete from test;
+
+2 rows affected.
+
+SQL>
+SQL>
+SQL> --  grant 权限测试
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant execute on dbe_ac_row to user1;
+
+Succeed.
+
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','POLICY_TEST_USER1');
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke execute on dbe_ac_row from user1;
+
+Succeed.
+
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','policy_test');
+  4 end;
+  5 /
+
+CT-00944, PL/SQL(USER1.ANONYMOUS BLOCK) terminated with compiling errors
+[3:2] PLC-01001 Permissions were insufficient
+
+SQL>
+SQL> -------------  新增exempt policy access权限，授予后不受策略限制 DTS2020011604427------
+SQL> -- 策略增加到2条：id>1 和 id < 4
+SQL> conn / as sysdba
+
+connected.
+
+SQL> CREATE OR REPLACE function Fn_GetTest(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'AA>10';
+  5 end Fn_GetTest;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> grant execute on user2.Fn_GetPolicy to user1;
+
+Succeed.
+
+SQL> grant execute on user2.function_test to user1;
+
+Succeed.
+
+SQL> grant EXEMPT ACCESS POLICY to user1;
+
+Succeed.
+
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE function Fn_GetPolicy(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id>1';
+  5 end Fn_GetPolicy;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> conn user2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE OR REPLACE function function_test(P_Schema in varchar2, P_Object in varchar2) return varchar2
+  2 as
+  3 begin
+  4 return 'id < 4';
+  5 end function_test;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> call DBE_AC_ROW.DROP_POLICY('user1','test','policy_test');
+
+PL/SQL procedure successfully completed.
+
+SQL> call DBE_AC_ROW.DROP_POLICY('user1','test','policy_test_user1');
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_AC_ROW.DROP_POLICY) terminated with execute errors
+CT-00708, The object policy POLICY_TEST_USER1 does not exist
+
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+
+0 rows fetched.
+
+SQL>
+SQL> -- 重新建表user1.test
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> drop table test;
+
+Succeed.
+
+SQL> create table test (id int, tel varchar(20));
+
+Succeed.
+
+SQL> insert into test values(1, '15256566565');
+
+1 rows affected.
+
+SQL> insert into test values(2, '15856524324');
+
+1 rows affected.
+
+SQL> insert into test values(3, '13556568977');
+
+1 rows affected.
+
+SQL> insert into test values(4, '13556568900');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+1            15256566565
+2            15856524324
+3            13556568977
+4            13556568900
+
+4 rows fetched.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test','user2','function_test', 'select,delete',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test','policy_test_user1','user1','Fn_GetPolicy', 'select,delete',true);
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> select * from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL CHK_OPTION ENABLE LONG_PREDICATE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ---------- ------ --------------
+USER1                                                            TEST                                                             POLICY_TEST                                                      USER2                                                            FUNCTION_TEST                                                    YES NO  NO  YES NO         YES    NO
+USER1                                                            TEST                                                             POLICY_TEST_USER1                                                USER1                                                            FN_GETPOLICY                                                     YES NO  NO  YES NO         YES    NO
+
+2 rows fetched.
+
+SQL>
+SQL> --  select现在策略都不生效
+SQL> conn user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test;
+
+ID           TEL
+------------ --------------------
+1            15256566565
+2            15856524324
+3            13556568977
+4            13556568900
+
+4 rows fetched.
+
+SQL> --  update现在策略都不生效，所有记录都更新
+SQL> update test set TEL='1888888000';
+
+4 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> --  delete和select一样，现在策略都不生效
+SQL> delete from test;
+
+4 rows affected.
+
+SQL>
+SQL>
+SQL> ------------------- 同名词的策略禁止添加 ---------------------
+SQL> create synonym test_syn for test;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> declare
+  2 Begin
+  3 	dbe_ac_row.add_policy('user1','test_syn','policy_test11','user2','function_test', 'select,delete',true);
+  4 end;
+  5 /
+
+CT-00932, [3:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[3:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00613, Invalid operation, please set rule on common table
+
+SQL>
+SQL> -- DTS2020011315701/	DTS2020011315626
+SQL> conn / as sysdba
+
+connected.
+
+SQL> CREATE OR REPLACE FUNCTION Fn_GetPolicy_000(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2    AS
+  3 BEGIN
+  4 RETURN 'ID>2';
+  5 END Fn_GetPolicy_000;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> drop table if exists t1 ;
+
+Succeed.
+
+SQL> create table t1(a int) nologging;
+
+CT-00130, Operation create nologging table is not supported on cluster mode
+SQL> call dbe_ac_row.add_policy('sys','t1','policy_001','sys','Fn_GetPolicy_000','select',TRUE);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00843, The table or view SYS.T1 does not exist.
+
+SQL>
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> create table t1(a int);
+
+Succeed.
+
+SQL> create or replace view t1_view as select * from t1;
+
+Succeed.
+
+SQL> call dbe_ac_row.add_policy('sys','t1_view','policy_001','sys','Fn_GetPolicy_000','select',TRUE);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00613, Invalid operation, please set rule on common table
+
+SQL>
+SQL> drop table t1;
+
+Succeed.
+
+SQL> create GLOBAL TEMPORARY  table t1(i int);
+
+Succeed.
+
+SQL> call dbe_ac_row.add_policy('sys','t1','policy_001','sys','Fn_GetPolicy_000','select',TRUE);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00613, Invalid operation, please set rule on common table
+
+SQL>
+SQL> drop table t1 ;
+
+Succeed.
+
+SQL> create table t1(i int)
+  2     partition by range (i)
+  3 (partition part_1 values less than (1),partition part_2 values less than (maxvalue));
+
+Succeed.
+
+SQL> call dbe_ac_row.add_policy('sys','t1','policy_001','sys','Fn_GetPolicy_000','select',TRUE);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00613, Invalid operation, please set rule on common table
+
+SQL>
+SQL> call dbe_ac_row.add_policy('sys','SYS_TALES','policy_001','sys','Fn_GetPolicy_000','select',TRUE);
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00843, The table or view SYS.SYS_TALES does not exist.
+
+SQL>
+SQL> drop FUNCTION Fn_GetPolicy_000;
+
+Succeed.
+
+SQL>
+SQL> -------------------  VPD: 删除测试数据 ------------------------
+SQL> conn / as sysdba
+
+connected.
+
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+USER1                                                            TEST                                                             POLICY_TEST                                                      USER2                                                            FUNCTION_TEST                                                    YES NO  NO  YES YES
+USER1                                                            TEST                                                             POLICY_TEST_USER1                                                USER1                                                            FN_GETPOLICY                                                     YES NO  NO  YES YES
+
+2 rows fetched.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','policy_test');
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 Begin
+  3 	DBE_AC_ROW.DROP_POLICY('user1','test','POLICY_TEST_USER1');
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> --  DTS2020020606286
+SQL> --  reach the policy count limit:32
+SQL> DECLARE
+  2 idx INTEGER;
+  3   SQL_STR VARCHAR(30);
+  4 BEGIN
+  5 FOR idx IN 0..32 LOOP
+  6     SQL_STR := 'policy_limit_test'||idx;
+  7 	dbe_ac_row.add_policy('user1','test',''||SQL_STR||'','user2','Fn_GetPolicy', 'select',true);
+  8 END LOOP;
+  9 END;
+ 10 /
+
+CT-00932, [7:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[7:2] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00706, The number 32 reached the upper limit of table's policies.
+
+SQL>
+SQL> select COUNT(1) from sys_policies where PNAME like 'POLICY_LIMIT_TEST%';
+
+COUNT(1)
+--------------------
+32
+
+1 rows fetched.
+
+SQL>
+SQL> DECLARE
+  2 idx INTEGER;
+  3   SQL_STR VARCHAR(30);
+  4 BEGIN
+  5 FOR idx IN 0..31 LOOP
+  6     SQL_STR := 'policy_limit_test'||idx;
+  7 	DBE_AC_ROW.DROP_POLICY('user1','test',''||SQL_STR||'');
+  8 END LOOP;
+  9 END;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> drop user if exists user1 cascade;
+
+Succeed.
+
+SQL> drop user if exists user2 cascade;
+
+Succeed.
+
+SQL> drop user if exists user3 cascade;
+
+Succeed.
+
+SQL>
+SQL> --  DTS2020012100830
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists cf1 cascade;
+
+Succeed.
+
+SQL> create user cf1 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to  cf1;
+
+Succeed.
+
+SQL> create table cf1.t1(id int);
+
+Succeed.
+
+SQL> insert into cf1.t1 values(1),(2),(3),(4);
+
+4 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from cf1.t1;
+
+ID
+------------
+1
+2
+3
+4
+
+4 rows fetched.
+
+SQL> CREATE OR REPLACE FUNCTION Fn_GetPolicy_000(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2    AS
+  3 BEGIN
+  4 RETURN 'id>2';
+  5 END Fn_GetPolicy_000;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> call dbe_ac_row.add_policy('cf1','t1','policy_cf_1','sys','Fn_GetPolicy_000','select',TRUE);
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from cf1.t1;
+
+ID
+------------
+1
+2
+3
+4
+
+4 rows fetched.
+
+SQL> grant EXECUTE on Fn_GetPolicy_000 to cf1;
+
+Succeed.
+
+SQL> conn cf1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL>
+SQL> update t1 set id = 3;
+
+4 rows affected.
+
+SQL> delete from t1;
+
+4 rows affected.
+
+SQL>
+SQL> --  DTS2020012103832 delete policy before drop
+SQL> drop table t1;
+
+CT-00613, Invalid operation, the table has policy, please drop policy firstly.
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> call DBE_AC_ROW.DROP_POLICY('cf1','t1','policy_cf_1');
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> drop table t1;
+
+Succeed.
+
+SQL> drop user cf1 cascade;
+
+Succeed.
+
+SQL>
+SQL> --  DTS2020012100481
+SQL> drop user if exists cf1 cascade;
+
+Succeed.
+
+SQL> create user cf1 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to  cf1;
+
+Succeed.
+
+SQL> create table cf1.t1(id int);
+
+Succeed.
+
+SQL> insert into cf1.t1 values(1),(2),(3),(4);
+
+4 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from cf1.t1;
+
+ID
+------------
+1
+2
+3
+4
+
+4 rows fetched.
+
+SQL> CREATE OR REPLACE FUNCTION Fn_GetPolicy_000(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2    AS
+  3 BEGIN
+  4 RETURN 'id>2';
+  5 END Fn_GetPolicy_000;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> call dbe_ac_row.add_policy('cf1','t1','policy_cf_1','sys','Fn_GetPolicy_000','select',TRUE);
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from cf1.t1;
+
+ID
+------------
+1
+2
+3
+4
+
+4 rows fetched.
+
+SQL> grant EXECUTE on   Fn_GetPolicy_000 to cf1;
+
+Succeed.
+
+SQL> conn cf1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from cf1.t1;
+
+ID
+------------
+3
+4
+
+2 rows fetched.
+
+SQL> --  增加EXEMPT，豁免
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant EXEMPT ACCESS POLICY to cf1;
+
+Succeed.
+
+SQL>
+SQL> conn cf1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from t1;
+
+ID
+------------
+1
+2
+3
+4
+
+4 rows fetched.
+
+SQL> select * from cf1.t1;
+
+ID
+------------
+1
+2
+3
+4
+
+4 rows fetched.
+
+SQL>
+SQL> --  去掉EXEMPT 策略生效
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke EXEMPT ACCESS POLICY from cf1;
+
+Succeed.
+
+SQL>
+SQL> conn cf1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from t1;
+
+ID
+------------
+3
+4
+
+2 rows fetched.
+
+SQL> select * from cf1.t1;
+
+ID
+------------
+3
+4
+
+2 rows fetched.
+
+SQL>
+SQL> --  DTS2020012103832
+SQL> alter table t1 rename to test33;
+
+Succeed.
+
+SQL> select * from t1;
+
+CT-00843, [1:15]The table or view CF1.T1 does not exist.
+SQL> select * from test33;
+
+ID
+------------
+3
+4
+
+2 rows fetched.
+
+SQL> select * from cf1.test33;
+
+ID
+------------
+3
+4
+
+2 rows fetched.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> call DBE_AC_ROW.DROP_POLICY('cf1','t1','policy_cf_1');
+
+CT-00932, [1:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_AC_ROW.DROP_POLICY) terminated with execute errors
+CT-00843, The table or view CF1.T1 does not exist.
+
+SQL> select OBJECT_OWNER,OBJECT_NAME,POLICY_NAME,PF_OWNER,FUNCTION,SEL,INS,UPD,DEL,ENABLE from adm_policies order by POLICY_NAME;
+
+OBJECT_OWNER                                                     OBJECT_NAME                                                      POLICY_NAME                                                      PF_OWNER                                                         FUNCTION                                                         SEL INS UPD DEL ENABLE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --- --- --- --- ------
+CF1                                                              TEST33                                                           POLICY_CF_1                                                      SYS                                                              FN_GETPOLICY_000                                                 YES NO  NO  NO  YES
+
+1 rows fetched.
+
+SQL> call DBE_AC_ROW.DROP_POLICY('cf1','test33','policy_cf_1');
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> conn cf1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from test33;
+
+ID
+------------
+1
+2
+3
+4
+
+4 rows fetched.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user cf1 cascade;
+
+Succeed.
+
+SQL>
+SQL> --
+SQL> drop user if exists DBE_AC_ROW_DML_0 cascade;
+
+Succeed.
+
+SQL> create user DBE_AC_ROW_DML_0 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create table,create session to DBE_AC_ROW_DML_0;
+
+Succeed.
+
+SQL> grant create PROCEDURE to DBE_AC_ROW_DML_0;
+
+Succeed.
+
+SQL> grant EXECUTE on dbe_ac_row to DBE_AC_ROW_DML_0;
+
+Succeed.
+
+SQL> conn DBE_AC_ROW_DML_0/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists dbe_ac_row_DML_table_000;
+
+Succeed.
+
+SQL> create table DBE_AC_ROW_DML_table_000 (id int);
+
+Succeed.
+
+SQL> insert into DBE_AC_ROW_DML_table_000 values(1),(2),(3),(4);
+
+4 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> CREATE OR REPLACE FUNCTION Fn_DML_G00(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2    AS
+  3 BEGIN
+  4 RETURN 'ID<2';
+  5 END Fn_DML_G00;
+  6 /
+
+Succeed.
+
+SQL> call DBE_AC_ROW.add_policy('DBE_AC_ROW_DML_0','DBE_AC_ROW_DML_table_000','DBE_AC_ROW_dml_000','DBE_AC_ROW_DML_0','Fn_DmL_G00','select');
+
+PL/SQL procedure successfully completed.
+
+SQL> conn DBE_AC_ROW_DML_0/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call DBE_AC_ROW.ENABLE_POLICY('DBE_AC_ROW_DML_0','DBE_AC_ROW_DML_table_000','DBE_AC_ROW_dml_000',true);
+
+PL/SQL procedure successfully completed.
+
+SQL> CREATE or replace procedure DBE_AC_ROW_proc_1()  as
+  2 i INT;
+  3 BEGIN
+  4 insert into DBE_AC_ROW_DML_table_000 select * from DBE_AC_ROW_DML_table_000 commit;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> call DBE_AC_ROW_proc_1() ;
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from DBE_AC_ROW_DML_table_000;
+
+ID
+------------
+1
+1
+
+2 rows fetched.
+
+SQL> call DBE_AC_ROW.ENABLE_POLICY('DBE_AC_ROW_DML_0','DBE_AC_ROW_DML_table_000','DBE_AC_ROW_dml_000',false);
+
+PL/SQL procedure successfully completed.
+
+SQL> call DBE_AC_ROW_proc_1() ;
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from DBE_AC_ROW_DML_table_000;
+
+ID
+------------
+1
+2
+3
+4
+1
+1
+2
+3
+4
+1
+
+10 rows fetched.
+
+SQL> -- 清理环境
+SQL> call dbe_ac_row.enable_policy('DBE_AC_ROW_DML_0','DBE_AC_ROW_DML_table_000','DBE_AC_ROW_DML_000',true);
+
+PL/SQL procedure successfully completed.
+
+SQL> delete from DBE_AC_ROW_DML_table_000;
+
+10 rows affected.
+
+SQL> insert into DBE_AC_ROW_DML_table_000 values (1),(2),(3),(4);
+
+4 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> -- 问题相关操作
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists DBE_AC_ROW_DML_0 cascade;
+
+CT-00613, Invalid operation, the table has policy, please drop policy firstly.
+SQL> conn DBE_AC_ROW_DML_0/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists DBE_AC_ROW_DML_table_000;
+
+CT-00613, Invalid operation, the table has policy, please drop policy firstly.
+SQL> call dbe_ac_row.drop_policy('DBE_AC_ROW_DML_0','DBE_AC_ROW_DML_table_000','DBE_AC_ROW_DML_000');
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists DBE_AC_ROW_DML_0 cascade;
+
+Succeed.
+
+SQL>
+SQL> -- DTS2020032409512
+SQL> drop user if exists dbe_ac_row_fun_0 cascade;
+
+Succeed.
+
+SQL> create user dbe_ac_row_fun_0 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create table,create session to dbe_ac_row_fun_0;
+
+Succeed.
+
+SQL> grant create PROCEDURE to dbe_ac_row_fun_0;
+
+Succeed.
+
+SQL> grant EXECUTE on dbe_ac_row to dbe_ac_row_fun_0;
+
+Succeed.
+
+SQL> conn dbe_ac_row_fun_0/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists dbe_ac_row_fun_table_000;
+
+Succeed.
+
+SQL> create table dbe_ac_row_fun_table_000 (id int);
+
+Succeed.
+
+SQL> insert into dbe_ac_row_fun_table_000 values(1),(2),(3),(4);
+
+4 rows affected.
+
+SQL> create table dbe_ac_row_fun_table_001 (id int);
+
+Succeed.
+
+SQL> insert into dbe_ac_row_fun_table_001 values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> CREATE OR REPLACE FUNCTION Fn_fun_G00(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2 AS
+  3 fun_G00 VARCHAR(128);
+  4 BEGIN
+  5 select id into fun_G00 from dbe_ac_row_fun_table_001;
+  6 if fun_G00>0 then
+  7     RETURN 'ID>0';
+  8 else
+  9     RETURN 'ID=3';
+ 10 end if;
+ 11 END Fn_fun_G00;
+ 12 /
+
+Succeed.
+
+SQL> call dbe_ac_row.add_policy('dbe_ac_row_fun_0','dbe_ac_row_fun_table_000','dbe_ac_row_fun_000','dbe_ac_row_fun_0','Fn_fun_G00','select');
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> select * from dbe_ac_row_fun_table_000;
+
+ID
+------------
+1
+2
+3
+4
+
+4 rows fetched.
+
+SQL> update dbe_ac_row_fun_table_001 set id=-1;---修改策略函数的如参值，查询对象
+
+1 rows affected.
+
+SQL> select * from dbe_ac_row_fun_table_000;---查询结果改变，通过关闭软解析实现
+
+ID
+------------
+3
+
+1 rows fetched.
+
+SQL>
+SQL> conn dbe_ac_row_fun_0/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> call dbe_ac_row.drop_policy('dbe_ac_row_fun_0','dbe_ac_row_fun_table_000','dbe_ac_row_fun_000');
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table dbe_ac_row_fun_table_000;
+
+Succeed.
+
+SQL> drop table dbe_ac_row_fun_table_001;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists dbe_ac_row_fun_0 cascade;
+
+Succeed.
+
+SQL> drop user if exists dbe_ac_row_fun_0_1 cascade;
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> --  1. SYS用户登录，创建用户USER1，并授权
+SQL> conn / as sysdba
+
+connected.
+
+SQL> DROP USER IF EXISTS USER_TS CASCADE;
+
+Succeed.
+
+SQL> CREATE USER USER_TS IDENTIFIED BY CANTIAN_234;
+
+Succeed.
+
+SQL> GRANT CREATE SESSION, CONNECT, RESOURCE TO USER_TS;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON SYS.dbe_ac_row TO USER_TS WITH GRANT OPTION;
+
+Succeed.
+
+SQL>
+SQL> --  2. 切换到USER1用户，建表并插入数据
+SQL> conn USER_TS/CANTIAN_234@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS TEST;
+
+Succeed.
+
+SQL> CREATE TABLE TEST (ID INT, TEL VARCHAR(20));
+
+Succeed.
+
+SQL> INSERT INTO TEST VALUES(1, '15256566565');
+
+1 rows affected.
+
+SQL> INSERT INTO TEST VALUES(2, '15856524324');
+
+1 rows affected.
+
+SQL> INSERT INTO TEST VALUES(3, '13556568977');
+
+1 rows affected.
+
+SQL> INSERT INTO TEST VALUES(4, '13556568900');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> --  3. 创建策略函数Fn_GetPolicy0。
+SQL> CREATE OR REPLACE FUNCTION FN_GETPOLICY0(P_SCHEMA IN VARCHAR2,P_OBJECT IN VARCHAR2) RETURN VARCHAR2
+  2 AS
+  3 BEGIN
+  4 RETURN 'ID>2';
+  5 END FN_GETPOLICY0;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> --  4. 添加安全策略。
+SQL> SET SERVEROUTPUT ON
+
+ON
+SQL> CALL dbe_ac_row.add_policy('USER_TS','TEST','POLICY_TEST','USER_TS','FN_GETPOLICY0', 'SELECT',TRUE);
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> --  5. 修复解析报错问题
+SQL> select * from test a, test b;
+
+ID           TEL                  ID           TEL
+------------ -------------------- ------------ --------------------
+3            13556568977          3            13556568977
+3            13556568977          4            13556568900
+4            13556568900          3            13556568977
+4            13556568900          4            13556568900
+
+4 rows fetched.
+
+SQL>
+SQL> DROP TABLE IF EXISTS T2;
+
+Succeed.
+
+SQL> CREATE TABLE T2 (ID INT, C2 INT);
+
+Succeed.
+
+SQL> INSERT INTO T2 VALUES (3, 1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> --  6. 修复绕过策略的问题
+SQL> select a.* from test a, t2 test;
+
+ID           TEL
+------------ --------------------
+3            13556568977
+4            13556568900
+
+2 rows fetched.
+
+SQL>
+SQL> --  7. 清理测试数据
+SQL> DROP FUNCTION FN_GETPOLICY0;
+
+Succeed.
+
+SQL> CALL dbe_ac_row.drop_policy('USER_TS','TEST','POLICY_TEST');
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> DROP TABLE IF EXISTS TEST;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T2;
+
+Succeed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> drop table if exists dbe_ac_row_fun_table_006;
+
+Succeed.
+
+SQL> create table dbe_ac_row_fun_table_006 (id int);
+
+Succeed.
+
+SQL> insert into dbe_ac_row_fun_table_006 values(1),(2),(3),(4);
+
+4 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL>
+SQL> CREATE OR REPLACE FUNCTION Fn_fun_G06(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2    AS
+  3    fun_G00 VARCHAR(128);
+  4 BEGIN
+  5
+  6 return 'id>3';
+  7 END Fn_fun_G06;
+  8 /
+
+Succeed.
+
+SQL> call dbe_ac_row.add_policy('USER_TS','dbe_ac_row_fun_table_006','dbe_ac_row_fun_006','USER_TS','Fn_fun_G06','select');
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> select * from dbe_ac_row_fun_table_006;
+
+ID
+------------
+4
+
+1 rows fetched.
+
+SQL> select ENABLE from my_policies;
+
+ENABLE
+------
+YES
+
+1 rows fetched.
+
+SQL>
+SQL> CREATE OR REPLACE FUNCTION Fn_fun_G06(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2    AS
+  3    fun_G00 VARCHAR(128);
+  4 BEGIN
+  5       dbe_ac_row.enable_policy('USER_TS','dbe_ac_row_fun_table_006','dbe_ac_row_fun_006',false);
+  6
+  7 return 'id>3';
+  8 END Fn_fun_G06;
+  9 /
+
+Succeed.
+
+SQL>
+SQL> select ENABLE from my_policies;
+
+ENABLE
+------
+YES
+
+1 rows fetched.
+
+SQL> select * from dbe_ac_row_fun_table_006;
+
+CT-01388, Unable to execute policy function, reason: failed to execute
+SQL> select ENABLE from my_policies;
+
+ENABLE
+------
+YES
+
+1 rows fetched.
+
+SQL> call dbe_ac_row.drop_policy('USER_TS','dbe_ac_row_fun_table_006','dbe_ac_row_fun_006');
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> DROP USER USER_TS CASCADE;
+
+Succeed.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+
+

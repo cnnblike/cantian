@@ -1,0 +1,34 @@
+
+
+SQL> DROP TABLE IF EXISTS ROW_CHAIN_TABLE;
+
+Succeed.
+
+SQL> CREATE TABLE ROW_CHAIN_TABLE(ID INT,A VARCHAR(8000),B VARCHAR(8000)) CRMODE ROW;
+
+Succeed.
+
+SQL> INSERT INTO ROW_CHAIN_TABLE VALUES(1,LPAD('A',8000,'A'),LPAD('B',8000,'B'));
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> SYNCPOINT SP_B1_HEAP_GET_CHAIN_ROW SIGNAL start_get_chain_row RAISE 1;
+
+Succeed.
+
+SQL> SYNCPOINT SP_B2_HEAP_GET_CHAIN_ROW WAIT truncate_table;
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ROW_CHAIN_TABLE;
+
+CT-00849, table has been dropped or truncate
+SQL> 
+
+

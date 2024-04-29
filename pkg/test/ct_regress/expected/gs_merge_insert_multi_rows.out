@@ -1,0 +1,99 @@
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL>   create table t1(id int,name varchar2(10));
+
+Succeed.
+
+SQL>   alter table t1 add constraint con_uniq_001 unique(id);
+
+Succeed.
+
+SQL>   insert into t1 values(1,'aa');
+
+1 rows affected.
+
+SQL>   insert into t1 values(2,'bb');
+
+1 rows affected.
+
+SQL>   insert into t1 values(3,'cc');
+
+1 rows affected.
+
+SQL>    insert into t1 values(4,'dd');
+
+1 rows affected.
+
+SQL>     insert into t1 values(5,'ee');
+
+1 rows affected.
+
+SQL>   insert into t1 values(6,'ff');
+
+1 rows affected.
+
+SQL> 
+SQL>    create table t2(id int,name varchar2(10));
+
+Succeed.
+
+SQL>    
+SQL>      insert into t2 values(1,'aaa');
+
+1 rows affected.
+
+SQL>   insert into t2 values(4,'ddd');
+
+1 rows affected.
+
+SQL>   insert into t2 values(5,'bbb');
+
+1 rows affected.
+
+SQL>   insert into t2 values(6,'ccc');
+
+1 rows affected.
+
+SQL>   insert into t2 values(7,'fff');
+
+1 rows affected.
+
+SQL>   commit;
+
+Succeed.
+
+SQL> merge into  t2 using t1 on(t2.id=t1.id)
+  2 when matched then update set name=t2.id||t2.name
+  3 when not matched then insert (id,name) values(t1.id,t1.name) ,((t1.id+t1.id)*10,t1.name||'a'),((t1.id+t1.id)*100,t1.name||'b'),((t1.id+t1.id)*1000,t1.name||'c');
+
+12 rows affected.
+
+SQL> select * from t2 order by id,name;
+
+ID           NAME      
+------------ ----------
+1            1aaa      
+2            bb        
+3            cc        
+4            4ddd      
+5            5bbb      
+6            6ccc      
+7            fff       
+40           bba       
+60           cca       
+400          bbb       
+600          ccb       
+4000         bbc       
+6000         ccc       
+
+13 rows fetched.
+
+SQL> 
+
+

@@ -1,0 +1,226 @@
+
+
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> create user user_security_1 identified by Test1234 account lock password expire;
+
+Succeed.
+
+SQL> grant dba to user_security_1;
+
+Succeed.
+
+SQL> select name, astatus from SYS_USERS where name = 'USER_SECURITY_1';
+
+NAME                                                             ASTATUS     
+---------------------------------------------------------------- ------------
+USER_SECURITY_1                                                  9           
+
+1 rows fetched.
+
+SQL> 
+SQL> connect user_security_1/Test1234@127.0.0.1:1611
+
+CT-00328, The account was locked
+
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> alter user user_security_1  account unlock;
+
+Succeed.
+
+SQL> select name, astatus from SYS_USERS where name = 'USER_SECURITY_1';
+
+NAME                                                             ASTATUS     
+---------------------------------------------------------------- ------------
+USER_SECURITY_1                                                  1           
+
+1 rows fetched.
+
+SQL> 
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> alter user user_security_1  identified by Cantian12345 replace Test12345;
+
+CT-00822, When the password of an existing database user was changed, the original password was incorrectly entered.
+SQL> alter user user_security_1  identified by Cantian12345 replace Test1234;
+
+Succeed.
+
+SQL> select name, astatus from SYS_USERS where name = 'USER_SECURITY_1';
+
+NAME                                                             ASTATUS     
+---------------------------------------------------------------- ------------
+USER_SECURITY_1                                                  0           
+
+1 rows fetched.
+
+SQL> connect user_security_1/Cantian12345@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> connect user_security_1/Test123456@127.0.0.1:1611
+
+CT-00329, Incorrect user or password
+
+SQL> connect user_security_3/Test123456@127.0.0.1:1611
+
+CT-00329, Incorrect user or password
+
+SQL> connect user_security_1/Cantian12345@127.0.0.1:1611
+
+connected.
+
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select name, astatus from SYS_USERS where name = 'USER_SECURITY_1';
+
+NAME                                                             ASTATUS     
+---------------------------------------------------------------- ------------
+USER_SECURITY_1                                                  0           
+
+1 rows fetched.
+
+SQL> 
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> create user user_security_2 identified by Test1234 account lock;
+
+Succeed.
+
+SQL> grant dba to user_security_2;
+
+Succeed.
+
+SQL> select name, astatus from SYS_USERS where name = 'USER_SECURITY_2';
+
+NAME                                                             ASTATUS     
+---------------------------------------------------------------- ------------
+USER_SECURITY_2                                                  8           
+
+1 rows fetched.
+
+SQL> connect user_security_2/Test1234@127.0.0.1:1611
+
+CT-00328, The account was locked
+
+SQL> 
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> revoke dba from user_security_1;
+
+Succeed.
+
+SQL> revoke dba from user_security_2;
+
+Succeed.
+
+SQL> select sleep(2) from dual;
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> drop user if exists user_security_1 cascade;
+
+Succeed.
+
+SQL> drop user if exists user_security_2 cascade;
+
+Succeed.
+
+SQL> create user user_lock_1 identified by Test1234 account lock;
+
+Succeed.
+
+SQL> grant dba to user_lock_1;
+
+Succeed.
+
+SQL> 
+SQL> connect user_lock_1/Test1234@127.0.0.1:1611
+
+CT-00328, The account was locked
+
+SQL> connect user_lock_1/Cantian12345@127.0.0.1:1611
+
+CT-00328, The account was locked
+
+SQL> connect sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> revoke dba from user_lock_1;
+
+Succeed.
+
+SQL> select sleep(2) from dual;
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> drop user if exists user_lock_1 cascade;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = 1;
+
+Succeed.
+
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = -1;
+
+CT-00601, Sql syntax error: Convert double failed, text = -
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = 0.001;
+
+Succeed.
+
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = 1.1;
+
+CT-00202, The parameter value "NORMAL_USER_RESERVED_SESSIONS_FACTOR" was invalid
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = 100;
+
+CT-00202, The parameter value "NORMAL_USER_RESERVED_SESSIONS_FACTOR" was invalid
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = 0.999;
+
+Succeed.
+
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = 1.111;
+
+CT-00202, The parameter value "NORMAL_USER_RESERVED_SESSIONS_FACTOR" was invalid
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = (1 - 0.11);
+
+CT-00601, Sql syntax error: Convert double failed, text = 1 - 0.11
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = 0;
+
+Succeed.
+
+SQL> alter system set NORMAL_USER_RESERVED_SESSIONS_FACTOR = 1;
+
+Succeed.
+
+SQL> 
+SQL> 
+
+

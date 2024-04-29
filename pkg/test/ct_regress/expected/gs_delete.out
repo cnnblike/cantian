@@ -1,0 +1,697 @@
+
+
+SQL> DROP TABLE IF EXISTS T_DELETE_1;
+
+Succeed.
+
+SQL> CREATE TABLE T_DELETE_1 (F_INT1 INT, F_INT2 INT, F_CHAR CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> INSERT INTO T_DELETE_1 VALUES(1,11,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DELETE_1 VALUES(2,22,'B','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DELETE_1 VALUES(3,33,'C','2017-12-13 08:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DELETE_1 VALUES(2,22,'B','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DELETE_1 VALUES(5,55,'E','2017-12-21 18:29:10');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DELETE_1 VALUES(1,11,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DELETE_1 VALUES(4,44,'D','2017-12-13 13:09:00');
+
+1 rows affected.
+
+SQL> DROP TABLE IF EXISTS T_DELETE_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_DELETE_2 (F_INT1 INT, F_INT2 INT, F_CHAR CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> INSERT INTO T_DELETE_2 VALUES(1,11,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_DELETE_2 VALUES(2,22,'B','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM T_DELETE_1;
+
+F_INT1       F_INT2       F_CHAR           F_DATE                
+------------ ------------ ---------------- ----------------------
+1            11           A                2017-12-11 14:08:00   
+2            22           B                2017-12-12 16:08:00   
+3            33           C                2017-12-13 08:08:00   
+2            22           B                2017-12-12 16:08:00   
+5            55           E                2017-12-21 18:29:10   
+1            11           A                2017-12-11 14:08:00   
+4            44           D                2017-12-13 13:09:00   
+
+7 rows fetched.
+
+SQL> SELECT * FROM T_DELETE_2;
+
+F_INT1       F_INT2       F_CHAR           F_DATE                
+------------ ------------ ---------------- ----------------------
+1            11           A                2017-12-11 14:08:00   
+2            22           B                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> DELETE T_DELETE_1 WHERE F_INT1=1 AND F_INT2=(SELECT F_INT2 FROM T_DELETE_2);
+
+CT-00915, More than one return value of SELECT INTO, EXECUTE IMMEDIATE, or a cursor was assigned to a common variable.
+SQL> DELETE T_DELETE_1 WHERE F_INT1=1 AND F_INT2=(SELECT F_INT2 FROM T_DELETE_2 WHERE F_INT1=1 AND F_INT2=11);
+
+2 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT F_INT1, F_INT2 FROM T_DELETE_1;
+
+F_INT1       F_INT2      
+------------ ------------
+2            22          
+3            33          
+2            22          
+5            55          
+4            44          
+
+5 rows fetched.
+
+SQL> DELETE T_DELETE_1 WHERE F_INT2=22;
+
+2 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT F_INT1, F_INT2 FROM T_DELETE_1;
+
+F_INT1       F_INT2      
+------------ ------------
+3            33          
+5            55          
+4            44          
+
+3 rows fetched.
+
+SQL> DELETE T_DELETE_1 WHERE F_INT1=3 AND F_INT2=(SELECT 22 FROM DUAL);
+
+0 rows affected.
+
+SQL> DELETE T_DELETE_1 WHERE F_INT1=3 AND F_INT2=(SELECT 33 FROM DUAL);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT F_INT1, F_INT2 FROM T_DELETE_1;
+
+F_INT1       F_INT2      
+------------ ------------
+5            55          
+4            44          
+
+2 rows fetched.
+
+SQL> DELETE T_DELETE_1 WHERE F_INT1=(SELECT 4 FROM DUAL) AND F_INT2=(SELECT 44 FROM DUAL);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT F_INT1, F_INT2 FROM T_DELETE_1;
+
+F_INT1       F_INT2      
+------------ ------------
+5            55          
+
+1 rows fetched.
+
+SQL> DROP VIEW IF EXISTS TEST_V1;
+
+Succeed.
+
+SQL> CREATE VIEW TEST_V1 AS SELECT * FROM T_DELETE_1;
+
+Succeed.
+
+SQL> DELETE TEST_V1;
+
+CT-00601, [1:8]Sql syntax error: view operation DELETE must based on instead of trigger but current view has no trigger
+SQL> DELETE FROM TEST_V1;
+
+CT-00601, [1:13]Sql syntax error: view operation DELETE must based on instead of trigger but current view has no trigger
+SQL> DELETE FROM T_DELETE_1,T_DELETE_2;
+
+CT-00601, [1:34]Sql syntax error:  USING expected but  found
+SQL> DELETE T_DELETE_1,T_DELETE_2;
+
+CT-00601, [1:29]Sql syntax error:  FROM expected but  found
+SQL> DELETE FROM T_DELETE_1,T_DELETE_2 FROM T_DELETE_1 JOIN T_DELETE_2 ON T_DELETE_1.F_INT1=T_DELETE_2.F_INT1;
+
+CT-00601, [1:35]Sql syntax error:  USING expected but FROM found
+SQL> DELETE T_DELETE_1,T_DELETE_2 USING T_DELETE_1 JOIN T_DELETE_2 ON T_DELETE_1.F_INT1=T_DELETE_2.F_INT1;
+
+CT-00601, [1:30]Sql syntax error:  FROM expected but USING found
+SQL> DELETE T_DELETE_1,T_DELETE_1 FROM T_DELETE_1 JOIN T_DELETE_2 ON T_DELETE_1.F_INT1=T_DELETE_2.F_INT1;
+
+CT-00601, [1:30]Sql syntax error: duplicated object FROM found
+SQL> DELETE T_DELETE_1 FROM T_DELETE_1 JOIN T_DELETE_1 ON T_DELETE_1.F_INT1=T_DELETE_1.F_INT1;
+
+CT-00601, [1:54]Sql syntax error: column ambiguously defined
+SQL> DELETE TT2 FROM T_DELETE_1 TT1 JOIN T_DELETE_2 ON TT1.F_INT1=T_DELETE_2.F_INT1;
+
+CT-00601, [1:8]Sql syntax error: unknown table TT2 in multi delete
+SQL> DELETE T_DELETE_1 FROM T_DELETE_1 TT1 JOIN T_DELETE_2 ON TT1.F_INT1=T_DELETE_2.F_INT1;
+
+CT-00601, [1:8]Sql syntax error: unknown table T_DELETE_1 in multi delete
+SQL> DELETE T_DELETE_1 FROM T_DELETE_1 FULL JOIN T_DELETE_2 ON TT1.F_INT1=T_DELETE_2.F_INT1;
+
+CT-00601, Sql syntax error: multi delete/update not support full join
+SQL> DELETE TT2 FROM T_DELETE_1 JOIN (SELECT * FROM T_DELETE_2) TT2 ON T_DELETE_1.F_INT1=TT2.F_INT1;
+
+CT-00130, [1:8]Operation delete table is not supported on view or system table
+SQL> DELETE V1 FROM T_DELETE_1 JOIN TEST_V1 V1 ON T_DELETE_1.F_INT1=V1.F_INT1;
+
+CT-00601, [1:32]Sql syntax error: view operation DELETE must based on instead of trigger but current view has no trigger
+SQL> DELETE TT1 FROM T_DELETE_1 TT1 JOIN T_DELETE_2 ON TT1.F_INT1=T_DELETE_2.F_INT1;
+
+0 rows affected.
+
+SQL> DELETE TT1 TT2 FROM T_DELETE_1 TT1 JOIN T_DELETE_2 ON TT1.F_INT1=T_DELETE_2.F_INT1;
+
+0 rows affected.
+
+SQL> DROP VIEW  TEST_V1;
+
+Succeed.
+
+SQL> DROP TABLE T_DELETE_1;
+
+Succeed.
+
+SQL> DROP TABLE T_DELETE_2;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TEMP_T1;
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE TEMP_T1(A INT, B INT);
+
+Succeed.
+
+SQL> INSERT INTO TEMP_T1 VALUES(5,5);
+
+1 rows affected.
+
+SQL> INSERT INTO TEMP_T1 VALUES(4,4);
+
+1 rows affected.
+
+SQL> INSERT INTO TEMP_T1 VALUES(3,3);
+
+1 rows affected.
+
+SQL> INSERT INTO TEMP_T1 VALUES(2,2);
+
+1 rows affected.
+
+SQL> INSERT INTO TEMP_T1 VALUES(1,1);
+
+1 rows affected.
+
+SQL> DELETE FROM TEMP_T1 ORDER BY A LIMIT 3;
+
+3 rows affected.
+
+SQL> SELECT * FROM TEMP_T1 ORDER BY A;
+
+A            B           
+------------ ------------
+4            4           
+5            5           
+
+2 rows fetched.
+
+SQL> DROP TABLE IF EXISTS TEMP_T1;
+
+Succeed.
+
+SQL> 
+SQL> --DELETE ORDERBY
+SQL> DROP TABLE IF EXISTS T1;
+
+Succeed.
+
+SQL> CREATE TABLE T1 (ID INTEGER, FIRST_NAME  VARCHAR(20) NOT NULL, LAST_NAME   VARCHAR(20) NOT NULL, CREDIT_LIMIT INTEGER);
+
+Succeed.
+
+SQL> INSERT INTO T1 VALUES (1, 'Li', 'Lei', 100);
+
+1 rows affected.
+
+SQL> INSERT INTO T1 VALUES (2, 'Han', 'Meimei', 2000);
+
+1 rows affected.
+
+SQL> DELETE FROM T1 ORDER BY 6;
+
+CT-00601, [1:25]Sql syntax error: ORDER BY item must be the number of a SELECT-list expression
+SQL> DELETE FROM T1 ORDER BY abc;
+
+CT-00601, [1:25]Sql syntax error: invalid column name 'ABC'
+SQL> DROP TABLE T1;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS test_del_temp_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS test_del_temp_2;
+
+Succeed.
+
+SQL> create table test_del_temp_1(a int);
+
+Succeed.
+
+SQL> create global temporary table test_del_temp_2(c int);
+
+Succeed.
+
+SQL> insert into test_del_temp_1 values(1);
+
+1 rows affected.
+
+SQL> insert into test_del_temp_1 values(2);
+
+1 rows affected.
+
+SQL> insert into test_del_temp_1 values(3);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into test_del_temp_2 values(2);
+
+1 rows affected.
+
+SQL> insert into test_del_temp_2 values(3);
+
+1 rows affected.
+
+SQL> delete test_del_temp_1 from test_del_temp_1 inner join test_del_temp_2 on test_del_temp_1.a=test_del_temp_2.c;
+
+2 rows affected.
+
+SQL> delete test_del_temp_2 from test_del_temp_1 inner join test_del_temp_2 on test_del_temp_1.a=test_del_temp_2.c;
+
+CT-00130, [1:56]Operation multi delete is not supported on temp table
+SQL> 
+SQL> drop table if exists delete_temptb_operation;
+
+Succeed.
+
+SQL> drop table if exists delete_temptb_policy;
+
+Succeed.
+
+SQL> drop table if exists delete_temptb_attribute;
+
+Succeed.
+
+SQL> create table delete_temptb_operation(id varchar(36) not null, apiid varchar(36)not null, res varchar(1024) not null, operation varchar(64) not null);
+
+Succeed.
+
+SQL> create table delete_temptb_policy (roid varchar(36) not null, name varchar(36) not null, value varchar(2048) not null);
+
+Succeed.
+
+SQL> create global temporary table delete_temptb_attribute(roid varchar(36) not null ,name varchar(36)not null, value varchar(2048));
+
+Succeed.
+
+SQL> insert into delete_temptb_operation(id,apiid,res,operation) values('d62e201c3e044764be51899366564b7a','2e4645926266ed4f9504196eda5a5944','/v1/openapi/instance','get');
+
+1 rows affected.
+
+SQL> insert into delete_temptb_policy(roid,name,value) values('d62e201c3e044764be51899366564b7a','plane','{"planes":["OM"]}');
+
+1 rows affected.
+
+SQL> insert into delete_temptb_policy(roid,name,value) values('d62e201c3e044764be51899366564b7a','route','{"service":"RCAccessConfigService_rest_ies_systemaccessservice"}');
+
+1 rows affected.
+
+SQL> insert into delete_temptb_policy(roid,name,value) values('d62e201c3e044764be51899366564b7a','auth','{"mode":"SSO"}');
+
+1 rows affected.
+
+SQL> delete p from delete_temptb_policy p left join delete_temptb_attribute a on p.roid = a.roid right join delete_temptb_operation o on o.id = p.roid 
+  2 where exists (select r.id from delete_temptb_operation r where r.apiid = '2e4645926266ed4f9504196eda5a5944' and p.roid = r.id);
+
+3 rows affected.
+
+SQL> drop table delete_temptb_operation;
+
+Succeed.
+
+SQL> drop table delete_temptb_policy;
+
+Succeed.
+
+SQL> drop table delete_temptb_attribute;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_delete_limit;
+
+Succeed.
+
+SQL> create table t_delete_limit(a int,b char(2));
+
+Succeed.
+
+SQL> insert into t_delete_limit values(1,'xx');
+
+1 rows affected.
+
+SQL> delete from t_delete_limit limit (3-1);
+
+1 rows affected.
+
+SQL> drop table t_delete_limit;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019072608546
+SQL> drop table if exists  t_order_base_001;
+
+Succeed.
+
+SQL> create table t_order_base_001(id int,c_int int not null,c_vchar varchar(100),c_clob clob,c_blob blob,c_date date);  
+
+Succeed.
+
+SQL> 
+SQL> create index idx_order_base_001_4 on t_order_base_001(to_char(c_int) asc,upper(c_vchar) desc);
+
+Succeed.
+
+SQL> insert into t_order_base_001 values(1,1000,'abc123',lpad('123abc',50,'abc'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> CREATE or replace procedure proc_insert(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5 		sqlst := 'insert into ' || tname ||' select id+'||i||',c_int+'||i||',c_vchar||'||i||',c_clob||'||i||',c_blob'||',c_date from '||tname|| ' where id=1';
+  6         execute immediate sqlst;
+  7   END LOOP;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> exec proc_insert('t_order_base_001',1,20);
+
+PL/SQL procedure successfully completed.
+
+SQL> select id, c_vchar from t_order_base_001 order by c_vchar;
+
+ID           C_VCHAR                                                         
+------------ ----------------------------------------------------------------
+1            abc123                                                          
+2            abc1231                                                         
+11           abc12310                                                        
+12           abc12311                                                        
+13           abc12312                                                        
+14           abc12313                                                        
+15           abc12314                                                        
+16           abc12315                                                        
+17           abc12316                                                        
+18           abc12317                                                        
+19           abc12318                                                        
+20           abc12319                                                        
+3            abc1232                                                         
+21           abc12320                                                        
+4            abc1233                                                         
+5            abc1234                                                         
+6            abc1235                                                         
+7            abc1236                                                         
+8            abc1237                                                         
+9            abc1238                                                         
+10           abc1239                                                         
+
+21 rows fetched.
+
+SQL> delete from t_order_base_001 order by c_vchar asc limit 3,5;
+
+5 rows affected.
+
+SQL> select id, c_vchar from t_order_base_001 order by c_vchar;
+
+ID           C_VCHAR                                                         
+------------ ----------------------------------------------------------------
+1            abc123                                                          
+2            abc1231                                                         
+11           abc12310                                                        
+17           abc12316                                                        
+18           abc12317                                                        
+19           abc12318                                                        
+20           abc12319                                                        
+3            abc1232                                                         
+21           abc12320                                                        
+4            abc1233                                                         
+5            abc1234                                                         
+6            abc1235                                                         
+7            abc1236                                                         
+8            abc1237                                                         
+9            abc1238                                                         
+10           abc1239                                                         
+
+16 rows fetched.
+
+SQL> drop procedure proc_insert;
+
+Succeed.
+
+SQL> drop table t_order_base_001;
+
+Succeed.
+
+SQL> 
+SQL> --DTSDTS2020050904826
+SQL> DROP TABLE IF EXISTS SECEYE_VERTICAL_EVENT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS SECEYE_TRAN_EVENT;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE "SECEYE_VERTICAL_EVENT"
+  2 (
+  3    "EVENT_ID"           VARCHAR2(64)         NOT NULL,
+  4    "DETECT_ID"          VARCHAR2(32),
+  5    "DETECT_SOURCE"      INT,
+  6    "SOURCE"             VARCHAR2(128),
+  7    "SOURCE_CATEGORY"    INT,
+  8    "SOURCE_TYPE"        VARCHAR2(64),
+  9    "SOURCE_IP"          VARCHAR2(128),
+ 10    "DOMAIN"             INT,
+ 11    "EVENT_CATEGORY"     INT,
+ 12    "EVENT_TYPE"         INT,
+ 13    "EVENT_SUB_TYPE"     INT,
+ 14    "EVENT_NAME"         VARCHAR2(64),
+ 15    "EVENT_CLASS"        INT,
+ 16    "EVENT_LEVEL"        INT,
+ 17    "CONFIDENCE"         INT,
+ 18    "EVIDENCE"           VARCHAR2(2048),
+ 19    "ATTACK_STATUS"      INT,
+ 20    "ATTACK_PHASE"       INT,
+ 21    "CREATE_TIME"        bigint,
+ 22    "OCCUR_TIME"         bigint,
+ 23    "BEGIN_TIME"         bigint,
+ 24    "RECENT_TIME"        bigint,
+ 25    "DURATION"           INT,
+ 26    "TIMES"              INT,
+ 27    "OCCUR_DATE"         bigint,
+ 28    "HANDLE_RESULT"      INT,
+ 29    "EVENT_STATE"        INT,
+ 30    "HANDLE_TIME"        bigint,
+ 31    CONSTRAINT PK_SECEYE_VERTICAL_EVENT PRIMARY KEY ("EVENT_ID")
+ 32 );
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE "SECEYE_TRAN_EVENT"
+  2 (
+  3    "EVENT_ID"           VARCHAR2(64)         NOT NULL,
+  4    "SRC_PORT"           INTEGER,
+  5    "DEST_PORT"          INTEGER,
+  6    "ATTACK_SPEED"       INTEGER,
+  7    "SRC_MAC"            VARCHAR2(128),
+  8    "DEST_MAC"           VARCHAR2(128),
+  9    "PROTOCOL"           VARCHAR2(128),
+ 10    CONSTRAINT PK_SECEYE_TRAN_EVENT PRIMARY KEY ("EVENT_ID")
+ 11 );
+
+Succeed.
+
+SQL> 
+SQL> declare random number;
+  2 id number;
+  3 BEGIN FOR i IN 1 .. 10 loop
+  4     random :=  trunc(DBE_RANDOM.GET_VALUE(400,403));
+  5     id := 20;
+  6    INSERT INTO SECEYE_VERTICAL_EVENT
+  7    (EVENT_ID, DETECT_ID, DETECT_SOURCE, SOURCE, SOURCE_CATEGORY, SOURCE_TYPE, SOURCE_IP, DOMAIN, EVENT_CATEGORY, EVENT_TYPE, EVENT_SUB_TYPE, EVENT_NAME, EVENT_CLASS,
+  8     EVENT_LEVEL,CONFIDENCE, EVIDENCE, ATTACK_STATUS, ATTACK_PHASE, CREATE_TIME, OCCUR_TIME, BEGIN_TIME, RECENT_TIME, DURATION, TIMES, OCCUR_DATE, HANDLE_RESULT, EVENT_STATE, HANDLE_TIME)
+  9    VALUES ( 'verticalb5577f16-025f-'|| id || i, 23, 2, id || i, trunc(DBE_RANDOM.GET_VALUE(1,3)), 'NE_NAME' || i, '9.35.23.' || i ,
+ 10    trunc(DBE_RANDOM.GET_VALUE(3,5)),trunc(DBE_RANDOM.GET_VALUE(1,3)), trunc(DBE_RANDOM.GET_VALUE(1,5))||trunc(DBE_RANDOM.GET_VALUE(0,2)),
+ 11    trunc(DBE_RANDOM.GET_VALUE(1,5))||trunc(DBE_RANDOM.GET_VALUE(0,2)) || 0, trunc(DBE_RANDOM.GET_VALUE(1,5))||trunc(DBE_RANDOM.GET_VALUE(0,2))||0||0,
+ 12    trunc(DBE_RANDOM.GET_VALUE(1,5))||trunc(DBE_RANDOM.GET_VALUE(0,2)) ||0||0, trunc(DBE_RANDOM.GET_VALUE(1,6)), 999999, '{usualIp=1.1.1.2, failures=2, destUser=test1}', trunc(DBE_RANDOM.GET_VALUE(0,3)),trunc(DBE_RANDOM.GET_VALUE(0,3)),
+ 13    unix_TIMESTAMP(SYSDATE-random)*1000, unix_TIMESTAMP(SYSDATE-random)*1000, unix_TIMESTAMP(SYSDATE-random)*1000, unix_TIMESTAMP(SYSDATE-random)*1000, 109, 209, unix_TIMESTAMP(trunc(sysdate-random))*1000, trunc(DBE_RANDOM.GET_VALUE(0,4)), 0,
+ 14    unix_TIMESTAMP(SYSDATE-trunc(DBE_RANDOM.GET_VALUE(1,30)))*1000);
+ 15    INSERT INTO SECEYE_TRAN_EVENT (EVENT_ID, SRC_PORT, DEST_PORT, ATTACK_SPEED, SRC_MAC, DEST_MAC, PROTOCOL) VALUES ('verticalb5577f16-025f-'|| id || i, 80||i, 80||i, 80||i, '00-FF-16-C7-61-B'||i, '00-FF-06-F1-0C-55'||i, 'udp');
+ 16 END loop;
+ 17 COMMIT;
+ 18 END;
+ 19 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> call dbe_stats.collect_table_stats( schema=>'SYS', name=>'SECEYE_VERTICAL_EVENT', sample_ratio => 100, method_opt=>'for all columns' );
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_stats.collect_table_stats( schema=>'SYS', name=>'SECEYE_TRAN_EVENT', sample_ratio => 100, method_opt=>'for all columns' );
+
+PL/SQL procedure successfully completed.
+
+SQL> ALTER SYSTEM SET CBO=ON;
+
+Succeed.
+
+SQL> 
+SQL> select event_id from SECEYE_TRAN_EVENT order by event_id;
+
+EVENT_ID                                                        
+----------------------------------------------------------------
+verticalb5577f16-025f-201                                       
+verticalb5577f16-025f-2010                                      
+verticalb5577f16-025f-202                                       
+verticalb5577f16-025f-203                                       
+verticalb5577f16-025f-204                                       
+verticalb5577f16-025f-205                                       
+verticalb5577f16-025f-206                                       
+verticalb5577f16-025f-207                                       
+verticalb5577f16-025f-208                                       
+verticalb5577f16-025f-209                                       
+
+10 rows fetched.
+
+SQL> delete from SECEYE_TRAN_EVENT WHERE EXISTS
+  2             (select event_id from SECEYE_VERTICAL_EVENT where event_id=SECEYE_TRAN_EVENT.EVENT_ID and occur_time <= unix_TIMESTAMP(TIMESTAMPADD(YEAR,-1, FROM_UNIXTIME(unix_TIMESTAMP)))*1000)
+  3             order by event_id limit 0,1;
+
+1 rows affected.
+
+SQL> select event_id from SECEYE_TRAN_EVENT order by event_id;
+
+EVENT_ID                                                        
+----------------------------------------------------------------
+verticalb5577f16-025f-2010                                      
+verticalb5577f16-025f-202                                       
+verticalb5577f16-025f-203                                       
+verticalb5577f16-025f-204                                       
+verticalb5577f16-025f-205                                       
+verticalb5577f16-025f-206                                       
+verticalb5577f16-025f-207                                       
+verticalb5577f16-025f-208                                       
+verticalb5577f16-025f-209                                       
+
+9 rows fetched.
+
+SQL> delete from SECEYE_TRAN_EVENT WHERE EXISTS
+  2             (select event_id from SECEYE_VERTICAL_EVENT where event_id=SECEYE_TRAN_EVENT.EVENT_ID and occur_time <= unix_TIMESTAMP(TIMESTAMPADD(YEAR,-1, FROM_UNIXTIME(unix_TIMESTAMP)))*1000)
+  3             order by event_id limit 0,1;
+
+1 rows affected.
+
+SQL> select event_id from SECEYE_TRAN_EVENT order by event_id;
+
+EVENT_ID                                                        
+----------------------------------------------------------------
+verticalb5577f16-025f-202                                       
+verticalb5577f16-025f-203                                       
+verticalb5577f16-025f-204                                       
+verticalb5577f16-025f-205                                       
+verticalb5577f16-025f-206                                       
+verticalb5577f16-025f-207                                       
+verticalb5577f16-025f-208                                       
+verticalb5577f16-025f-209                                       
+
+8 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS SECEYE_VERTICAL_EVENT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS SECEYE_TRAN_EVENT;
+Succeed.
+
+SQL> ALTER SYSTEM SET CBO=OFF;
+
+Succeed.
+
+
+

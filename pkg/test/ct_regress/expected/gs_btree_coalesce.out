@@ -1,0 +1,610 @@
+
+
+SQL> ---- RCR test ------
+SQL> --1. prepare
+SQL> drop table if exists tb1;
+
+Succeed.
+
+SQL> CREATE TABLE tb1(id int, b int) crmode row;
+
+Succeed.
+
+SQL> create index idx_tb1 on tb1(b);
+
+Succeed.
+
+SQL> drop table if exists test_part_1;
+
+Succeed.
+
+SQL> create table test_part_1(f1 int, f2 real, f3 number)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(40)
+  8 ) crmode row;
+
+Succeed.
+
+SQL> create index idx_p1_1 on test_part_1(f1);
+
+Succeed.
+
+SQL> create index idx_p1_2 on test_part_1(f2,f3) local;
+
+Succeed.
+
+SQL> create index idx_p1_3 on test_part_1(f1,f3) local
+  2 (
+  3 partition p1,
+  4 partition p2,
+  5 partition p3,
+  6 partition p4
+  7 );
+
+Succeed.
+
+SQL> 
+SQL> --2. normal table
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 4000 loop
+  5         execute immediate 'insert into tb1 values(1, ' || i || ')';
+  6         execute immediate 'commit';
+  7     end loop;
+  8     commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> insert into tb1 values(1, 10000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select PAGES from USER_SEGMENTS where SEGMENT_NAME = 'IDX_TB1';
+
+PAGES               
+--------------------
+24                  
+
+1 rows fetched.
+
+SQL> delete from tb1 where b < 10000;
+
+4000 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --4. partition table
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 4000 loop
+  5         execute immediate 'insert into test_part_1 values(1, 1, ' || i || ')';
+  6         execute immediate 'commit';
+  7     end loop;
+  8     commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select PAGES from user_segments where SEGMENT_NAME = 'IDX_P1_2' and PARTITION_NAME = 'P1';
+
+PAGES               
+--------------------
+32                  
+
+1 rows fetched.
+
+SQL> delete from test_part_1 where f1=1;
+
+4000 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --create a table to force inc min scn
+SQL> drop table if exists test_coalesce;
+
+Succeed.
+
+SQL> create table test_coalesce(id int);
+
+Succeed.
+
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> --recycle
+SQL> alter index idx_tb1 on tb1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_tb1 on tb1 coalesce index;
+
+CT-00601, [1:35]Sql syntax error: expected end but index found
+SQL> alter index idx_tb1 on tb1 coalesce partition p1;
+
+CT-00601, [1:40]Sql syntax error: expected end but partition found
+SQL> alter index idx_tb1 on tb1 coalesce aaa;
+
+CT-00601, [1:33]Sql syntax error: expected end but aaa found
+SQL> alter index idx_p1_1 on test_part_1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_2 on test_part_1 modify partition p1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_2 on test_part_1 modify partition p1 coalesce index;
+
+CT-00601, [1:56]Sql syntax error: expected end but index found
+SQL> alter index idx_p1_2 on test_part_1 modify partition p1 coalesce aaa;
+
+CT-00601, [1:54]Sql syntax error: expected end but aaa found
+SQL> --commit a transaction to force increase scn
+SQL> insert into test_coalesce values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> --3. test for error code
+SQL> alter index idx_p1_1 on test_part_1 modify partition p1 coalesce;
+
+CT-01112, The common index was treated as a (sub)partitioned index
+SQL> alter index idx_p1_2 on test_part_1 coalesce;
+
+CT-01111, The local index of the partitioned table was treated as a common index
+SQL> alter index idx_tb1 on tb1 modify partition p1 coalesce;
+
+CT-01112, The common index was treated as a (sub)partitioned index
+SQL> ALTER INDEX idx_p1_3 on test_part_1 MODIFY PARTITION p10 COALESCE;
+
+CT-00800, A index (sub)partition P10 does not exist.
+SQL> ALTER INDEX idx_p1_4 on test_part_1 MODIFY PARTITION p1 COALESCE;
+
+CT-00830, Index SYS.IDX_P1_4 does not exist
+SQL> 
+SQL> 
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 2000 loop
+  5         execute immediate 'insert into tb1 values(1, 10000 + ' || i || ')';
+  6         execute immediate 'commit';
+  7     end loop;
+  8     commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --4. partition table
+SQL> alter index idx_p1_1 on test_part_1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_2 on test_part_1 modify partition p1 coalesce;
+
+Succeed.
+
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 2000 loop
+  5         execute immediate 'insert into test_part_1 values(1, 1, 10000 + ' || i || ')';
+  6         execute immediate 'commit';
+  7     end loop;
+  8     commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> insert into test_part_1 values (21, 5, 5);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter index idx_p1_1 on test_part_1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_2 on test_part_1 modify partition p3 coalesce;
+
+Succeed.
+
+SQL> 
+SQL> alter index idx_p1_2 on test_part_1 modify partition p2 coalesce;
+
+Succeed.
+
+SQL> ALTER INDEX idx_p1_3 on test_part_1 MODIFY PARTITION p1 COALESCE;
+
+Succeed.
+
+SQL> 
+SQL> --dts
+SQL> create table strg_btree_range_tbl_001(c_id int,
+  2 c_d_id int NOT NULL,
+  3 c_w_id int,
+  4 c_first varchar(32),
+  5 c_middle char(2),
+  6 c_last varchar(32) NOT NULL,
+  7 c_street_1 varchar(20),
+  8 c_street_2 varchar(20),
+  9 c_city varchar(20) NOT NULL,
+ 10 c_state char(2) NOT NULL,
+ 11 c_zip char(9) NOT NULL,
+ 12 c_phone char(16) NOT NULL,
+ 13 c_since timestamp,
+ 14 c_credit char(2) NOT NULL,
+ 15 c_credit_lim numeric(12,2),
+ 16 c_discount numeric(4,4),
+ 17 c_balance numeric(12,2),
+ 18 c_ytd_payment real NOT NULL,
+ 19 c_payment_cnt number NOT NULL,
+ 20 c_delivery_cnt bool NOT NULL,
+ 21 c_end date NOT NULL,
+ 22 c_vchar varchar(1000),
+ 23 c_data clob,
+ 24 c_text blob) partition by range(c_d_id,c_last) (partition PART_1 values less than (101,'BBBAR101'),partition PART_2 values less than (201,'CCBAR201'),partition PART_3 values less than (301,'DDBAR301'),partition PART_4 values less than (401,'EEBAR401'),partition PART_5 values less than (501,'FFBAR501'),partition PART_6 values less than (601,'GGBAR601'),partition PART_7 values less than (701,'HHBAR701'),partition PART_8 values less than (801,'IIBAR801'),partition PART_9 values less than (maxvalue,maxvalue));
+
+Succeed.
+
+SQL> 
+SQL> create index strg_btree_range_index_001_1 on strg_btree_range_tbl_001(c_first);
+
+Succeed.
+
+SQL> create unique index strg_btree_range_index_001_2 on strg_btree_range_tbl_001(c_id,c_first);
+
+Succeed.
+
+SQL> create index strg_btree_range_index_001_3 on strg_btree_range_tbl_001(c_d_id,c_last,c_first) local;
+
+Succeed.
+
+SQL> create unique index strg_btree_range_index_001_4 on strg_btree_range_tbl_001(c_d_id,c_last) local;
+
+Succeed.
+
+SQL> alter table strg_btree_range_tbl_001 drop column c_first;
+
+Succeed.
+
+SQL> alter index strg_btree_range_index_001_4 on strg_btree_range_tbl_001 modify partition  PART_9 coalesce;
+
+Succeed.
+
+SQL> drop table strg_btree_range_tbl_001;
+
+Succeed.
+
+SQL> --5. postprepare
+SQL> drop index idx_tb1 on tb1;
+
+Succeed.
+
+SQL> drop table tb1;
+
+Succeed.
+
+SQL> drop table test_part_1;
+
+Succeed.
+
+SQL> 
+SQL> ---- PCR test -----
+SQL> --1. prepare
+SQL> drop table if exists tb1;
+
+Succeed.
+
+SQL> CREATE TABLE tb1(id int, b int) crmode page;
+
+Succeed.
+
+SQL> create index idx_tb1 on tb1(b);
+
+Succeed.
+
+SQL> drop table if exists test_part_1;
+
+Succeed.
+
+SQL> create table test_part_1(f1 int, f2 real, f3 number)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(40)
+  8 ) crmode row;
+
+Succeed.
+
+SQL> create index idx_p1_1 on test_part_1(f1);
+
+Succeed.
+
+SQL> create index idx_p1_2 on test_part_1(f2,f3) local;
+
+Succeed.
+
+SQL> create index idx_p1_3 on test_part_1(f1,f3) local
+  2 (
+  3 partition p1,
+  4 partition p2,
+  5 partition p3,
+  6 partition p4
+  7 );
+
+Succeed.
+
+SQL> 
+SQL> --2. normal table
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 4000 loop
+  5         execute immediate 'insert into tb1 values(1, ' || i || ')';
+  6         execute immediate 'commit';
+  7     end loop;
+  8     commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> insert into tb1 values(1, 10000);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select PAGES from USER_SEGMENTS where SEGMENT_NAME = 'IDX_TB1';
+
+PAGES               
+--------------------
+16                  
+
+1 rows fetched.
+
+SQL> delete from tb1 where b < 10000;
+
+4000 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --4. partition table
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 4000 loop
+  5         execute immediate 'insert into test_part_1 values(1, 1, ' || i || ')';
+  6         execute immediate 'commit';
+  7     end loop;
+  8     commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select PAGES from user_segments where SEGMENT_NAME = 'IDX_P1_2' and PARTITION_NAME = 'P1';
+
+PAGES               
+--------------------
+32                  
+
+1 rows fetched.
+
+SQL> delete from test_part_1 where f1=1;
+
+4000 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --commit a transaction to force increase scn
+SQL> insert into test_coalesce values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> --recycle
+SQL> alter index idx_tb1 on tb1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_1 on test_part_1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_2 on test_part_1 modify partition p1 coalesce;
+
+Succeed.
+
+SQL> --commit a transaction to force increase scn
+SQL> insert into test_coalesce values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> --3. test for error code
+SQL> alter index idx_p1_1 on test_part_1 modify partition p1 coalesce;
+
+CT-01112, The common index was treated as a (sub)partitioned index
+SQL> alter index idx_p1_2 on test_part_1 coalesce;
+
+CT-01111, The local index of the partitioned table was treated as a common index
+SQL> alter index idx_tb1 on tb1 modify partition p1 coalesce;
+
+CT-01112, The common index was treated as a (sub)partitioned index
+SQL> ALTER INDEX idx_p1_3 on test_part_1 MODIFY PARTITION p10 COALESCE;
+
+CT-00800, A index (sub)partition P10 does not exist.
+SQL> ALTER INDEX idx_p1_4 on test_part_1 MODIFY PARTITION p1 COALESCE;
+
+CT-00830, Index SYS.IDX_P1_4 does not exist
+SQL> 
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for i in 1 .. 2000 loop
+  5         execute immediate 'insert into tb1 values(1, 10000 + ' || i || ')';
+  6         execute immediate 'commit';
+  7     end loop;
+  8     commit;
+  9 end;
+ 10 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --4. partition table
+SQL> alter index idx_p1_1 on test_part_1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_2 on test_part_1 modify partition p1 coalesce;
+
+Succeed.
+
+SQL> declare
+  2     i integer;
+  3 begin
+  4     for ggi in 1 .. 2000 loop
+  5         execute immediate 'insert into test_part_1 values(1, 1, 10000 + ' || i || ')';
+  6         execute immediate 'commit';
+  7     end loop;
+  8     commit;
+  9 end;
+ 10 /
+
+CT-00932, [5:9] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[1:44] CT-00601, Sql syntax error: expression error
+
+SQL> 
+SQL> insert into test_part_1 values (21, 5, 5);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter index idx_p1_1 on test_part_1 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_2 on test_part_1 modify partition p3 coalesce;
+
+Succeed.
+
+SQL> alter index idx_p1_2 on test_part_1 modify partition p2 coalesce;
+
+Succeed.
+
+SQL> ALTER INDEX idx_p1_3 on test_part_1 MODIFY PARTITION p1 COALESCE;
+
+Succeed.
+
+SQL> 
+SQL> --5. postprepare
+SQL> drop index idx_tb1 on tb1;
+
+Succeed.
+
+SQL> drop table tb1;
+
+Succeed.
+
+SQL> drop table test_part_1;
+
+Succeed.
+
+SQL> drop table test_coalesce purge;
+
+Succeed.
+
+SQL> 
+SQL> 
+
+

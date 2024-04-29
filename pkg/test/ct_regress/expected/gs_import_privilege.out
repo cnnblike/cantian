@@ -1,0 +1,437 @@
+
+
+SQL> -- import other user need dba role
+SQL> -- create user
+SQL> drop user if exists test_common cascade;
+
+Succeed.
+
+SQL> create user test_common identified by Test_123456;
+
+Succeed.
+
+SQL> grant create session to test_common;
+
+Succeed.
+
+SQL> grant create table to test_common;
+
+Succeed.
+
+SQL> grant insert any table to test_common;
+
+Succeed.
+
+SQL> grant select any table to test_common;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists test_dba cascade;
+
+Succeed.
+
+SQL> create user test_dba identified by Test_123456;
+
+Succeed.
+
+SQL> grant dba to test_dba;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists test_all_privilege cascade;
+
+Succeed.
+
+SQL> create user test_all_privilege identified by Test_123456;
+
+Succeed.
+
+SQL> grant all to test_all_privilege;
+
+Succeed.
+
+SQL> 
+SQL> -- create table
+SQL> conn test_common/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> create table test_common_table(c int);
+
+Succeed.
+
+SQL> insert into test_common_table values(1),(2);
+
+2 rows affected.
+
+SQL> select * from test_common_table order by c asc;
+
+C           
+------------
+1           
+2           
+
+2 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> -- exp users : test_common
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> exp users=test_common file="./data/test_common_bin.dmp" filetype=bin;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_COMMON
+-- FILE TYPE = BIN
+-- DUMP FILE = ./data/test_common_bin.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_COMMON ...
+Exporting sequence of schema TEST_COMMON ...
+Exporting profile of schema TEST_COMMON ...
+Exporting type of schema TEST_COMMON ...
+Exporting tables of schema TEST_COMMON ...
+Reading table objects of TEST_COMMON
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TEST_COMMON_TABLE                                                1         
+
+Exporting tables (scripts or data) of TEST_COMMON
+exporting table TEST_COMMON.TEST_COMMON_TABLE ...
+  exporting DDL of TEST_COMMON.TEST_COMMON_TABLE ...
+  exporting data of TEST_COMMON.TEST_COMMON_TABLE ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_COMMON.TEST_COMMON_TABLE ...
+  exporting constraints on TEST_COMMON.TEST_COMMON_TABLE ...
+
+Exporting procedures/functions/triggers of schema TEST_COMMON ...
+Exporting views of schema TEST_COMMON ...
+Exporting synonyms of schema TEST_COMMON ...
+Exporting package of schema TEST_COMMON ...
+End of export schema TEST_COMMON ...
+
+Logical export succeeded.
+
+SQL> exp users=test_common file="./data/test_common_txt.dmp" filetype=txt;
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEST_COMMON
+-- FILE TYPE = TXT
+-- DUMP FILE = ./data/test_common_txt.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEST_COMMON ...
+Exporting sequence of schema TEST_COMMON ...
+Exporting profile of schema TEST_COMMON ...
+Exporting type of schema TEST_COMMON ...
+Exporting tables of schema TEST_COMMON ...
+Reading table objects of TEST_COMMON
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+TEST_COMMON_TABLE                                                1         
+
+Exporting tables (scripts or data) of TEST_COMMON
+exporting table TEST_COMMON.TEST_COMMON_TABLE ...
+  exporting DDL of TEST_COMMON.TEST_COMMON_TABLE ...
+  exporting data of TEST_COMMON.TEST_COMMON_TABLE ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on TEST_COMMON.TEST_COMMON_TABLE ...
+  exporting constraints on TEST_COMMON.TEST_COMMON_TABLE ...
+
+Exporting procedures/functions/triggers of schema TEST_COMMON ...
+Exporting views of schema TEST_COMMON ...
+Exporting synonyms of schema TEST_COMMON ...
+Exporting package of schema TEST_COMMON ...
+End of export schema TEST_COMMON ...
+
+Logical export succeeded.
+
+SQL> 
+SQL> -- dba user imp users : test_common
+SQL> conn test_dba/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> select USER_NAME from v$me;
+
+USER_NAME                                                       
+----------------------------------------------------------------
+TEST_DBA                                                        
+
+1 rows fetched.
+
+SQL> imp users=test_common file="./data/test_common_bin.dmp" filetype=bin;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST_COMMON
+-- DUMP FILE = ./data/test_common_bin.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_COMMON ... 
+  Importing sequence of schema TEST_COMMON ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_COMMON ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_COMMON ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_COMMON ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TEST_COMMON_TABLE                                                    2         
+
+  Importing foreign key of schema TEST_COMMON ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_COMMON ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_COMMON ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_COMMON ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_COMMON ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=test_common file="./data/test_common_txt.dmp" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST_COMMON
+-- DUMP FILE = ./data/test_common_txt.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> -- common user imp users : test_common
+SQL> conn test_all_privilege/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> select USER_NAME from v$me;
+
+USER_NAME                                                       
+----------------------------------------------------------------
+TEST_ALL_PRIVILEGE                                              
+
+1 rows fetched.
+
+SQL> imp users=test_common file="./data/test_common_bin.dmp" filetype=bin;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+
+CT-01001, Permissions were insufficient
+Logical import failed.
+
+SQL> imp users=test_common file="./data/test_common_txt.dmp" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+
+CT-01001, Permissions were insufficient
+Logical import failed.
+
+SQL> 
+SQL> -- imp users self : test_common
+SQL> conn test_common/Test_123456@127.0.0.1:1611
+
+connected.
+
+SQL> select USER_NAME from v$me;
+
+USER_NAME                                                       
+----------------------------------------------------------------
+TEST_COMMON                                                     
+
+1 rows fetched.
+
+SQL> imp users=TEST_COMMON file="./data/test_common_bin.dmp" filetype=bin;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST_COMMON
+-- DUMP FILE = ./data/test_common_bin.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema TEST_COMMON ... 
+  Importing sequence of schema TEST_COMMON ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema TEST_COMMON ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema TEST_COMMON ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema TEST_COMMON ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    TEST_COMMON_TABLE                                                    2         
+
+  Importing foreign key of schema TEST_COMMON ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema TEST_COMMON ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema TEST_COMMON ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema TEST_COMMON ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema TEST_COMMON ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=TEST_COMMON file="./data/test_common_txt.dmp" filetype=txt;
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEST_COMMON
+-- DUMP FILE = ./data/test_common_txt.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> 
+
+

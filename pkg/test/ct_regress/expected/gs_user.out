@@ -1,0 +1,2755 @@
+
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create  profile test_pwd_profile limit
+  2 SESSIONS_PER_USER      UNLIMITED
+  3 FAILED_LOGIN_ATTEMPTS  100
+  4 PASSWORD_LIFE_TIME     1800
+  5 PASSWORD_REUSE_TIME    UNLIMITED
+  6 PASSWORD_REUSE_MAX     UNLIMITED
+  7 PASSWORD_LOCK_TIME     1
+  8 PASSWORD_GRACE_TIME    7;
+
+Succeed.
+
+SQL> drop user if exists test_dba1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_user1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_user2 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_dba2 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_user3 cascade;
+
+Succeed.
+
+SQL> create user  test_dba1  identified by Cantian_234 profile test_pwd_profile;
+
+Succeed.
+
+SQL> create user  test_user1 identified by Cantian_234 profile test_pwd_profile;
+
+Succeed.
+
+SQL> create user  test_user2 identified by Cantian_234 profile test_pwd_profile;
+
+Succeed.
+
+SQL> create user  test_dba2  identified by Cantian_234 profile test_pwd_profile;
+
+Succeed.
+
+SQL> create user  test_user3 identified by Cantian_234 profile test_pwd_profile;
+
+Succeed.
+
+SQL> grant dba to test_dba1;
+
+Succeed.
+
+SQL> grant dba to test_dba2;
+
+Succeed.
+
+SQL> grant connect, alter user to test_user1;
+
+Succeed.
+
+SQL> grant connect, alter user to test_user2;
+
+Succeed.
+
+SQL> grant connect to test_user3;
+
+Succeed.
+
+SQL> alter user test_dba2 identified by Root_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user test_dba2 identified by Cantian_234;
+
+Succeed.
+
+SQL> conn test_dba1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> alter user test_dba2 identified by Root_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user test_dba2 identified by Cantian_234;
+
+Succeed.
+
+SQL> alter user test_dba1 identified by Root_123;
+
+Succeed.
+
+SQL> alter user test_dba1 identified by Root_123 replace Cantian_234;
+
+CT-00822, When the password of an existing database user was changed, the original password was incorrectly entered.
+SQL> conn test_user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> alter user test_user2 identified by Root_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user test_user2 identified by Cantian_234;
+
+Succeed.
+
+SQL> alter user test_user3 identified by Root_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user test_user3 identified by Cantian_234;
+
+Succeed.
+
+SQL> alter user test_user1 identified by Root_123;
+
+Succeed.
+
+SQL> alter user test_user1 identified by Root_123 replace Cantian_234;
+
+CT-00822, When the password of an existing database user was changed, the original password was incorrectly entered.
+SQL> conn / as sysdba 
+
+connected.
+
+SQL> drop user if exists test_dba1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_user1 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_user2 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_dba2 cascade;
+
+Succeed.
+
+SQL> drop user if exists test_user3 cascade;
+
+Succeed.
+
+SQL> drop profile test_pwd_profile;
+
+Succeed.
+
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> alter system set ENABLE_SYSDBA_REMOTE_LOGIN = TRUE;
+
+Succeed.
+
+SQL> DROP USER IF EXISTS USER_SYSDBA CASCADE; 
+
+Succeed.
+
+SQL> CREATE USER USER_SYSDBA IDENTIFIED BY CANTIAN_234;
+
+Succeed.
+
+SQL> GRANT CONNECT , SYSDBA TO USER_SYSDBA;
+
+Succeed.
+
+SQL> CONN USER_SYSDBA/CANTIAN_234@127.0.0.1:1611 AS SYSDBA
+
+connected.
+
+SQL> SELECT  USER;
+
+USER                                                            
+----------------------------------------------------------------
+SYS                                                             
+
+1 rows fetched.
+
+SQL> ALTER USER SYS ACCOUNT LOCK;
+
+Succeed.
+
+SQL> CONN USER_SYSDBA/CANTIAN_234@127.0.0.1:1611
+
+connected.
+
+SQL> ALTER USER SYS ACCOUNT UNLOCK;
+
+CT-01001, Permissions were insufficient
+SQL> SELECT  USER;
+
+USER                                                            
+----------------------------------------------------------------
+USER_SYSDBA                                                     
+
+1 rows fetched.
+
+SQL> CONN USER_SYSDBA/CANTIAN_234@127.0.0.1:1611 AS SYSDBA
+
+connected.
+
+SQL> alter system set ENABLE_SYSDBA_REMOTE_LOGIN = FALSE;
+
+Succeed.
+
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> ALTER USER SYS ACCOUNT UNLOCK;
+
+Succeed.
+
+SQL> DROP USER USER_SYSDBA CASCADE;
+
+Succeed.
+
+SQL> --DTS2019031909797
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists cao cascade;
+
+Succeed.
+
+SQL> create user  cao  identified by ";Cantian234";
+
+CT-00658, The password was invalid: Password contains unexpected character.
+
+SQL> create user  cao  identified by ';Cantian234';
+
+CT-00658, The password was invalid: Password contains unexpected character.
+
+SQL> create user  cao  identified by `;Cantian234`;
+
+CT-00658, The password was invalid: Password contains unexpected character.
+
+SQL> create user  cao  identified by Cantian_234;
+
+Succeed.
+
+SQL> alter user cao identified by ';bao102_bao' replace Cantian_234;
+
+CT-00658, The password was invalid: Password contains unexpected character.
+
+SQL> create role cao_role identified by ';bao102_bao';
+
+CT-00658, The password was invalid: Password contains unexpected character.
+
+SQL> create database dbg_database user sys identified by ';bao102_bao';
+
+CT-00658, The password was invalid: Password contains unexpected character.
+
+SQL> drop user if exists cao cascade;
+
+Succeed.
+
+SQL> CREATE USER DROP_TEST_01 IDENTIFIED BY TEst1234;
+
+Succeed.
+
+SQL> --SELECT ID, NAME FROM SYS_USERS ORDER BY ID;
+SQL> DROP USER DROP_TEST_01;
+
+Succeed.
+
+SQL> DROP USER IF EXISTS DROP_TEST_01;
+
+Succeed.
+
+SQL> --SELECT ID, NAME FROM DROP_TEST_01 ORDER BY ID;
+SQL> 
+SQL> CREATE USER DROP_TEST_02 IDENTIFIED BY TEst1234;
+
+Succeed.
+
+SQL> --SELECT ID, NAME FROM SYS_USERS ORDER BY ID;
+SQL> DROP USER IF EXISTS DROP_TEST_02;
+
+Succeed.
+
+SQL> DROP USER DROP_TEST_02;
+
+CT-00781, The user DROP_TEST_02 does not exist.
+SQL> --SELECT ID, NAME FROM SYS_USERS ORDER BY ID;
+SQL> 
+SQL> -- CREATE ROLE USE THE SAME NAME WITH USERS
+SQL> CREATE USER DROP_TEST_03 IDENTIFIED BY TEst1234;
+
+Succeed.
+
+SQL> CREATE ROLE DROP_TEST_03 IDENTIFIED BY TEst1234;
+
+CT-00753, The object user DROP_TEST_03 already exists.
+SQL> 
+SQL> DROP USER IF EXISTS DROP_TEST_03;
+
+Succeed.
+
+SQL> CREATE ROLE DROP_TEST_03 IDENTIFIED BY TEst1234;
+
+Succeed.
+
+SQL> DROP ROLE DROP_TEST_03;
+
+Succeed.
+
+SQL> 
+SQL> -- CREATE USER USE THE SAME NAME WITH ROLE
+SQL> CREATE ROLE DROP_TEST_04 IDENTIFIED BY TEst1234;
+
+Succeed.
+
+SQL> CREATE USER DROP_TEST_04 IDENTIFIED BY TEst1234;
+
+CT-00753, The object role DROP_TEST_04 already exists.
+SQL> 
+SQL> DROP ROLE DROP_TEST_04;
+
+Succeed.
+
+SQL> CREATE USER DROP_TEST_04 IDENTIFIED BY TEst1234;
+
+Succeed.
+
+SQL> DROP USER DROP_TEST_04;
+
+Succeed.
+
+SQL> 
+SQL> -- Password with @ 
+SQL> DROP USER IF EXISTS PFA_TEST_USER_1;
+
+Succeed.
+
+SQL> CREATE USER PFA_TEST_USER_1 IDENTIFIED BY 'ABCD@123@2';
+
+Succeed.
+
+SQL> 
+SQL> DROP USER IF EXISTS PFA_TEST_USER_2;
+
+Succeed.
+
+SQL> CREATE USER PFA_TEST_USER_2 IDENTIFIED BY 'sys/sys@127.0.0.1:1611';
+
+Succeed.
+
+SQL> 
+SQL> grant create session to PFA_TEST_USER_1;
+
+Succeed.
+
+SQL> grant create session to PFA_TEST_USER_2;
+
+Succeed.
+
+SQL> 
+SQL> conn PFA_TEST_USER_1/ABCD@123@2@127.0.0.1:1611
+
+connected.
+
+SQL> conn PFA_TEST_USER_2/sys/sys@127.0.0.1:1611@127.0.0.1:1611
+
+connected.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> conn @127.0.0.1:1611
+
+incorrect user or passwd
+SQL> conn sys/2@127.0.0.1:1611
+
+CT-00329, Incorrect user or password
+
+SQL> conn sys/Huawei@123@127.0.0.1:
+
+CT-00501, Invalid URL: 127.0.0.1:
+
+SQL> conn sys/Huawei@123@127.0.0.1:00000000000000000000000000000000000000000001611
+
+connected.
+
+SQL> conn sys/Huawei@123@127.0.0.1:-00000000000000000000000000000000000000000001611
+
+CT-00601, Sql syntax error: Convert uint16 failed, the number text is not in the range of uint16, text = -00000000000000000000000000000000000000000001611
+
+SQL> conn sys/Huawei@123@127.0.0.1:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001611
+
+ZS-00001: DB URL overlength
+
+SQL> conn sys/Huawei@123@127.0.0.1:000000000001o11
+
+CT-00501, Invalid URL: 127.0.0.1:000000000001o11
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> conn /sys@127.0.0.1:000000000001611
+
+ZS-00001: "/ AS SYSDBA [host:port] [-D data_dir] ", or "/ AS CLSMGR [host:port] [-D data_dir] " is expected
+
+SQL> conn /
+
+ZS-00001: "/ AS SYSDBA [host:port] [-D data_dir] ", or "/ AS CLSMGR [host:port] [-D data_dir] " is expected
+
+SQL> conn
+
+ZS-00001: "/ AS SYSDBA [host:port] [-D data_dir] ", "username@ip:port ", "username/password@ip:port ", or "/ AS CLSMGR [host:port] [-D data_dir] " is expected
+
+SQL> conn ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg/sys@127.0.0.1:000000000001611
+
+ZS-00001: user, password or URL overlength
+
+SQL> conn gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg/suuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuys@127.0.0.1:000000000001611
+
+ZS-00001: user, password or URL overlength
+
+SQL> 
+SQL> -- this following SQL can not be executed, as the connection has been colsed
+SQL> select * from dual;
+
+ZS-00001: connection is not established
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> create user sys identified by Root12345;
+
+CT-01332, [1:13]Cannot create a user with the name same as sys user
+SQL> create database cantiandb user user_1 identified by Root1234;
+
+CT-00601, [1:30]Sql syntax error: user name SYS expected but user_1 found
+SQL> 
+SQL> create database cantiandb abc;
+
+CT-00601, Sql syntax error: key word expected but abc found
+SQL> 
+SQL> -- create database control file error
+SQL> create database cantiandb user SYS identified by Changeme_123 character set utf8 CONTROLFILE ('/home/acmareal/cantiandb/data/cntl1'wrong, '/home/acmareal/cantiandb/data/cntl2', '/home/acmareal/cantiandb/data/cntl3');
+
+CT-00601, [1:128]Sql syntax error: "," expected but wrong found
+SQL> create database cantiandb user SYS identified by Changeme_123 character set utf8 CONTROLFILE abc;
+
+CT-00601, [1:95]Sql syntax error: (...) expected but abc found
+SQL> create database cantiandb user SYS identified by Changeme_123 character set utf8 CONTROLFILE (/home/acmareal/cantiandb/data/cntl1);
+
+CT-00601, [1:93]Sql syntax error: '...' expected but / found
+SQL> create database cantiandb user SYS identified by Changeme_123 character set utf8 CONTROLFILE ('/home/acmareal/cantiandb/data/cntl1') CONTROLFILE ('/home/acmareal/cantiandb/data/cntl1');
+
+CT-00601, Sql syntax error: CONTROLFILE is already defined
+SQL> 
+SQL> -- create database charset error
+SQL> create database cantiandb user SYS identified by Changeme_123 character set utf8 character set utf8;
+
+CT-00601, Sql syntax error: CHARACTER SET is already defined
+SQL> create database cantiandb user SYS identified by Changeme_123 character;
+
+CT-00601, [1:70]Sql syntax error: SET expected
+SQL> create database cantiandb user SYS identified by Changeme_123 character set;
+
+CT-00601, [1:74]Sql syntax error: more text expected but terminated
+SQL> 
+SQL> -- create database logfile block size error
+SQL> create database cantiandb user SYS identified by Changeme_123 LOGFILE ('/home/acmareal/cantiandb/data/log1' size 256M blocksize);
+
+CT-00601, [1:124]Sql syntax error: size must be a positive long integer
+SQL> create database cantiandb user SYS identified by Changeme_123 LOGFILE ('/home/acmareal/cantiandb/data/log1' size 256M blocksize 4);
+
+CT-00601, [1:125]Sql syntax error: size value is smaller than minimum(512) required
+SQL> create database cantiandb user SYS identified by Changeme_123 LOGFILE ('/home/acmareal/cantiandb/data/log1' size 256M) LOGFILE ('/home/acmareal/cantiandb/data/log1' size 256M);
+
+CT-00601, Sql syntax error: LOGFILE is already defined
+SQL> create database cantiandb user SYS identified by Changeme_123 LOGFILE ('/home/acmareal/cantiandb/data/log1' size 256M a'/home/acmareal/cantiandb/data/log2' size 256M, '/home/acmareal/cantiandb/data/log3' size 256M);
+
+CT-00601, Sql syntax error: "," expected but a found
+SQL> 
+SQL> -- create database data file error
+SQL> create database cantiandb user SYS identified by system tablespace DATAFILE '/home/acmareal/cantiandb/data/system' size 1M;
+
+CT-00601, [1:48]Sql syntax error: The password must be identifier or string
+SQL> create database cantiandb user SYS identified by Changeme_123 system tablespace DATAFILE '/home/acmareal/cantiandb/data/system' size 100000000M;
+
+CT-00601, [1:130]Sql syntax error: size value is bigger than maximum(8796093022208) required
+SQL> create database cantiandb user SYS identified by Changeme_123 system tablespace DATAFILE '/home/acmareal/cantiandb/data/system' size 128M ALL IN MEMORY LOGFILE ('/home/acmareal/cantiandb/data/log1' size 256M blocksize);
+
+CT-00601, [1:212]Sql syntax error: size must be a positive long integer
+SQL> create database cantiandb user SYS identified by Changeme_123 system tablespace DATAFILE '/home/acmareal/cantiandb/data/system' size 128M ALL IN MEMORY user SYS;
+
+CT-00601, Sql syntax error: sys user is already defined
+SQL> 
+SQL> -- create database table space error
+SQL> create database cantiandb user SYS identified by Changeme_123 system tablespace DATAFILE '/home/acmareal/cantiandb/data/system' size 128M system tablespace DATAFILE '/home/acmareal/cantiandb/data/system' size 128M;
+
+CT-00601, Sql syntax error: system tablesapce is already defined
+SQL> 
+SQL> -- create database default user error
+SQL> create database cantiandb user SYS identified by Changeme_123 user SYS identified by Changeme_123;
+
+CT-00601, Sql syntax error: sys user is already defined
+SQL> create database cantiandb user;
+
+CT-00601, [1:29]Sql syntax error: more text expected but terminated
+SQL> create database cantiandb user SYS;
+
+CT-00601, [1:33]Sql syntax error: IDENTIFIED expected
+SQL> create database cantiandb user SYS abc;
+
+CT-00601, [1:34]Sql syntax error: IDENTIFIED expected
+SQL> create database cantiandb user SYS identified abc;
+
+CT-00601, [1:45]Sql syntax error: BY expected
+SQL> create database cantiandb user SYS identified by;
+
+CT-00601, [1:47]Sql syntax error: more text expected but terminated
+SQL> 
+SQL> create tablespace TMP_TBLSPC datafile 'tmp1' size 128M;
+
+Succeed.
+
+SQL> create user;
+
+CT-00601, [1:12]Sql syntax error: more text expected but terminated
+SQL> create user table;
+
+CT-00601, [1:13]Sql syntax error: invalid variant/object name was found
+SQL> create user USER_TEST_001 identified by Root12345 default tablespace TMP_TBLSPC;
+
+Succeed.
+
+SQL> create user USER_TEST_002 identified by Root12345 default tablespace TMP_TBLSPC temporary tablespace SWAP_00;
+
+Succeed.
+
+SQL> 
+SQL> create user USER_TEST_003 identified by Root12345 default tablespace TMP_TBLSPC temporary tablespace TMP_TBLSPC default tablespace TMP_TBLSPC;
+
+CT-00601, [1:113]Sql syntax error: keyword "default" cannot be appear more than once
+SQL> create user USER_TEST_004 identified by Root12345 default tablespace TMP_TBLSPC temporary tablespace TMP_TBLSPC temporary tablespace TMP_TBLSPC;
+
+CT-00601, [1:113]Sql syntax error: keyword "temporaray" cannot be appear more than once
+SQL> 
+SQL> create user USER_TEST_005 identified by Root12345 password no_expire;
+
+CT-00601, [1:60]Sql syntax error: EXPIRE expected
+SQL> create user USER_TEST_005 identified by Root12345 password expire password expire;
+
+CT-00601, [1:67]Sql syntax error: keyword "password" cannot be appear more than once
+SQL> create user USER_TEST_005 identified by Root12345 password expire;
+
+Succeed.
+
+SQL> create user USER_TEST_006 identified by Root12345 account abc;
+
+CT-00601, [1:59]Sql syntax error: lock or unlock expected
+SQL> create user USER_TEST_006 identified by Root12345 account lock account lock;
+
+CT-00601, [1:64]Sql syntax error: keyword "account" cannot be appear more than once
+SQL> create user USER_TEST_006 identified by Root12345 default abc;
+
+CT-00601, [1:59]Sql syntax error: TABLESPACE expected
+SQL> create user USER_TEST_006 identified by Root12345 default tablespace;
+
+CT-00601, [1:69]Sql syntax error: more text expected but terminated
+SQL> 
+SQL> alter user USER_TEST_005 password expire;
+
+Succeed.
+
+SQL> alter user USER_TEST_005 identified by;
+
+CT-00601, [1:39]Sql syntax error: more text expected but terminated
+SQL> alter user USER_TEST_005 identified by ,Root1234;
+
+CT-00601, Sql syntax error: The password must be identifier or string
+SQL> alter user USER_TEST_005 identified by 'Root12345';
+
+Succeed.
+
+SQL> alter user USER_TEST_005 identified by 'Root12345' replace root23454 identified by 'Root12345' replace root23454;
+
+CT-00601, [1:70]Sql syntax error: keyword "identified" cannot be appear more than once
+SQL> alter user USER_TEST_005 identified abc;
+
+CT-00601, [1:37]Sql syntax error: by expected
+SQL> alter user USER_TEST_005 identified by 'Root12345' replace ,Root1234;
+
+CT-00601, Sql syntax error: The password must be identifier or string
+SQL> alter user USER_TEST_005 abc;
+
+CT-00601, [1:26]Sql syntax error: illegal sql text
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if abc USER_TEST_001 cascade;
+
+CT-00601, [1:14]Sql syntax error: EXISTS expected
+SQL> drop user USER_TEST_001 cascade;
+
+Succeed.
+
+SQL> drop user USER_TEST_002 cascade;
+
+Succeed.
+
+SQL> drop user USER_TEST_005 cascade;
+
+Succeed.
+
+SQL> 
+SQL> create temporary abc;
+
+CT-00601, Sql syntax error: TABLE or TABLESPACE expected but abc found
+SQL> create or fja;
+
+CT-00601, [1:11]Sql syntax error: REPLACE expected
+SQL> create or replace public abc;
+
+CT-00601, [1:26]Sql syntax error: SYNONYM expected
+SQL> create public abc;
+
+CT-00601, Sql syntax error: SYNONYM expected but abc found
+SQL> create global abc;
+
+CT-00601, Sql syntax error: TEMPORARY expected but abc found
+SQL> create global TEMPORARY abc;
+
+CT-00601, Sql syntax error: TABLE expected but abc found
+SQL> create database link abc;
+
+CT-00601, [1:25]Sql syntax error: CONNECT expected
+SQL> 
+SQL> create role ,fjds123;
+
+CT-00601, [1:13]Sql syntax error: invalid variant/object name was found
+SQL> drop role;
+
+CT-00601, [1:10]Sql syntax error: more text expected but terminated
+SQL> drop role ,fjds123;
+
+CT-00601, [1:11]Sql syntax error: invalid variant/object name was found
+SQL> drop role abc1234 not_end;
+
+CT-00601, [1:26]Sql syntax error: expected end but not_end found
+SQL> 
+SQL> create role F$#_FVT_CREATE_ROLE_PASSWORD_9 identified by 'Gauussabcd=';
+
+CT-00601, [1:13]Sql syntax error: invalid variant/object name was found
+SQL> create role CREATE_USER_PASSWORD_002 identified by 'Gs~!@#$%^&*()-_=+\|[{}];:",<.>/? ';
+
+CT-00658, The password was invalid: Password contains unexpected character.
+
+SQL> drop role F$#_FVT_CREATE_ROLE_PASSWORD_9;
+
+CT-00783, The role F$#_FVT_CREATE_ROLE_PASSWORD_9 does not exist.
+SQL> drop role CREATE_USER_PASSWORD_002;
+
+CT-00783, The role CREATE_USER_PASSWORD_002 does not exist.
+SQL> 
+SQL> create sequence SEQ_TEST_001 increment abc;
+
+CT-00601, [1:40]Sql syntax error: BY expected
+SQL> create sequence SEQ_TEST_001 start;
+
+CT-00601, [1:35]Sql syntax error: WITH expected
+SQL> create sequence SEQ_TEST_001 cache 1 nocache;
+
+CT-00601, Sql syntax error: duplicate or conflicting CACHE/NOCACHE specifications
+SQL> 
+SQL> drop sequence if exists SEQ_TEST_001;
+
+Succeed.
+
+SQL> drop sequence if exists SEQ_TEST_002;
+
+Succeed.
+
+SQL> drop user if exists test_seq_user_001;
+
+Succeed.
+
+SQL> create sequence SEQ_TEST_001 start with 100 increment by 2 cache 99999;
+
+Succeed.
+
+SQL> create sequence SEQ_TEST_002 start with 100 increment by 2 cache 99999;
+
+Succeed.
+
+SQL> create user test_seq_user_001 identified by Root1234;
+
+Succeed.
+
+SQL> grant create session to test_seq_user_001;
+
+Succeed.
+
+SQL> create sequence test_seq_user_001.SEQ_TEST_001 start with 100 increment by 2 cache 99999;
+
+Succeed.
+
+SQL> create sequence test_seq_user_001.SEQ_TEST_002 start with 100 increment by 2 cache 99999;
+
+Succeed.
+
+SQL> 
+SQL> select * from all_sequences where SEQUENCE_NAME in ('SEQ_TEST_001', 'SEQ_TEST_002') order by SEQUENCE_OWNER, SEQUENCE_NAME;
+
+SEQUENCE_OWNER                                                   SEQUENCE_NAME                                                    MIN_VALUE            MAX_VALUE            INCREMENT_BY         CYCLE_FLAG   ORDER_FLAG   CACHE_SIZE           LAST_NUMBER         
+---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- -------------------- -------------------- ------------ ------------ -------------------- --------------------
+SYS                                                              SEQ_TEST_001                                                     1                    9223372036854775807  2                    0            0            99999                100                 
+SYS                                                              SEQ_TEST_002                                                     1                    9223372036854775807  2                    0            0            99999                100                 
+TEST_SEQ_USER_001                                                SEQ_TEST_001                                                     1                    9223372036854775807  2                    0            0            99999                100                 
+TEST_SEQ_USER_001                                                SEQ_TEST_002                                                     1                    9223372036854775807  2                    0            0            99999                100                 
+
+4 rows fetched.
+
+SQL> 
+SQL> conn test_seq_user_001/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> select * from user_sequences order by SEQUENCE_NAME;
+
+SEQUENCE_NAME                                                    MIN_VALUE            MAX_VALUE            INCREMENT_BY         CYCLE_FLAG   ORDER_FLAG   CACHE_SIZE           LAST_NUMBER         
+---------------------------------------------------------------- -------------------- -------------------- -------------------- ------------ ------------ -------------------- --------------------
+SEQ_TEST_001                                                     1                    9223372036854775807  2                    0            0            99999                100                 
+SEQ_TEST_002                                                     1                    9223372036854775807  2                    0            0            99999                100                 
+
+2 rows fetched.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop sequence if exists SEQ_TEST_001;
+
+Succeed.
+
+SQL> drop sequence if exists SEQ_TEST_002;
+
+Succeed.
+
+SQL> drop user test_seq_user_001 cascade;
+
+Succeed.
+
+SQL> 
+SQL> create user USER_TEST_001 identified by Root1234;
+
+Succeed.
+
+SQL> create user USER_TEST_002 identified by Root1234;
+
+Succeed.
+
+SQL> 
+SQL> alter user USER_TEST_001 account lock;
+
+Succeed.
+
+SQL> alter user USER_TEST_002 password expire;
+
+Succeed.
+
+SQL> 
+SQL> drop user USER_TEST_001;
+
+Succeed.
+
+SQL> drop user USER_TEST_002;
+
+Succeed.
+
+SQL> 
+SQL> create user user_test_proc_001 identified by Root1234;
+
+Succeed.
+
+SQL> create or replace procedure user_test_proc_001.test_proc_001
+  2 as
+  3    sqlstr varchar2(2000);
+  4 begin
+  5    sqlstr := 'create table user_test_proc_001.tab_001 (id int)';
+  6    execute immediate sqlstr;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> select name from SYS_PROCS where name = UPPER('test_proc_001');
+
+NAME                                                            
+----------------------------------------------------------------
+TEST_PROC_001                                                   
+
+1 rows fetched.
+
+SQL> drop user user_test_proc_001;
+
+CT-00815, user objects is being used, can not drop
+SQL> drop user user_test_proc_001 cascade;
+
+Succeed.
+
+SQL> select name from SYS_PROCS where name = UPPER('test_proc_001');
+
+NAME                                                            
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> -- test 'ALTER SESSION set current_schema=schema' feature
+SQL> connect / as sysdba
+
+connected.
+
+SQL> create user USER_TEST_001 identified by Root1234;
+
+Succeed.
+
+SQL> create user USER_TEST_002 identified by Root1234;
+
+Succeed.
+
+SQL> create user USER_TEST_003 identified by Root1234;
+
+Succeed.
+
+SQL> 
+SQL> grant connect, resource to USER_TEST_001, USER_TEST_002, USER_TEST_003;
+
+Succeed.
+
+SQL> grant select on v$session to USER_TEST_001;
+
+Succeed.
+
+SQL> grant drop user, create any table, create any sequence, create any view, create any synonym to USER_TEST_001;
+
+Succeed.
+
+SQL> grant create any procedure, create any trigger to USER_TEST_001;
+
+Succeed.
+
+SQL> grant insert any table to USER_TEST_001;
+
+Succeed.
+
+SQL> grant alter session to USER_TEST_001;
+
+Succeed.
+
+SQL> 
+SQL> create table USER_TEST_001.u_table_001 (f1 int, f2 varchar2(30));
+
+Succeed.
+
+SQL> create table USER_TEST_002.u_table_001 (f1 int, f2 varchar2(30));
+
+Succeed.
+
+SQL> create table USER_TEST_003.u_table_001 (f1 int, f2 varchar2(30));
+
+Succeed.
+
+SQL> 
+SQL> grant select on USER_TEST_002.u_table_001 to USER_TEST_001;
+
+Succeed.
+
+SQL> 
+SQL> create sequence USER_TEST_001.u_seq_001 start with 10;
+
+Succeed.
+
+SQL> create sequence USER_TEST_002.u_seq_001 start with 100;
+
+Succeed.
+
+SQL> 
+SQL> -- 1. set a schema that not exists
+SQL> conn USER_TEST_001/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> select user_name, curr_schema from sys.v$me;
+
+USER_NAME                                                        CURR_SCHEMA                                                     
+---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_001                                                    USER_TEST_001                                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> alter session set current_schema=abc; -- failed
+
+CT-00781, The user ABC does not exist.
+SQL> select user_name, curr_schema from sys.v$me;
+
+USER_NAME                                                        CURR_SCHEMA                                                     
+---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_001                                                    USER_TEST_001                                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> -- 2. drop a user after set the user as a session's current schema
+SQL> alter session set current_schema=user_test_003; -- succeed
+
+Succeed.
+
+SQL> select user_name, curr_schema from sys.v$me;
+
+USER_NAME                                                        CURR_SCHEMA                                                     
+---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_001                                                    USER_TEST_003                                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select * from u_table_001;
+
+CT-01001, Permissions were insufficient
+SQL> drop user user_test_003 cascade;
+
+Succeed.
+
+SQL> select * from u_table_001; -- can not find the schema
+
+CT-01001, [1:15]Permissions were insufficient
+SQL> 
+SQL> -- the setting is not changed
+SQL> select user_name, curr_schema from sys.v$me;
+
+USER_NAME                                                        CURR_SCHEMA                                                     
+---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_001                                                    USER_TEST_003                                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> -- 3. check if the current_schema setting has taken effects
+SQL> alter session set current_schema=USER_TEST_001;
+
+Succeed.
+
+SQL> insert into u_table_001 values (1, '111');
+
+1 rows affected.
+
+SQL> select u_seq_001.nextval from dual;
+
+NEXTVAL             
+--------------------
+10                  
+
+1 rows fetched.
+
+SQL> 
+SQL> alter session set current_schema=USER_TEST_002;
+
+Succeed.
+
+SQL> insert into u_table_001 values (1, '111');
+
+1 rows affected.
+
+SQL> select user_name, curr_schema from sys.v$me;
+
+USER_NAME                                                        CURR_SCHEMA                                                     
+---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_001                                                    USER_TEST_002                                                   
+
+1 rows fetched.
+
+SQL> select USERNAME, curr_schema from sys.v$session where type='USER' and USERNAME='USER_TEST_001';
+
+USERNAME                                                         CURR_SCHEMA                                                     
+---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_001                                                    USER_TEST_002                                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select * from user_test_001.u_table_001; -- (1, '111') 1 row
+
+F1           F2                            
+------------ ------------------------------
+1            111                           
+
+1 rows fetched.
+
+SQL> select * from user_test_002.u_table_001; -- (1, '111') 1 row
+
+F1           F2                            
+------------ ------------------------------
+1            111                           
+
+1 rows fetched.
+
+SQL> select u_seq_001.nextval from dual; -- no privilege
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> -- create table
+SQL> create table u_table_002 (id int, name varchar2(30)); -- in schema USER_TEST_002
+
+Succeed.
+
+SQL> insert into u_table_002 values (1, 'zhusimaji');
+
+1 rows affected.
+
+SQL> select * from user_test_001.u_table_002; -- not found
+
+CT-00843, [1:15]The table or view USER_TEST_001.U_TABLE_002 does not exist.
+SQL> select * from user_test_002.u_table_002; -- 1 row
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> -- create sequence
+SQL> create sequence u_seq_002 start with 1000; -- in schema USER_TEST_002
+
+Succeed.
+
+SQL> select user_test_001.u_seq_002.nextval from dual;
+
+CT-00848, [1:8]The sequence USER_TEST_001.U_SEQ_002 does not exist.
+SQL> select user_test_002.u_seq_002.nextval from dual;
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> -- create view
+SQL> create view u_view_001 as select * from u_table_002;
+
+Succeed.
+
+SQL> select * from user_test_001.u_view_001;
+
+CT-00843, [1:15]The table or view USER_TEST_001.U_VIEW_001 does not exist.
+SQL> select * from user_test_002.u_view_001;
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> -- create synonym
+SQL> create synonym u_syn_001 for user_test_002.u_table_002;
+
+Succeed.
+
+SQL> select * from u_syn_001;  -- no privilege
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> -- create procedure/function/trigger
+SQL> CREATE OR REPLACE FUNCTION Zenith_Test_Sysdate return varchar2
+  2 IS
+  3  cunt int := 0;
+  4  Begin
+  5  select count(*) into cunt from dual;
+  6  dbe_output.print_line(cunt);
+  7  IF SQL % FOUND
+  8   then
+  9  return cunt;
+ 10  end if;
+ 11  End Zenith_Test_Sysdate;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> select Zenith_Test_Sysdate() from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> 
+SQL> create or replace trigger u_trig_001
+  2     before insert
+  3     on u_table_001
+  4     for each row
+  5     begin
+  6         select 1 into :new.f2 from dual;
+  7     end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE Zenith_Test_004(param1 out varchar2)
+  2 IS
+  3     tmp varchar2(20) :='12345678';
+  4 begin
+  5  param1:=param1||tmp;
+  6 end Zenith_Test_004;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select NAME, TRIG_TABLE_USER, TRIG_TABLE from SYS_PROCS where user# = (select id from SYS_USERS where name = 'USER_TEST_002') order by NAME;
+
+NAME                                                             TRIG_TABLE_USER                                                  TRIG_TABLE                                                      
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+U_TRIG_001                                                       USER_TEST_002                                                    U_TABLE_001                                                     
+ZENITH_TEST_004                                                                                                                                                                                   
+ZENITH_TEST_SYSDATE                                                                                                                                                                               
+
+3 rows fetched.
+
+SQL> 
+SQL> revoke create any procedure, create any trigger from USER_TEST_001;
+
+Succeed.
+
+SQL> revoke select on user_test_002.u_table_001 from user_test_001;
+
+Succeed.
+
+SQL> 
+SQL> -- 4. check the privileges of current user to access the objects in current schema
+SQL> conn USER_TEST_001/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> alter session set current_schema=user_test_002;
+
+Succeed.
+
+SQL> 
+SQL> select * from u_table_001;  -- no privilege
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> conn user_test_002/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> select user_name, curr_schema from sys.v$me;
+
+USER_NAME                                                        CURR_SCHEMA                                                     
+---------------------------------------------------------------- ----------------------------------------------------------------
+USER_TEST_002                                                    USER_TEST_002                                                   
+
+1 rows fetched.
+
+SQL> grant select on u_table_001 to user_test_001;
+
+Succeed.
+
+SQL> 
+SQL> select * from u_table_001; -- 1 rows: (1, '111')
+
+F1           F2                            
+------------ ------------------------------
+1            111                           
+
+1 rows fetched.
+
+SQL> 
+SQL> insert into u_table_001 values (1, '333');
+
+1 rows affected.
+
+SQL> select * from u_table_001 order by f2; -- 2 rows: (1, '1'), (1, '111') changed by the trigger
+
+F1           F2                            
+------------ ------------------------------
+1            1                             
+1            111                           
+
+2 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> conn user_test_001/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> alter session set current_schema=USER_TEST_002;
+
+Succeed.
+
+SQL> select * from u_table_001 order by f2;  -- 2 rows: (1, '1'), (1, '111')
+
+F1           F2                            
+------------ ------------------------------
+1            1                             
+1            111                           
+
+2 rows fetched.
+
+SQL> 
+SQL> -- no privileges to create procedure/function/trigger in current schema
+SQL> CREATE OR REPLACE FUNCTION Zenith_Test_Sysdate return varchar2
+  2 IS
+  3  cunt int := 0;
+  4  Begin
+  5  select count(*) into cunt from dual;
+  6  dbe_output.print_line(cunt);
+  7  IF SQL % FOUND
+  8   then
+  9  return cunt;
+ 10  end if;
+ 11  End Zenith_Test_Sysdate;
+ 12 /
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> select Zenith_Test_Sysdate() from dual;
+
+CT-01001, [1:8]Permissions were insufficient
+SQL> 
+SQL> create or replace trigger u_trig_001
+  2     before insert
+  3     on u_table_001
+  4     for each row
+  5     begin
+  6         select 1 into :new.f2 from dual;
+  7     end;
+  8 /
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE Zenith_Test_004(param1 out varchar2)
+  2 IS
+  3     tmp varchar2(20) :='12345678';
+  4 begin
+  5  param1:=param1||tmp;
+  6 end Zenith_Test_004;
+  7 /
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> -- 5. describe + table/view name : use current user's object if the schema name is not specified.
+SQL> desc u_table_002
+
+CT-01001, Permissions were insufficient
+
+SQL> desc user_test_002.u_table_002
+
+CT-01001, Permissions were insufficient
+
+SQL> 
+SQL> -- 6. clean
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user user_test_001 cascade;
+
+Succeed.
+
+SQL> drop user user_test_002 cascade;
+
+Succeed.
+
+SQL> drop tablespace TMP_TBLSPC;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists test;
+
+Succeed.
+
+SQL> create user test identified by Root1234;
+
+Succeed.
+
+SQL> alter user test identified by Root12345;
+
+Succeed.
+
+SQL> grant create session, alter user to test;
+
+Succeed.
+
+SQL> connect test/Root12345@127.0.0.1:1611
+
+connected.
+
+SQL> alter user test identified by Root1234;
+
+Succeed.
+
+SQL> alter user test identified by Root54321 replace Root1234;
+
+Succeed.
+
+SQL> connect test/Root54321@127.0.0.1:1611
+
+connected.
+
+SQL> connect / as sysdba
+
+connected.
+
+SQL> alter user test identified by Root123456 replace Root123;
+
+CT-00822, When the password of an existing database user was changed, the original password was incorrectly entered.
+SQL> alter user test identified by Root123456 replace Root54321;
+
+Succeed.
+
+SQL> drop user test cascade;
+
+Succeed.
+
+SQL> 
+SQL> --test the spid in v$session and v$me
+SQL> SELECT DECODE(S.SPID, 0, 'INVALID', 'VALID') FROM V$SESSION S, V$ME M WHERE M.SID=S.SID;         --VALID expected
+
+DECODE(S.SPID, 0, 'INVALID', 'VALID')
+-------------------------------------
+VALID                                
+
+1 rows fetched.
+
+SQL> SELECT DECODE(S.SPID, M.SPID, 'EQUAL', 'INEQUAL') FROM V$SESSION S, V$ME M WHERE M.SID=S.SID;  --EQUAL expected
+
+DECODE(S.SPID, M.SPID, 'EQUAL', 'INEQUAL')
+------------------------------------------
+EQUAL                                     
+
+1 rows fetched.
+
+SQL> SELECT DECODE(COUNT(DISTINCT SPID), COUNT(SPID), 'NO DUPLICATE', 'DUPLICATE EXISTS') AS COL FROM V$SESSION WHERE SPID <> 0;  --NO DUPLICATE expected
+
+COL             
+----------------
+NO DUPLICATE    
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> declare
+  2     role_cnt int;
+  3     sqlstr varchar(64);
+  4 begin
+  5     select count(*) into role_cnt from SYS_ROLES;
+  6     for i in 1..(1024 - role_cnt) loop
+  7         sqlstr := 'create role role_test_' || i ;
+  8         execute immediate sqlstr;
+  9     end loop;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create role abc;  -- failed
+
+CT-00686, Maximum number of roles (1024) exceeded
+SQL> 
+SQL> declare
+  2     role_cnt int;
+  3     sqlstr varchar(64);
+  4 begin
+  5     select count(*) into role_cnt from SYS_ROLES where name like 'ROLE_TEST_%';
+  6     for i in 1..role_cnt loop
+  7         sqlstr := 'drop role role_test_' || i ;
+  8         execute immediate sqlstr;
+  9     end loop;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select count(*) from SYS_ROLES;
+
+COUNT(*)            
+--------------------
+4                   
+
+1 rows fetched.
+
+SQL> 
+SQL> -- test : alter session set current_schema in procedure DTS2018081701021
+SQL> create user c##session_schema_001 identified by Root1234;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput on
+
+ON
+SQL> 
+SQL> create or replace function sys_session_schema_fun_003_1(n number, oneT char, twoT char, threeT char) return number
+  2 is
+  3 v_sql char(128);
+  4 v_sna NUMBER(10, 0);
+  5 begin
+  6   if (n = 1) then
+  7     dbe_output.print_line(oneT ||'---->'|| threeT);
+  8   else
+  9     v_sql:='call sys_session_schema_pro_003_1(' || to_char(n - 1) || ', '''||oneT||''','''||threeT||''','''||twoT||''')';
+ 10     EXECUTE IMMEDIATE v_sql;
+ 11     dbe_output.print_line(oneT ||'---->'|| threeT);
+ 12     
+ 13     execute immediate 'alter session set current_schema=c##session_schema_001';
+ 14 
+ 15     v_sql:='call sys_session_schema_pro_003_1('||to_char(n - 1)||','''||twoT||''','''||oneT||''','''||threeT||''')';
+ 16     EXECUTE IMMEDIATE v_sql;
+ 17   end if;
+ 18   return 0;
+ 19 end;
+ 20 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure sys_session_schema_pro_003_1(n int,a varchar2,b varchar2,c varchar2)
+  2 as
+  3 v_tmp int;
+  4 v_n int :=n;
+  5 v_a varchar2(40) :=a;
+  6 v_b varchar2(40) :=b;
+  7 v_c varchar2(40) :=c;
+  8 begin
+  9     if(1=v_n)
+ 10     then
+ 11         dbe_output.print_line(v_a||'---->'||v_c);
+ 12     else
+ 13         v_tmp:=sys_session_schema_fun_003_1(v_n-1,v_a,v_c,v_b);
+ 14         dbe_output.print_line(v_a||'---->'||v_c);
+ 15         v_tmp:=sys_session_schema_fun_003_1(v_n-1,v_b,v_a,v_c);
+ 16     end if;
+ 17 end;
+ 18 /
+
+Succeed.
+
+SQL> 
+SQL> select sys_session_schema_fun_003_1(3,'oneT','twoT','threeT') from dual;
+
+oneT---->threeT
+oneT---->twoT
+threeT---->twoT
+oneT---->threeT
+CT-00932, [13:5] PL/SQL(SYS.SYS_SESSION_SCHEMA_FUN_003_1) terminated with execute errors
+[13:5] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> select curr_schema from v$me; -- current schema should be changed to 'c##session_schema_001'
+
+CURR_SCHEMA                                                     
+----------------------------------------------------------------
+SYS                                                             
+
+1 rows fetched.
+
+SQL> 
+SQL> alter session set current_schema=SYS;
+
+Succeed.
+
+SQL> select curr_schema from v$me; -- current schema should be changed to 'SYS'
+
+CURR_SCHEMA                                                     
+----------------------------------------------------------------
+SYS                                                             
+
+1 rows fetched.
+
+SQL> 
+SQL> set serveroutput off
+
+OFF
+SQL> drop user c##session_schema_001;
+
+Succeed.
+
+SQL> 
+SQL> -- test drop user that not exists 
+SQL> drop user if exists user_not_exists;
+
+Succeed.
+
+SQL> \! ctsql user_not_exists/Root1234@127.0.0.1:1611 -c 'select 1';
+
+
+SQL> \! ctsql user_not_exists/Root1234@127.0.0.1:1611 -c 'select 1';
+
+
+SQL> \! ctsql user_not_exists/Root1234@127.0.0.1:1611 -c 'select 1';
+
+
+SQL> \! ctsql user_not_exists/Root1234@127.0.0.1:1611 -c 'select 1';
+
+
+SQL> \! ctsql / as sysdba -c 'drop user user_not_exists cascade';
+
+
+SQL> 
+SQL> connect / as sysdba
+
+connected.
+
+SQL> 
+SQL> CREATE USER myuser IDENTIFIED BY myuserpwd1;
+
+CT-00657, Password is too simple, password should contain at least three of the following character types:
+A. at least one lowercase letter
+B. at least one uppercase letter
+C. at least one digit
+D. at least one special character: `~!@#$%^&*()-_=+\|[{}]:'",<.>/? and space
+SQL> CREATE USER myusertest IDENTIFIED BY tsetresuym;
+
+CT-00658, The password was invalid: password cannot be the same as the reverse of the name
+SQL> 
+SQL> DROP USER IF EXISTS myuser;
+
+Succeed.
+
+SQL> CREATE USER myuser IDENTIFIED BY Gs_12345;
+
+Succeed.
+
+SQL> grant create session to myuser;
+
+Succeed.
+
+SQL> connect myuser/Gs_12345@127.0.0.1:1611
+
+connected.
+
+SQL> ALTER USER myuser IDENTIFIED BY Gs_12346 REPLACE Gs_12345;
+
+CT-00658, The password was invalid: new password and old password should differ by at least two character bits
+SQL> ALTER USER myuser IDENTIFIED BY Gs_123ab REPLACE Gs_12345;
+
+Succeed.
+
+SQL> connect / as sysdba
+
+connected.
+
+SQL> DROP USER myuser;
+
+Succeed.
+
+SQL> 
+SQL> -- test public user 
+SQL> conn public/Changeme_123@127.0.0.1:1611 -- fail
+
+CT-00329, Incorrect user or password
+
+SQL> connect / as sysdba
+
+connected.
+
+SQL> create user publicdba identified by Changeme_123;
+
+Succeed.
+
+SQL> grant create session to publicdba;
+
+Succeed.
+
+SQL> conn publicdba/Changeme_123@127.0.0.1:1611  -- succeed
+
+connected.
+
+SQL> conn / as sysdba -- succeed
+
+connected.
+
+SQL> drop user publicdba;
+
+Succeed.
+
+SQL> 
+SQL> -- test drop user after drop a role
+SQL> drop user if exists test_user_obj_001;
+
+Succeed.
+
+SQL> create user test_user_obj_001 identified by cantian_234;
+
+Succeed.
+
+SQL> create table test_user_obj_001.tab_001 (id int);
+
+Succeed.
+
+SQL> grant connect, resource to test_user_obj_001;
+
+Succeed.
+
+SQL> 
+SQL> create user test_user_obj_002 identified by cantian_234;
+
+Succeed.
+
+SQL> create user test_user_obj_003 identified by cantian_234;
+
+Succeed.
+
+SQL> create role test_role_obj_001;
+
+Succeed.
+
+SQL> create role test_role_obj_002;
+
+Succeed.
+
+SQL> 
+SQL> conn test_user_obj_001/cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> grant select on test_user_obj_001.tab_001 to test_user_obj_002, test_user_obj_003, test_role_obj_001, test_role_obj_002;
+
+Succeed.
+
+SQL> revoke select on test_user_obj_001.tab_001 from test_role_obj_002;
+
+Succeed.
+
+SQL> revoke select on test_user_obj_001.tab_001 from test_user_obj_003;
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop role test_role_obj_001;
+
+Succeed.
+
+SQL> drop role test_role_obj_002;
+
+Succeed.
+
+SQL> drop user test_user_obj_002;
+
+Succeed.
+
+SQL> drop user test_user_obj_003;
+
+Succeed.
+
+SQL> drop user test_user_obj_001 cascade;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2018111403174
+SQL> create user id_reuse_test_01 identified by cantian_234;
+
+Succeed.
+
+SQL> grant create session, create role, create table to id_reuse_test_01;
+
+Succeed.
+
+SQL> conn id_reuse_test_01/cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> create role id_reuse_role_01;
+
+Succeed.
+
+SQL> grant select any table to id_reuse_role_01;
+
+CT-01001, Permissions were insufficient
+SQL> create table tab_001 (f1 int);
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user id_reuse_test_01 cascade;
+
+Succeed.
+
+SQL> 
+SQL> select OWNER_UID from SYS_ROLES where name = upper('id_reuse_role_01'); -- role's owner uid changed to 0;
+
+OWNER_UID   
+------------
+0           
+
+1 rows fetched.
+
+SQL> create user id_reuse_test_02 identified by cantian_234; -- uid reuse
+
+Succeed.
+
+SQL> grant create session to id_reuse_test_02;
+
+Succeed.
+
+SQL> 
+SQL> conn id_reuse_test_02/cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> grant id_reuse_role_01 to id_reuse_test_02; -- failed, no privilege
+
+CT-01001, Permissions were insufficient
+SQL> drop role id_reuse_role_01; -- failed, no privilege
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user id_reuse_test_02 cascade;
+
+Succeed.
+
+SQL> drop role id_reuse_role_01;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018112709220
+SQL> create user DTS2018112709220 identified by cantian_234;
+
+Succeed.
+
+SQL> create user DTS_test_001 identified by cantian_234;
+
+Succeed.
+
+SQL> grant create session to DTS2018112709220;
+
+Succeed.
+
+SQL> 
+SQL> conn DTS2018112709220/cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> alter user DTS2018112709220 identified by Cantian_123; -- failed
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant dba to DTS2018112709220;
+
+Succeed.
+
+SQL> conn DTS2018112709220/Cantian_123@127.0.0.1:1611
+
+connected.
+
+SQL> alter user DTS2018112709220 identified by Cantian_123; -- failed
+
+Succeed.
+
+SQL> alter user DTS2018112709220 identified by Cantian_123 replace Cantian_123; -- succeed
+
+CT-00658, The password was invalid: new password and old password should differ by at least two character bits
+SQL> alter user DTS_test_001 identified by Cantian_123; -- succeed
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant dba to DTS_test_001;
+
+Succeed.
+
+SQL> conn DTS2018112709220/Cantian_123@127.0.0.1:1611
+
+connected.
+
+SQL> alter user DTS_test_001 identified by Cantian_456;
+
+Succeed.
+
+SQL> alter user DTS_test_001 identified by Huawei_123 replace Cantian_456;
+
+Succeed.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> revoke dba from DTS2018112709220;
+
+Succeed.
+
+SQL> conn DTS2018112709220/Cantian_123@127.0.0.1:1611
+
+connected.
+
+SQL> alter user DTS2018112709220 identified by Root1234 replace Cantian_123 default tablespace SYSTEM; -- failed, no privilege
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user DTS2018112709220;
+
+Succeed.
+
+SQL> drop user DTS_test_001;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2019091601669
+SQL> create user DTS2019091601669 identified by Cantian_234;
+
+Succeed.
+
+SQL> create table DTS2019091601669.t1 (id int, name varchar(20));
+
+Succeed.
+
+SQL> select name from db_dependencies where referenced_owner='DTS2019091601669';
+
+NAME                                                            
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> create view DTS2019091601669_v1 as select * from DTS2019091601669.t1;
+
+Succeed.
+
+SQL> select name from db_dependencies where referenced_owner='DTS2019091601669';
+
+NAME                                                            
+----------------------------------------------------------------
+DTS2019091601669_V1                                             
+
+1 rows fetched.
+
+SQL> drop user DTS2019091601669 cascade;
+
+Succeed.
+
+SQL> select name from db_dependencies where referenced_owner='DTS2019091601669';
+
+NAME                                                            
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> -- DTS2019101805435
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create role test_drop_sys_role;
+
+Succeed.
+
+SQL> create user test_drop_sys_role_user1 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant drop any role, connect to test_drop_sys_role_user1;
+
+Succeed.
+
+SQL> conn test_drop_sys_role_user1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> drop role test_drop_sys_role;
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user test_drop_sys_role_user1 cascade;
+
+Succeed.
+
+SQL> drop role test_drop_sys_role;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2019102209078
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create user test_role1 identified by Cantian_234;
+
+Succeed.
+
+SQL> alter session set current_schema=test_role1;
+
+Succeed.
+
+SQL> create role role_schema;
+
+Succeed.
+
+SQL> select a.username,r.name from sys.roles$ r,all_users a where r.owner_uid = a.user_id and r.name = 'ROLE_SCHEMA';
+
+USERNAME                                                         NAME                                                            
+---------------------------------------------------------------- ----------------------------------------------------------------
+SYS                                                              ROLE_SCHEMA                                                     
+
+1 rows fetched.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user test_role1 cascade;
+
+Succeed.
+
+SQL> drop role role_schema;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2018120304015  DTS2018120304015
+SQL> drop user if exists  "B--B";
+
+Succeed.
+
+SQL> drop user if exists  "B%B";
+
+Succeed.
+
+SQL> drop user if exists  "B/B";
+
+Succeed.
+
+SQL> drop user if exists  "BB";
+
+Succeed.
+
+SQL> create user "B--B" identified by Changme_123;
+
+Succeed.
+
+SQL> create user "BB" identified by Changme_123;
+
+Succeed.
+
+SQL> create user "B%B" identified by Changme_123;
+
+Succeed.
+
+SQL> create user "B/B" identified by Changme_123;
+
+Succeed.
+
+SQL> grant connect to "B--B";
+
+Succeed.
+
+SQL> grant connect to "B%B";
+
+Succeed.
+
+SQL> grant connect to "B/B";
+
+Succeed.
+
+SQL> grant connect to "BB";
+
+Succeed.
+
+SQL> 
+SQL> conn "B--B"/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> conn "B%B"/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> conn "B/B"/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> conn 'B--B'/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> conn 'B%B'/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> conn 'B/B'/Changme_123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> -- DTS2019112612773 DTS2019112008819
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create user c##user_test_zzc identified by Cantian_234;
+
+Succeed.
+
+SQL> create user c##user_normal_zzc identified by Cantian_234;
+
+Succeed.
+
+SQL> create user c##user_dba_zzc identified by Cantian_234;
+
+Succeed.
+
+SQL> grant connect to c##user_test_zzc;
+
+Succeed.
+
+SQL> grant dba to c##user_dba_zzc;
+
+Succeed.
+
+SQL> conn c##user_test_zzc/Cantian_234@127.0.0.1:1611  -- ordinary users without alter user permissions
+
+connected.
+
+SQL> alter user c##user_test_zzc account lock;
+
+CT-01001, Permissions were insufficient
+SQL> alter user c##user_test_zzc identified by Cantian_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user c##user_normal_zzc account lock;
+
+CT-01001, Permissions were insufficient
+SQL> alter user c##user_normal_zzc identified by Cantian_123 replace Cantian_234;
+
+CT-01001, Permissions were insufficient
+SQL> alter user c##user_dba_zzc account lock;
+
+CT-01001, Permissions were insufficient
+SQL> alter user c##user_dba_zzc identified by Cantian_123 replace Cantian_234;
+
+CT-01001, Permissions were insufficient
+SQL> alter user sys account lock;
+
+CT-01001, Permissions were insufficient
+SQL> alter user sys identified by Cantian_123 replace Cantian_234;
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba
+
+connected.
+
+SQL> grant alter user to c##user_test_zzc;
+
+Succeed.
+
+SQL> conn c##user_test_zzc/Cantian_123@127.0.0.1:1611  --ordinary user with alter user permissions
+
+connected.
+
+SQL> select * from user_sys_privs;
+
+USERNAME                                                         PRIVILEGE                    ADMIN_OPTION
+---------------------------------------------------------------- ---------------------------- ------------
+C##USER_TEST_ZZC                                                 ALTER USER                   NO          
+
+1 rows fetched.
+
+SQL> alter user c##user_test_zzc account lock;
+
+Succeed.
+
+SQL> alter user c##user_test_zzc identified by Cantian_234 replace Cantian_123;
+
+Succeed.
+
+SQL> alter user c##user_normal_zzc account lock;
+
+Succeed.
+
+SQL> alter user c##user_normal_zzc identified by Cantian_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user c##user_dba_zzc account lock;
+
+CT-01001, Permissions were insufficient
+SQL> alter user c##user_dba_zzc identified by Cantian_123 replace Cantian_234;
+
+CT-01001, Permissions were insufficient
+SQL> alter user sys account lock;
+
+CT-01001, Permissions were insufficient
+SQL> alter user sys identified by Cantian_123 replace Cantian_234;
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create user c##user_dbatest_zzc identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to c##user_dbatest_zzc;
+
+Succeed.
+
+SQL> conn c##user_dbatest_zzc/Cantian_234@127.0.0.1:1611  --dba role user
+
+connected.
+
+SQL> alter user c##user_dbatest_zzc account lock;
+
+Succeed.
+
+SQL> alter user c##user_dbatest_zzc identified by Cantian_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user c##user_normal_zzc account lock;
+
+Succeed.
+
+SQL> alter user c##user_normal_zzc identified by Cantian_234 replace Cantian_123;
+
+Succeed.
+
+SQL> alter user c##user_dba_zzc account lock;
+
+Succeed.
+
+SQL> alter user c##user_dba_zzc identified by Cantian_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user sys account lock;
+
+CT-01001, Permissions were insufficient
+SQL> alter user sys identified by Cantian_123 replace Cantian_234;
+
+CT-01001, Permissions were insufficient
+SQL> conn / as sysdba  -- sys user
+
+connected.
+
+SQL> alter user c##user_normal_zzc account lock;
+
+Succeed.
+
+SQL> alter user c##user_normal_zzc identified by Cantian_123 replace Cantian_234;
+
+Succeed.
+
+SQL> alter user c##user_dba_zzc account lock;
+
+Succeed.
+
+SQL> alter user c##user_dba_zzc identified by Cantian_456 replace Cantian_123;
+
+Succeed.
+
+SQL> alter user sys account unlock;
+
+Succeed.
+
+SQL> drop user c##user_test_zzc cascade;
+
+Succeed.
+
+SQL> drop user c##user_normal_zzc cascade;
+
+Succeed.
+
+SQL> drop user c##user_dba_zzc cascade;
+
+Succeed.
+
+SQL> drop user c##user_dbatest_zzc cascade;
+
+Succeed.
+
+SQL> 
+SQL> -- error conn with " '
+SQL> conn / as sysdba
+
+connected.
+
+SQL> conn ""/Changme_123@127.0.0.1:1611
+
+ZS-00001: username expect
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> conn ''@127.0.0.1:1611
+
+ZS-00001: username expect
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> conn ''BB/Changme_123@127.0.0.1:1611
+
+ZS-00001: username expect
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> conn "BB/Changme_123@127.0.0.1:1611"
+
+ZS-00001: quotation need to be used in pairs
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> conn "B-B"Changme_123@127.0.0.1:1611
+
+ZS-00001: '/' expect between username and password
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> conn "B-B"/@127.0.0.1:1611
+
+ZS-00001: password expect
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user "B--B";
+
+Succeed.
+
+SQL> drop user "B%B";
+
+Succeed.
+
+SQL> drop user "B/B";
+
+Succeed.
+
+SQL> drop user "BB";
+
+Succeed.
+
+SQL> 
+SQL> create user DTS2019041210933 identified by test_1234 password expire;
+
+Succeed.
+
+SQL> alter user DTS2019041210933 identified by test_12345 password expire account unlock;
+
+Succeed.
+
+SQL> select ACCOUNT_STATUS from dba_users where username = 'DTS2019041210933';
+
+ACCOUNT_STATUS                            
+------------------------------------------
+EXPIRED                                   
+
+1 rows fetched.
+
+SQL> drop user  DTS2019041210933 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --test of create permanent user 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE USER test_user1 IDENTIFIED BY Cantian_234 PERMANENT;
+
+Succeed.
+
+SQL> CREATE USER test_2 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> CREATE USER test_3 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> GRANT DBA TO test_2;
+
+Succeed.
+
+SQL> conn test_2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> CREATE USER test_user2 IDENTIFIED BY Cantian_234 PERMANENT;
+
+CT-00601, Sql syntax error: only sys can create the permanent user
+SQL> ALTER USER test_user1 IDENTIFIED BY Huawei_123 REPLACE Cantian_234;
+
+CT-00601, Sql syntax error: only sys can alter the permanent user
+SQL> DROP USER test_user1;
+
+CT-00601, Sql syntax error: only sys can drop the parmanent user
+SQL> drop user test_3;
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP USER test_user1;
+
+Succeed.
+
+SQL> CREATE USER test_user1 IDENTIFIED BY Cantian_234 PERMANENT PERMANENT;
+
+CT-00601, [1:58]Sql syntax error: keyword "permanent" cannot be appear more than once
+SQL> CREATE USER test_user1 IDENTIFIED BY Cantian_234 PERMANENT;
+
+Succeed.
+
+SQL> SELECT USERNAME, ACCOUNT_STATUS FROM DBA_USERS WHERE USERNAME = 'TEST_USER1';
+
+USERNAME                                                         ACCOUNT_STATUS                            
+---------------------------------------------------------------- ------------------------------------------
+TEST_USER1                                                       PERMANENT                                 
+
+1 rows fetched.
+
+SQL> DROP USER test_user1;
+
+Succeed.
+
+SQL> DROP USER test_2;
+
+Succeed.
+
+SQL> 
+SQL> create user pang identified by Root12345 temporary tablespace TEMP2;
+
+CT-00795, The tablespace specified for the user to be created was not a temporary tablespace.
+SQL> drop user if exists pang cascade;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists nologging_user_test cascade;
+
+Succeed.
+
+SQL> create user nologging_user_test identified by Cantian_234;
+
+Succeed.
+
+SQL> create table nologging_user_test.nologging_table(i int) nologging;
+
+Succeed.
+
+SQL> drop user nologging_user_test cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019122314705
+SQL> conn sys/Huawei@123@127.0.0.1:1611 as sysd
+
+ZS-00001: cmd error, please check cmd after url.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611 -D abc
+
+ZS-00001: cmd error, please check cmd after url.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611 as sysdba -D abc
+
+ZS-00001: cmd error, please check cmd after url.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611 as sysdba as sysdba
+
+ZS-00001: cmd error, please check cmd after url.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists user_test cascade;
+
+Succeed.
+
+SQL> drop user if exists user_test1 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --parameter: ENABLE_PASSWORD_CIPHER
+SQL> select * from dv_parameters where name = 'ENABLE_PASSWORD_CIPHER';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                    ISDEFAULT            MODIFIABLE           DESCRIPTION                                                      RANGE                                                            DATATYPE             EFFECTIVE           
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- --------------------
+ENABLE_PASSWORD_CIPHER                                           TRUE                                                             TRUE                                                             TRUE                                                             TRUE                 TRUE                 -                                                                FALSE, TRUE                                                      CT_TYPE_BOOLEAN      immediately         
+
+1 rows fetched.
+
+SQL> alter system set ENABLE_PASSWORD_CIPHER=false;
+
+Succeed.
+
+SQL> select * from dv_parameters where name = 'ENABLE_PASSWORD_CIPHER';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                    ISDEFAULT            MODIFIABLE           DESCRIPTION                                                      RANGE                                                            DATATYPE             EFFECTIVE           
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- --------------------
+ENABLE_PASSWORD_CIPHER                                           FALSE                                                            FALSE                                                            TRUE                                                             FALSE                TRUE                 -                                                                FALSE, TRUE                                                      CT_TYPE_BOOLEAN      immediately         
+
+1 rows fetched.
+
+SQL> create user user_test identified by v6DYfQUAECeYeY3EG ENCRYPTED;
+
+CT-00601, Sql syntax error: please check whether supports create user with ciphertext
+SQL> alter system set ENABLE_PASSWORD_CIPHER=true;
+
+Succeed.
+
+SQL> select * from dv_parameters where name = 'ENABLE_PASSWORD_CIPHER';
+
+NAME                                                             VALUE                                                            RUNTIME_VALUE                                                    DEFAULT_VALUE                                                    ISDEFAULT            MODIFIABLE           DESCRIPTION                                                      RANGE                                                            DATATYPE             EFFECTIVE           
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- -------------------- --------------------
+ENABLE_PASSWORD_CIPHER                                           TRUE                                                             TRUE                                                             TRUE                                                             FALSE                TRUE                 -                                                                FALSE, TRUE                                                      CT_TYPE_BOOLEAN      immediately         
+
+1 rows fetched.
+
+SQL> create user user_test identified by v6DYfQUAECeYeY3EG ENCRYPTED;
+
+Succeed.
+
+SQL> drop user if exists user_test cascade;
+
+Succeed.
+
+SQL> 
+SQL> --default profile
+SQL> create user user_test identified by Cantian_2;
+
+CT-00658, The password was invalid: password can't be less than min length characters
+SQL> create user user_test identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to user_test;
+
+Succeed.
+
+SQL> create profile pro_test limit PASSWORD_MIN_LEN 10;
+
+Succeed.
+
+SQL> conn user_test/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> --pro_test
+SQL> alter user user_test identified by Cantian_123 profile pro_test;
+
+CT-00658, The password was invalid: password can't be less than min length characters
+SQL> alter user user_test profile pro_test;
+
+Succeed.
+
+SQL> alter user user_test identified by Cantian_123;
+
+CT-00658, The password was invalid: password can't be less than min length characters
+SQL> alter user user_test identified by Cantian_1234;
+
+Succeed.
+
+SQL> create user user_test1 identified by Cantian_123 profile pro_test;
+
+CT-00658, The password was invalid: password can't be less than min length characters
+SQL> create user user_test1 identified by Cantian_1234 profile pro_test;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user if exists user_test cascade;
+
+Succeed.
+
+SQL> drop user if exists user_test1 cascade;
+
+Succeed.
+
+SQL> drop profile pro_test;
+
+Succeed.
+
+SQL> 
+SQL> --20201021
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists user_DTS2019013103017 cascade;
+
+Succeed.
+
+SQL> create user user_DTS2019013103017 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant create session to user_DTS2019013103017;
+
+Succeed.
+
+SQL> conn user_DTS2019013103017/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> wsr list;
+
+CT-01001, Permissions were insufficient
+
+SQL> 
+SQL> --DTS202105170NR65VP1G00 START
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> ALTER SYSTEM SET AUDIT_LEVEL=255;
+
+Succeed.
+
+SQL> ALTER SYSTEM SET AUDIT_TRAIL_MODE=DB;
+
+Succeed.
+
+SQL> DROP USER IF EXISTS DTS202105170NR65VP1G00_USER1 CASCADE;
+
+Succeed.
+
+SQL> CREATE USER DTS202105170NR65VP1G00_USER1 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> ALTER USER DTS202105170NR65VP1G00_USER1 IDENTIFIED BY Cantian_123;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE DTS202105170NR65VP1G00_P1(V1 INT) IS
+  2 BEGIN
+  3  EXECUTE IMMEDIATE 'CREATE USER DTS202105170NR65VP1G00_USER2 IDENTIFIED BY Cantian_234;';
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> SELECT SQLTEXT FROM SYS_AUDIT WHERE SQLTEXT LIKE '%DTS202105170NR65VP1G00%' ORDER BY SQLTEXT;
+
+SQLTEXT                                                         
+----------------------------------------------------------------
+ALTER USER DTS202105170NR65VP1G00_USER1 IDENTIFIED BY *         
+CREATE OR REPLACE PROCEDURE DTS202105170NR65VP1G00_P1(V1 INT) IS
+SQL CONTAINS:CREATE USER OR ROLE
+CREATE USER DTS202105170NR65VP1G00_USER1 IDENTIFIED BY *        
+DROP USER IF EXISTS DTS202105170NR65VP1G00_USER1 CASCADE        
+SELECT SQLTEXT FROM SYS_AUDIT WHERE SQLTEXT LIKE '%DTS202105170NR65VP1G00%' ORDER BY SQLTEXT
+
+5 rows fetched.
+
+SQL> ALTER SYSTEM SET AUDIT_TRAIL_MODE=FILE;
+
+Succeed.
+
+SQL> DROP USER IF EXISTS DTS202105170NR65VP1G00_USER1 CASCADE;
+
+Succeed.
+
+SQL> DROP PROCEDURE IF EXISTS DTS202105170NR65VP1G00_P1;
+
+Succeed.
+
+SQL> --DTS202105170NR65VP1G00 END
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> create user user_test1 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to user_test1;
+
+Succeed.
+
+SQL> create user user_test2 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant connect, alter user to user_test2;
+
+Succeed.
+
+SQL> create user user_test3 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant connect to user_test3;
+
+Succeed.
+
+SQL>
+SQL> alter system set replace_password_verify = false;
+
+Succeed.
+
+SQL> show parameter replace_password_verify;
+
+NAME                                                             DATATYPE             VALUE                                                            RUNTIME_VALUE                                                    EFFECTIVE
+---------------------------------------------------------------- -------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- --------------------
+REPLACE_PASSWORD_VERIFY                                          CT_TYPE_BOOLEAN      FALSE                                                            FALSE                                                            immediately
+
+
+SQL> conn user_test3/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> alter user user_test3 identified by Cantian_123;   --success
+
+Succeed.
+
+SQL> alter user user_test3 identified by Cantian_234 replace Cantian_123;   --success
+
+Succeed.
+
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> alter system set replace_password_verify = true;
+
+Succeed.
+
+SQL> conn user_test3/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> alter user user_test3 identified by Cantian_123;   --error
+
+CT-00601, Sql syntax error: need old password when the parameter REPLACE_PASSWORD_VERIFY is true
+SQL> alter user user_test3 identified by Cantian_123 replace Cantian_234;   --success
+
+Succeed.
+
+SQL>
+SQL> conn user_test1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> alter user user_test3 identified by Cantian_123;   --success
+
+Succeed.
+
+SQL>
+SQL> conn user_test2/Cantian_123@127.0.0.1:1611
+
+CT-00329, Incorrect user or password
+
+SQL> alter user user_test3 identified by Cantian_123;   --success
+
+ZS-00001: connection is not established
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> alter system set replace_password_verify = false;
+
+Succeed.
+
+SQL> drop user user_test1 cascade;
+
+Succeed.
+
+SQL> drop user user_test2 cascade;
+
+Succeed.
+
+SQL> drop user user_test3 cascade;
+
+Succeed.
+

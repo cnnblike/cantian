@@ -1,0 +1,2016 @@
+
+
+SQL> --*CLEAR RECYCLEBIN*--
+SQL> PURGE RECYCLEBIN;
+
+Succeed.
+
+SQL> 
+SQL> --*DROP TEST GROUP*--
+SQL> --**DROP PURGE WITHOUT DATA**--
+SQL> DROP TABLE IF EXISTS DROP_PURGE1_1;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE1_1 (ID INT);
+
+Succeed.
+
+SQL> DROP TABLE DROP_PURGE1_1 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_PURGE1_2;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE1_2 (ID INT);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_PURGE1_2 ON DROP_PURGE1_2 (ID);
+
+Succeed.
+
+SQL> DROP INDEX IDX_DROP_PURGE1_2 ON DROP_PURGE1_2;
+
+Succeed.
+
+SQL> DROP TABLE DROP_PURGE1_2 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_PURGE1_3;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE1_3 (ID1 INT PRIMARY KEY, ID2 INT);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_PURGE1_3 ON DROP_PURGE1_3 (ID2);
+
+Succeed.
+
+SQL> DROP TABLE DROP_PURGE1_3 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_PURGE1_4;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE1_4 (ID1 INT, TT CLOB);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_PURGE1_4 ON DROP_PURGE1_4 (ID1);
+
+Succeed.
+
+SQL> DROP TABLE DROP_PURGE1_4 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_PURGE1_5;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE1_5 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> DROP TABLE DROP_PURGE1_5 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> --**DROP PURGE WITH DATA**--
+SQL> DROP TABLE IF EXISTS DROP_PURGE2_1;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE2_1 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO DROP_PURGE2_1 VALUES (1);
+
+1 rows affected.
+
+SQL> DROP TABLE DROP_PURGE2_1 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_PURGE2_2;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE2_2 (ID INT);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_PURGE2_2 ON DROP_PURGE2_2 (ID);
+
+Succeed.
+
+SQL> INSERT INTO DROP_PURGE2_2 VALUES (1);
+
+1 rows affected.
+
+SQL> DROP INDEX IDX_DROP_PURGE2_2 ON DROP_PURGE2_2;
+
+Succeed.
+
+SQL> DROP TABLE DROP_PURGE2_2 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_PURGE2_3;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE2_3 (ID1 INT PRIMARY KEY, ID2 INT);
+
+Succeed.
+
+SQL> INSERT INTO DROP_PURGE2_3 VALUES (1, 1);
+
+1 rows affected.
+
+SQL> CREATE INDEX IDX_DROP_PURGE2_3 ON DROP_PURGE2_3 (ID2);
+
+Succeed.
+
+SQL> DROP TABLE DROP_PURGE2_3 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_PURGE2_4;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE2_4 (ID1 INT, TT CLOB);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_PURGE2_4 ON DROP_PURGE2_4 (ID1);
+
+Succeed.
+
+SQL> INSERT INTO DROP_PURGE2_4 VALUES (1, 'DROP PURGE CLOB');
+
+1 rows affected.
+
+SQL> DROP TABLE DROP_PURGE2_4 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_PURGE2_5;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_PURGE2_5 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO DROP_PURGE2_5 VALUES (10);
+
+1 rows affected.
+
+SQL> INSERT INTO DROP_PURGE2_5 VALUES (30);
+
+1 rows affected.
+
+SQL> DROP TABLE DROP_PURGE2_5 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> --**DROP TABLE WITH NO DATA**--
+SQL> DROP TABLE IF EXISTS DROP_RB1_1;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB1_1 (ID INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB1_1;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB1_1';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+DROP_RB1_1                                                       4393751543808       
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB1_2;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB1_2 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB1_2;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB1_2';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+DROP_RB1_2                                                       4393751543808       
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB1_3;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB1_3 (ID1 INT PRIMARY KEY, ID2 INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_RB1_3 ON DROP_RB1_3 (ID2);
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB1_3;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB1_3';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+DROP_RB1_3                                                       4393751543808       
+
+1 rows fetched.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_DROP_RB1_3';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+IDX_DROP_RB1_3                                                   4393751543808       
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB1_4;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB1_4 (ID1 INT PRIMARY KEY, ID2 INT, CC CLOB)
+  2 PARTITION BY RANGE (ID2)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_RB1_4 ON DROP_RB1_4 (ID2) LOCAL;
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB1_4;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB1_4';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+DROP_RB1_4                                                       4393751543808       
+
+1 rows fetched.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_DROP_RB1_4';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+IDX_DROP_RB1_4                                                   4393751543808       
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB1_4;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB1_4 (ID1 INT PRIMARY KEY, ID2 INT, CC CLOB)
+  2 PARTITION BY RANGE (ID2)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_RB1_4 ON DROP_RB1_4 (ID2) LOCAL;
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB1_4;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB1_4';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+DROP_RB1_4                                                       4393751543808       
+DROP_RB1_4                                                       4393751543808       
+
+2 rows fetched.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_DROP_RB1_4';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+IDX_DROP_RB1_4                                                   4393751543808       
+IDX_DROP_RB1_4                                                   4393751543808       
+
+2 rows fetched.
+
+SQL> 
+SQL> --**DROP TABLE WITH DATA**--
+SQL> DROP TABLE IF EXISTS DROP_RB2_1;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB2_1 (ID INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO DROP_RB2_1 VALUES (1);
+
+1 rows affected.
+
+SQL> DROP TABLE DROP_RB2_1;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB2_1';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+DROP_RB2_1                                                      
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB2_2;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB2_2 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO DROP_RB2_2 VALUES (10);
+
+1 rows affected.
+
+SQL> DROP TABLE DROP_RB2_2;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB2_2';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+DROP_RB2_2                                                       4393751543808       
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB2_3;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB2_3 (ID1 INT PRIMARY KEY, ID2 INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_RB2_3 ON DROP_RB2_3 (ID2);
+
+Succeed.
+
+SQL> INSERT INTO DROP_RB2_3 VALUES (2, 2);
+
+1 rows affected.
+
+SQL> DROP TABLE DROP_RB2_3;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB2_3';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+DROP_RB2_3                                                      
+
+1 rows fetched.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_DROP_RB2_3';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+IDX_DROP_RB2_3                                                  
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB2_4;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB2_4 (ID1 INT PRIMARY KEY, ID2 INT, CC CLOB)
+  2 PARTITION BY RANGE (ID2)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO DROP_RB2_4 VALUES (5, 10, 'ABCD');
+
+1 rows affected.
+
+SQL> CREATE INDEX IDX_DROP_RB2_4 ON DROP_RB2_4 (ID2) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO DROP_RB2_4 VALUES (10, 20, 'ABCDEF');
+
+1 rows affected.
+
+SQL> DROP TABLE DROP_RB2_4;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB2_4';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+DROP_RB2_4                                                       4393751543808       
+
+1 rows fetched.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_DROP_RB2_4';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+IDX_DROP_RB2_4                                                   4393751543808       
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB2_4;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB2_4 (ID1 INT PRIMARY KEY, ID2 INT, CC CLOB)
+  2 PARTITION BY RANGE (ID2)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_DROP_RB2_4 ON DROP_RB2_4 (ID2) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO DROP_RB2_4 VALUES (-10, -20, 'ABCDEF');
+
+1 rows affected.
+
+SQL> DROP TABLE DROP_RB2_4;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB2_4';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+DROP_RB2_4                                                       4393751543808       
+DROP_RB2_4                                                       4393751543808       
+
+2 rows fetched.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_DROP_RB2_4';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+IDX_DROP_RB2_4                                                   4393751543808       
+IDX_DROP_RB2_4                                                   4393751543808       
+
+2 rows fetched.
+
+SQL> 
+SQL> --**FLASHBACK DROP WITHOUT DATA**--
+SQL> SELECT * FROM DROP_RB1_4;
+
+CT-00843, [1:15]The table or view SYS.DROP_RB1_4 does not exist.
+SQL> FLASHBACK TABLE DROP_RB1_4 TO BEFORE DROP;
+
+Succeed.
+
+SQL> SELECT * FROM DROP_RB1_4;
+
+ID1          ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> FLASHBACK TABLE DROP_RB1_4 TO BEFORE DROP RENAME TO DROP_RB1_4_NEW;
+
+Succeed.
+
+SQL> SELECT * FROM DROP_RB1_4_NEW;
+
+ID1          ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> DROP TABLE DROP_RB1_4;
+
+Succeed.
+
+SQL> SELECT * FROM DROP_RB1_4;
+
+CT-00843, [1:15]The table or view SYS.DROP_RB1_4 does not exist.
+SQL> FLASHBACK TABLE DROP_RB1_4 TO BEFORE DROP;
+
+Succeed.
+
+SQL> SELECT * FROM DROP_RB1_4;
+
+ID1          ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> DROP TABLE DROP_RB1_4;
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB1_4_NEW;
+
+Succeed.
+
+SQL> 
+SQL> --**FLASHBACK DROP WITH DATA**--
+SQL> SELECT * FROM DROP_RB2_4;
+
+CT-00843, [1:15]The table or view SYS.DROP_RB2_4 does not exist.
+SQL> FLASHBACK TABLE DROP_RB2_4 TO BEFORE DROP;
+
+Succeed.
+
+SQL> SELECT * FROM DROP_RB2_4;
+
+ID1          ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+-10          -20          ABCDEF                                                          
+
+1 rows fetched.
+
+SQL> 
+SQL> FLASHBACK TABLE DROP_RB2_4 TO BEFORE DROP RENAME TO DROP_RB2_4_NEW;
+
+Succeed.
+
+SQL> SELECT * FROM DROP_RB2_4_NEW;
+
+ID1          ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+5            10           ABCD                                                            
+10           20           ABCDEF                                                          
+
+2 rows fetched.
+
+SQL> 
+SQL> DROP TABLE DROP_RB2_4;
+
+Succeed.
+
+SQL> SELECT * FROM DROP_RB2_4;
+
+CT-00843, [1:15]The table or view SYS.DROP_RB2_4 does not exist.
+SQL> FLASHBACK TABLE DROP_RB2_4 TO BEFORE DROP;
+
+Succeed.
+
+SQL> SELECT * FROM DROP_RB2_4;
+
+ID1          ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+-10          -20          ABCDEF                                                          
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE DROP_RB2_4;
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB2_4_NEW;
+
+Succeed.
+
+SQL> 
+SQL> --**PURGE DROP TABLE**--
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB1_1';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+DROP_RB1_1                                                      
+
+1 rows fetched.
+
+SQL> PURGE TABLE DROP_RB1_1;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB2_1';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+DROP_RB2_1                                                      
+
+1 rows fetched.
+
+SQL> PURGE TABLE DROP_RB2_1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_DROP_RB1_2';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> PURGE INDEX IDX_DROP_RB1_3;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_DROP_RB2_2';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> PURGE INDEX IDX_DROP_RB2_3;
+
+Succeed.
+
+SQL> 
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB1_4';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+DROP_RB1_4                                                      
+
+1 rows fetched.
+
+SQL> PURGE TABLE DROP_RB1_4;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB1_4_NEW';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+DROP_RB1_4_NEW                                                  
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB2_4';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+DROP_RB2_4                                                      
+
+1 rows fetched.
+
+SQL> PURGE TABLE DROP_RB2_4;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'DROP_RB2_4_NEW';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+DROP_RB2_4_NEW                                                  
+
+1 rows fetched.
+
+SQL> 
+SQL> --*CLEAR RECYCLEBIN*--
+SQL> PURGE TABLESPACE USERS;
+
+Succeed.
+
+SQL> PURGE RECYCLEBIN;
+
+Succeed.
+
+SQL> 
+SQL> --*TRUNCATE TEST GROUP*--
+SQL> --**TRUNCATE PURGE SYNTAX**--
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE0_1;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE0_1 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 PURGE;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 DROP STORAGE PURGE;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 REUSE STORAGE PURGE;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 PURGE DROP STORAGE;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 PURGE REUSE STORAGE;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 DROP STORAGE;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 REUSE STORAGE;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE0_1 DROP STORAGE REUSE STORAGE;
+
+CT-00601, [1:47]Sql syntax error: unexpected text conflict REUSE
+SQL> 
+SQL> --TRUNCATE PURGE WITHOUT DATA**--
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE1_1;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE1_1 (ID INT);
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE1_1 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE1_2;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE1_2 (ID1 INT PRIMARY KEY, ID2 INT);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_TRUNCATE_PURGE1_2 ON TRUNCATE_PURGE1_2 (ID2);
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE1_2 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE1_3;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE1_3 (ID1 INT, TT CLOB);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_TRUNCATE_PURGE1_3 ON TRUNCATE_PURGE1_3 (ID1);
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE1_3 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE1_4;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE1_4 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE1_4 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> --**TRUNCATE PURGE WITH DATA**--
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE2_1;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE2_1 (ID INT);
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE2_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE2_1 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE2_2;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE2_2 (ID1 INT PRIMARY KEY, ID2 INT);
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE2_2 VALUES (1, 1);
+
+1 rows affected.
+
+SQL> CREATE INDEX IDX_TRUNCATE_PURGE2_2 ON TRUNCATE_PURGE2_2 (ID2);
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE2_2 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE2_3;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE2_3 (ID1 INT, TT CLOB);
+
+Succeed.
+
+SQL> CREATE INDEX IDX_TRUNCATE_PURGE2_3 ON TRUNCATE_PURGE2_3 (ID1);
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE2_3 VALUES (1, 'DROP PURGE CLOB');
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE2_3 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_PURGE2_4;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_PURGE2_4 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_PURGE2_4 VALUES (10);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_PURGE2_4 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE TRUNCATE_PURGE0_1 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_PURGE1_1 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_PURGE1_2 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_PURGE1_3 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_PURGE1_4 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_PURGE2_1 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_PURGE2_2 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_PURGE2_3 PURGE;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_PURGE2_4 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> --**TRUNCATE PARTITION PURGE**--
+SQL> DROP TABLE IF EXISTS TRUNC_PART_PURGE0_1;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNC_PART_PURGE0_1 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 );
+
+Succeed.
+
+SQL> INSERT INTO TRUNC_PART_PURGE0_1 VALUES (1);
+
+1 rows affected.
+
+SQL> ALTER TABLE TRUNC_PART_PURGE0_1 TRUNCATE PARTITION P1 PURGE;
+
+Succeed.
+
+SQL> ALTER TABLE TRUNC_PART_PURGE0_1 TRUNCATE PARTITION P2 PURGE DROP STORAGE;
+
+Succeed.
+
+SQL> ALTER TABLE TRUNC_PART_PURGE0_1 TRUNCATE PARTITION P1 REUSE STORAGE PURGE;
+
+Succeed.
+
+SQL> ALTER TABLE TRUNC_PART_PURGE0_1 TRUNCATE PARTITION P1 REUSE STORAGE DROP STORAGE;
+
+CT-00601, [1:69]Sql syntax error: unexpected text conflict DROP
+SQL> DROP TABLE TRUNC_PART_PURGE0_1 PURGE;
+
+Succeed.
+
+SQL> 
+SQL> --**TRUNCATE WITHOUT DATA**--
+SQL> DROP TABLE IF EXISTS TRUNCATE_RB1_1;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_RB1_1 (ID INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_RB1_1;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'TRUNCATE_RB1_1';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_RB1_2;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_RB1_2 (ID1 INT PRIMARY KEY, ID2 INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_TRUNCATE_RB1_2 ON TRUNCATE_RB1_2 (ID2);
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_RB1_2;
+
+Succeed.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'TRUNCATE_RB1_2';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+
+0 rows fetched.
+
+SQL> SELECT ORG_NAME, ENTRY FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'SYS_INDEXES1';
+
+ORG_NAME                                                         ENTRY               
+---------------------------------------------------------------- --------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_RB1_3;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_RB1_3 (ID INT)
+  2 PARTITION BY LIST (ID)
+  3 (
+  4 PARTITION P1 VALUES (1, 2, 3),
+  5 PARTITION P2 VALUES (DEFAULT)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_TRUNCATE_RB1_3 ON TRUNCATE_RB1_3(ID) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE TRUNCATE_RB1_3 TRUNCATE PARTITION P1;
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_RB1_3;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'TRUNCATE_RB1_3';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'P1';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --**TRUNCATE WITH DATA**--
+SQL> DROP TABLE IF EXISTS TRUNCATE_RB2_1;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_RB2_1 (ID INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_RB2_1 VALUES (1);
+
+1 rows affected.
+
+SQL> TRUNCATE TABLE TRUNCATE_RB2_1;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'TRUNCATE_RB2_1';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+TRUNCATE_RB2_1                                                  
+
+1 rows fetched.
+
+SQL> PURGE TABLE TRUNCATE_RB2_1;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_RB2_2;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_RB2_2 (ID1 INT PRIMARY KEY, ID2 INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_RB2_2 VALUES (2, 2);
+
+1 rows affected.
+
+SQL> CREATE INDEX IDX_TRUNCATE_RB2_2 ON TRUNCATE_RB2_2 (ID2);
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_RB2_2;
+
+Succeed.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'TRUNCATE_RB2_2';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+TRUNCATE_RB2_2                                                  
+
+1 rows fetched.
+
+SQL> SELECT ORG_NAME FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'IDX_TRUNCATE_RB2_2';
+
+ORG_NAME                                                        
+----------------------------------------------------------------
+IDX_TRUNCATE_RB2_2                                              
+
+1 rows fetched.
+
+SQL> PURGE INDEX IDX_TRUNCATE_RB2_2;
+
+CT-00647, The purge operation was invalid:cannot purge index
+SQL> PURGE TABLE TRUNCATE_RB2_2;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_RB2_3;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_RB2_3 (ID1 INT PRIMARY KEY, ID2 BIGINT UNIQUE, ID3 REAL, ID4 NUMBER, ID5 DATE, ID6 CHAR, ID7 VARCHAR(10), ID8 BINARY(100), ID9 BOOL, T1 BLOB, T2 CLOB) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_TRUNCATE_RB2_3 ON TRUNCATE_RB2_3 (ID3);
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_RB2_3 VALUES (1, 1, 1, 1, '2017-12-09', 'A', 'B', 'C', TRUE, 'TEST', 'RECYCLEBIN TRUNCATE1');
+
+CT-00105, Invalid format of hex
+SQL> TRUNCATE TABLE TRUNCATE_RB2_3;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_RB2_3 VALUES (2, 2, 2, 2, '2017-12-09', 'A', 'B', 'C', TRUE, 'TEST', 'RECYCLEBIN TRUNCATE2');
+
+CT-00105, Invalid format of hex
+SQL> TRUNCATE TABLE TRUNCATE_RB2_3;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_RB2_3 VALUES (3, 3, 3, 3, '2017-12-09', 'A', 'B', 'C', TRUE, 'TEST', 'RECYCLEBIN TRUNCATE3');
+
+CT-00105, Invalid format of hex
+SQL> TRUNCATE TABLE TRUNCATE_RB2_3;
+
+Succeed.
+
+SQL> SELECT COUNT (*) FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'TRUNCATE_RB2_3';
+
+COUNT (*)           
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_RB2_4;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_RB2_4 (ID INT, ID2 INT PRIMARY KEY, CC CLOB)
+  2 PARTITION BY LIST (ID)
+  3 (
+  4 PARTITION P1 VALUES (1, 2, 3),
+  5 PARTITION P2 VALUES (DEFAULT)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_RB2_4 VALUES (1, 1, 'ASDF');
+
+1 rows affected.
+
+SQL> CREATE INDEX IDX_TRUNCATE_RB2_4 ON TRUNCATE_RB2_4(ID) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_RB2_4 VALUES (4, 4, 'ASDFASG');
+
+1 rows affected.
+
+SQL> ALTER TABLE TRUNCATE_RB2_4 TRUNCATE PARTITION P1;
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_RB2_4;
+
+Succeed.
+
+SQL> INSERT INTO TRUNCATE_RB2_4 VALUES (2, 2, 'ASDF');
+
+1 rows affected.
+
+SQL> INSERT INTO TRUNCATE_RB2_4 VALUES (5, 5, 'ASDFASG');
+
+1 rows affected.
+
+SQL> ALTER TABLE TRUNCATE_RB2_4 TRUNCATE PARTITION P2;
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_RB2_4;
+
+Succeed.
+
+SQL> SELECT COUNT(*) FROM SYS_RECYCLEBIN WHERE ORG_NAME = 'TRUNCATE_RB2_4';
+
+COUNT(*)            
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> SELECT COUNT(*) FROM SYS_RECYCLEBIN WHERE PARTITION_NAME = 'P1';
+
+COUNT(*)            
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> 
+SQL> --**FLASHBACK TRUNCATE WITH DATA**--
+SQL> SELECT * FROM TRUNCATE_RB2_3;
+
+ID1          ID2                  ID3                  ID4                                      ID5                    ID6 ID7        ID8                                                              ID9    T1                                                               T2                                                              
+------------ -------------------- -------------------- ---------------------------------------- ---------------------- --- ---------- ---------------------------------------------------------------- ------ ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> FLASHBACK TABLE TRUNCATE_RB2_3 TO BEFORE TRUNCATE;
+
+CT-00829, Recyclebin object SYS.TRUNCATE_RB2_3 does not exist
+SQL> SELECT * FROM TRUNCATE_RB2_3;
+
+ID1          ID2                  ID3                  ID4                                      ID5                    ID6 ID7        ID8                                                              ID9    T1                                                               T2                                                              
+------------ -------------------- -------------------- ---------------------------------------- ---------------------- --- ---------- ---------------------------------------------------------------- ------ ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --**FLASHBACK TRUNCATE WITH DATA AFTER FLASHBACK DROP RENAME**--
+SQL> DROP TABLE TRUNCATE_RB2_4;
+
+Succeed.
+
+SQL> SELECT * FROM TRUNCATE_RB2_4;
+
+CT-00843, [1:15]The table or view SYS.TRUNCATE_RB2_4 does not exist.
+SQL> FLASHBACK TABLE TRUNCATE_RB2_4 TO BEFORE DROP RENAME TO TRUNCATE_RB2_4_NEW;
+
+Succeed.
+
+SQL> FLASHBACK TABLE TRUNCATE_RB2_4_NEW TO BEFORE TRUNCATE;
+
+Succeed.
+
+SQL> SELECT * FROM TRUNCATE_RB2_4_NEW;
+
+ID           ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+2            2            ASDF                                                            
+
+1 rows fetched.
+
+SQL> FLASHBACK TABLE TRUNCATE_RB2_4_NEW PARTITION P2 TO BEFORE TRUNCATE;
+
+Succeed.
+
+SQL> SELECT * FROM TRUNCATE_RB2_4_NEW;
+
+ID           ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+2            2            ASDF                                                            
+5            5            ASDFASG                                                         
+
+2 rows fetched.
+
+SQL> FLASHBACK TABLE TRUNCATE_RB2_4_NEW TO BEFORE TRUNCATE;
+
+CT-00643, Table SYS.TRUNCATE_RB2_4_NEW is not empty, hint: use force option to flashback truncate
+SQL> FLASHBACK TABLE TRUNCATE_RB2_4_NEW TO BEFORE TRUNCATE FORCE;
+
+Succeed.
+
+SQL> SELECT * FROM TRUNCATE_RB2_4_NEW;
+
+ID           ID2          CC                                                              
+------------ ------------ ----------------------------------------------------------------
+4            4            ASDFASG                                                         
+
+1 rows fetched.
+
+SQL> 
+SQL> --**CLEANUP**--
+SQL> DROP TABLE TRUNCATE_RB1_1;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_RB1_2;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_RB1_3;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_RB2_1;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_RB2_2;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_RB2_3;
+
+Succeed.
+
+SQL> DROP TABLE TRUNCATE_RB2_4_NEW;
+
+Succeed.
+
+SQL> 
+SQL> --**PURGE TABLE**--
+SQL> PURGE TABLE TRUNCATE_RB1_1;
+
+Succeed.
+
+SQL> PURGE TABLE TRUNCATE_RB1_2;
+
+Succeed.
+
+SQL> PURGE TABLE TRUNCATE_RB1_3;
+
+Succeed.
+
+SQL> PURGE TABLE TRUNCATE_RB2_1;
+
+Succeed.
+
+SQL> PURGE TABLE TRUNCATE_RB2_2;
+
+Succeed.
+
+SQL> PURGE TABLE TRUNCATE_RB2_3;
+
+Succeed.
+
+SQL> PURGE TABLE TRUNCATE_RB2_4_NEW;
+
+Succeed.
+
+SQL> PURGE PARTITION P1;
+
+CT-00601, [1:19]Sql syntax error: '...' expected but P1 found
+SQL> PURGE TABLE TRUNCATE_RB2_4 PARTITION P1;
+
+Succeed.
+
+SQL> PURGE TABLE TRUNCATE_RB2_4_NEW;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --**ADDITIONAL TEST**--
+SQL> DROP TABLE IF EXISTS DROP_RB3_1;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB3_1 (ID1 INT, ID2 INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> ALTER TABLE DROP_RB3_1 ADD CONSTRAINT PK_DROP_RB3_1 PRIMARY KEY (ID1) USING INDEX (CREATE INDEX PK_DROP_RB3_1 ON DROP_RB3_1 (ID1) TABLESPACE USERS);
+
+Succeed.
+
+SQL> ALTER TABLE DROP_RB3_1 ADD CONSTRAINT UK_DROP_RB3_1 UNIQUE (ID2) USING INDEX (CREATE INDEX UK_DROP_RB3_1 ON DROP_RB3_1 (ID2) TABLESPACE USERS);
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB3_1;
+
+Succeed.
+
+SQL> PURGE INDEX PK_DROP_RB3_1;
+
+CT-00651, The index cannot be deleted because it is referenced by a primary key or unique index
+SQL> PURGE INDEX UK_DROP_RB3_1;
+
+CT-00651, The index cannot be deleted because it is referenced by a primary key or unique index
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB3_2;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB3_2 (ID1 INT, ID2 INT)
+  2 PARTITION BY RANGE (ID1)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (10),
+  5 PARTITION P2 VALUES LESS THAN (20)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> ALTER TABLE DROP_RB3_2 ADD CONSTRAINT PK_DROP_RB3_2 PRIMARY KEY (ID1) USING INDEX (CREATE INDEX PK_DROP_RB3_2 ON DROP_RB3_2 (ID1) LOCAL TABLESPACE USERS);
+
+Succeed.
+
+SQL> ALTER TABLE DROP_RB3_2 ADD CONSTRAINT UK_DROP_RB3_2 UNIQUE (ID2) USING INDEX (CREATE INDEX UK_DROP_RB3_2 ON DROP_RB3_2 (ID2) TABLESPACE USERS);
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB3_2;
+
+Succeed.
+
+SQL> PURGE INDEX PK_DROP_RB3_2;
+
+CT-00651, The index cannot be deleted because it is referenced by a primary key or unique index
+SQL> PURGE INDEX UK_DROP_RB3_2;
+
+CT-00651, The index cannot be deleted because it is referenced by a primary key or unique index
+SQL> 
+SQL> CREATE TABLESPACE TBLSPC DATAFILE 'TBLSPC_DF1' SIZE 32M;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS DROP_RB4_1;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB4_1 (ID1 INT, ID2 INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> ALTER TABLE DROP_RB4_1 ADD CONSTRAINT PK_DROP_RB4_1 PRIMARY KEY (ID1) USING INDEX (CREATE INDEX PK_DROP_RB4_1 ON DROP_RB4_1 (ID1) TABLESPACE TBLSPC);
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB4_1;
+
+Succeed.
+
+SQL> PURGE TABLESPACE TBLSPC;
+
+Succeed.
+
+SQL> PURGE TABLE DROP_RB4_1;
+
+CT-00829, Recyclebin object SYS.DROP_RB4_1 does not exist
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB4_2;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB4_2 (ID1 INT, ID2 INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> ALTER TABLE DROP_RB4_2 ADD CONSTRAINT UK_DROP_RB4_2 UNIQUE (ID2) USING INDEX (CREATE INDEX UK_DROP_RB4_2 ON DROP_RB4_2 (ID2) TABLESPACE TBLSPC);
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB4_2;
+
+Succeed.
+
+SQL> PURGE TABLESPACE TBLSPC;
+
+Succeed.
+
+SQL> PURGE TABLE DROP_RB4_2;
+
+CT-00829, Recyclebin object SYS.DROP_RB4_2 does not exist
+SQL> 
+SQL> DROP TABLE IF EXISTS DROP_RB4_3;
+
+Succeed.
+
+SQL> CREATE TABLE DROP_RB4_3 (ID1 INT, ID2 INT) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX UK_DROP_RB4_3 ON DROP_RB4_3 (ID2) TABLESPACE TBLSPC;
+
+Succeed.
+
+SQL> DROP TABLE DROP_RB4_3;
+
+Succeed.
+
+SQL> PURGE TABLESPACE TBLSPC;
+
+Succeed.
+
+SQL> PURGE TABLE DROP_RB4_3;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TRUNCATE_RB3_1;
+
+Succeed.
+
+SQL> CREATE TABLE TRUNCATE_RB3_1 (ID INT)
+  2 PARTITION BY RANGE (ID)
+  3 (
+  4 PARTITION P1 VALUES LESS THAN (20),
+  5 PARTITION P2 VALUES LESS THAN (MAXVALUE)
+  6 ) TABLESPACE USERS;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_TRUNCATE_RB3_1 ON TRUNCATE_RB3_1 (ID);
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO TRUNCATE_RB3_1 VALUES (10);
+
+1 rows affected.
+
+SQL> INSERT INTO TRUNCATE_RB3_1 VALUES (20);
+
+1 rows affected.
+
+SQL> 
+SQL> ALTER TABLE TRUNCATE_RB3_1 TRUNCATE PARTITION P1;
+
+Succeed.
+
+SQL> TRUNCATE TABLE TRUNCATE_RB3_1;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO TRUNCATE_RB3_1 VALUES (11);
+
+1 rows affected.
+
+SQL> INSERT INTO TRUNCATE_RB3_1 VALUES (21);
+
+1 rows affected.
+
+SQL> FLASHBACK TABLE TRUNCATE_RB3_1 TO BEFORE TRUNCATE FORCE;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO TRUNCATE_RB3_1 VALUES (12);
+
+1 rows affected.
+
+SQL> INSERT INTO TRUNCATE_RB3_1 VALUES (22);
+
+1 rows affected.
+
+SQL> FLASHBACK TABLE TRUNCATE_RB3_1 PARTITION P1 TO BEFORE TRUNCATE FORCE;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE TRUNCATE_RB3_1;
+
+Succeed.
+
+SQL> 
+SQL> --PURGE SYNTAX TEST
+SQL> PURGE TABLE RB_PURGE1;
+
+CT-00829, Recyclebin object SYS.RB_PURGE1 does not exist
+SQL> PURGE TABLE USER1.RB_PURGE1;
+
+CT-00829, Recyclebin object USER1.RB_PURGE1 does not exist
+SQL> PURGE TABLE USER1.'RB_PURGE1';
+
+CT-00601, [1:19]Sql syntax error: expression expected but ''RB_PURGE1'' found
+SQL> PURGE TABLE 'RB_PURGE1';
+
+CT-00829, Recyclebin object SYS.RB_PURGE1 does not exist
+SQL> 
+SQL> PURGE INDEX RB_PURGE2;
+
+CT-00829, Recyclebin object SYS.RB_PURGE2 does not exist
+SQL> PURGE INDEX USER2.RB_PURGE2;
+
+CT-00829, Recyclebin object USER2.RB_PURGE2 does not exist
+SQL> PURGE INDEX USER2.'RB_PURGE2';
+
+CT-00601, [1:19]Sql syntax error: expression expected but ''RB_PURGE2'' found
+SQL> PURGE INDEX 'RB_PURGE2';
+
+CT-00829, Recyclebin object SYS.RB_PURGE2 does not exist
+SQL> 
+SQL> PURGE PARTITION RB_PURGE3;
+
+CT-00601, [1:26]Sql syntax error: '...' expected but RB_PURGE3 found
+SQL> PURGE PARTITION USER3.RB_PURGE3;
+
+CT-00601, [1:32]Sql syntax error: '...' expected but USER3 found
+SQL> PURGE PARTITION USER3.'RB_PURGE3';
+
+CT-00601, [1:23]Sql syntax error: expression expected but ''RB_PURGE3'' found
+SQL> PURGE PARTITION 'RB_PURGE3';
+
+CT-00829, Recyclebin object SYS.RB_PURGE3 does not exist
+SQL> 
+SQL> PURGE TABLE RB_PURGE4 PARTITION P1;
+
+CT-00852, Recyclebin object SYS.RB_PURGE4 (sub)partition P1 does not exist
+SQL> PURGE TABLE RB_PURGE4 PARTITION USER4.P1;
+
+CT-00601, [1:38]Sql syntax error: expected end but . found
+SQL> PURGE TABLE USER4.RB_PURGE4 PARTITION P1;
+
+CT-00829, Recyclebin object USER4.RB_PURGE4 does not exist
+SQL> PURGE TABLE USER4.RB_PURGE4 PARTITION USER4.P1;
+
+CT-00601, [1:44]Sql syntax error: expected end but . found
+SQL> PURGE TABLE RB_PURGE4 PARTITION 'P1';
+
+CT-00601, [1:33]Sql syntax error: invalid variant/object name was found
+SQL> PURGE TABLE RB_PURGE4 PARTITION USER4.'P1';
+
+CT-00601, [1:38]Sql syntax error: expected end but . found
+SQL> 
+SQL> PURGE TABLESPACE USERS;
+
+Succeed.
+
+SQL> 
+SQL> create user fanmingke identified by Fanmk1234;
+
+Succeed.
+
+SQL> grant dba to fanmingke;
+
+Succeed.
+
+SQL> 
+SQL> connect fanmingke/Fanmk1234@127.0.0.1:1611
+
+connected.
+
+SQL> create table test_rb(c1 int);
+
+Succeed.
+
+SQL> drop table test_rb;
+
+Succeed.
+
+SQL> flashback table test_rb to before drop;
+
+Succeed.
+
+SQL> alter system set recyclebin=false;
+
+Succeed.
+
+SQL> drop table test_rb;
+
+Succeed.
+
+SQL> flashback table test_rb to before drop;
+
+CT-00829, Recyclebin object FANMINGKE.TEST_RB does not exist
+SQL> alter system set recyclebin=true;
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user fanmingke;
+
+Succeed.
+
+SQL>
+SQL> ALTER SYSTEM SET RECYCLEBIN = TRUE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS RB_TRUNCATE_PART_LOB;
+
+Succeed.
+
+SQL> CREATE TABLE RB_TRUNCATE_PART_LOB(ID INT, NAME VARCHAR(20), C_LOB CLOB) PARTITION BY RANGE(ID)
+  2 (
+  3 PARTITION P1 VALUES LESS THAN(50) TABLESPACE USERS,
+  4 PARTITION P2 VALUES LESS THAN(100) TABLESPACE USERS
+  5 )TABLESPACE USERS;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO RB_TRUNCATE_PART_LOB VALUES(10, 'AAAAA', LPAD('BBB', 8000, 'BBB'));
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> TRUNCATE TABLE RB_TRUNCATE_PART_LOB;
+
+Succeed.
+
+SQL> DROP TABLE RB_TRUNCATE_PART_LOB;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS Cantian.PURGE_TEST;
+
+Succeed.
+
+SQL> DROP USER IF EXISTS Cantian;
+
+Succeed.
+
+SQL> CREATE USER Cantian IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> CREATE TABLE Cantian.PURGE_TEST(ID INT, NAME VARCHAR(20));
+
+Succeed.
+
+SQL> INSERT INTO Cantian.PURGE_TEST VALUES(10, 'AAAAA');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE Cantian.PURGE_TEST;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE PURGE_TABLE(TABLE_NAME VARCHAR)
+  2 AS
+  3 RECYCLE_NAME VARCHAR(200);
+  4 BEGIN
+  5 SELECT NAME INTO RECYCLE_NAME FROM RECYCLEBIN$ WHERE ORG_NAME = TABLE_NAME;
+  6 EXECUTE IMMEDIATE 'PURGE TABLE '||CHAR(39)||RECYCLE_NAME||CHAR(39);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> CALL PURGE_TABLE('PURGE_TEST');
+
+PL/SQL procedure successfully completed.
+
+SQL> DROP PROCEDURE PURGE_TABLE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS Cantian.PURGE_TEST;
+
+Succeed.
+
+SQL> DROP USER Cantian;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists jdd;
+
+Succeed.
+
+SQL> create user jdd identified by Jdd12345678;
+
+Succeed.
+
+SQL> grant dba to jdd;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION jdd.ztest_f1() RETURN INT AS
+  2 BEGIN
+  3     RETURN 100;
+  4 END ztest_f1;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists jdd.test_purge;
+
+Succeed.
+
+SQL> create table jdd.test_purge(a int default jdd.ztest_f1(), b int);
+
+Succeed.
+
+SQL> insert into jdd.test_purge(b) values(1),(2),(3);
+
+3 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> PURGE RECYCLEBIN;
+
+Succeed.
+
+SQL> alter system set recyclebin = true;
+
+Succeed.
+
+SQL> drop table if exists jdd.test_purge;
+
+Succeed.
+
+SQL> SELECT count(*)from sys.SYS_RECYCLEBIN where ORG_NAME = upper('test_purge');
+
+COUNT(*)
+--------------------
+1
+
+1 rows fetched.
+
+SQL> 
+SQL> select * from jdd.test_purge;
+
+CT-00843, [1:15]The table or view JDD.TEST_PURGE does not exist.
+SQL> drop FUNCTION jdd.ztest_f1;
+
+Succeed.
+
+SQL> flashback table jdd.test_purge to before drop; -- no error
+
+Succeed.
+
+SQL> select * from jdd.test_purge; -- error is normal
+
+CT-00828, [1:15]function JDD.ZTEST_F1 does not exist
+SQL> desc jdd.test_purge; -- error is normal
+
+CT-00828, [1:15]function JDD.ZTEST_F1 does not exist
+
+SQL> drop table jdd.test_purge; -- error is normal
+
+CT-00828, [1:1]function JDD.ZTEST_F1 does not exist
+SQL> CREATE OR REPLACE FUNCTION jdd.ztest_f1() RETURN INT AS
+  2 BEGIN
+  3     RETURN 100;
+  4 END ztest_f1;
+  5 /
+
+Succeed.
+
+SQL> select * from jdd.test_purge; -- ok
+
+A            B
+------------ ------------
+100          1
+100          2
+100          3
+
+3 rows fetched.
+
+SQL> 
+SQL> drop FUNCTION jdd.ztest_f1;
+
+Succeed.
+
+SQL> drop table jdd.test_purge;
+
+Succeed.
+
+SQL> PURGE RECYCLEBIN;
+
+Succeed.
+
+SQL> drop user jdd;
+
+Succeed.
+
+SQL> 

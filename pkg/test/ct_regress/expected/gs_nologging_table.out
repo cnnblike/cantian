@@ -1,0 +1,2149 @@
+
+
+SQL> select ID, NAME, TEMPORARY, IN_MEMORY, AUTO_PURGE, EXTENT_SIZE from v$tablespace where name in ('TEMP2', 'TEMP2_UNDO') order by name;
+
+ID           NAME                                                             TEMPORARY IN_MEMORY AUTO_PURGE EXTENT_SIZE 
+------------ ---------------------------------------------------------------- --------- --------- ---------- ------------
+4            TEMP2                                                            TRUE      FALSE     TRUE       8           
+5            TEMP2_UNDO                                                       TRUE      FALSE     FALSE      1           
+
+2 rows fetched.
+
+SQL> alter tablespace TEMP2_UNDO autoextend off;
+
+Succeed.
+
+SQL> select tablespace_name,AUTOEXTENSIBLE from SYS.DBA_DATA_FILES where tablespace_name in ('TEMP2_UNDO');
+
+TABLESPACE_NAME                                                  AUTOEXTENSIBLE
+---------------------------------------------------------------- --------------
+TEMP2_UNDO                                                       NO            
+
+1 rows fetched.
+
+SQL> alter tablespace TEMP2_UNDO autoextend on;
+
+Succeed.
+
+SQL> create tablespace nologging_spc datafile 'nologging_spc' size 1M autoextend on nologging;
+
+Succeed.
+
+SQL> alter tablespace temp2_undo rename to temp2_undo_new_name;
+
+CT-00613, Invalid operation, can't rename TEMP2_UNDO tablespace.
+SQL> -- OK: Create an unlogging table
+SQL> create table nologging_t1(a int, b int, c char(100) default '123456789') nologging;
+
+Succeed.
+
+SQL> select table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_T1';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_T1                                                     TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> select table_name, TABLESPACE_NAME, table_type from all_tables where table_name = 'NOLOGGING_T1';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_T1                                                     TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> select table_name, TABLESPACE_NAME, table_type from user_tables where table_name = 'NOLOGGING_T1';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_T1                                                     TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> drop table nologging_t1;
+
+Succeed.
+
+SQL> create tablespace logging_spc datafile 'logging_spc' size 1M autoextend on;
+
+Succeed.
+
+SQL> 
+SQL> ---------------CREATE NOLOGGING TABLE------------------------
+SQL> -- OK: no nologging space, default is on temp2 space 
+SQL> create table nologging_test (a int, b int, c char(100) default '123456789' ) nologging;
+
+Succeed.
+
+SQL> create index idx_nologging_test on nologging_test(b);
+
+Succeed.
+
+SQL> ---TEMP2 expected
+SQL> select table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_TEST';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_TEST                                                   TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> ---index also on default on TEMP2
+SQL> select index_name, table_name, tablespace_name from dba_indexes where table_name = 'NOLOGGING_TEST';
+
+INDEX_NAME                                                       TABLE_NAME                                                       TABLESPACE_NAME                                                 
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+IDX_NOLOGGING_TEST                                               NOLOGGING_TEST                                                   TEMP2                                                           
+
+1 rows fetched.
+
+SQL> drop table nologging_test;
+
+Succeed.
+
+SQL> 
+SQL> -- create on nologging space is also a nologging table and index and on the same tablespace;
+SQL> create table nologging_test2 (a int, b int, c char(100) default '123456789' ) tablespace nologging_spc;
+
+Succeed.
+
+SQL> create index idx_nologging_test2 on nologging_test2(b);
+
+Succeed.
+
+SQL> select table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_TEST2';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_TEST2                                                  NOLOGGING_SPC                                                    NOLOGGING   
+
+1 rows fetched.
+
+SQL> select index_name, table_name, tablespace_name from dba_indexes where table_name = 'NOLOGGING_TEST2';
+
+INDEX_NAME                                                       TABLE_NAME                                                       TABLESPACE_NAME                                                 
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+IDX_NOLOGGING_TEST2                                              NOLOGGING_TEST2                                                  NOLOGGING_SPC                                                   
+
+1 rows fetched.
+
+SQL> drop table nologging_test2;
+
+Succeed.
+
+SQL> -- specified temp2 as default space
+SQL> create table nologging_test2 (a int, b int, c char(100) default '123456789' ) tablespace temp2;
+
+Succeed.
+
+SQL> select table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_TEST2';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_TEST2                                                  TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> drop table nologging_test2;
+
+Succeed.
+
+SQL> 
+SQL> -- failed : create nologging table on normal tablespace;
+SQL> create table nologging_test2 (a int, b int, c char(100) default '123456789' ) nologging tablespace logging_spc;
+
+CT-00130, Operation create nologging table is not supported on logging tablespace
+SQL> 
+SQL> -- specify unlogging as user default tablespace
+SQL> create user nlg_user1 identified by 'Cantian_123' default tablespace temp2;
+
+Succeed.
+
+SQL> create user nlg_user2 identified by 'Cantian_123' default tablespace nologging_spc;
+
+Succeed.
+
+SQL> drop user nlg_user1 cascade;
+
+Succeed.
+
+SQL> drop user nlg_user2 cascade;
+
+Succeed.
+
+SQL> -- failed : cannot use undo 
+SQL> create user nlg_user3 identified by 'Cantian_123' default tablespace undo;
+
+CT-00792, Can not specify UNDO tablespace as user default tablespace.
+SQL> create user nlg_user4 identified by 'Cantian_123' default tablespace temp2_undo;
+
+CT-00792, Can not specify TEMP2_UNDO tablespace as user default tablespace.
+SQL> 
+SQL> -- Test alter user
+SQL> create user tempdb identified by 'Cantian_123';
+
+Succeed.
+
+SQL> create table tempdb.test2 (a int primary key, b int, c char(100) default '123456789' );
+
+Succeed.
+
+SQL> drop table tempdb.test2;
+
+Succeed.
+
+SQL> -- failed: 
+SQL> alter user tempdb default tablespace temp;
+
+CT-00792, Can not specify TEMP tablespace as user default tablespace.
+SQL> alter user tempdb default tablespace temp2_undo;
+
+CT-00792, Can not specify TEMP2_UNDO tablespace as user default tablespace.
+SQL> alter user tempdb default tablespace undo;
+
+CT-00792, Can not specify UNDO tablespace as user default tablespace.
+SQL> -- OK
+SQL> alter user tempdb default tablespace temp2;
+
+Succeed.
+
+SQL> --export/import
+SQL> create table tempdb.nologging_exp(a int primary key, b int);
+
+Succeed.
+
+SQL> insert into tempdb.nologging_exp values(1,1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> -- global temporary table on the tempdb is also a temporary table not a nologging table
+SQL> create global temporary table tempdb.temp_nlg_test(a int, b int);
+
+Succeed.
+
+SQL> select table_name, table_type from all_tables where table_name = 'TEMP_NLG_TEST';
+
+TABLE_NAME                                                       TABLE_TYPE  
+---------------------------------------------------------------- ------------
+TEMP_NLG_TEST                                                    TRANS_TEMP  
+
+1 rows fetched.
+
+SQL> drop table tempdb.temp_nlg_test;
+
+Succeed.
+
+SQL> -- Failed: global temporary cannot set nologging
+SQL> create global temporary table tempdb.temp_nlg_test(a int, b int) nologging;
+
+CT-00601, [1:66]Sql syntax error: cannot sepecify NOLOGGING on temporary table
+SQL> 
+SQL> exp users=tempdb file="nologging_exp.dmp" log="nologging_exp.log";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = TEMPDB
+-- FILE TYPE = TXT
+-- DUMP FILE = nologging_exp.dmp
+-- LOG FILE = nologging_exp.log
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema TEMPDB ...
+Exporting sequence of schema TEMPDB ...
+Exporting profile of schema TEMPDB ...
+Exporting type of schema TEMPDB ...
+Exporting tables of schema TEMPDB ...
+Reading table objects of TEMPDB
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+NOLOGGING_EXP                                                    1         
+
+Exporting tables (scripts or data) of TEMPDB
+exporting table TEMPDB.NOLOGGING_EXP ...
+  exporting DDL of TEMPDB.NOLOGGING_EXP ...
+  exporting data of TEMPDB.NOLOGGING_EXP ...
+    data exporting success, 1 rows are dumped.
+
+  exporting indexes on TEMPDB.NOLOGGING_EXP ...
+  exporting constraints on TEMPDB.NOLOGGING_EXP ...
+
+Exporting procedures/functions/triggers of schema TEMPDB ...
+Exporting views of schema TEMPDB ...
+Exporting synonyms of schema TEMPDB ...
+Exporting package of schema TEMPDB ...
+End of export schema TEMPDB ...
+
+Logical export succeeded.
+
+SQL> drop table tempdb.nologging_exp;
+
+Succeed.
+
+SQL> imp users=tempdb file="nologging_exp.dmp" log="nologging_imp.log";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = TEMPDB
+-- DUMP FILE = nologging_exp.dmp
+-- LOG FILE = nologging_imp.log
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 1 rows are loaded.
+Logical import succeeded.
+
+SQL> select owner, table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_EXP';
+
+OWNER                                                            TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+TEMPDB                                                           NOLOGGING_EXP                                                    TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> select * from tempdb.nologging_exp;
+
+A            B           
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> drop table tempdb.nologging_exp;
+
+Succeed.
+
+SQL> alter session set current_schema= sys;
+
+Succeed.
+
+SQL> 
+SQL> --OK: if create table on nologging space, table is nologging
+SQL> create table tempdb.nologging_test3(a int);
+
+Succeed.
+
+SQL> select owner, table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_TEST3';
+
+OWNER                                                            TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+TEMPDB                                                           NOLOGGING_TEST3                                                  TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> drop table tempdb.nologging_test3;
+
+Succeed.
+
+SQL> --OK: if create table on nologging space, table is nologging
+SQL> create table tempdb.nlg_test_hash1 (
+  2 c3 char(20) primary key,
+  3 c4 number(8) not null
+  4 )
+  5 partition by hash(c3)
+  6 (
+  7 partition part_01,
+  8 partition part_02,
+  9 partition part_03
+ 10 );
+
+Succeed.
+
+SQL> select owner, table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NLG_TEST_HASH1';
+
+OWNER                                                            TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+TEMPDB                                                           NLG_TEST_HASH1                                                   TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> --failed: nologging partition table add partition on logging tablespace
+SQL> alter table tempdb.nlg_test_hash1 add partition part_04 tablespace users;
+
+CT-00130, Operation add nologging partition is not supported on logging tablespace
+SQL> drop table tempdb.nlg_test_hash1;
+
+Succeed.
+
+SQL> create table tempdb.nlg_test_hash1 (
+  2 c3 char(20) primary key,
+  3 c4 number(8) not null
+  4 )
+  5 partition by hash(c3)
+  6 (
+  7 partition part_01,
+  8 partition part_02,
+  9 partition part_03
+ 10 ) tablespace users;
+
+Succeed.
+
+SQL> --failed: logging partition table add partition on nologging tablespace
+SQL> alter table tempdb.nlg_test_hash1 add partition part_04 tablespace temp2;
+
+CT-00130, Operation add logging partition is not supported on nologging tablespace
+SQL> drop table tempdb.nlg_test_hash1;
+
+Succeed.
+
+SQL> 
+SQL> drop user tempdb cascade;
+
+Succeed.
+
+SQL> -------------CRATE PARTITION TABLE --------------------------
+SQL> -- 1.partiton table : create as nologging table default on temp2 space
+SQL> create table NLG_PART_TEST1 (a int, b int, c char(8) not null ) partition by list (c)
+  2 (
+  3 partition nlg_part1 values ('35020000'),
+  4 partition nlg_part2 values ('37020000'),
+  5 partition nlg_default values ('00000000')
+  6 )
+  7 nologging;
+
+Succeed.
+
+SQL> select table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NLG_PART_TEST1';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NLG_PART_TEST1                                                   TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> drop table NLG_PART_TEST1;
+
+Succeed.
+
+SQL> 
+SQL> create tablespace nologging_spc2 datafile 'nologging_spc2' size 1M autoextend on nologging;
+
+Succeed.
+
+SQL> -- 2.partiton table : create as nologging table on different unlogging space
+SQL> create table nlg_part_test2 (a int, b int, c char(8) not null ) partition by list (c)
+  2 (
+  3 partition nlg_part1 values ('35020000') tablespace nologging_spc,
+  4 partition nlg_part2 values ('37020000') tablespace nologging_spc2,
+  5 partition nlg_default values ('00000000') tablespace temp2
+  6 )
+  7 nologging;
+
+Succeed.
+
+SQL> drop table nlg_part_test2;
+
+Succeed.
+
+SQL> 
+SQL> -- 3.Faild partiton table : create as nologging table on different type of space
+SQL> create table nlg_part_test2 (a int, b int, c char(8) not null ) partition by list (c)
+  2 (
+  3 partition nlg_part1 values ('35020000') tablespace logging_spc,
+  4 partition nlg_part2 values ('37020000') tablespace nologging_spc2,
+  5 partition nlg_default values ('00000000') tablespace logging_spc
+  6 )
+  7 nologging;
+
+CT-00130, Operation add nologging partition is not supported on logging tablespace
+SQL> 
+SQL> -- 3.Faild partiton table : create as logging table on nologging space
+SQL> create table nlg_part_test3 (a int, b int, c char(8) not null ) partition by list (c)
+  2 (
+  3 partition nlg_part1 values ('35020000') tablespace logging_spc,
+  4 partition nlg_part2 values ('37020000') tablespace nologging_spc2,
+  5 partition nlg_default values ('00000000') tablespace logging_spc
+  6 );
+
+CT-00130, Operation add logging partition is not supported on nologging tablespace
+SQL> drop table nlg_part_test3;
+
+CT-00843, The table or view SYS.NLG_PART_TEST3 does not exist.
+SQL> -----------INDEX TEST -------------------------------------
+SQL> ------- Table and index on different nologging space
+SQL> create table nologging_test2 (a int, b int, c char(100) default '123456789' ) tablespace nologging_spc;
+
+Succeed.
+
+SQL> create index idx_nologging_test2 on nologging_test2(b) tablespace nologging_spc2;
+
+Succeed.
+
+SQL> select table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_TEST2';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_TEST2                                                  NOLOGGING_SPC                                                    NOLOGGING   
+
+1 rows fetched.
+
+SQL> select index_name, table_name, tablespace_name from dba_indexes where table_name = 'NOLOGGING_TEST2';
+
+INDEX_NAME                                                       TABLE_NAME                                                       TABLESPACE_NAME                                                 
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+IDX_NOLOGGING_TEST2                                              NOLOGGING_TEST2                                                  NOLOGGING_SPC2                                                  
+
+1 rows fetched.
+
+SQL> drop table nologging_test2;
+
+Succeed.
+
+SQL> 
+SQL> ------ Table on temp2, index specified other nologging space
+SQL> create table nologging_test3 (a int, b int, c char(100) default '123456789' ) nologging;
+
+Succeed.
+
+SQL> create index idx_nologging_test3 on nologging_test3(b) tablespace nologging_spc;
+
+Succeed.
+
+SQL> select table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_TEST3';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_TEST3                                                  TEMP2                                                            NOLOGGING   
+
+1 rows fetched.
+
+SQL> select index_name, table_name, tablespace_name from dba_indexes where table_name = 'NOLOGGING_TEST3';
+
+INDEX_NAME                                                       TABLE_NAME                                                       TABLESPACE_NAME                                                 
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+IDX_NOLOGGING_TEST3                                              NOLOGGING_TEST3                                                  NOLOGGING_SPC                                                   
+
+1 rows fetched.
+
+SQL> 
+SQL> ---Failed : index on logging space
+SQL> create index idx2_nologging_test3 on nologging_test3(c) tablespace logging_spc;
+
+CT-00130, Operation create logging object is not supported on nologging parent object
+SQL> create table logging_test4 (a int, b int, c char(100) default '123456789' ) ;
+
+Succeed.
+
+SQL> create index idx_nologging_test on logging_test4(b) tablespace nologging_spc;
+
+CT-00130, Operation create nologging object is not supported on logging parent object
+SQL> drop table nologging_test3;
+
+Succeed.
+
+SQL> drop table logging_test4;
+
+Succeed.
+
+SQL> 
+SQL> ------------ TEST BASIC UNLOGGING TABLE FUNCTION--------
+SQL> create table nologging_t1(a int, b int, c char(100) default '123456789') nologging tablespace nologging_spc;
+
+Succeed.
+
+SQL> create index nologging_t1_idx_a on nologging_t1(a);
+
+Succeed.
+
+SQL> create table logging_t1(a int, b int, c char(100) default '123456789');
+
+Succeed.
+
+SQL> create index logging_t1_idx_a on logging_t1(a);
+
+Succeed.
+
+SQL> 
+SQL> --check table type
+SQL> select table_name, TABLESPACE_NAME, table_type from dba_tables where table_name = 'NOLOGGING_T1';
+
+TABLE_NAME                                                       TABLESPACE_NAME                                                  TABLE_TYPE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------
+NOLOGGING_T1                                                     NOLOGGING_SPC                                                    NOLOGGING   
+
+1 rows fetched.
+
+SQL> --insert
+SQL> insert into nologging_t1(a,b) values(1,1);
+
+1 rows affected.
+
+SQL> insert into logging_t1(a,b) values(1,1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into nologging_t1(a,b) values(2,2);
+
+1 rows affected.
+
+SQL> insert into logging_t1(a,b) values(2,2);
+
+1 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+
+1 rows fetched.
+
+SQL> select * from logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+
+1 rows fetched.
+
+SQL> 
+SQL> --dc invalidate
+SQL> drop index nologging_t1_idx_a on nologging_t1;
+
+Succeed.
+
+SQL> create index nologging_t1_idx_a on nologging_t1(a);
+
+Succeed.
+
+SQL> 
+SQL> --update
+SQL> update nologging_t1 set b=b+10;
+
+1 rows affected.
+
+SQL> update logging_t1 set b=b+10;
+
+1 rows affected.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            11           123456789                                                                                           
+
+1 rows fetched.
+
+SQL> select * from logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            11           123456789                                                                                           
+
+1 rows fetched.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+
+1 rows fetched.
+
+SQL> select * from logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+
+1 rows fetched.
+
+SQL> update nologging_t1 set b=b+10;
+
+1 rows affected.
+
+SQL> update logging_t1 set b=b+10;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            11           123456789                                                                                           
+
+1 rows fetched.
+
+SQL> select * from logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            11           123456789                                                                                           
+
+1 rows fetched.
+
+SQL> 
+SQL> --delete
+SQL> delete from nologging_t1;
+
+1 rows affected.
+
+SQL> delete from logging_t1;
+
+1 rows affected.
+
+SQL> rollback;
+
+Succeed.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            11           123456789                                                                                           
+
+1 rows fetched.
+
+SQL> select * from logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            11           123456789                                                                                           
+
+1 rows fetched.
+
+SQL> delete from nologging_t1;
+
+1 rows affected.
+
+SQL> delete from logging_t1;
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> insert into nologging_t1(a,b) values(1,1);
+
+1 rows affected.
+
+SQL> insert into logging_t1(a,b) values(1,1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> SAVEPOINT POINT1;
+
+Succeed.
+
+SQL> INSERT INTO nologging_t1(a,b) VALUES(2,2);
+
+1 rows affected.
+
+SQL> INSERT INTO logging_t1(a,b) VALUES(2,2);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT2;
+
+Succeed.
+
+SQL> INSERT INTO nologging_t1(a,b) VALUES(3,3);
+
+1 rows affected.
+
+SQL> INSERT INTO logging_t1(a,b) VALUES(3,3);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT3;
+
+Succeed.
+
+SQL> INSERT INTO nologging_t1(a,b) VALUES(4,4);
+
+1 rows affected.
+
+SQL> INSERT INTO logging_t1(a,b) VALUES(4,4);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT4;
+
+Succeed.
+
+SQL> INSERT INTO nologging_t1(a,b) VALUES(5,5);
+
+1 rows affected.
+
+SQL> INSERT INTO logging_t1(a,b) VALUES(5,5);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT5;
+
+Succeed.
+
+SQL> INSERT INTO nologging_t1(a,b) VALUES(6,6);
+
+1 rows affected.
+
+SQL> INSERT INTO logging_t1(a,b) VALUES(6,6);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT6;
+
+Succeed.
+
+SQL> INSERT INTO nologging_t1(a,b) VALUES(7,7);
+
+1 rows affected.
+
+SQL> INSERT INTO logging_t1(a,b) VALUES(7,7);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT5;
+
+Succeed.
+
+SQL> INSERT INTO nologging_t1(a,b) VALUES(8,8);
+
+1 rows affected.
+
+SQL> INSERT INTO logging_t1(a,b) VALUES(8,8);
+
+1 rows affected.
+
+SQL> SELECT * FROM nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+7            7            123456789                                                                                           
+8            8            123456789                                                                                           
+
+8 rows fetched.
+
+SQL> SELECT '1 POINT1 2 POINT2 3 POINT3 4 POINT4 5 6 POINT6 7 POINT5 8' AS SAVEPOINT_DESC FROM DUAL;
+
+SAVEPOINT_DESC                                           
+---------------------------------------------------------
+1 POINT1 2 POINT2 3 POINT3 4 POINT4 5 6 POINT6 7 POINT5 8
+
+1 rows fetched.
+
+SQL> 
+SQL> --TEST ROLLBACK TO SAVEPOINT
+SQL> ROLLBACK TO SAVEPOINT POINT7;
+
+CT-00736, The savepoint 'POINT7' does not exist.
+SQL> ROLLBACK TO SAVEPOINT POINT5;
+
+Succeed.
+
+SQL> SELECT * FROM nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+7            7            123456789                                                                                           
+
+7 rows fetched.
+
+SQL> SELECT * FROM logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+7            7            123456789                                                                                           
+
+7 rows fetched.
+
+SQL> ROLLBACK TO SAVEPOINT POINT5;
+
+Succeed.
+
+SQL> SELECT * FROM nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+7            7            123456789                                                                                           
+
+7 rows fetched.
+
+SQL> SELECT * FROM logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+7            7            123456789                                                                                           
+
+7 rows fetched.
+
+SQL> ROLLBACK TO SAVEPOINT POINT6;
+
+Succeed.
+
+SQL> SELECT * FROM nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+
+6 rows fetched.
+
+SQL> SELECT * FROM logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+
+6 rows fetched.
+
+SQL> ROLLBACK TO SAVEPOINT POINT5;
+
+CT-00736, The savepoint 'POINT5' does not exist.
+SQL> SELECT * FROM nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+
+6 rows fetched.
+
+SQL> SELECT * FROM logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+
+6 rows fetched.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+
+6 rows fetched.
+
+SQL> SELECT * FROM logging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+
+6 rows fetched.
+
+SQL> 
+SQL> SAVEPOINT AA;
+
+Succeed.
+
+SQL> insert into nologging_t1(a,b) values(1,1);
+
+1 rows affected.
+
+SQL> SAVEPOINT BB;
+
+Succeed.
+
+SQL> insert into nologging_t1(a,b) values(1,1);
+
+1 rows affected.
+
+SQL> SAVEPOINT CC;
+
+Succeed.
+
+SQL> insert into nologging_t1(a,b) values(1,1);
+
+1 rows affected.
+
+SQL> RELEASE SAVEPOINT AA;
+
+Succeed.
+
+SQL> ROLLBACK TO SAVEPOINT BB;
+
+CT-00736, The savepoint 'BB' does not exist.
+SQL> ROLLBACK TO  SAVEPOINT CC;
+
+CT-00736, The savepoint 'CC' does not exist.
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> 
+SQL> --analyze
+SQL> analyze table nologging_t1 compute statistics;
+
+Succeed.
+
+SQL> select count(1) from SYS_TEMP_HISTGRAM where table# = (select id from SYS_TABLES where name = 'NOLOGGING_T1');
+
+COUNT(1)            
+--------------------
+13                  
+
+1 rows fetched.
+
+SQL> select count(1) from SYS_TEMP_HISTGRAM_ABSTR where tab# = (select id from SYS_TABLES where name = 'NOLOGGING_T1');
+
+COUNT(1)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select * from nologging_t1 where a=1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+
+1 rows fetched.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+1            1            123456789                                                                                           
+2            2            123456789                                                                                           
+3            3            123456789                                                                                           
+4            4            123456789                                                                                           
+5            5            123456789                                                                                           
+6            6            123456789                                                                                           
+
+6 rows fetched.
+
+SQL> 
+SQL> --truncate
+SQL> truncate table nologging_t1;
+
+Succeed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from nologging_t1;
+
+A            B            C                                                               
+------------ ------------ ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --2pc
+SQL> update nologging_t1 set a=2 where a=1;
+
+0 rows affected.
+
+SQL> prepare transaction '3.ab.cd';
+
+CT-00890, Xa transaction can't change nologging table
+SQL> 
+SQL> drop table nologging_t1;
+
+Succeed.
+
+SQL> drop table logging_t1;
+
+Succeed.
+
+SQL> 
+SQL> select ID, NAME, TEMPORARY, IN_MEMORY, AUTO_PURGE, EXTENT_SIZE from v$tablespace where name in ('TEMP2', 'TEMP2_UNDO') order by name;
+
+ID           NAME                                                             TEMPORARY IN_MEMORY AUTO_PURGE EXTENT_SIZE 
+------------ ---------------------------------------------------------------- --------- --------- ---------- ------------
+4            TEMP2                                                            TRUE      FALSE     TRUE       8           
+5            TEMP2_UNDO                                                       TRUE      FALSE     FALSE      1           
+
+2 rows fetched.
+
+SQL> 
+SQL> --interval
+SQL> create table interval_noredo(f1 int, f2 int, f3 char(30))
+  2 PARTITION BY RANGE(f2)
+  3 INTERVAL(10)
+  4 (
+  5  PARTITION interval_noredop1 values less than(10),
+  6  PARTITION interval_noredop2 values less than(20),
+  7  PARTITION interval_noredop3 values less than(30)
+  8 ) tablespace temp2;
+
+Succeed.
+
+SQL> 
+SQL> create index interval_noredo_gidx1 on interval_noredo(f1);
+
+Succeed.
+
+SQL> create index interval_noredo_lidx2 on interval_noredo(f2) local;
+
+Succeed.
+
+SQL> insert into interval_noredo values(1,5,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(2,15,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(3,25,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(4,35,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(5,45,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(6,55,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(7,65,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(8,75,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(9,85,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(10,95,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(11,105,'hzy');
+
+1 rows affected.
+
+SQL> insert into interval_noredo values(12,115,'hzy');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> alter table interval_noredo truncate partition interval_noredop3;
+
+Succeed.
+
+SQL> truncate table interval_noredo;
+
+Succeed.
+
+SQL> drop table interval_noredo;
+
+Succeed.
+
+SQL> 
+SQL> ----------- Clean Envirement 
+SQL> -- temp2 and temp2_undo cannot be dropped
+SQL> drop tablespace temp2 including contents;
+
+CT-00613, Invalid operation,forbid to drop database system space
+SQL> drop tablespace temp2_undo including contents;
+
+CT-00613, Invalid operation,forbid to drop database system space
+SQL> 
+SQL> drop tablespace nologging_spc including contents;
+
+Succeed.
+
+SQL> drop tablespace nologging_spc1 including contents;
+
+CT-00780, The tablespace NOLOGGING_SPC1 does not exist.
+SQL> drop tablespace nologging_spc2 including contents;
+
+Succeed.
+
+SQL> drop tablespace logging_spc2 including contents;
+
+CT-00780, The tablespace LOGGING_SPC2 does not exist.
+SQL> drop tablespace logging_spc  including contents;
+
+Succeed.
+
+SQL> select * from v$tablespace where name like '%LOGGING_SPC%';
+
+ID           NAME                                                             TEMPORARY IN_MEMORY AUTO_PURGE EXTENT_SIZE  SEGMENT_COUNT FILE_COUNT   STATUS   AUTO_OFFLINE EXTENT_MANAGEMENT EXTENT_ALLOCATION ENCRYPT  PUNCHED_SIZE
+------------ ---------------------------------------------------------------- --------- --------- ---------- ------------ ------------- ------------ -------- ------------ ----------------- ----------------- -------- --------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --DTS2019052413362 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists nologging_user;
+
+Succeed.
+
+SQL> create user nologging_user IDENTIFIED by 'exp_user123';
+
+Succeed.
+
+SQL> grant dba to nologging_user;
+
+Succeed.
+
+SQL> conn nologging_user/exp_user123@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists nologging_table;
+
+Succeed.
+
+SQL> create table nologging_table(f1 int, f2 int) nologging;
+
+Succeed.
+
+SQL> create index t2_ind on  nologging_table (to_char(f1), f2);
+
+Succeed.
+
+SQL> create index t2_ind2 on  nologging_table (to_char(f1), upper(f2));
+
+Succeed.
+
+SQL> insert into nologging_table values(1,2);
+
+1 rows affected.
+
+SQL> insert into nologging_table values(4,5);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> exp users=nologging_user filetype=txt file ="nolongging_txt.dmp";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = NOLOGGING_USER
+-- FILE TYPE = TXT
+-- DUMP FILE = nolongging_txt.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema NOLOGGING_USER ...
+Exporting sequence of schema NOLOGGING_USER ...
+Exporting profile of schema NOLOGGING_USER ...
+Exporting type of schema NOLOGGING_USER ...
+Exporting tables of schema NOLOGGING_USER ...
+Reading table objects of NOLOGGING_USER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+NOLOGGING_TABLE                                                  1         
+
+Exporting tables (scripts or data) of NOLOGGING_USER
+exporting table NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting DDL of NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting data of NOLOGGING_USER.NOLOGGING_TABLE ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting constraints on NOLOGGING_USER.NOLOGGING_TABLE ...
+
+Exporting procedures/functions/triggers of schema NOLOGGING_USER ...
+Exporting views of schema NOLOGGING_USER ...
+Exporting synonyms of schema NOLOGGING_USER ...
+Exporting package of schema NOLOGGING_USER ...
+End of export schema NOLOGGING_USER ...
+
+Logical export succeeded.
+
+SQL> exp users=nologging_user filetype=txt PARALLEL = 5 file ="nolongging_txt_parallel.dmp";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = NOLOGGING_USER
+-- FILE TYPE = TXT
+-- DUMP FILE = nolongging_txt_parallel.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 5
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema NOLOGGING_USER ...
+Exporting sequence of schema NOLOGGING_USER ...
+Exporting profile of schema NOLOGGING_USER ...
+Exporting type of schema NOLOGGING_USER ...
+Exporting tables of schema NOLOGGING_USER ...
+Reading table objects of NOLOGGING_USER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+NOLOGGING_TABLE                                                  1         
+
+Exporting tables (scripts or data) of NOLOGGING_USER
+exporting table NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting DDL of NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting indexes on NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting constraints on NOLOGGING_USER.NOLOGGING_TABLE ...
+
+Exporting procedures/functions/triggers of schema NOLOGGING_USER ...
+Exporting views of schema NOLOGGING_USER ...
+Exporting synonyms of schema NOLOGGING_USER ...
+Exporting package of schema NOLOGGING_USER ...
+End of export schema NOLOGGING_USER ...
+
+Logical export succeeded.
+
+SQL> exp users=nologging_user filetype=bin file ="nolongging_bin.dmp";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = NOLOGGING_USER
+-- FILE TYPE = BIN
+-- DUMP FILE = nolongging_bin.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 0
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema NOLOGGING_USER ...
+Exporting sequence of schema NOLOGGING_USER ...
+Exporting profile of schema NOLOGGING_USER ...
+Exporting type of schema NOLOGGING_USER ...
+Exporting tables of schema NOLOGGING_USER ...
+Reading table objects of NOLOGGING_USER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+NOLOGGING_TABLE                                                  1         
+
+Exporting tables (scripts or data) of NOLOGGING_USER
+exporting table NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting DDL of NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting data of NOLOGGING_USER.NOLOGGING_TABLE ...
+    data exporting success, 2 rows are dumped.
+
+  exporting indexes on NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting constraints on NOLOGGING_USER.NOLOGGING_TABLE ...
+
+Exporting procedures/functions/triggers of schema NOLOGGING_USER ...
+Exporting views of schema NOLOGGING_USER ...
+Exporting synonyms of schema NOLOGGING_USER ...
+Exporting package of schema NOLOGGING_USER ...
+End of export schema NOLOGGING_USER ...
+
+Logical export succeeded.
+
+SQL> exp users=nologging_user filetype=bin PARALLEL = 5 file ="nolongging_bin_parallel.dmp";
+Parsing export options ... 
+Verify options ...
+  verify schema ...
+Starting export ...
+Preparing to export ...
+-- EXPORT TYPE = SCHEMA
+-- EXPORT OBJECTS = NOLOGGING_USER
+-- FILE TYPE = BIN
+-- DUMP FILE = nolongging_bin_parallel.dmp
+-- LOG FILE = 
+-- QUERY = ""
+-- COMPRESS = N
+-- CONSISTENT = N
+-- CONTENT_MODE = ALL
+-- SKIP_COMMENTS = N
+-- FORCE = N
+-- SKIP_ADD_DROP_TABLE = N
+-- SKIP_TRIGGERS = N
+-- QUOTE_NAMES = Y
+-- TABLESPACE = N
+-- COMMIT_BATCH = 1000
+-- INSERT_BATCH = 1
+-- FEEDBACK = 10000
+-- PARALLEL = 5
+-- TENANT= N
+-- CREATE_USER = N
+-- ROLE = N
+-- GRANT = N
+-- WITH_CR_MODE = N
+-- WITH_FORMAT_CSF = Y
+-- INDEX_PARTITIONS = N
+
+Exporting schema NOLOGGING_USER ...
+Exporting sequence of schema NOLOGGING_USER ...
+Exporting profile of schema NOLOGGING_USER ...
+Exporting type of schema NOLOGGING_USER ...
+Exporting tables of schema NOLOGGING_USER ...
+Reading table objects of NOLOGGING_USER
+
+The order of exporting table is:
+TABLE NAME                                                       LEVEL     
+---------------------------------------------------------------- ----------
+NOLOGGING_TABLE                                                  1         
+
+Exporting tables (scripts or data) of NOLOGGING_USER
+exporting table NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting DDL of NOLOGGING_USER.NOLOGGING_TABLE ...
+    data exporting success! 2 rows are dumped.
+  exporting indexes on NOLOGGING_USER.NOLOGGING_TABLE ...
+  exporting constraints on NOLOGGING_USER.NOLOGGING_TABLE ...
+
+Exporting procedures/functions/triggers of schema NOLOGGING_USER ...
+Exporting views of schema NOLOGGING_USER ...
+Exporting synonyms of schema NOLOGGING_USER ...
+Exporting package of schema NOLOGGING_USER ...
+End of export schema NOLOGGING_USER ...
+
+Logical export succeeded.
+
+SQL> 
+SQL> imp users=nologging_user filetype=txt file ="nolongging_txt.dmp";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = NOLOGGING_USER
+-- DUMP FILE = nolongging_txt.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=nologging_user filetype=txt PARALLEL = 5 file ="nolongging_txt_parallel.dmp";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = NOLOGGING_USER
+-- DUMP FILE = nolongging_txt_parallel.dmp
+-- LOG FILE = 
+-- FILE TYPE = TXT
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 5
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+data importing success, 3 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=nologging_user filetype=bin file ="nolongging_bin.dmp";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = NOLOGGING_USER
+-- DUMP FILE = nolongging_bin.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 1
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema NOLOGGING_USER ... 
+  Importing sequence of schema NOLOGGING_USER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema NOLOGGING_USER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema NOLOGGING_USER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema NOLOGGING_USER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    NOLOGGING_TABLE                                                      2         
+
+  Importing foreign key of schema NOLOGGING_USER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema NOLOGGING_USER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema NOLOGGING_USER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema NOLOGGING_USER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema NOLOGGING_USER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> imp users=nologging_user filetype=bin PARALLEL = 5 file ="nolongging_bin_parallel.dmp";
+Parsing import options ... 
+Verify options ...
+  verify schema ...
+Starting import ...
+Preparing to import ...
+-- IMPORT TYPE = SCHEMA
+-- IMPORT OBJECTS = NOLOGGING_USER
+-- DUMP FILE = nolongging_bin_parallel.dmp
+-- LOG FILE = 
+-- FILE TYPE = BIN
+-- SHOW = N
+-- FEEDBACK = 10000
+-- PARALLEL = 5
+-- DDL_PARALLEL = 1
+-- CONTENT_MODE = ALL
+-- IGNORE = N
+-- CREATE_USER = N
+-- TIMING = OFF
+-- BATCH_COUNT = 10000
+-- DISABLE_TRIGGER = Y
+-- NOLOGGING = N
+
+
+Importing schema NOLOGGING_USER ... 
+  Importing sequence of schema NOLOGGING_USER ...
+    Sequence importing success, 0 rows are loaded.
+  Importing profile of schema NOLOGGING_USER ...
+    Profile importing success, 0 rows are loaded.
+  Importing type of schema NOLOGGING_USER ...
+    Type importing success, 0 rows are loaded.
+
+  Importing tables of schema NOLOGGING_USER ,total number : 1 ...
+    The order of importing table is:
+    TABLE NAME                                                       RECORD NUMBER 
+    ---------------------------------------------------------------- --------------
+    NOLOGGING_TABLE                                                      2         
+
+  Importing foreign key of schema NOLOGGING_USER ...
+    Foreign key importing success, 0 rows are loaded.
+
+  Importing fuction/procedure/trigger of schema NOLOGGING_USER ...
+    Fuction/procedure/trigger importing success, 0 rows are loaded.
+
+  Importing view of schema NOLOGGING_USER ...
+    View importing success, 0 rows are loaded.
+
+  Importing synonym of schema NOLOGGING_USER ...
+    Synonym importing success, 0 rows are loaded.
+
+  Importing package of schema NOLOGGING_USER ...
+    Package importing success, 0 rows are loaded.
+
+data importing success, 2 rows are loaded.
+Logical import succeeded.
+
+SQL> 
+SQL> drop synonym if exists s_liu1;
+
+Succeed.
+
+SQL> drop synonym if exists s_liu2;
+
+Succeed.
+
+SQL> drop synonym if exists s_liu3;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists #liu_tab;
+
+Succeed.
+
+SQL> alter system set LOCAL_TEMPORARY_TABLE_ENABLED = true;
+
+Succeed.
+
+SQL> create temporary table #liu_tab(a int , c varchar(50));
+
+Succeed.
+
+SQL> create synonym s_liu1 for #liu_tab;
+
+CT-00601, Sql syntax error: Prevent creating synonyms of local temporary tables
+SQL> explain select * from s_liu1;
+
+CT-00843, [1:23]The table or view NOLOGGING_USER.S_LIU1 does not exist.
+SQL> 
+SQL> drop table if exists liu_tab_global_temp;
+
+Succeed.
+
+SQL> create global temporary table liu_tab_global_temp(a int , c varchar(50));
+
+Succeed.
+
+SQL> create synonym s_liu2 for liu_tab_global_temp;
+
+Succeed.
+
+SQL> explain select * from s_liu2;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+| Id  | Description          | Owner          | Name                | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |                |                     |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | NOLOGGING_USER | LIU_TAB_GLOBAL_TEMP |      |      |       |        |
+----------------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> 
+SQL> drop table if exists liu_nologging ;
+
+Succeed.
+
+SQL> create table liu_nologging(a int , c varchar(50)) nologging;
+
+Succeed.
+
+SQL> create synonym s_liu3 for liu_nologging;
+
+Succeed.
+
+SQL> explain select * from s_liu3;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+| Id  | Description          | Owner          | Name          | Rows | Cost | Bytes | Remark |
+----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT     |                |               |      |      |       |        |
+| 1   |   TABLE ACCESS FULL  | NOLOGGING_USER | LIU_NOLOGGING |      |      |       |        |
+----------------------------------------------------------------------------------------------
+
+6 rows fetched.
+
+SQL> alter system set LOCAL_TEMPORARY_TABLE_ENABLED = false;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists #liu_tab;
+
+Succeed.
+
+SQL> drop table if exists liu_tab_global_temp;
+
+Succeed.
+
+SQL> drop table if exists liu_nologging ;
+
+Succeed.
+
+SQL> drop table if exists nologging_table;
+
+Succeed.
+
+SQL> 
+SQL> --split part of sub_part_table when part is nologging
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> alter database enable_logic_replication off;
+
+Succeed.
+
+SQL> create tablespace nolog_tablespace_1 datafile 'nolog_tablespace_1' size 1G;
+
+Succeed.
+
+SQL> create tablespace nolog_tablespace_2 datafile 'nolog_tablespace_2' size 1G;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists nologging_insert_r_h_008;
+
+Succeed.
+
+SQL> create table nologging_insert_r_h_008(num int,c_id int,c_d_id bigint not null,c_w_id tinyint unsigned not null,c_uint uint not null,c_first varchar(16) not null,c_middle char(2),c_last varchar(16) not null,c_street_1 varchar(20) not null,c_street_2 varchar2(20),c_zero timestamp not null,c_start date not null,c_zip char(9) not null,c_phone char(16) not null,c_since timestamp,c_credit char(2),c_credit_lim numeric,c_discount numeric(5,2),c_balance numeric(12,2),c_ytd_payment real not null,c_payment_cnt number not null,c_delivery_cnt bool not null,c_end date not null,c_data1 varchar2(7744),c_data2 varchar(7744),c_data3 varchar(7744),c_data4 varchar(7744),c_data5 varchar(7744),c_data6 varchar(7744),c_data7 varchar(7744),c_varbinary varbinary(100),c_clob clob,c_blob blob,c_binary binary(100)) partition by range(c_id) subpartition by hash(c_w_id,c_first,c_discount) (partition p1 values less than (201) tablespace nolog_tablespace_1 (subpartition p11,subpartition p12,subpartition p13,subpartition p14,subpartition p15),partition p2 values less than (401)(subpartition p21,subpartition p22,subpartition p23,subpartition p24,subpartition p25),partition p3 values less than (601)(subpartition p31,subpartition p32,subpartition p33,subpartition p34,subpartition p35),partition p4 values less than (maxvalue)(subpartition p41,subpartition p42,subpartition p43,subpartition p44,subpartition p45)) ;
+
+Succeed.
+
+SQL> alter table nologging_insert_r_h_008 enable partition p1 nologging;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  6                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 split partition p1 at(101) into (partition p1_1 tablespace nolog_tablespace_1, partition p1_2 tablespace nolog_tablespace_1);
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  6                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 disable partition p1_1 nologging;
+
+CT-00613, Invalid operation, the table part does not have the nologging attribute
+SQL> alter table nologging_insert_r_h_008 disable partition p1_2 nologging;
+
+Succeed.
+
+SQL> select PARTITION_NAME from sys.adm_tab_subpartitions where NOLOGGING_INSERT='YES' and TABLE_NAME=upper('nologging_insert_r_h_008');
+
+PARTITION_NAME                                                  
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 drop partition p1_1;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 drop partition p1_2;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists nologging_insert_r_h_008;
+
+Succeed.
+
+SQL> create table nologging_insert_r_h_008(num int,c_id int,c_d_id bigint not null,c_w_id tinyint unsigned not null,c_uint uint not null,c_first varchar(16) not null,c_middle char(2),c_last varchar(16) not null,c_street_1 varchar(20) not null,c_street_2 varchar2(20),c_zero timestamp not null,c_start date not null,c_zip char(9) not null,c_phone char(16) not null,c_since timestamp,c_credit char(2),c_credit_lim numeric,c_discount numeric(5,2),c_balance numeric(12,2),c_ytd_payment real not null,c_payment_cnt number not null,c_delivery_cnt bool not null,c_end date not null,c_data1 varchar2(7744),c_data2 varchar(7744),c_data3 varchar(7744),c_data4 varchar(7744),c_data5 varchar(7744),c_data6 varchar(7744),c_data7 varchar(7744),c_varbinary varbinary(100),c_clob clob,c_blob blob,c_binary binary(100)) partition by range(c_id) subpartition by hash(c_w_id,c_first,c_discount) (partition p1 values less than (201) tablespace nolog_tablespace_1 (subpartition p11,subpartition p12,subpartition p13,subpartition p14,subpartition p15),partition p2 values less than (401)(subpartition p21,subpartition p22,subpartition p23,subpartition p24,subpartition p25),partition p3 values less than (601)(subpartition p31,subpartition p32,subpartition p33,subpartition p34,subpartition p35),partition p4 values less than (maxvalue)(subpartition p41,subpartition p42,subpartition p43,subpartition p44,subpartition p45)) ;
+
+Succeed.
+
+SQL> alter table nologging_insert_r_h_008 enable partition p1 nologging;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  6                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 split partition p1 at(101) into (partition p1_1 tablespace nolog_tablespace_1, partition p1_2 tablespace nolog_tablespace_2);
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 disable partition p1_1 nologging;
+
+CT-00613, Invalid operation, the table part does not have the nologging attribute
+SQL> alter table nologging_insert_r_h_008 disable partition p1_2 nologging;
+
+CT-00613, Invalid operation, the table part does not have the nologging attribute
+SQL> select PARTITION_NAME from sys.adm_tab_subpartitions where NOLOGGING_INSERT='YES' and TABLE_NAME=upper('nologging_insert_r_h_008');
+
+PARTITION_NAME                                                  
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 drop partition p1_1;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 drop partition p1_2;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists nologging_insert_r_h_008;
+
+Succeed.
+
+SQL> create table nologging_insert_r_h_008(num int,c_id int,c_d_id bigint not null,c_w_id tinyint unsigned not null,c_uint uint not null,c_first varchar(16) not null,c_middle char(2),c_last varchar(16) not null,c_street_1 varchar(20) not null,c_street_2 varchar2(20),c_zero timestamp not null,c_start date not null,c_zip char(9) not null,c_phone char(16) not null,c_since timestamp,c_credit char(2),c_credit_lim numeric,c_discount numeric(5,2),c_balance numeric(12,2),c_ytd_payment real not null,c_payment_cnt number not null,c_delivery_cnt bool not null,c_end date not null,c_data1 varchar2(7744),c_data2 varchar(7744),c_data3 varchar(7744),c_data4 varchar(7744),c_data5 varchar(7744),c_data6 varchar(7744),c_data7 varchar(7744),c_varbinary varbinary(100),c_clob clob,c_blob blob,c_binary binary(100)) partition by range(c_id) subpartition by hash(c_w_id,c_first,c_discount) (partition p1 values less than (201) tablespace nolog_tablespace_1 (subpartition p11,subpartition p12,subpartition p13,subpartition p14,subpartition p15),partition p2 values less than (401)(subpartition p21,subpartition p22,subpartition p23,subpartition p24,subpartition p25),partition p3 values less than (601)(subpartition p31,subpartition p32,subpartition p33,subpartition p34,subpartition p35),partition p4 values less than (maxvalue)(subpartition p41,subpartition p42,subpartition p43,subpartition p44,subpartition p45)) ;
+
+Succeed.
+
+SQL> alter table nologging_insert_r_h_008 enable partition p1 nologging;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  6                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 split partition p1 at(101) into (partition p1_1 tablespace nolog_tablespace_2, partition p1_2 tablespace nolog_tablespace_2);
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 disable partition p1_1 nologging;
+
+CT-00613, Invalid operation, the table part does not have the nologging attribute
+SQL> alter table nologging_insert_r_h_008 disable partition p1_2 nologging;
+
+CT-00613, Invalid operation, the table part does not have the nologging attribute
+SQL> select PARTITION_NAME from sys.adm_tab_subpartitions where NOLOGGING_INSERT='YES' and TABLE_NAME=upper('nologging_insert_r_h_008');
+
+PARTITION_NAME                                                  
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 drop partition p1_1;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> alter table nologging_insert_r_h_008 drop partition p1_2;
+
+Succeed.
+
+SQL> select * from sys_instance_info;
+
+NAME                                                             VALUE               
+---------------------------------------------------------------- --------------------
+NOLOGOBJECT_CNT                                                  0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists nologging_insert_r_h_008;
+
+Succeed.
+
+SQL> drop tablespace nolog_tablespace_1 including contents and datafiles;
+
+Succeed.
+
+SQL> drop tablespace nolog_tablespace_2 INCLUDING contents and datafiles;
+
+Succeed.
+
+SQL> 
+
+

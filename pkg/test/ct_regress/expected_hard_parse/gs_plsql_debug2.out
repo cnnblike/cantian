@@ -1,0 +1,1673 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> -- test prepare start
+SQL> drop user if exists gs_plsql_debug cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_debug identified by Abc123456;
+
+Succeed.
+
+SQL> grant dba to gs_plsql_debug;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_debug2 cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_debug2 identified by Abc123456;
+
+Succeed.
+
+SQL> grant create session to gs_plsql_debug2;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function is_debug_create_session_id_table() return boolean is
+  2 begin
+  3   execute immediate 'create table if not exists target_session_id_t(id int)';
+  4   return true;
+  5 exception
+  6   when others then
+  7     return false;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2   for i in 1..100000 loop
+  3     if is_debug_create_session_id_table() then
+  4 	  exit;
+  5     end if;
+  6   end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace function is_target_session_init(id out int) return boolean is
+  2 begin
+  3   execute immediate 'select id from target_session_id_t where id != -1' into id;
+  4   return true;
+  5 exception
+  6   when others then
+  7     return false;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace PROCEDURE get_target_waiting() is
+  2 begin
+  3   for i in 1..1000000000 loop
+  4     if dbe_debug.get_status() = 2 then
+  5 	  exit;
+  6     end if;
+  7   end loop;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace PROCEDURE get_target_waiting_or_idle() is
+  2 begin
+  3   for i in 1..1000000000 loop
+  4     if dbe_debug.get_status() = 2 then
+  5 	  exit;
+  6     end if;
+  7     if dbe_debug.get_status() = 0 then
+  8 	  exit;
+  9     end if;
+ 10   end loop;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace PROCEDURE get_target_executing() is
+  2 begin
+  3   for i in 1..1000000000 loop
+  4     if dbe_debug.get_status() = 1 then
+  5 	  exit;
+  6     end if;
+  7   end loop;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> GRANT EXECUTE ON is_target_session_init TO gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_waiting TO gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_waiting_or_idle TO gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_executing TO gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT select on target_session_id_t to gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT insert on target_session_id_t to gs_plsql_debug;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON is_target_session_init TO gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_waiting TO gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_waiting_or_idle TO gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON get_target_executing TO gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT select on target_session_id_t to gs_plsql_debug2;
+
+Succeed.
+
+SQL> GRANT insert on target_session_id_t to gs_plsql_debug2;
+
+Succeed.
+
+SQL> 
+SQL> conn gs_plsql_debug2/Abc123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4   for i in 1..100000 loop
+  5     if sys.is_target_session_init(se_id) then
+  6       dbe_debug.attach(se_id, 9);
+  7 	  execute immediate 'insert into sys.target_session_id_t values(0)';
+  8 	  exit;
+  9     end if;
+ 10   end loop;
+ 11 end;
+ 12 /
+
+CT-00932, [6:7] PL/SQL(GS_PLSQL_DEBUG2.ANONYMOUS BLOCK) terminated with execute errors
+[6:7] PL/SQL(DBE_DEBUG.ATTACH) terminated with execute errors
+CT-01001, Permissions were insufficient
+
+SQL> 
+SQL> conn gs_plsql_debug/Abc123456@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> declare
+  2 se_id int;
+  3 begin
+  4   for i in 1..100000 loop
+  5     if sys.is_target_session_init(se_id) then
+  6       dbe_debug.attach(se_id, 9);
+  7 	  execute immediate 'insert into sys.target_session_id_t values(0)';
+  8 	  execute immediate 'select id from sys.target_session_id_t where id = 0' into se_id;
+  9 	  dbe_output.print_line(se_id);
+ 10 	  commit;
+ 11 	  exit;
+ 12     end if;
+ 13   end loop;
+ 14 end;
+ 15 /
+
+0
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(4, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test prepare end
+SQL> 
+SQL> -- test step1 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_debug.add_break('SYS', 'TEST_LV1_FUNC2', 'FUNCTION', 12, 0, '') as break_id from dual;
+
+CT-00982, Error occurred when handling breakpoint id 0, line_number is invalid
+SQL> select dbe_debug.add_break('SYS', 'TEST_LV1_FUNC2', 'FUNCTION', 24, 0, '') as break_id from dual;
+
+CT-00982, Error occurred when handling breakpoint id 0, line_number is invalid
+SQL> select dbe_debug.add_break('SYS', 'TEST_LVX_TRIGGER1', 'TRIGGER', 3, 0, '') as break_id from dual;
+
+BREAK_ID    
+------------
+1           
+
+1 rows fetched.
+
+SQL> call dbe_debug.delete_break_by_name('SYS','TEST_LVX_TRIGGER1', 'TRIGGER');
+
+PL/SQL procedure successfully completed.
+
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              9            LINE_BEGIN                      
+
+1 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :10
+
+PL/SQL procedure successfully completed.
+
+SQL> --1
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              10           LINE_SETVAL                     
+
+1 rows fetched.
+
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0.2));
+
+CT-00614, [1:60]Parameter error: illegal function argument: integer argument expected - got NUMBER
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0                                                                             NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+
+6 rows fetched.
+
+SQL> select dbe_debug.get_value(2,0,0,0) from dual;
+
+DBE_DEBUG.GET_VALUE(2,0,0,0)                                    
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,1,0,0) from dual;
+
+CT-00985, The index 1 of block_id is overflow, must be less than 1
+SQL> select dbe_debug.get_value(1,0,6,0) from dual;
+
+CT-00985, The index 6 of id is overflow, must be less than 6
+SQL> select dbe_debug.get_value(1,0,5,1) from dual;
+
+DBE_DEBUG.GET_VALUE(1,0,5,1)                                    
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select * from table(dbg_show_values(0.4));
+
+CT-00614, [1:21]Parameter error: illegal function argument: integer argument expected - got NUMBER
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :11
+
+PL/SQL procedure successfully completed.
+
+SQL> --2
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              11           LINE_SETVAL                     
+
+1 rows fetched.
+
+SQL> declare
+  2 stack_id int := 0;
+  3 begin
+  4 	execute immediate 'select * from table(dbg_proc_callstack(:1))' using stack_id;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+
+6 rows fetched.
+
+SQL> declare
+  2 stack_id int := 0;
+  3 begin
+  4 	execute immediate 'select * from table(dbg_show_values(:1))' using stack_id;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#2: SYS.TEST_LV1_FUNC1 :3
+
+PL/SQL procedure successfully completed.
+
+SQL> --3
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              11           LINE_SETVAL                     
+2            SYS                                                              TEST_LV1_FUNC1                                                   3            LINE_RETURN                     
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+2                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              P2                                                               0            2            0            6.7                                                              NUMBER                                                          
+
+9 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LV2_FUNC1 :4
+
+PL/SQL procedure successfully completed.
+
+SQL> --4
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              11           LINE_SETVAL                     
+2            SYS                                                              TEST_LV1_FUNC1                                                   3            LINE_RETURN                     
+3            SYS                                                              TEST_LV2_FUNC1                                                   4            LINE_LABEL                      
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+2                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              P2                                                               0            2            0            6.7                                                              NUMBER                                                          
+3                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+3                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               0            2            0                                                                             BINARY_INTEGER                                                  
+
+12 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LV2_FUNC1 :5
+
+PL/SQL procedure successfully completed.
+
+SQL> --5
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              11           LINE_SETVAL                     
+2            SYS                                                              TEST_LV1_FUNC1                                                   3            LINE_RETURN                     
+3            SYS                                                              TEST_LV2_FUNC1                                                   5            LINE_FOR                        
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+2                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              P2                                                               0            2            0            6.7                                                              NUMBER                                                          
+3                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+3                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               0            2            0                                                                             BINARY_INTEGER                                                  
+
+12 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LV2_FUNC1 :6
+
+PL/SQL procedure successfully completed.
+
+SQL> --6
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              11           LINE_SETVAL                     
+2            SYS                                                              TEST_LV1_FUNC1                                                   3            LINE_RETURN                     
+3            SYS                                                              TEST_LV2_FUNC1                                                   6            LINE_SETVAL                     
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+2                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              P2                                                               0            2            0            6.7                                                              NUMBER                                                          
+3                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+3                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               0            2            0                                                                             BINARY_INTEGER                                                  
+3            TEST_LV2_FUNC1_FOR                                                                                                                I                                                                1            0            0            1                                                                BINARY_INTEGER                                                  
+
+13 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LV2_FUNC1 :7
+
+PL/SQL procedure successfully completed.
+
+SQL> --7
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              11           LINE_SETVAL                     
+2            SYS                                                              TEST_LV1_FUNC1                                                   3            LINE_RETURN                     
+3            SYS                                                              TEST_LV2_FUNC1                                                   7            LINE_END_LOOP                   
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+2                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              P2                                                               0            2            0            6.7                                                              NUMBER                                                          
+3                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+3                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               0            2            0            6                                                                BINARY_INTEGER                                                  
+3            TEST_LV2_FUNC1_FOR                                                                                                                I                                                                1            0            0            1                                                                BINARY_INTEGER                                                  
+
+13 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LV2_FUNC1 :5
+
+PL/SQL procedure successfully completed.
+
+SQL> --8
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              11           LINE_SETVAL                     
+2            SYS                                                              TEST_LV1_FUNC1                                                   3            LINE_RETURN                     
+3            SYS                                                              TEST_LV2_FUNC1                                                   5            LINE_FOR                        
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+2                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              P2                                                               0            2            0            6.7                                                              NUMBER                                                          
+3                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+3                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               0            2            0            6                                                                BINARY_INTEGER                                                  
+3            TEST_LV2_FUNC1_FOR                                                                                                                I                                                                1            0            0            1                                                                BINARY_INTEGER                                                  
+
+13 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LV2_FUNC1 :8
+
+PL/SQL procedure successfully completed.
+
+SQL> --9
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              11           LINE_SETVAL                     
+2            SYS                                                              TEST_LV1_FUNC1                                                   3            LINE_RETURN                     
+3            SYS                                                              TEST_LV2_FUNC1                                                   8            LINE_RETURN                     
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0                                                                             BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+2                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              P2                                                               0            2            0            6.7                                                              NUMBER                                                          
+3                                                                                                                                                                                                               0            0            0                                                                             BINARY_INTEGER                                                  
+3                                                                                                                                              P1                                                               0            1            0            3                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               0            2            0            6                                                                BINARY_INTEGER                                                  
+
+12 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :12
+
+PL/SQL procedure successfully completed.
+
+SQL> --10
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              12           LINE_SETVAL                     
+
+1 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0                                                                             VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+
+6 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :13
+
+PL/SQL procedure successfully completed.
+
+SQL> --11
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              13           LINE_IF                         
+
+1 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+
+6 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#2: SYS.TEST_LV1_FUNC2 :13
+
+PL/SQL procedure successfully completed.
+
+SQL> --12
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              13           LINE_IF                         
+2            SYS                                                              TEST_LV1_FUNC2                                                   13           LINE_FOR                        
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BOOLEAN                                                         
+2                                                                                                                                              P1                                                               0            1            0            pfa                                                              VARCHAR                                                         
+2                                                                                                                                              V1_CUR                                                           0            2            0                                                                             CURSOR                                                          
+2                                                                                                                                              V2_RECORD                                                        0            5            0                                                                             RECORD                                                          
+2                                                                             V2_RECORD                                                        ID                                                               0            5            1                                                                             BINARY_INTEGER                                                  
+2                                                                             V2_RECORD                                                        NAME                                                             0            5            2                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        HOME                                                             0            5            3                                                                             RECORD                                                          
+2                                                                             HOME                                                             PROVINCE                                                         0            5            4                                                                             VARCHAR                                                         
+2                                                                             HOME                                                             CITY                                                             0            5            5                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        REGISTER_TIME                                                    0            5            6                                                                             DATE                                                            
+
+16 rows fetched.
+
+SQL> select dbe_debug.get_value(2,0,5,0) from dual;
+
+DBE_DEBUG.GET_VALUE(2,0,5,0)                                    
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> begin
+  2 	execute immediate 'select dbe_debug.get_value(2,0,:1,0) from dual' using 5;
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.set_value(2,0,5,0,'123');
+
+CT-00932, [1:2] PL/SQL(GS_PLSQL_DEBUG.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_DEBUG.SET_VALUE) terminated with execute errors
+CT-00606, Inconsistent datatypes, expected RECORD - got VARCHAR
+
+SQL> begin
+  2 	execute immediate 'call dbe_debug.set_value(2,:1,5,0,''123'')' using 0;
+  3 end;
+  4 /
+
+CT-00932, [2:2] PL/SQL(GS_PLSQL_DEBUG.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(GS_PLSQL_DEBUG.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_DEBUG.SET_VALUE) terminated with execute errors
+CT-00606, Inconsistent datatypes, expected RECORD - got VARCHAR
+
+SQL> call dbe_debug.resume(1, 100);
+
+#2: SYS.TEST_LV1_FUNC2 :19
+
+PL/SQL procedure successfully completed.
+
+SQL> --13
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              13           LINE_IF                         
+2            SYS                                                              TEST_LV1_FUNC2                                                   19           LINE_PROC                       
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BOOLEAN                                                         
+2                                                                                                                                              P1                                                               0            1            0            pfa                                                              VARCHAR                                                         
+2                                                                                                                                              V1_CUR                                                           0            2            0                                                                             CURSOR                                                          
+2                                                                                                                                              V2_RECORD                                                        0            5            0                                                                             RECORD                                                          
+2                                                                             V2_RECORD                                                        ID                                                               0            5            1                                                                             BINARY_INTEGER                                                  
+2                                                                             V2_RECORD                                                        NAME                                                             0            5            2                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        HOME                                                             0            5            3                                                                             RECORD                                                          
+2                                                                             HOME                                                             PROVINCE                                                         0            5            4                                                                             VARCHAR                                                         
+2                                                                             HOME                                                             CITY                                                             0            5            5                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        REGISTER_TIME                                                    0            5            6                                                                             DATE                                                            
+
+16 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LV2_PROC1 :3
+
+PL/SQL procedure successfully completed.
+
+SQL> --13
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              13           LINE_IF                         
+2            SYS                                                              TEST_LV1_FUNC2                                                   19           LINE_PROC                       
+3            SYS                                                              TEST_LV2_PROC1                                                   3            LINE_OPEN                       
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BOOLEAN                                                         
+2                                                                                                                                              P1                                                               0            1            0            pfa                                                              VARCHAR                                                         
+2                                                                                                                                              V1_CUR                                                           0            2            0                                                                             CURSOR                                                          
+2                                                                                                                                              V2_RECORD                                                        0            5            0                                                                             RECORD                                                          
+2                                                                             V2_RECORD                                                        ID                                                               0            5            1                                                                             BINARY_INTEGER                                                  
+2                                                                             V2_RECORD                                                        NAME                                                             0            5            2                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        HOME                                                             0            5            3                                                                             RECORD                                                          
+2                                                                             HOME                                                             PROVINCE                                                         0            5            4                                                                             VARCHAR                                                         
+2                                                                             HOME                                                             CITY                                                             0            5            5                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        REGISTER_TIME                                                    0            5            6                                                                             DATE                                                            
+3                                                                                                                                              P1                                                               0            0            0            fujian                                                           VARCHAR                                                         
+3                                                                                                                                              RESULTSET                                                        0            1            0                                                                             CURSOR                                                          
+
+18 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LV2_PROC1 :4
+
+PL/SQL procedure successfully completed.
+
+SQL> --14
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              13           LINE_IF                         
+2            SYS                                                              TEST_LV1_FUNC2                                                   19           LINE_PROC                       
+3            SYS                                                              TEST_LV2_PROC1                                                   4            LINE_END                        
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BOOLEAN                                                         
+2                                                                                                                                              P1                                                               0            1            0            pfa                                                              VARCHAR                                                         
+2                                                                                                                                              V1_CUR                                                           0            2            0                                                                             CURSOR                                                          
+2                                                                                                                                              V2_RECORD                                                        0            5            0                                                                             RECORD                                                          
+2                                                                             V2_RECORD                                                        ID                                                               0            5            1                                                                             BINARY_INTEGER                                                  
+2                                                                             V2_RECORD                                                        NAME                                                             0            5            2                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        HOME                                                             0            5            3                                                                             RECORD                                                          
+2                                                                             HOME                                                             PROVINCE                                                         0            5            4                                                                             VARCHAR                                                         
+2                                                                             HOME                                                             CITY                                                             0            5            5                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        REGISTER_TIME                                                    0            5            6                                                                             DATE                                                            
+3                                                                                                                                              P1                                                               0            0            0            fujian                                                           VARCHAR                                                         
+3                                                                                                                                              RESULTSET                                                        0            1            0            open                                                             CURSOR                                                          
+
+18 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#2: SYS.TEST_LV1_FUNC2 :20
+
+PL/SQL procedure successfully completed.
+
+SQL> --15
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              13           LINE_IF                         
+2            SYS                                                              TEST_LV1_FUNC2                                                   20           LINE_FETCH                      
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BOOLEAN                                                         
+2                                                                                                                                              P1                                                               0            1            0            pfa                                                              VARCHAR                                                         
+2                                                                                                                                              V1_CUR                                                           0            2            0            open                                                             CURSOR                                                          
+2                                                                                                                                              V2_RECORD                                                        0            5            0                                                                             RECORD                                                          
+2                                                                             V2_RECORD                                                        ID                                                               0            5            1                                                                             BINARY_INTEGER                                                  
+2                                                                             V2_RECORD                                                        NAME                                                             0            5            2                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        HOME                                                             0            5            3                                                                             RECORD                                                          
+2                                                                             HOME                                                             PROVINCE                                                         0            5            4                                                                             VARCHAR                                                         
+2                                                                             HOME                                                             CITY                                                             0            5            5                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        REGISTER_TIME                                                    0            5            6                                                                             DATE                                                            
+
+16 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#2: SYS.TEST_LV1_FUNC2 :21
+
+PL/SQL procedure successfully completed.
+
+SQL> --16
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              13           LINE_IF                         
+2            SYS                                                              TEST_LV1_FUNC2                                                   21           LINE_SETVAL                     
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BOOLEAN                                                         
+2                                                                                                                                              P1                                                               0            1            0            pfa                                                              VARCHAR                                                         
+2                                                                                                                                              V1_CUR                                                           0            2            0            rowcount=1, open, found                                          CURSOR                                                          
+2                                                                                                                                              V2_RECORD                                                        0            5            0                                                                             RECORD                                                          
+2                                                                             V2_RECORD                                                        ID                                                               0            5            1            2                                                                BINARY_INTEGER                                                  
+2                                                                             V2_RECORD                                                        NAME                                                             0            5            2            whf                                                              VARCHAR                                                         
+2                                                                             V2_RECORD                                                        HOME                                                             0            5            3                                                                             RECORD                                                          
+2                                                                             HOME                                                             PROVINCE                                                         0            5            4            fujian                                                           VARCHAR                                                         
+2                                                                             HOME                                                             CITY                                                             0            5            5                                                                             VARCHAR                                                         
+2                                                                             V2_RECORD                                                        REGISTER_TIME                                                    0            5            6            2010-01-01 00:00:00                                              DATE                                                            
+
+16 rows fetched.
+
+SQL> select dbe_debug.get_value(2,0,2,0) from dual;
+
+DBE_DEBUG.GET_VALUE(2,0,2,0)                                    
+----------------------------------------------------------------
+rowcount=1, open, found                                         
+
+1 rows fetched.
+
+SQL> call dbe_debug.set_value(2,0,2,0,'123');
+
+CT-00932, [1:2] PL/SQL(GS_PLSQL_DEBUG.ANONYMOUS BLOCK) terminated with execute errors
+[1:2] PL/SQL(DBE_DEBUG.SET_VALUE) terminated with execute errors
+CT-00606, Inconsistent datatypes, expected CURSOR - got VARCHAR
+
+SQL> call dbe_debug.resume(1, 100);
+
+#2: SYS.TEST_LV1_FUNC2 :22
+
+PL/SQL procedure successfully completed.
+
+SQL> --17
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              13           LINE_IF                         
+2            SYS                                                              TEST_LV1_FUNC2                                                   22           LINE_RETURN                     
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                                                                                               0            0            0                                                                             BOOLEAN                                                         
+2                                                                                                                                              P1                                                               0            1            0            pfa                                                              VARCHAR                                                         
+2                                                                                                                                              V1_CUR                                                           0            2            0            rowcount=1, open, found                                          CURSOR                                                          
+2                                                                                                                                              V2_RECORD                                                        0            5            0                                                                             RECORD                                                          
+2                                                                             V2_RECORD                                                        ID                                                               0            5            1            2                                                                BINARY_INTEGER                                                  
+2                                                                             V2_RECORD                                                        NAME                                                             0            5            2            whf                                                              VARCHAR                                                         
+2                                                                             V2_RECORD                                                        HOME                                                             0            5            3                                                                             RECORD                                                          
+2                                                                             HOME                                                             PROVINCE                                                         0            5            4            fujian                                                           VARCHAR                                                         
+2                                                                             HOME                                                             CITY                                                             0            5            5            fuzhou                                                           VARCHAR                                                         
+2                                                                             V2_RECORD                                                        REGISTER_TIME                                                    0            5            6            2010-01-01 00:00:00                                              DATE                                                            
+
+16 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :15
+
+PL/SQL procedure successfully completed.
+
+SQL> --18
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              15           LINE_END_IF                     
+
+1 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+
+6 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: ANONYMOUS BLOCK :16
+
+PL/SQL procedure successfully completed.
+
+SQL> --19
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              16           LINE_PROC                       
+
+1 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+
+6 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#2: SYS.TEST_LV1_PROC1 :3
+
+PL/SQL procedure successfully completed.
+
+SQL> --20
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              16           LINE_PROC                       
+2            SYS                                                              TEST_LV1_PROC1                                                   3            LINE_SQL                        
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                              P1                                                               0            0            0            pfa                                                              VARCHAR                                                         
+
+7 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LVX_TRIGGER1 :3
+
+PL/SQL procedure successfully completed.
+
+SQL> --21
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              16           LINE_PROC                       
+2            SYS                                                              TEST_LV1_PROC1                                                   3            LINE_SQL                        
+3            SYS                                                              TEST_LVX_TRIGGER1                                                3            LINE_BEGIN                      
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                              P1                                                               0            0            0            pfa                                                              VARCHAR                                                         
+3                                                                                                                                              :NEW.ID                                                          0            0            0            0                                                                BINARY_INTEGER                                                  
+
+8 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LVX_TRIGGER1 :4
+
+PL/SQL procedure successfully completed.
+
+SQL> --22
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              16           LINE_PROC                       
+2            SYS                                                              TEST_LV1_PROC1                                                   3            LINE_SQL                        
+3            SYS                                                              TEST_LVX_TRIGGER1                                                4            LINE_SQL                        
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                              P1                                                               0            0            0            pfa                                                              VARCHAR                                                         
+3                                                                                                                                              :NEW.ID                                                          0            0            0            0                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               1            0            0                                                                             BINARY_INTEGER                                                  
+
+9 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LVX_TRIGGER1 :5
+
+PL/SQL procedure successfully completed.
+
+SQL> --23
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              16           LINE_PROC                       
+2            SYS                                                              TEST_LV1_PROC1                                                   3            LINE_SQL                        
+3            SYS                                                              TEST_LVX_TRIGGER1                                                5            LINE_SETVAL                     
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                              P1                                                               0            0            0            pfa                                                              VARCHAR                                                         
+3                                                                                                                                              :NEW.ID                                                          0            0            0            0                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               1            0            0            5                                                                BINARY_INTEGER                                                  
+
+9 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#3: SYS.TEST_LVX_TRIGGER1 :6
+
+PL/SQL procedure successfully completed.
+
+SQL> --24
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              16           LINE_PROC                       
+2            SYS                                                              TEST_LV1_PROC1                                                   3            LINE_SQL                        
+3            SYS                                                              TEST_LVX_TRIGGER1                                                6            LINE_END                        
+
+3 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                              P1                                                               0            0            0            pfa                                                              VARCHAR                                                         
+3                                                                                                                                              :NEW.ID                                                          0            0            0            5                                                                BINARY_INTEGER                                                  
+3                                                                                                                                              V1                                                               1            0            0            5                                                                BINARY_INTEGER                                                  
+
+9 rows fetched.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#2: SYS.TEST_LV1_PROC1 :4
+
+PL/SQL procedure successfully completed.
+
+SQL> --25
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              16           LINE_PROC                       
+2            SYS                                                              TEST_LV1_PROC1                                                   4            LINE_END                        
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            TEST_STEP1_BEGIN                                                                                                                  V1_INT                                                           0            0            0            13                                                               BINARY_INTEGER                                                  
+1            TEST_STEP1_BEGIN                                                                                                                  V2_NUM                                                           0            1            0            6.7                                                              NUMBER                                                          
+1            TEST_STEP1_BEGIN                                                                                                                  V3_VARC                                                          0            2            0            pfa                                                              VARCHAR                                                         
+1            TEST_STEP1_BEGIN                                                                                                                  V4_C                                                             0            3            0                                                                             CHAR                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V5_DATE                                                          0            4            0                                                                             DATE                                                            
+1            TEST_STEP1_BEGIN                                                                                                                  V6_DOUB                                                          0            5            0                                                                             BINARY_DOUBLE                                                   
+2                                                                                                                                              P1                                                               0            0            0            pfa                                                              VARCHAR                                                         
+
+7 rows fetched.
+
+SQL> call dbe_debug.resume(6, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step1 end
+SQL> 
+SQL> -- test step2 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_debug.add_break('SYS','dbe_debug_006_PROC','PROCEDURE',7,3,'') as break_id from dual;
+
+BREAK_ID    
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+1            SYS                                                              DBE_DEBUG_006_PROC                                               PROCEDURE                                                        7            TRUE     TRUE                                                                        3           
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7, 100);
+
+#2: SYS.DBE_DEBUG_006_PROC :7
+
+PL/SQL procedure successfully completed.
+
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              1            LINE_PROC                       
+2            SYS                                                              DBE_DEBUG_006_PROC                                               7            LINE_PROC                       
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+2                                                                                                                                              A                                                                0            0            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              B                                                                0            1            0            5                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              C                                                                0            2            0            11                                                               BINARY_INTEGER                                                  
+2                                                                                                                                              I                                                                1            0            0            4                                                                BINARY_INTEGER                                                  
+
+4 rows fetched.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.update_break(1, 4);
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+1            SYS                                                              DBE_DEBUG_006_PROC                                               PROCEDURE                                                        7            TRUE     TRUE                                                                        4           
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.update_break(1, 2);
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+1            SYS                                                              DBE_DEBUG_006_PROC                                               PROCEDURE                                                        7            TRUE     TRUE                                                                        2           
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7, 100);
+
+#2: SYS.DBE_DEBUG_006_PROC :7
+
+PL/SQL procedure successfully completed.
+
+SQL> select STACK_ID,OWNER,OBJECT,LOC_LINE,LINE_TYPE from table(dbg_proc_callstack(0));
+
+STACK_ID     OWNER                                                            OBJECT                                                           LOC_LINE     LINE_TYPE                       
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ --------------------------------
+1                                                                                                                                              1            LINE_PROC                       
+2            SYS                                                              DBE_DEBUG_006_PROC                                               7            LINE_PROC                       
+
+2 rows fetched.
+
+SQL> select * from table(dbg_show_values(0));
+
+STACK_ID     BLOCK_NAME                                                       PARENT                                                           NAME                                                             VID_BLOCK    VID_ID       VID_OFFSET   VALUE                                                            TYPE                                                            
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+2                                                                                                                                              A                                                                0            0            0            3                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              B                                                                0            1            0            8                                                                BINARY_INTEGER                                                  
+2                                                                                                                                              C                                                                0            2            0            13                                                               BINARY_INTEGER                                                  
+2                                                                                                                                              I                                                                1            0            0            3                                                                BINARY_INTEGER                                                  
+
+4 rows fetched.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step2 end
+SQL> 
+SQL> -- test step3 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(5,100);
+
+#1: ANONYMOUS BLOCK :5
+
+PL/SQL procedure successfully completed.
+
+SQL> begin
+  2 	execute immediate 'call dbe_debug.resume(:1, 0)' using 7;
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step3 end
+SQL> 
+SQL> -- test step4 start
+SQL> declare
+  2 id_line_8 int;
+  3 id_line_9 int;
+  4 id_line_10 int;
+  5 id_line_11 int;
+  6 begin
+  7 sys.get_target_waiting();
+  8 id_line_8 := dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',8,0,'');
+  9 id_line_9 := dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',9,0,'');
+ 10 id_line_10 := dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',10,0,'');
+ 11 id_line_11 := dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',11,0,'');
+ 12 dbe_debug.set_break(id_line_10, 0);
+ 13 dbe_debug.resume(7, 100);
+ 14 dbe_debug.set_break(id_line_9, 0);
+ 15 dbe_debug.set_break(id_line_10, 1);
+ 16 dbe_debug.resume(7, 100);
+ 17 dbe_debug.delete_break(id_line_11);
+ 18 end;
+ 19 /
+
+#2: SYS.SET_DELETE_BREAK_PROC :8
+#2: SYS.SET_DELETE_BREAK_PROC :10
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+1            SYS                                                              DBE_DEBUG_006_PROC                                               PROCEDURE                                                        7            TRUE     TRUE                                                                        2           
+2            SYS                                                              SET_DELETE_BREAK_PROC                                            PROCEDURE                                                        8            TRUE     TRUE                                                                        0           
+3            SYS                                                              SET_DELETE_BREAK_PROC                                            PROCEDURE                                                        9            TRUE     FALSE                                                                       0           
+4            SYS                                                              SET_DELETE_BREAK_PROC                                            PROCEDURE                                                        10           TRUE     TRUE                                                                        0           
+
+4 rows fetched.
+
+SQL> select * from table(dbg_break_info(5.6));
+
+CT-00614, [1:21]Parameter error: illegal function argument: integer argument expected - got NUMBER
+SQL> select * from table(dbg_break_info(7));
+
+CT-00614, Parameter error: invalid argument for table function
+SQL> begin
+  2 	execute immediate 'call dbe_debug.delete_break(:1)' using 0;
+  3 end;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+
+0 rows fetched.
+
+SQL> declare
+  2 break_id int := 0;
+  3 begin
+  4 	execute immediate 'select * from table(dbg_break_info(:1))' using break_id;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 line int := 8;
+  3 begin
+  4 	execute immediate 'select dbe_debug.add_break(''SYS'', ''SET_DELETE_BREAK_PROC'', ''PROCEDURE'', :1, 0, '''') from dual' using line;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',9,0,'') as break_id from dual;
+
+BREAK_ID    
+------------
+2           
+
+1 rows fetched.
+
+SQL> select dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',10,0,'') as break_id from dual;
+
+BREAK_ID    
+------------
+3           
+
+1 rows fetched.
+
+SQL> select dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',11,0,'') as break_id from dual;
+
+BREAK_ID    
+------------
+4           
+
+1 rows fetched.
+
+SQL> call dbe_debug.delete_break_by_name('SYS','SET_DELETE_BREAK_PROC', 'PROCEDURE');
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+
+0 rows fetched.
+
+SQL> select dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',9,0,'') as break_id from dual;
+
+BREAK_ID    
+------------
+1           
+
+1 rows fetched.
+
+SQL> select dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',10,0,'') as break_id from dual;
+
+BREAK_ID    
+------------
+2           
+
+1 rows fetched.
+
+SQL> select dbe_debug.add_break('SYS','SET_DELETE_BREAK_PROC','PROCEDURE',11,0,'') as break_id from dual;
+
+BREAK_ID    
+------------
+3           
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(6, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+1            SYS                                                              SET_DELETE_BREAK_PROC                                            PROCEDURE                                                        9            TRUE     TRUE                                                                        0           
+2            SYS                                                              SET_DELETE_BREAK_PROC                                            PROCEDURE                                                        10           TRUE     TRUE                                                                        0           
+3            SYS                                                              SET_DELETE_BREAK_PROC                                            PROCEDURE                                                        11           TRUE     TRUE                                                                        0           
+
+3 rows fetched.
+
+SQL> call dbe_debug.delete_break_by_name('SYS','SET_DELETE_BREAK_PROC','PROCEDURE');
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step4 end
+SQL> 
+SQL> -- test step5 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(1, 100);
+
+#1: SYS.DBE_DEBUG_010_FUN :6
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_debug.get_value(1,0,0,0);
+
+DBE_DEBUG.GET_VALUE(1,0,0,0)                                    
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select dbe_debug.get_value(1,0,1,0);
+
+DBE_DEBUG.GET_VALUE(1,0,1,0)                                    
+----------------------------------------------------------------
+open                                                            
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7, 0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step5 end
+SQL> 
+SQL> -- test step6 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> call dbe_debug.resume(7,0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step6 end
+SQL> 
+SQL> -- test step7 start
+SQL> call sys.get_target_waiting();
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table if exists TEST_TABLE_FOR_VALID_BREAK;
+
+Succeed.
+
+SQL> create table TEST_TABLE_FOR_VALID_BREAK(id int,name varchar(100),email varchar(100));
+
+Succeed.
+
+SQL> create or replace procedure TEST_PROC_FOR_VALID_BREAK is
+  2 begin
+  3 	insert into TEST_TABLE_FOR_VALID_BREAK values(1,'hello'||1,'hello'||1||'@126.com');
+  4 	insert into TEST_TABLE_FOR_VALID_BREAK values(2,'hello'||2,'hello'||2||'@126.com');
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> call dbe_debug.delete_break(0);
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_debug.add_break('GS_PLSQL_DEBUG','TEST_PROC_FOR_VALID_BREAK','procedure',4,0,'') from SYS_DUMMY;
+
+DBE_DEBUG.ADD_BREAK('GS_PLSQL_DEBUG','TEST_PROC_FOR_VALID_BREAK'
+----------------------------------------------------------------
+1                                                               
+
+1 rows fetched.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+1            GS_PLSQL_DEBUG                                                   TEST_PROC_FOR_VALID_BREAK                                        PROCEDURE                                                        4            TRUE     TRUE                                                                        0           
+
+1 rows fetched.
+
+SQL> alter table TEST_TABLE_FOR_VALID_BREAK add sex char(2);
+
+Succeed.
+
+SQL> select * from table(dbg_break_info(0));
+
+BREAK_ID     OWNER                                                            OBJECT                                                           PL_TYPE                                                          LOC_LINE     IS_VALID IS_ENABLED COND                                                             MAX_SKIP    
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ---------- ---------------------------------------------------------------- ------------
+1            GS_PLSQL_DEBUG                                                   TEST_PROC_FOR_VALID_BREAK                                        PROCEDURE                                                        4            FALSE    TRUE                                                                        0           
+
+1 rows fetched.
+
+SQL> call dbe_debug.resume(7,0);
+
+PL/SQL procedure successfully completed.
+
+SQL> -- test step7 end
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists target_session_id_t;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_debug cascade;
+
+Succeed.
+
+SQL> drop user if exists gs_plsql_debug2 cascade;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

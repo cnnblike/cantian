@@ -1,0 +1,1260 @@
+
+
+SQL> drop table if exists t_wmagic_1;
+
+Succeed.
+
+SQL> drop table if exists t_wmagic_2;
+
+Succeed.
+
+SQL> drop table if exists t_wmagic_3;
+
+Succeed.
+
+SQL> create table t_wmagic_1(f_int1 int, f_int2 int, f_char char(32), f_vchar varchar(32), f_real real);
+
+Succeed.
+
+SQL> create table t_wmagic_2(f_int1 int, f_int2 int, f_char char(32), f_vchar varchar(32), f_real real);
+
+Succeed.
+
+SQL> create table t_wmagic_3(f_int1 int, f_int2 int, f_char char(32), f_vchar varchar(32), f_real real);
+
+Succeed.
+
+SQL> 
+SQL> --Can not WinMagic Rewrite
+SQL> EXPLAIN
+  2 SELECT * FROM t_wmagic_3 T3 WHERE EXISTS
+  3 (
+  4  SELECT t1.f_char, t2.f_char
+  5           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  6          WHERE t1.f_int1 = t2.f_int1
+  7 		   AND t2.f_char = t3.f_char
+  8            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  9                             FROM t_wmagic_1 t1
+ 10                            WHERE t1.f_int1 = t2.f_int1)
+ 11 );
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name          | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |               |      |      |       |        |
+| 1   |   HASH JOIN SEMI(L)            |       |               |      |      |       |        |
+| 2   |     SUBSELECT                  |       |               |      |      |       |        |
+| 3   |       HASH JOIN(L)             |       |               |      |      |       |        |
+| 4   |         KERNEL FILTER          |       |               |      |      |       |        |
+| 5   |           TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |           HASH MATERIALIZE     |       |               |      |      |       |        |
+| 7   |             TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 8   |         KERNEL FILTER          |       |               |      |      |       |        |
+| 9   |           TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 10  |           HASH MATERIALIZE     |       |               |      |      |       |        |
+| 11  |             TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 12  |     TABLE ACCESS FULL          | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+-----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T2.F_CHAR = T3.F_CHAR                            
+   3 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   6 - access: T1.F_INT1 = T2.F_INT1                            
+   10 - access: T1.F_INT1 = T2.F_INT1                           
+
+24 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT distinct t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |               |      |      |       |        |
+| 1   |   HASH DISTINCT              |       |               |      |      |       |        |
+| 2   |     HASH JOIN(L)             |       |               |      |      |       |        |
+| 3   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 7   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 8   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 9   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 10  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+   9 - access: T1.F_INT1 = T2.F_INT1                            
+
+21 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t2.f_vchar = (select max(t3.f_vchar) from t_wmagic_3 t3)
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1
+  8                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       AGGR                 |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+| 6   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 7   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 8   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 9   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 10  |       AGGR                 |       |               |      |      |       |        |
+| 11  |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+| 12  |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 13  |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T2.F_VCHAR = (SELECT MAX(T3.F_VCHAR) FROM T_WMAGIC_3 T3) AND T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM 
+               T_WMAGIC_1 T1 GROUP BY T1.F_INT1)                
+   6 - access: T1.F_INT1 = T2.F_INT1                            
+   12 - access: T1.F_INT1 = T2.F_INT1                           
+
+25 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1)
+  8 		   order by t2.f_char;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |               |      |      |       |        |
+| 1   |   QUERY SORT ORDER BY        |       |               |      |      |       |        |
+| 2   |     HASH JOIN(L)             |       |               |      |      |       |        |
+| 3   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 7   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 8   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 9   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 10  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+   9 - access: T1.F_INT1 = T2.F_INT1                            
+
+21 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1)
+  8 		   group by t2.f_char, t1.f_char;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |               |      |      |       |        |
+| 1   |   HASH GROUP BY              |       |               |      |      |       |        |
+| 2   |     HASH JOIN(L)             |       |               |      |      |       |        |
+| 3   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 7   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 8   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 9   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 10  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+   9 - access: T1.F_INT1 = T2.F_INT1                            
+
+21 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1)
+  8 		   limit 100;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |               |      |      |       |        |
+| 1   |   QUERY LIMIT                |       |               |      |      |       |        |
+| 2   |     HASH JOIN(L)             |       |               |      |      |       |        |
+| 3   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 7   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 8   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 9   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 10  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+   9 - access: T1.F_INT1 = T2.F_INT1                            
+
+21 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char, sum(t1.f_real) over(partition by t2.f_vchar)
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |               |      |      |       |        |
+| 1   |   WINDOW SORT                |       |               |      |      |       |        |
+| 2   |     HASH JOIN(L)             |       |               |      |      |       |        |
+| 3   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 7   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 8   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 9   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 10  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+   9 - access: T1.F_INT1 = T2.F_INT1                            
+
+21 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1 left join t_wmagic_2 t2 on t1.f_int1 = t2.f_int1
+  4          WHERE t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  5                             FROM t_wmagic_1 t1
+  6                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+| Id  | Description              | Owner | Name          | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT         |       |               |      |      |       |        |
+| 1   |   FILTER                 |       |               |      |      |       |        |
+| 2   |     HASH JOIN OUTER(R)   |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       TABLE ACCESS FULL  | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 5   |   HASH MATERIALIZE       |       |               |      |      |       |        |
+| 6   |     TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-----------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   2 - access: T1.F_INT1 = T2.F_INT1                            
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+
+16 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1)
+  8 		   AND rownum > 0;
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |               |      |      |       |        |
+| 1   |   ROWNUM FILTER              |       |               |      |      |       |        |
+| 2   |     HASH JOIN(L)             |       |               |      |      |       |        |
+| 3   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 7   |       KERNEL FILTER          |       |               |      |      |       |        |
+| 8   |         TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 9   |         HASH MATERIALIZE     |       |               |      |      |       |        |
+| 10  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+   9 - access: T1.F_INT1 = T2.F_INT1                            
+
+21 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND (t2.f_int2 = 10 or t2.f_int2 = 100)
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1
+  8                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   4 - access: T1.F_INT1 = T2.F_INT1                            
+   7 - filter: T2.F_INT2 = 10 OR T2.F_INT2 = 100                
+   8 - access: T1.F_INT1 = T2.F_INT1                            
+
+21 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t1.f_int2 = 10
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1
+  8                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   3 - filter: T1.F_INT2 = 10                                   
+   4 - access: T1.F_INT1 = T2.F_INT1                            
+   8 - access: T1.F_INT1 = T2.F_INT1                            
+
+21 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                             WHERE t1.f_int1 = t2.f_int1
+  8 						    union
+  9 						    SELECT 0.2 * sum(t1.f_int2)
+ 10                              FROM t_wmagic_1 t1
+ 11                             WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)               |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER            |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH UNION             |       |               |      |      |       |        |
+| 5   |         AGGR                 |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 7   |         AGGR                 |       |               |      |      |       |        |
+| 8   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 9   |     KERNEL FILTER            |       |               |      |      |       |        |
+| 10  |       TABLE ACCESS FULL      | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 11  |       HASH UNION             |       |               |      |      |       |        |
+| 12  |         AGGR                 |       |               |      |      |       |        |
+| 13  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 14  |         AGGR                 |       |               |      |      |       |        |
+| 15  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < ((SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 WHERE T1.F_INT1 = T2.F_INT1) UNION 
+               (SELECT .2 * SUM(T1.F_INT2) FROM T_WMAGIC_1 T1 WHERE T1.F_INT1 = T2.F_INT1))
+   6 - filter: T1.F_INT1 = T2.F_INT1                            
+   8 - filter: T1.F_INT1 = T2.F_INT1                            
+   13 - filter: T1.F_INT1 = T2.F_INT1                           
+   15 - filter: T1.F_INT1 = T2.F_INT1                           
+
+29 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t1.f_int2 = t2.f_int2
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1
+  8                            WHERE t1.f_int1 = t2.f_int1
+  9 						     AND t1.f_int2 = t2.f_int2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT2 = T2.F_INT2 AND T1.F_INT1 = T2.F_INT1  
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT2,T1.F_INT1)
+   4 - access: T1.F_INT2 = T2.F_INT2 AND T1.F_INT1 = T2.F_INT1  
+   8 - access: T1.F_INT2 = T2.F_INT2 AND T1.F_INT1 = T2.F_INT1  
+
+20 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)+t2.f_real
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       AGGR                 |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       AGGR                 |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) + T2.F_REAL FROM T_WMAGIC_1 T1 WHERE T1.F_INT1 = T2.F_INT1)
+   5 - filter: T1.F_INT1 = T2.F_INT1                            
+   9 - filter: T1.F_INT1 = T2.F_INT1                            
+
+20 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1 and rownum >0);
+
+EXPLAIN PLAN OUTPUT
+----------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+| Id  | Description                  | Owner | Name          | Rows | Cost | Bytes | Remark |
+---------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT             |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)               |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER            |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL      | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       AGGR                   |       |               |      |      |       |        |
+| 5   |         ROWNUM FILTER        |       |               |      |      |       |        |
+| 6   |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 7   |     KERNEL FILTER            |       |               |      |      |       |        |
+| 8   |       TABLE ACCESS FULL      | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 9   |       AGGR                   |       |               |      |      |       |        |
+| 10  |         ROWNUM FILTER        |       |               |      |      |       |        |
+| 11  |           TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+---------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 WHERE T1.F_INT1 = T2.F_INT1)
+   6 - filter: T1.F_INT1 = T2.F_INT1                            
+   11 - filter: T1.F_INT1 = T2.F_INT1                           
+
+22 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t3.f_real)
+  6                             FROM t_wmagic_3 t3
+  7                            WHERE t3.f_int1 = t2.f_int1);						   
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T3.F_REAL) FROM T_WMAGIC_3 T3 GROUP BY T3.F_INT1)
+   4 - access: T3.F_INT1 = T2.F_INT1                            
+   8 - access: T3.F_INT1 = T2.F_INT1                            
+
+20 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(distinct t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   4 - access: T1.F_INT1 = T2.F_INT1                            
+   8 - access: T1.F_INT1 = T2.F_INT1                            
+
+20 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t2.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T2.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   4 - access: T1.F_INT1 = T2.F_INT1                            
+   8 - access: T1.F_INT1 = T2.F_INT1                            
+
+20 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t1.f_int1 = 100
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1
+  8                            WHERE t1.f_int1 = 100);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       AGGR                 |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       AGGR                 |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 WHERE T1.F_INT1 = 100)
+   3 - filter: T1.F_INT1 = 100                                  
+   5 - filter: T1.F_INT1 = 100                                  
+   7 - filter: T2.F_INT1 = 100                                  
+   9 - filter: T1.F_INT1 = 100                                  
+
+22 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int2 = t2.f_int2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT2)
+   4 - access: T1.F_INT2 = T2.F_INT2                            
+   8 - access: T1.F_INT2 = T2.F_INT2                            
+
+20 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1
+  8 						     AND t1.f_int2 = 100);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 WHERE T1.F_INT2 = 100 GROUP BY 
+               T1.F_INT1)                                       
+   4 - access: T1.F_INT1 = T2.F_INT1                            
+   5 - filter: T1.F_INT2 = 100                                  
+   8 - access: T1.F_INT1 = T2.F_INT1                            
+   9 - filter: T1.F_INT2 = 100                                  
+
+23 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t1.f_int2 = 50
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1
+  8                            WHERE t1.f_int1 = t2.f_int1
+  9 						     AND t1.f_int2 = 100);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 WHERE T1.F_INT2 = 100 GROUP BY 
+               T1.F_INT1)                                       
+   3 - filter: T1.F_INT2 = 50                                   
+   4 - access: T1.F_INT1 = T2.F_INT1                            
+   5 - filter: T1.F_INT2 = 100                                  
+   8 - access: T1.F_INT1 = T2.F_INT1                            
+   9 - filter: T1.F_INT2 = 100                                  
+
+24 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char, t3.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2, t_wmagic_3 t3
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t1.f_int2 = t3.f_int2
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1, t_wmagic_3 t3
+  8                            WHERE t1.f_int1 = t2.f_int1
+  9 						     AND t1.f_int2 = t3.f_int2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+| Id  | Description                    | Owner | Name          | Rows | Cost | Bytes | Remark |
+-----------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT               |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)                 |       |               |      |      |       |        |
+| 2   |     HASH JOIN(L)               |       |               |      |      |       |        |
+| 3   |       KERNEL FILTER            |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL      | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         HASH MATERIALIZE       |       |               |      |      |       |        |
+| 6   |           NESTED LOOPS         |       |               |      |      |       |        |
+| 7   |             TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 8   |             TABLE ACCESS FULL  | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+| 9   |       KERNEL FILTER            |       |               |      |      |       |        |
+| 10  |         TABLE ACCESS FULL      | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 11  |         HASH MATERIALIZE       |       |               |      |      |       |        |
+| 12  |           NESTED LOOPS         |       |               |      |      |       |        |
+| 13  |             TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 14  |             TABLE ACCESS FULL  | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+| 15  |     KERNEL FILTER              |       |               |      |      |       |        |
+| 16  |       TABLE ACCESS FULL        | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+| 17  |       HASH MATERIALIZE         |       |               |      |      |       |        |
+| 18  |         NESTED LOOPS           |       |               |      |      |       |        |
+| 19  |           TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 20  |           TABLE ACCESS FULL    | SYS   | T_WMAGIC_3 T3 |      |      |       |        |
+-----------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT2 = T3.F_INT2                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1, T_WMAGIC_3 T3 WHERE T1.F_INT2 = T3.F_INT2 GROUP BY 
+               T1.F_INT1)                                       
+   2 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1, T_WMAGIC_3 T3 WHERE T1.F_INT2 = T3.F_INT2 GROUP BY 
+               T1.F_INT1)                                       
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+   8 - filter: T1.F_INT2 = T3.F_INT2                            
+   11 - access: T1.F_INT1 = T2.F_INT1                           
+   14 - filter: T1.F_INT2 = T3.F_INT2                           
+   17 - access: T1.F_INT1 = T2.F_INT1                           
+   20 - filter: T1.F_INT2 = T3.F_INT2                           
+
+39 rows fetched.
+
+SQL> --Can WinMagic Rewrite
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   SUBSELECT                |       |               |      |      |       |        |
+| 2   |     WINDOW SORT            |       |               |      |      |       |        |
+| 3   |       HASH JOIN(L)         |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: T1.F_REAL < .2 * sum(T1.F_REAL) OVER(PARTITION BY T2.F_INT1)
+   3 - access: T1.F_INT1 = T2.F_INT1                            
+
+14 rows fetched.
+
+SQL> alter system set _optim_winmagic_rewrite = false;
+
+Succeed.
+
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1)  ;
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   HASH JOIN(L)             |       |               |      |      |       |        |
+| 2   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 3   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 4   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 6   |     KERNEL FILTER          |       |               |      |      |       |        |
+| 7   |       TABLE ACCESS FULL    | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+| 8   |       HASH MATERIALIZE     |       |               |      |      |       |        |
+| 9   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - access: T1.F_INT1 = T2.F_INT1                            
+       filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1)
+   4 - access: T1.F_INT1 = T2.F_INT1                            
+   8 - access: T1.F_INT1 = T2.F_INT1                            
+
+20 rows fetched.
+
+SQL> alter system set _optim_winmagic_rewrite = true;					   
+
+Succeed.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t2.f_int2 > 100
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1
+  8                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   SUBSELECT                |       |               |      |      |       |        |
+| 2   |     WINDOW SORT            |       |               |      |      |       |        |
+| 3   |       HASH JOIN(L)         |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: T1.F_REAL < .2 * sum(T1.F_REAL) OVER(PARTITION BY T2.F_INT1)
+   3 - access: T1.F_INT1 = T2.F_INT1                            
+   5 - filter: T2.F_INT2 > 100                                  
+
+15 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t1.f_int2 > 100
+  6            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  7                             FROM t_wmagic_1 t1
+  8                            WHERE t1.f_int1 = t2.f_int1
+  9 						     AND t1.f_int2 > 100);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   SUBSELECT                |       |               |      |      |       |        |
+| 2   |     WINDOW SORT            |       |               |      |      |       |        |
+| 3   |       HASH JOIN(L)         |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: T1.F_REAL < .2 * sum(T1.F_REAL) OVER(PARTITION BY T2.F_INT1)
+   3 - access: T1.F_INT1 = T2.F_INT1                            
+   4 - filter: T1.F_INT2 > 100                                  
+
+15 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5 		   AND t2.f_real > 55.5
+  6 		   AND t1.f_int2 > 100
+  7            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  8                             FROM t_wmagic_1 t1
+  9                            WHERE t1.f_int1 = t2.f_int1
+ 10 						     AND t1.f_int2 > 100);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+| Id  | Description                | Owner | Name          | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT           |       |               |      |      |       |        |
+| 1   |   SUBSELECT                |       |               |      |      |       |        |
+| 2   |     WINDOW SORT            |       |               |      |      |       |        |
+| 3   |       HASH JOIN(L)         |       |               |      |      |       |        |
+| 4   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_1 T1 |      |      |       |        |
+| 5   |         TABLE ACCESS FULL  | SYS   | T_WMAGIC_2 T2 |      |      |       |        |
+-------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: T1.F_REAL < .2 * sum(T1.F_REAL) OVER(PARTITION BY T2.F_INT1)
+   3 - access: T1.F_INT1 = T2.F_INT1                            
+   4 - filter: T1.F_INT2 > 100                                  
+   5 - filter: T2.F_REAL > 55.5                                 
+
+16 rows fetched.
+
+SQL> 
+SQL> create index idx_t_wmagic_2_1 on t_wmagic_2(f_int1);
+
+Succeed.
+
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+| Id  | Description                          | Owner | Name             | Rows | Cost | Bytes | Remark |
+--------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                     |       |                  |      |      |       |        |
+| 1   |   SUBSELECT                          |       |                  |      |      |       |        |
+| 2   |     WINDOW SORT                      |       |                  |      |      |       |        |
+| 3   |       NESTED LOOPS                   |       |                  |      |      |       |        |
+| 4   |         TABLE ACCESS FULL            | SYS   | T_WMAGIC_1 T1    |      |      |       |        |
+| 5   |         TABLE ACCESS BY INDEX ROWID  | SYS   | T_WMAGIC_2 T2    |      |      |       |        |
+| 6   |           INDEX RANGE SCAN           | SYS   | IDX_T_WMAGIC_2_1 |      |      |       |        |
+--------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   1 - filter: T1.F_REAL < .2 * sum(T1.F_REAL) OVER(PARTITION BY T2.F_INT1)
+   6 - access: T1.F_INT1 = T2.F_INT1                            
+
+15 rows fetched.
+
+SQL> 
+SQL> EXPLAIN
+  2 SELECT t1.f_char, t2.f_char
+  3           FROM t_wmagic_1 t1, t_wmagic_2 t2
+  4          WHERE t1.f_int1 = t2.f_int1
+  5            AND t1.f_real < (SELECT 0.2 * sum(t1.f_real)
+  6                             FROM t_wmagic_1 t1
+  7                            WHERE t1.f_int1 = t2.f_int1 limit 2);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+| Id  | Description                        | Owner | Name             | Rows | Cost | Bytes | Remark |
+------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                   |       |                  |      |      |       |        |
+| 1   |   NESTED LOOPS                     |       |                  |      |      |       |        |
+| 2   |     KERNEL FILTER                  |       |                  |      |      |       |        |
+| 3   |       TABLE ACCESS FULL            | SYS   | T_WMAGIC_1 T1    |      |      |       |        |
+| 4   |       QUERY LIMIT                  |       |                  |      |      |       |        |
+| 5   |         HASH MATERIALIZE           |       |                  |      |      |       |        |
+| 6   |           TABLE ACCESS FULL        | SYS   | T_WMAGIC_1 T1    |      |      |       |        |
+| 7   |     KERNEL FILTER                  |       |                  |      |      |       |        |
+| 8   |       TABLE ACCESS BY INDEX ROWID  | SYS   | T_WMAGIC_2 T2    |      |      |       |        |
+| 9   |         INDEX RANGE SCAN           | SYS   | IDX_T_WMAGIC_2_1 |      |      |       |        |
+| 10  |       QUERY LIMIT                  |       |                  |      |      |       |        |
+| 11  |         HASH MATERIALIZE           |       |                  |      |      |       |        |
+| 12  |           TABLE ACCESS FULL        | SYS   | T_WMAGIC_1 T1    |      |      |       |        |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   5 - access: T1.F_INT1 = T2.F_INT1                            
+   8 - filter: T1.F_REAL < (SELECT .2 * SUM(T1.F_REAL) FROM T_WMAGIC_1 T1 GROUP BY T1.F_INT1 LIMIT 2)
+   9 - access: T1.F_INT1 = T2.F_INT1                            
+   11 - access: T1.F_INT1 = T2.F_INT1                           
+
+23 rows fetched.
+
+SQL> 
+SQL> drop table if exists t_wmagic_1;
+
+Succeed.
+
+SQL> drop table if exists t_wmagic_2;
+
+Succeed.
+
+SQL> drop table if exists t_wmagic_3;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019080912008
+SQL> drop table if exists BMSQL_CUSTOMER;
+
+Succeed.
+
+SQL> drop table if exists BMSQL_STOCK;
+
+Succeed.
+
+SQL> drop view if exists view_BMSQL_CUSTOMER;
+
+Succeed.
+
+SQL> 
+SQL> create table BMSQL_CUSTOMER
+  2 (
+  3 C_W_ID         INTEGER,
+  4 C_D_ID         INTEGER,
+  5 C_ID           INTEGER,
+  6 C_DISCOUNT     NUMBER(4, 4),
+  7 C_CREDIT       CHAR(2 BYTE),
+  8 C_LAST         VARCHAR(16 BYTE),
+  9 C_FIRST        VARCHAR(16 BYTE),
+ 10 C_CREDIT_LIM   NUMBER(12, 2),
+ 11 C_BALANCE      NUMBER(12, 2),
+ 12 C_YTD_PAYMENT  NUMBER(12, 2),
+ 13 C_PAYMENT_CNT  INTEGER,
+ 14 C_DELIVERY_CNT INTEGER,
+ 15 C_STREET_1     VARCHAR(20 BYTE),
+ 16 C_STREET_2     VARCHAR(20 BYTE),
+ 17 C_CITY         VARCHAR(20 BYTE),
+ 18 C_STATE        CHAR(2 BYTE),
+ 19 C_ZIP          CHAR(9 BYTE),
+ 20 C_PHONE        CHAR(16 BYTE),
+ 21 C_SINCE        TIMESTAMP(6),
+ 22 C_MIDDLE       CHAR(2 BYTE),
+ 23 C_DATA         VARCHAR(500 BYTE)
+ 24 );
+
+Succeed.
+
+SQL> 
+SQL> create table BMSQL_STOCK
+  2 (
+  3 S_W_ID         INTEGER,
+  4 S_I_ID         INTEGER,
+  5 S_QUANTITY     INTEGER,
+  6 S_YTD          INTEGER,
+  7 S_ORDER_CNT    INTEGER,
+  8 S_REMOTE_CNT   INTEGER,
+  9 S_DATA         VARCHAR(50 BYTE),
+ 10 S_DIST_01      CHAR(24 BYTE),
+ 11 S_DIST_02      CHAR(24 BYTE),
+ 12 S_DIST_03      CHAR(24 BYTE),
+ 13 S_DIST_04      CHAR(24 BYTE),
+ 14 S_DIST_05      CHAR(24 BYTE),
+ 15 S_DIST_06      CHAR(24 BYTE),
+ 16 S_DIST_07      CHAR(24 BYTE),
+ 17 S_DIST_08      CHAR(24 BYTE),
+ 18 S_DIST_09      CHAR(24 BYTE),
+ 19 S_DIST_10      CHAR(24 BYTE)
+ 20 );
+
+Succeed.
+
+SQL> 
+SQL> create or replace view view_BMSQL_CUSTOMER as select distinct * from BMSQL_CUSTOMER;
+
+Succeed.
+
+SQL> 
+SQL> explain
+  2 select sum(C_CREDIT_LIM)/7.0 as avg_C_CREDIT_LIM
+  3 from view_BMSQL_CUSTOMER,BMSQL_STOCK
+  4 where C_W_ID=S_W_ID
+  5 and S_DIST_07='iI0jh8oBJz1r4v7mxF5CtY1c'
+  6 and S_DIST_01='dc9c7RuJDCVJikkS93DnS2j7'
+  7 and C_ID<(select max(C_D_ID)
+  8 		  from view_BMSQL_CUSTOMER
+  9 		  where C_W_ID=S_W_ID);
+
+EXPLAIN PLAN OUTPUT                                             
+----------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+| Id  | Description                      | Owner | Name                | Rows | Cost | Bytes | Remark |
+-------------------------------------------------------------------------------------------------------
+| 0   | SELECT STATEMENT                 |       |                     |      |      |       |        |
+| 1   |   AGGR                           |       |                     |      |      |       |        |
+| 2   |     HASH JOIN(L)                 |       |                     |      |      |       |        |
+| 3   |       KERNEL FILTER              |       |                     |      |      |       |        |
+| 4   |         VIEW                     | SYS   | VIEW_BMSQL_CUSTOMER |      |      |       |        |
+| 5   |           HASH DISTINCT          |       |                     |      |      |       |        |
+| 6   |             TABLE ACCESS FULL    | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 7   |         HASH MATERIALIZE         |       |                     |      |      |       |        |
+| 8   |           VIEW                   | SYS   | VIEW_BMSQL_CUSTOMER |      |      |       |        |
+| 9   |             HASH DISTINCT        |       |                     |      |      |       |        |
+| 10  |               TABLE ACCESS FULL  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+| 11  |       KERNEL FILTER              |       |                     |      |      |       |        |
+| 12  |         TABLE ACCESS FULL        | SYS   | BMSQL_STOCK         |      |      |       |        |
+| 13  |         HASH MATERIALIZE         |       |                     |      |      |       |        |
+| 14  |           VIEW                   | SYS   | VIEW_BMSQL_CUSTOMER |      |      |       |        |
+| 15  |             HASH DISTINCT        |       |                     |      |      |       |        |
+| 16  |               TABLE ACCESS FULL  | SYS   | BMSQL_CUSTOMER      |      |      |       |        |
+-------------------------------------------------------------------------------------------------------
+Predicate Information (identified by id):                       
+-----------------------------------------                       
+   2 - access: BMSQL_CUSTOMER.C_W_ID = S_W_ID                   
+       filter: BMSQL_CUSTOMER.C_ID < (SELECT MAX(BMSQL_CUSTOMER.C_D_ID) FROM VIEW_BMSQL_CUSTOMER GROUP BY 
+               BMSQL_CUSTOMER.C_W_ID)                           
+   7 - access: BMSQL_CUSTOMER.C_W_ID = S_W_ID                   
+   12 - filter: S_DIST_07 = 'iI0jh8oBJz1r4v7mxF5CtY1c' AND S_DIST_01 = 'dc9c7RuJDCVJikkS93DnS2j7'
+   13 - access: BMSQL_CUSTOMER.C_W_ID = S_W_ID                  
+
+29 rows fetched.
+
+SQL> 
+SQL> drop table if exists BMSQL_CUSTOMER;
+
+Succeed.
+
+SQL> drop table if exists BMSQL_STOCK;
+
+Succeed.
+
+SQL> drop view if exists view_BMSQL_CUSTOMER;
+Succeed.
+
+
+
+

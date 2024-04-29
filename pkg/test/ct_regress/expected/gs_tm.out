@@ -1,0 +1,229 @@
+
+
+SQL> DROP TABLE IF EXISTS T_TM_1;
+
+Succeed.
+
+SQL> CREATE TABLE T_TM_1 (F_INT1 INT);
+
+Succeed.
+
+SQL> --TEST COMMIT AND ROLLBACK
+SQL> INSERT INTO T_TM_1 VALUES(1);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+1           
+
+1 rows fetched.
+
+SQL> ROLLBACK;
+
+Succeed.
+
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+
+0 rows fetched.
+
+SQL> INSERT INTO T_TM_1 VALUES(1);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+1           
+
+1 rows fetched.
+
+SQL> --TEST SAVEPOINT
+SQL> SAVEPOINT POINT1;
+
+Succeed.
+
+SQL> INSERT INTO T_TM_1 VALUES(2);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT2;
+
+Succeed.
+
+SQL> INSERT INTO T_TM_1 VALUES(3);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT3;
+
+Succeed.
+
+SQL> INSERT INTO T_TM_1 VALUES(4);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT4;
+
+Succeed.
+
+SQL> INSERT INTO T_TM_1 VALUES(5);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT5;
+
+Succeed.
+
+SQL> INSERT INTO T_TM_1 VALUES(6);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT6;
+
+Succeed.
+
+SQL> INSERT INTO T_TM_1 VALUES(7);
+
+1 rows affected.
+
+SQL> SAVEPOINT POINT5;
+
+Succeed.
+
+SQL> INSERT INTO T_TM_1 VALUES(8);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+1           
+2           
+3           
+4           
+5           
+6           
+7           
+8           
+
+8 rows fetched.
+
+SQL> SELECT '1 POINT1 2 POINT2 3 POINT3 4 POINT4 5 6 POINT6 7 POINT5 8' AS SAVEPOINT_DESC FROM DUAL;
+
+SAVEPOINT_DESC                                           
+---------------------------------------------------------
+1 POINT1 2 POINT2 3 POINT3 4 POINT4 5 6 POINT6 7 POINT5 8
+
+1 rows fetched.
+
+SQL> --TEST ROLLBACK TO SAVEPOINT
+SQL> ROLLBACK TO SAVEPOINT POINT7;
+
+CT-00736, The savepoint 'POINT7' does not exist.
+SQL> ROLLBACK TO SAVEPOINT POINT5;
+
+Succeed.
+
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+1           
+2           
+3           
+4           
+5           
+6           
+7           
+
+7 rows fetched.
+
+SQL> ROLLBACK TO SAVEPOINT POINT5;
+
+Succeed.
+
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+1           
+2           
+3           
+4           
+5           
+6           
+7           
+
+7 rows fetched.
+
+SQL> ROLLBACK TO SAVEPOINT POINT6;
+
+Succeed.
+
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+1           
+2           
+3           
+4           
+5           
+6           
+
+6 rows fetched.
+
+SQL> ROLLBACK TO SAVEPOINT POINT5;
+
+CT-00736, The savepoint 'POINT5' does not exist.
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+1           
+2           
+3           
+4           
+5           
+6           
+
+6 rows fetched.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT * FROM T_TM_1;
+
+F_INT1      
+------------
+1           
+2           
+3           
+4           
+5           
+6           
+
+6 rows fetched.
+
+SQL> DROP TABLE T_TM_1;
+
+Succeed.
+
+SQL> RESTORE DATABASE UNTIL SCN 15587602284545111111;
+CT-00601, [1:18]Sql syntax error: from expected
+
+
+

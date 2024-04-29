@@ -1,0 +1,454 @@
+
+
+SQL> create user sql_par identified by sql_par_1234;
+
+Succeed.
+
+SQL> grant dba to sql_par;
+
+Succeed.
+
+SQL> conn sql_par/sql_par_1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists par_test_t1;
+
+Succeed.
+
+SQL> create table par_test_t1(f1 int, f2 real, f3 number, f4 char(30), f5 varchar(30), f6 date, f7 timestamp);
+
+Succeed.
+
+SQL> insert into par_test_t1 values(1, 15, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into par_test_t1 values(2, 16, 29, '16', '29', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into par_test_t1 values(7, 26, 39, '26', '39', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into par_test_t1 values(8, 36, 49, '36', '49', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into par_test_t1 values(12, 46, 59, '46', '59', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into par_test_t1 values(13, 56, 69, '56', '69', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> 
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+6 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+12 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+24 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+48 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+96 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+192 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+384 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+768 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+1536 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+3072 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+6144 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+12288 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+24576 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+49152 rows affected.
+
+SQL> insert into par_test_t1 select * from par_test_t1;
+
+98304 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select /*+ parallel(8) */ count(*) from par_test_t1;
+
+COUNT(*)            
+--------------------
+196608              
+
+1 rows fetched.
+
+SQL> select /*+ parallel(8) */ avg(f1) from par_test_t1;
+
+AVG(F1)                                 
+----------------------------------------
+7.16666666666666666666666666666666666667
+
+1 rows fetched.
+
+SQL> select /*+ parallel(8) */ sum(f1) from par_test_t1;
+
+SUM(F1)             
+--------------------
+1409024             
+
+1 rows fetched.
+
+SQL> select /*+ parallel(8) */ max(f1) from par_test_t1;
+
+MAX(F1)     
+------------
+13          
+
+1 rows fetched.
+
+SQL> select /*+ parallel(8) */ min(f1) from par_test_t1;
+
+MIN(F1)     
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "bmsql_history" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> create table bmsql_history (
+  2   hist_id  integer,
+  3   h_c_id   integer,
+  4   h_c_d_id integer,
+  5   h_c_w_id integer,
+  6   h_d_id   integer,
+  7   h_w_id   integer not null,
+  8   h_date   timestamp,
+  9   h_amount decimal(6,2),
+ 10   h_data   varchar(24)
+ 11 );
+
+Succeed.
+
+SQL> 
+SQL> create index bmsql_history_idx_001   on  bmsql_history (h_w_id);
+
+Succeed.
+
+SQL> create index bmsql_history_idx_002   on  bmsql_history (h_c_id);
+
+Succeed.
+
+SQL> create index bmsql_history_idx_003   on  bmsql_history (h_d_id);
+
+Succeed.
+
+SQL> create index bmsql_history_idx_004   on  bmsql_history (h_w_id,h_c_id,h_d_id);
+
+Succeed.
+
+SQL> create index bmsql_history_idx_005   on  bmsql_history (h_data);
+
+Succeed.
+
+SQL> create index bmsql_history_idx_006   on  bmsql_history (h_w_id,h_data);
+
+Succeed.
+
+SQL> create index bmsql_history_idx_007   on  bmsql_history (h_w_id,h_c_id,h_data);
+
+Succeed.
+
+SQL> 
+SQL> insert into bmsql_history values(2156056,2056,9,72,9,72,to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'),10,'nanjing');
+
+1 rows affected.
+
+SQL> select /*+parallel(6)*/  HIST_ID as HIST_ID01,H_C_ID as H_C_ID01 from BMSQL_HISTORY where H_C_ID not in  (4,3) and H_DATE = '2018-01-24 16:00:00.000' ;
+
+HIST_ID01    H_C_ID01    
+------------ ------------
+2156056      2056        
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "T_P_SCCPCHTFC_C2" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE "T_P_SCCPCHTFC_C2"
+  2 (
+  3   "PLANID" BINARY_INTEGER NOT NULL,
+  4   "CMENEID" BINARY_INTEGER NOT NULL,
+  5   "CELLID" NUMBER(17) NOT NULL,
+  6   "PHYCHID" BINARY_INTEGER NOT NULL,
+  7   "CTFC" NUMBER(17) NOT NULL
+  8 )
+  9 INITRANS 2
+ 10 MAXTRANS 255
+ 11 PCTFREE 8;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_row;
+
+Succeed.
+
+SQL> create table test_row(f1 int, f2 real, f3 number, f4 char(30), f5 varchar(30), f6 date, f7 timestamp);
+
+Succeed.
+
+SQL> insert into test_row values(1, 15, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_row values(2, 16, 29, '16', '29', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_row values(7, 26, 39, '26', '39', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_row values(8, 36, 49, '36', '49', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_row values(12, 46, 59, '46', '59', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into test_row values(13, 56, 69, '56', '69', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> 
+SQL> select * from test_row;
+
+F1           F2                   F3                                       F4                             F5                             F6                     F7                              
+------------ -------------------- ---------------------------------------- ------------------------------ ------------------------------ ---------------------- --------------------------------
+1            15                   28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+2            16                   29                                       16                             29                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+7            26                   39                                       26                             39                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+8            36                   49                                       36                             49                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+12           46                   59                                       46                             59                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+13           56                   69                                       56                             69                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+
+6 rows fetched.
+
+SQL> select * from test_row where f1 > 12;
+
+F1           F2                   F3                                       F4                             F5                             F6                     F7                              
+------------ -------------------- ---------------------------------------- ------------------------------ ------------------------------ ---------------------- --------------------------------
+13           56                   69                                       56                             69                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+
+1 rows fetched.
+
+SQL> select f1, f2, f3, f4, f5, f6, f7 from test_row;
+
+F1           F2                   F3                                       F4                             F5                             F6                     F7                              
+------------ -------------------- ---------------------------------------- ------------------------------ ------------------------------ ---------------------- --------------------------------
+1            15                   28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+2            16                   29                                       16                             29                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+7            26                   39                                       26                             39                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+8            36                   49                                       36                             49                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+12           46                   59                                       46                             59                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+13           56                   69                                       56                             69                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+
+6 rows fetched.
+
+SQL> select f1, f2, f3, f4, f5, f6, f7 from test_row where f1 > 12;
+
+F1           F2                   F3                                       F4                             F5                             F6                     F7                              
+------------ -------------------- ---------------------------------------- ------------------------------ ------------------------------ ---------------------- --------------------------------
+13           56                   69                                       56                             69                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+
+1 rows fetched.
+
+SQL> select f2, f1, f3, f4, f5, f6, f7 from test_row;
+
+F2                   F1           F3                                       F4                             F5                             F6                     F7                              
+-------------------- ------------ ---------------------------------------- ------------------------------ ------------------------------ ---------------------- --------------------------------
+15                   1            28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+16                   2            29                                       16                             29                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+26                   7            39                                       26                             39                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+36                   8            49                                       36                             49                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+46                   12           59                                       46                             59                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+56                   13           69                                       56                             69                             2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+
+6 rows fetched.
+
+SQL> 
+SQL> CREATE TABLE "FVT_PARTITION_05"
+  2 (
+  3   "C_ID" BINARY_INTEGER NOT NULL,
+  4   "C_CLOB" CLOB,
+  5   "C_TIME" TIMESTAMP(6),
+  6   "C_NUM" NUMBER(10, 5),
+  7   "C_NAME" VARCHAR(10 CHAR)
+  8 )
+  9 PARTITION BY RANGE ("C_ID")
+ 10 INTERVAL(500)
+ 11 (
+ 12     PARTITION P1 VALUES LESS THAN (100) TABLESPACE "USERS" INITRANS 2 PCTFREE 8,
+ 13     PARTITION P2 VALUES LESS THAN (200) TABLESPACE "USERS" INITRANS 2 PCTFREE 8,
+ 14     PARTITION P3 VALUES LESS THAN (300) TABLESPACE "USERS" INITRANS 2 PCTFREE 8
+ 15 )
+ 16 TABLESPACE "USERS"
+ 17 INITRANS 2
+ 18 MAXTRANS 255
+ 19 PCTFREE 8;
+Succeed.
+SQL> CREATE INDEX "FVT_PARTITION_INDEX_005" ON "FVT_PARTITION_05"("C_TIME", "C_NAME")
+  2 LOCAL
+  3 TABLESPACE "USERS"
+  4 INITRANS 2
+  5 PCTFREE 8;
+Succeed.
+SQL> CREATE INDEX "FVT_PARTITION_INDEX_5" ON "FVT_PARTITION_05"("C_TIME", "C_NAME", "C_NUM")
+  2 TABLESPACE "USERS"
+  3 INITRANS 2
+  4 PCTFREE 8;
+Succeed.
+SQL> ALTER TABLE "FVT_PARTITION_05" ADD CONSTRAINT "_PK_SYS_8039766F42D624EE06245418649FB9FB" PRIMARY KEY("C_ID");
+Succeed.
+SQL> 
+SQL> create table t_union_all_parallel_001(
+  2 id int,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,
+  4 c_long varchar(200),c_blob blob,c_raw raw(100),c_date date,c_timestamp timestamp);
+Succeed.
+SQL> insert into t_union_all_parallel_001 values(1,1000,100.123,100.456,100.789,100.123,'abc123','abcdefg',lpad('123abc',50,'abc'),lpad('123abc',50,'abc'),lpad('11100000',50,'1100'),lpad('11100001',50,'1100'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'),to_timestamp(to_char('1800-03-05 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> 
+SQL> create table t_union_all_parallel_101(
+  2 id int,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,
+  4 c_long varchar(200),c_blob blob,c_raw varchar(100),c_date date,c_timestamp timestamp)
+  5 PARTITION BY LIST(id)  
+  6 (
+  7 PARTITION p1 VALUES (1,2,3),
+  8 PARTITION p2 VALUES (4,5,6,7),
+  9 PARTITION p3 VALUES (8,9,10,11)
+ 10 );
+
+Succeed.
+
+SQL> insert into t_union_all_parallel_101 select * from t_union_all_parallel_001; 
+
+1 rows affected.
+
+SQL> 
+SQL> create table t_union_all_parallel_102(
+  2 id int not null,c_int int,c_real real,c_float float,c_decimal decimal,c_number number,
+  3 c_char char(10),c_vchar varchar(10) not null,c_vchar2 varchar2(100),c_clob clob,
+  4 c_long varchar(200),c_blob blob,c_raw varchar(100),c_date date,c_timestamp timestamp,CONSTRAINT t_union_all_parallel_102_con primary key(id,c_vchar))
+  5 PARTITION BY RANGE(id)
+  6 (
+  7 PARTITION p1 VALUES LESS THAN(6),
+  8 PARTITION p2 VALUES LESS THAN(10),
+  9 PARTITION p3 VALUES LESS THAN(maxvalue)
+ 10 );
+
+Succeed.
+
+SQL> insert into t_union_all_parallel_102 select * from t_union_all_parallel_001;  
+
+1 rows affected.
+
+SQL> 
+SQL> create index idx_union_all_parallel_101_1 on t_union_all_parallel_101(c_int);
+
+Succeed.
+
+SQL> create index idx_union_all_parallel_101_2 on t_union_all_parallel_101(c_int,c_vchar);
+
+Succeed.
+
+SQL> create index idx_union_all_parallel_101_3 on t_union_all_parallel_101(c_int,c_vchar,c_date);
+
+Succeed.
+
+SQL> 
+SQL> create index idx_union_all_parallel_102_1 on t_union_all_parallel_102(c_int);
+
+Succeed.
+
+SQL> create index idx_union_all_parallel_102_2 on t_union_all_parallel_102(c_int,c_vchar);
+
+Succeed.
+
+SQL> create index idx_union_all_parallel_102_3 on t_union_all_parallel_102(c_int,c_vchar,c_date);
+
+Succeed.
+
+SQL> 
+SQL>
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user sql_par cascade; 
+
+Succeed.
+
+SQL> 
+SQL> 
+
+

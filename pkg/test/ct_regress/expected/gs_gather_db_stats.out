@@ -1,0 +1,743 @@
+
+
+SQL> --run this example in user 'SYS' !!!
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --test subpartition modification, epxect stats of one-level part in SYS_DML_STATS include the sum of it's child subpartition
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, d date default sysdate) partition by range(id) interval(50) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100),
+  7 subpartition p13 values less than(maxvalue)
+  8 ),
+  9 partition p2 values less than(100)
+ 10 (
+ 11 subpartition p21 values less than(50),
+ 12 subpartition p22 values less than(100),
+ 13 subpartition p23 values less than(maxvalue)
+ 14 )
+ 15 );
+
+Succeed.
+
+SQL> begin
+  2 for i in 1..100 loop
+  3     for j in 1..200 loop
+  4         insert into test_subpart values(i,j,sysdate);
+  5      end loop;
+  6 end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> call DBE_STATS.FLUSH_DB_STATS_INFO();
+
+PL/SQL procedure successfully completed.
+
+SQL> select INSERTS,updates,deletes from SYS_DML_STATS where USER#=0 and table# in (select id from sys_tables where user#=0 and name=upper('test_subpart')) order by 1,2,3;
+
+INSERTS      UPDATES      DELETES     
+------------ ------------ ------------
+200          0            0           
+9800         0            0           
+10000        0            0           
+20000        0            0           
+
+4 rows fetched.
+
+SQL> 
+SQL> delete from test_subpart where id=1 and c_id=1;
+
+1 rows affected.
+
+SQL> call DBE_STATS.FLUSH_DB_STATS_INFO();
+
+PL/SQL procedure successfully completed.
+
+SQL> select INSERTS,updates,deletes from SYS_DML_STATS where USER#=0 and table# in (select id from sys_tables where user#=0 and name=upper('test_subpart')) order by 1,2,3;
+
+INSERTS      UPDATES      DELETES     
+------------ ------------ ------------
+200          0            0           
+9800         0            1           
+10000        0            0           
+20000        0            1           
+
+4 rows fetched.
+
+SQL> 
+SQL> --test cacl tale segments by sum all part segment
+SQL> create or replace function DBA_CACL_TABLE_SIZE(in_owner varchar, in_table_name varchar) return bigint
+  2 is
+  3 res bigint;
+  4 is_part int;
+  5 begin
+  6 select count(*) into is_part from adm_part_tables where owner=upper(in_owner) and table_name=upper(in_table_name);
+  7 if(is_part) then
+  8 select sum(DBE_DIAGNOSE.DBA_SEGSIZE(0, TP.ENTRY)) into res from sys_tables t, sys_users u,sys_table_parts tp 
+  9 where t.user# = u.id and tp.user# = u.id and
+ 10 u.name = upper(in_owner) and t.name = upper(in_table_name) and tp.table# = t.id;
+ 11 else
+ 12 select DBE_DIAGNOSE.DBA_SEGSIZE(0, T.ENTRY) into res from sys_tables t, sys_users u where t.user#=u.id and u.name=upper(in_owner) and t.name=upper(in_table_name);
+ 13 end if;
+ 14 return res;
+ 15 end;
+ 16 /
+
+Succeed.
+
+SQL> --only support one-level partition table
+SQL> create or replace function DBA_CACL_TABLE_PARTSIZE(owner varchar, table_name varchar, partname varchar) return bigint
+  2 is
+  3 res bigint;
+  4 begin
+  5 select DBE_DIAGNOSE.DBA_SEGSIZE(0, TP.ENTRY) into res from sys_tables t, sys_users u,sys_table_parts tp 
+  6 where t.user# = u.id and tp.user# = u.id and u.name = upper(owner) and t.name = upper(table_name) and tp.table# = t.id and tp.name=upper(partname);
+  7 return res;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> --test normal table
+SQL> drop table if exists myt;
+
+Succeed.
+
+SQL> create table myt(a int,b varchar(2000),c bigint default 1000000000000, d date default sysdate, e clob default 'abc', e2 blob default 'abcd',f number(20,10) default 1.1, g decimal default 111.111);
+
+Succeed.
+
+SQL> declare
+  2 sql1 clob;
+  3 begin
+  4 for i in 1..100 loop
+  5 insert into myt(a,b) values(i, i||'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl');
+  6 end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_diagnose.dba_table_size(0,user,'myt') - DBA_CACL_TABLE_SIZE(user,'myt');
+
+DBE_DIAGNOSE.DBA_TABLE_SIZE(0,USER,'MYT') - DBA_CACL_TABLE_SIZE(
+----------------------------------------------------------------
+0                                                               
+
+1 rows fetched.
+
+SQL> 
+SQL> --test part table
+SQL> drop table if exists myt_part;
+
+Succeed.
+
+SQL> create table myt_part(a int,b varchar(2000),c bigint default 1000000000000, d date default sysdate, e clob default 'abc', e2 blob default 'abcd',f number(20,10) default 1.1, g decimal default 111.111)
+  2 partition by range(a)
+  3 (
+  4 partition p1 values less than(50),
+  5 partition p2 values less than(100),
+  6 partition p3 values less than(maxvalue)
+  7 );
+
+Succeed.
+
+SQL> declare
+  2 sql1 clob;
+  3 begin
+  4 for i in 1..100 loop
+  5 insert into myt_part(a,b) values(i, i||'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl');
+  6 end loop;
+  7 end;
+  8 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select dbe_diagnose.dba_table_size(0,user,'myt_part')-DBA_CACL_TABLE_SIZE(user,'myt_part');
+
+DBE_DIAGNOSE.DBA_TABLE_SIZE(0,USER,'MYT_PART')-DBA_CACL_TABLE_SI
+----------------------------------------------------------------
+0                                                               
+
+1 rows fetched.
+
+SQL> 
+SQL> --### test normal ability ###
+SQL> --normal partition
+SQL> begin
+  2 execute immediate 'delete from sys_stats_log';
+  3 commit;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists tb_test;
+
+Succeed.
+
+SQL> create table tb_test
+  2 (
+  3 c_id int,
+  4 CAOC clob default '123456789',
+  5 CAOB blob default '123456789'
+  6 ) 
+  7 partition by range(c_id)
+  8 (partition part_1 values less than(10),
+  9 partition part_2 values less than(30),
+ 10 partition part_3 values less than(maxvalue));
+
+Succeed.
+
+SQL> 
+SQL> insert into tb_test(c_id) values(5);
+
+1 rows affected.
+
+SQL> insert into tb_test(c_id) values(20);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select dbe_diagnose.dba_table_partsize(0,user,'tb_test','part_1');
+
+DBE_DIAGNOSE.DBA_TABLE_PARTSIZE(0,USER,'TB_TEST','PART_1')
+----------------------------------------------------------
+65536                                                     
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_table_partsize(1,user,'tb_test','part_1');
+
+DBE_DIAGNOSE.DBA_TABLE_PARTSIZE(1,USER,'TB_TEST','PART_1')
+----------------------------------------------------------
+8                                                         
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_table_partsize(2,user,'tb_test','part_1');
+
+DBE_DIAGNOSE.DBA_TABLE_PARTSIZE(2,USER,'TB_TEST','PART_1')
+----------------------------------------------------------
+1                                                         
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_table_partsize(-1,user,'tb_test','part_1'); --expect error
+
+CT-00242, [1:8]The function argument is out of range
+SQL> select dbe_diagnose.dba_table_partsize(3,user,'tb_test','part_1'); --expect error
+
+CT-00242, [1:8]The function argument is out of range
+SQL> 
+SQL> --sub partition
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, d date default sysdate) partition by range(id) interval(50) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100),
+  7 subpartition p13 values less than(maxvalue)
+  8 ),
+  9 partition p2 values less than(100)
+ 10 (
+ 11 subpartition p21 values less than(50),
+ 12 subpartition p22 values less than(100),
+ 13 subpartition p23 values less than(maxvalue)
+ 14 )
+ 15 );
+
+Succeed.
+
+SQL> insert into test_subpart(id,c_id) values(10,20),(10,60);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select dbe_diagnose.dba_table_partsize(0,user,'test_subpart','p1');
+
+DBE_DIAGNOSE.DBA_TABLE_PARTSIZE(0,USER,'TEST_SUBPART','P1')
+-----------------------------------------------------------
+131072                                                     
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_table_partsize(1,user,'test_subpart','p1');
+
+DBE_DIAGNOSE.DBA_TABLE_PARTSIZE(1,USER,'TEST_SUBPART','P1')
+-----------------------------------------------------------
+16                                                         
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_table_partsize(2,user,'test_subpart','p1');
+
+DBE_DIAGNOSE.DBA_TABLE_PARTSIZE(2,USER,'TEST_SUBPART','P1')
+-----------------------------------------------------------
+2                                                          
+
+1 rows fetched.
+
+SQL> 
+SQL> --normal table
+SQL> drop table if exists plsql_tabsize;
+
+Succeed.
+
+SQL> create table plsql_tabsize(a int,b int);
+
+Succeed.
+
+SQL> select dbe_diagnose.dba_table_size(0,user,'plsql_tabsize');
+
+DBE_DIAGNOSE.DBA_TABLE_SIZE(0,USER,'PLSQL_TABSIZE')
+---------------------------------------------------
+0                                                  
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_table_size(1,user,'plsql_tabsize');
+
+DBE_DIAGNOSE.DBA_TABLE_SIZE(1,USER,'PLSQL_TABSIZE')
+---------------------------------------------------
+0                                                  
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_table_size(2,user,'plsql_tabsize');
+
+DBE_DIAGNOSE.DBA_TABLE_SIZE(2,USER,'PLSQL_TABSIZE')
+---------------------------------------------------
+0                                                  
+
+1 rows fetched.
+
+SQL> select dbe_diagnose.dba_table_size(-1,user,'plsql_tabsize'); --expect error
+
+CT-00242, [1:8]The function argument is out of range
+SQL> select dbe_diagnose.dba_table_size(3,user,'plsql_tabsize'); --expect error
+
+CT-00242, [1:8]The function argument is out of range
+SQL> 
+SQL> --test GATHER_DB_STATS_EX
+SQL> begin
+  2 execute immediate 'delete from sys_stats_log';
+  3 commit;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> call GATHER_DB_STATS_EX(force=>true, max_size=>1024*1024);
+
+PL/SQL procedure successfully completed.
+
+SQL> select count(*) from sys_stats_log where status='FIN' and start_time+1/24/6>=sysdate and end_time+1/24/60>=sysdate and owner=user and table_name in  ('TB_TEST','TEST_SUBPART','PLSQL_TABSIZE');
+
+COUNT(*)            
+--------------------
+6                   
+
+1 rows fetched.
+
+SQL> select TABLE_NAME from MY_TABLES where TABLE_NAME in  ('TB_TEST','TEST_SUBPART','PLSQL_TABSIZE') and LAST_ANALYZED is not null order by 1;
+
+TABLE_NAME                                                      
+----------------------------------------------------------------
+PLSQL_TABSIZE                                                   
+TB_TEST                                                         
+TEST_SUBPART                                                    
+
+3 rows fetched.
+
+SQL> select TABLE_NAME, PARTITION_NAME from MY_TAB_PARTITIONS where TABLE_NAME in  ('TB_TEST','TEST_SUBPART','PLSQL_TABSIZE') and LAST_ANALYZED is not null order by 1,2;
+
+TABLE_NAME                                                       PARTITION_NAME                                                  
+---------------------------------------------------------------- ----------------------------------------------------------------
+TB_TEST                                                          PART_1                                                          
+TB_TEST                                                          PART_2                                                          
+TB_TEST                                                          PART_3                                                          
+TEST_SUBPART                                                     P1                                                              
+TEST_SUBPART                                                     P2                                                              
+
+5 rows fetched.
+
+SQL> drop table if exists tb_test;
+
+Succeed.
+
+SQL> drop table if exists tb_subpart;
+
+Succeed.
+
+SQL> drop table if exists plsql_tabsize;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --#### test part flag ####
+SQL> --normal partition
+SQL> drop table if exists tb_test;
+
+Succeed.
+
+SQL> create table tb_test
+  2 (
+  3 c_id int,
+  4 CAOC clob default '123456789',
+  5 CAOB blob default '123456789'
+  6 ) 
+  7 partition by range(c_id)
+  8 (partition part_1 values less than(10),
+  9 partition part_2 values less than(30),
+ 10 partition part_3 values less than(maxvalue));
+
+Succeed.
+
+SQL> 
+SQL> insert into tb_test(c_id) values(5);
+
+1 rows affected.
+
+SQL> insert into tb_test(c_id) values(20);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> --sub partition
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_subpart(id int, c_id int, d date default sysdate) partition by range(id) interval(50) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100),
+  7 subpartition p13 values less than(maxvalue)
+  8 ),
+  9 partition p2 values less than(100)
+ 10 (
+ 11 subpartition p21 values less than(50),
+ 12 subpartition p22 values less than(100),
+ 13 subpartition p23 values less than(maxvalue)
+ 14 )
+ 15 );
+
+Succeed.
+
+SQL> insert into test_subpart(id,c_id) values(10,20),(10,60);
+
+2 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2 execute immediate 'delete from sys_stats_log';
+  3 commit;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> call GATHER_DB_STATS_EX(force=>true, part_flag=>false, max_size=>1024*1024);
+
+PL/SQL procedure successfully completed.
+
+SQL> select table_name,part_name from sys_stats_log where status='FIN' and start_time+1/24/6>=sysdate and end_time+1/24/60>=sysdate and owner=user and table_name in  ('TB_TEST','TEST_SUBPART') order by 1,2;
+
+TABLE_NAME                                                       PART_NAME                                                       
+---------------------------------------------------------------- ----------------------------------------------------------------
+TB_TEST                                                                                                                          
+TEST_SUBPART                                                                                                                     
+
+2 rows fetched.
+
+SQL> select TABLE_NAME from MY_TABLES where TABLE_NAME in ('TB_TEST','TEST_SUBPART') and LAST_ANALYZED is not null order by 1;
+
+TABLE_NAME                                                      
+----------------------------------------------------------------
+TB_TEST                                                         
+TEST_SUBPART                                                    
+
+2 rows fetched.
+
+SQL> select TABLE_NAME, PARTITION_NAME from MY_TAB_PARTITIONS where TABLE_NAME in  ('TB_TEST','TEST_SUBPART') and LAST_ANALYZED is not null order by 1,2;
+
+TABLE_NAME                                                       PARTITION_NAME                                                  
+---------------------------------------------------------------- ----------------------------------------------------------------
+TB_TEST                                                          PART_1                                                          
+TB_TEST                                                          PART_2                                                          
+TB_TEST                                                          PART_3                                                          
+TEST_SUBPART                                                     P1                                                              
+TEST_SUBPART                                                     P2                                                              
+
+5 rows fetched.
+
+SQL> drop table if exists tb_test;
+
+Succeed.
+
+SQL> drop table if exists tb_subpart;
+
+Succeed.
+
+SQL> 
+SQL> --### test max size ###
+SQL> drop table if exists myt;
+
+Succeed.
+
+SQL> create table myt(a int,b varchar(2000),c bigint default 1000000000000, d date default sysdate, e clob default 'abc', e2 blob default 'abcd',f number(20,10) default 1.1, g decimal default 111.111);
+
+Succeed.
+
+SQL> insert into myt(a,b) values(10, '312adsfdsabcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl');
+
+1 rows affected.
+
+SQL> declare
+  2 begin
+  3 for i in 1..17 loop
+  4 insert into myt select * from myt;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists myt_part;
+
+Succeed.
+
+SQL> create table myt_part(a int,b varchar(2000),c bigint default 1000000000000, d date default sysdate, e clob default 'abc', e2 blob default 'abcd',f number(20,10) default 1.1, g decimal default 111.111)
+  2 partition by range(a)
+  3 (partition part_1 values less than(10),
+  4 partition part_2 values less than(maxvalue));
+
+Succeed.
+
+SQL> insert into myt_part(a,b) values(1, '312adsfdsabcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl');
+
+1 rows affected.
+
+SQL> declare
+  2 begin
+  3 for i in 1..17 loop
+  4 insert into myt_part select * from myt_part;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> insert into myt_part(a,b) values(100, '312adsfdsabcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl');
+
+1 rows affected.
+
+SQL> declare
+  2 begin
+  3 for i in 1..17 loop
+  4 insert into myt_part select * from myt_part where a = 100;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists myt_subpart;
+
+Succeed.
+
+SQL> create table myt_subpart(a int,b varchar(2000),c bigint default 1000000000000, d date default sysdate, e clob default 'abc', e2 blob default 'abcd',f number(20,10) default 1.1, g decimal default 111.111)
+  2 partition by range(a) subpartition by range(c)
+  3 (partition part_1 values less than(10)
+  4 (
+  5     subpartition part_11 values less than(100),
+  6     subpartition part_12 values less than(maxvalue)
+  7 ),
+  8 partition part_2 values less than(maxvalue)
+  9 (
+ 10     subpartition part_21 values less than(100),
+ 11     subpartition part_22 values less than(maxvalue)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> insert into myt_subpart(a,b) values(1, '312adsfdsabcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl');
+
+1 rows affected.
+
+SQL> declare
+  2 begin
+  3 for i in 1..17 loop
+  4 insert into myt_subpart select * from myt_subpart;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> insert into myt_subpart(a,b) values(100, '312adsfdsabcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl');
+
+1 rows affected.
+
+SQL> declare
+  2 begin
+  3 for i in 1..17 loop
+  4 insert into myt_subpart select * from myt_subpart where a=100;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> insert into myt_subpart(a,b,c) values(1, '312adsfdsabcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl',1);
+
+1 rows affected.
+
+SQL> declare
+  2 begin
+  3 for i in 1..17 loop
+  4 insert into myt_subpart select * from myt_subpart where a=1 and c=1;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> insert into myt_subpart(a,b,c) values(100, '312adsfdsabcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl',1);
+
+1 rows affected.
+
+SQL> declare
+  2 begin
+  3 for i in 1..17 loop
+  4 insert into myt_subpart select * from myt_subpart where a=100 and c=1;
+  5 end loop;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select 1 from sys_dummy where dbe_diagnose.dba_table_size(0,user,'myt')/1024/1024 > 10;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 2 from sys_dummy where dbe_diagnose.dba_table_size(0,user,'myt_part')/1024/1024 > 20;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> select 3 from sys_dummy where dbe_diagnose.dba_table_size(0,user,'myt_subpart')/1024/1024 > 40;
+
+3           
+------------
+3           
+
+1 rows fetched.
+
+SQL> 
+SQL> begin
+  2 execute immediate 'delete from sys_stats_log';
+  3 commit;
+  4 end;
+  5 /
+
+PL/SQL procedure successfully completed.
+
+SQL> call GATHER_DB_STATS_EX(force=>true, max_size=>1024*1024); --the sample of percent of table/part with size>10M whill change
+
+PL/SQL procedure successfully completed.
+
+SQL> select table_name, part_name from sys_stats_log where percent < 10 and table_name in ('MYT','MYT_PART','MYT_SUBPART') order by 1,2;
+
+TABLE_NAME                                                       PART_NAME                                                       
+---------------------------------------------------------------- ----------------------------------------------------------------
+MYT                                                                                                                              
+MYT_PART                                                         PART_1                                                          
+MYT_PART                                                         PART_2                                                          
+MYT_SUBPART                                                      PART_1                                                          
+MYT_SUBPART                                                      PART_2                                                          
+
+5 rows fetched.
+
+SQL> select TABLE_NAME from MY_TABLES where TABLE_NAME in  ('MYT','MYT_PART','MYT_SUBPART') and LAST_ANALYZED is not null order by 1;
+
+TABLE_NAME                                                      
+----------------------------------------------------------------
+MYT                                                             
+MYT_PART                                                        
+MYT_SUBPART                                                     
+
+3 rows fetched.
+
+SQL> select TABLE_NAME, PARTITION_NAME from MY_TAB_PARTITIONS where TABLE_NAME in  ('MYT','MYT_PART','MYT_SUBPART') and LAST_ANALYZED is not null order by 1,2;
+
+TABLE_NAME                                                       PARTITION_NAME                                                  
+---------------------------------------------------------------- ----------------------------------------------------------------
+MYT_PART                                                         PART_1                                                          
+MYT_PART                                                         PART_2                                                          
+MYT_SUBPART                                                      PART_1                                                          
+MYT_SUBPART                                                      PART_2                                                          
+
+4 rows fetched.
+
+SQL> drop table if exists myt;
+
+Succeed.
+
+SQL> drop table if exists myt_part;
+
+Succeed.
+
+SQL> drop table if exists myt_subpart;
+Succeed.
+
+
+
+

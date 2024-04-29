@@ -1,0 +1,1438 @@
+
+
+SQL> --TEST SYSTEM VIEW
+SQL> 
+SQL> -- TEST OTHER USER CANNOT DROP THE VIEW CREATE BY SYS 
+SQL> --DROP USER IF EXISTS VIEW_TEST_USER;
+SQL> --CREATE USER VIEW_TEST_USER IDENTIFIED BY 'ABCD@123@2';
+SQL> --grant create session to VIEW_TEST_USER;
+SQL> --conn VIEW_TEST_USER/ABCD@123@2@127.0.0.1:1611
+SQL> --DROP VIEW DBA_TAB_MODIFICATIONS;
+SQL> --DROP VIEW USER_TAB_MODIFICATIONS;
+SQL> --SELECT COUNT(*) FROM DBA_TAB_MODIFICATIONS;
+SQL> --SELECT COUNT(*) FROM USER_TAB_MODIFICATIONS;
+SQL> 
+SQL> --conn sys/Huawei@123@127.0.0.1:1611
+SQL> --DROP USER IF EXISTS VIEW_TEST_USER;
+SQL> 
+SQL> --DBA_TAB_PARTITIONS & USER_TAB_PARTITIONS
+SQL> drop table if exists TEST_TAB_PART1;
+
+Succeed.
+
+SQL> CREATE TABLE TEST_TAB_PART1 (ID int, TIME date) PARTITION BY RANGE (TIME) 
+  2   (PARTITION P1中 VALUES LESS THAN (TO_DATE('2004-07-01', 'YYYY-MM-DD')), 
+  3   PARTITION P2过 VALUES LESS THAN (TO_DATE('2005-01-01', 'YYYY-MM-DD')), 
+  4   PARTITION P3 VALUES LESS THAN (TO_DATE('2005-07-01', 'YYYY-MM-DD')),
+  5   PARTITION P4 VALUES LESS THAN (MAXVALUE));
+
+Succeed.
+
+SQL> select * from DBA_TAB_PARTITIONS WHERE TABLE_OWNER='SYS' AND TABLE_NAME='TEST_TAB_PART1' ORDER BY PARTITION_NAME;
+
+TABLE_OWNER                                                      TABLE_NAME                                                       COMPOSITE PARTITION_NAME                                                   SUBPARTITION_COUNT                       HIGH_VALUE                                                       HIGH_VALUE_LENGTH                        PARTITION_POSITION TABLESPACE_NAME                                                  INTERVAL PCT_FREE     PCT_USED                                 INI_TRANS    MAX_TRANS                                INITIAL_EXTENT                           NEXT_EXTENT                              MIN_EXTENT                               MAX_EXTENT                               MAX_SIZE                                 PCT_INCREASE                             FREELISTS                                FREELIST_GROUPS                          LOGGING COMPRESSION COMPRESS_FOR       NUM_ROWS     BLOCKS       EMPTY_BLOCKS AVG_SPACE                                CHAIN_CNT                                AVG_ROW_LEN  SAMPLE_SIZE  LAST_ANALYZED          BUFFER_POOL GLOBAL_STATS USER_STATS ROW_FORMAT NOLOGGING_INSERT
+---------------------------------------------------------------- ---------------------------------------------------------------- --------- ---------------------------------------------------------------- ---------------------------------------- ---------------------------------------------------------------- ---------------------------------------- ------------------ ---------------------------------------------------------------- -------- ------------ ---------------------------------------- ------------ ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ------- ----------- ------------------ ------------ ------------ ------------ ---------------------------------------- ---------------------------------------- ------------ ------------ ---------------------- ----------- ------------ ---------- ---------- ----------------
+SYS                                                              TEST_TAB_PART1                                                   NO        P1中                                                            0                                        TO_DATE('2004-07-01', 'YYYY-MM-DD')                                                                       1                  SYSTEM                                                           N        8                                                     2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ASF        NO              
+SYS                                                              TEST_TAB_PART1                                                   NO        P2过                                                            0                                        TO_DATE('2005-01-01', 'YYYY-MM-DD')                                                                       2                  SYSTEM                                                           N        8                                                     2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ASF        NO              
+SYS                                                              TEST_TAB_PART1                                                   NO        P3                                                               0                                        TO_DATE('2005-07-01', 'YYYY-MM-DD')                                                                       3                  SYSTEM                                                           N        8                                                     2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ASF        NO              
+SYS                                                              TEST_TAB_PART1                                                   NO        P4                                                               0                                        MAXVALUE                                                                                                  4                  SYSTEM                                                           N        8                                                     2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ASF        NO              
+
+4 rows fetched.
+
+SQL> select * from USER_TAB_PARTITIONS WHERE TABLE_NAME='TEST_TAB_PART1' ORDER BY PARTITION_NAME;
+
+TABLE_NAME                                                       COMPOSITE PARTITION_NAME                                                   SUBPARTITION_COUNT                       HIGH_VALUE                                                       HIGH_VALUE_LENGTH                        PARTITION_POSITION TABLESPACE_NAME                                                  INTERVAL PCT_FREE     PCT_USED                                 INI_TRANS    MAX_TRANS                                INITIAL_EXTENT                           NEXT_EXTENT                              MIN_EXTENT                               MAX_EXTENT                               MAX_SIZE                                 PCT_INCREASE                             FREELISTS                                FREELIST_GROUPS                          LOGGING COMPRESSION COMPRESS_FOR       NUM_ROWS     BLOCKS       EMPTY_BLOCKS AVG_SPACE                                CHAIN_CNT                                AVG_ROW_LEN  SAMPLE_SIZE  LAST_ANALYZED          BUFFER_POOL GLOBAL_STATS USER_STATS ROW_FORMAT NOLOGGING_INSERT
+---------------------------------------------------------------- --------- ---------------------------------------------------------------- ---------------------------------------- ---------------------------------------------------------------- ---------------------------------------- ------------------ ---------------------------------------------------------------- -------- ------------ ---------------------------------------- ------------ ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ------- ----------- ------------------ ------------ ------------ ------------ ---------------------------------------- ---------------------------------------- ------------ ------------ ---------------------- ----------- ------------ ---------- ---------- ----------------
+TEST_TAB_PART1                                                   NO        P1中                                                            0                                        TO_DATE('2004-07-01', 'YYYY-MM-DD')                              35                                       1                  SYSTEM                                                           N        8                                                     2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ASF        NO              
+TEST_TAB_PART1                                                   NO        P2过                                                            0                                        TO_DATE('2005-01-01', 'YYYY-MM-DD')                              35                                       2                  SYSTEM                                                           N        8                                                     2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ASF        NO              
+TEST_TAB_PART1                                                   NO        P3                                                               0                                        TO_DATE('2005-07-01', 'YYYY-MM-DD')                              35                                       3                  SYSTEM                                                           N        8                                                     2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ASF        NO              
+TEST_TAB_PART1                                                   NO        P4                                                               0                                        MAXVALUE                                                         8                                        4                  SYSTEM                                                           N        8                                                     2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ASF        NO              
+
+4 rows fetched.
+
+SQL> 
+SQL> --drop by to validate user_tab_modifications/dba_tab_modifications
+SQL> SELECT COUNT(PARTITION_NAME) FROM DBA_TAB_MODIFICATIONS WHERE TABLE_NAME= 'TEST_TAB_PART1' AND TABLE_OWNER = 'SYS';
+
+COUNT(PARTITION_NAME)
+---------------------
+0                    
+
+1 rows fetched.
+
+SQL> SELECT COUNT(PARTITION_NAME), COUNT(SUBPARTITION_NAME), COUNT(INSERTS), COUNT(UPDATES), COUNT(DELETES), COUNT(TIMESTAMP), COUNT(DROP_SEGMENTS)
+  2 FROM DBA_TAB_MODIFICATIONS WHERE TABLE_NAME= 'TEST_TAB_PART1' AND PARTITION_NAME = 'P3' AND TABLE_OWNER = 'SYS';
+
+COUNT(PARTITION_NAME) COUNT(SUBPARTITION_NAME) COUNT(INSERTS)       COUNT(UPDATES)       COUNT(DELETES)       COUNT(TIMESTAMP)     COUNT(DROP_SEGMENTS)
+--------------------- ------------------------ -------------------- -------------------- -------------------- -------------------- --------------------
+0                     0                        0                    0                    0                    0                    0                   
+
+1 rows fetched.
+
+SQL> SELECT COUNT(PARTITION_NAME) FROM USER_TAB_MODIFICATIONS WHERE TABLE_NAME= 'TEST_TAB_PART1';
+
+COUNT(PARTITION_NAME)
+---------------------
+0                    
+
+1 rows fetched.
+
+SQL> SELECT COUNT(PARTITION_NAME), COUNT(SUBPARTITION_NAME), COUNT(INSERTS), COUNT(UPDATES), COUNT(DELETES), COUNT(TIMESTAMP), COUNT(DROP_SEGMENTS)
+  2 FROM USER_TAB_MODIFICATIONS WHERE TABLE_NAME= 'TEST_TAB_PART1' AND PARTITION_NAME = 'P3';
+
+COUNT(PARTITION_NAME) COUNT(SUBPARTITION_NAME) COUNT(INSERTS)       COUNT(UPDATES)       COUNT(DELETES)       COUNT(TIMESTAMP)     COUNT(DROP_SEGMENTS)
+--------------------- ------------------------ -------------------- -------------------- -------------------- -------------------- --------------------
+0                     0                        0                    0                    0                    0                    0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table TEST_TAB_PART1;
+
+Succeed.
+
+SQL> select count(*) from DBA_TAB_PARTITIONS WHERE TABLE_OWNER='SYS' AND TABLE_NAME='TEST_TAB_PART1';
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select count(*) from USER_TAB_PARTITIONS WHERE TABLE_NAME='TEST_TAB_PART1';
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --USER_SOURCE & ALL_SOURCE
+SQL> drop table if exists test_pro_t1;
+
+Succeed.
+
+SQL> drop table if exists test_pro_t2;
+
+Succeed.
+
+SQL> create table test_pro_t1(f1 int, f2 varchar2(20));
+
+Succeed.
+
+SQL> create table test_pro_t2(f1 int, f2 varchar2(20));
+
+Succeed.
+
+SQL> 
+SQL> drop procedure if exists test_proc_src;
+
+Succeed.
+
+SQL> create or replace procedure test_proc_src(a int, b varchar2)
+  2 as
+  3 c int := 1;
+  4 d int := 2;
+  5 begin
+  6   insert into test_pro_t1 values(a,b);
+  7   commit;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> DROP TRIGGER IF EXISTS TRIG_BEFORE_SRC;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_SRC
+  2 BEFORE INSERT OR UPDATE OF f1 OR DELETE ON test_pro_t1
+  3 BEGIN
+  4   INSERT INTO test_pro_t2 VALUES(4, 'abc');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM USER_SOURCE WHERE NAME = 'TEST_PROC_SRC';
+
+NAME                                                             TYPE         LINE                                     TEXT                                                            
+---------------------------------------------------------------- ------------ ---------------------------------------- ----------------------------------------------------------------
+TEST_PROC_SRC                                                    PROCEDURE                                             (a int, b varchar2)
+as
+c int := 1;
+d int := 2;
+begin
+  insert into test_pro_t1 values(a,b);
+  commit;
+end;
+/
+
+
+1 rows fetched.
+
+SQL> SELECT * FROM USER_SOURCE WHERE NAME = 'TRIG_BEFORE_SRC';
+
+NAME                                                             TYPE         LINE                                     TEXT                                                            
+---------------------------------------------------------------- ------------ ---------------------------------------- ----------------------------------------------------------------
+TRIG_BEFORE_SRC                                                  TRIGGER                                               BEFORE INSERT OR UPDATE OF f1 OR DELETE ON test_pro_t1
+BEGIN
+  INSERT INTO test_pro_t2 VALUES(4, 'abc');
+END;
+/
+
+
+1 rows fetched.
+
+SQL> drop table if exists test_pro_t1;
+
+Succeed.
+
+SQL> drop table if exists test_pro_t2;
+
+Succeed.
+
+SQL> drop procedure if exists test_proc_src;
+
+Succeed.
+
+SQL> DROP TRIGGER IF EXISTS TRIG_BEFORE_SRC;
+
+Succeed.
+
+SQL> SELECT * FROM USER_SOURCE WHERE NAME = 'TEST_PROC_SRC';
+
+NAME                                                             TYPE         LINE                                     TEXT                                                            
+---------------------------------------------------------------- ------------ ---------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> SELECT * FROM USER_SOURCE WHERE NAME = 'TRIG_BEFORE_SRC';
+
+NAME                                                             TYPE         LINE                                     TEXT                                                            
+---------------------------------------------------------------- ------------ ---------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --V$CONTROLFILE
+SQL> SELECT STATUS, IS_RECOVERY_DEST_FILE, BLOCK_SIZE, FILE_SIZE_BLKS FROM V$CONTROLFILE WHERE NAME LIKE '%ctrl%';  --FILE_SIZE_BLKS always return zero for temporary
+
+STATUS           IS_RECOVERY_DEST_FILE BLOCK_SIZE   FILE_SIZE_BLKS
+---------------- --------------------- ------------ --------------
+                 NO                    16384        0             
+                 NO                    16384        0             
+                 NO                    16384        0             
+
+3 rows fetched.
+
+SQL> SELECT COUNT(*) FROM V$CONTROLFILE WHERE NAME LIKE '%ctrl%';
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> 
+SQL> --statistic views
+SQL> DROP TABLE IF EXISTS SV_FOOBAR;
+
+Succeed.
+
+SQL> CREATE TABLE SV_FOOBAR (col1 INTEGER NOT NULL, col2 VARCHAR(32));
+
+Succeed.
+
+SQL> CREATE INDEX IX_SVFOOBAR_01 ON SV_FOOBAR(col1);
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO SV_FOOBAR VALUES (1, 'aaa');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (2, 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (3, 'cc');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (4, 'ddd');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (5, 'eeee');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (6, 'aaa');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (7, 'bbb');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (8, 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (9, 'cc');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (10, 'dddd');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (11, 'aaa');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (12, 'f'); 
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (4, 'aaa');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (6, 'bb');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (7, 'ccc');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (9, 'ddd');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (12, 'ee');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (1, 'eeee');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (3, 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR VALUES (7, 'f');
+
+1 rows affected.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> ANALYZE TABLE SV_FOOBAR COMPUTE STATISTICS;
+
+Succeed.
+
+SQL> SELECT SLEEP(3) FROM DUAL;    -- make ANALYZE write statistics data into disk
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT TABLE_NAME, NUM_ROWS, BLOCKS, EMPTY_BLOCKS, AVG_ROW_LEN FROM ALL_TAB_STATISTICS WHERE TABLE_NAME='SV_FOOBAR';
+
+TABLE_NAME                                                       NUM_ROWS     BLOCKS       EMPTY_BLOCKS AVG_ROW_LEN         
+---------------------------------------------------------------- ------------ ------------ ------------ --------------------
+SV_FOOBAR                                                        20           1            0            18                  
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, NUM_ROWS, BLOCKS, EMPTY_BLOCKS, AVG_ROW_LEN FROM USER_TAB_STATISTICS WHERE TABLE_NAME='SV_FOOBAR';
+
+TABLE_NAME                                                       NUM_ROWS     BLOCKS       EMPTY_BLOCKS AVG_ROW_LEN         
+---------------------------------------------------------------- ------------ ------------ ------------ --------------------
+SV_FOOBAR                                                        20           1            0            18                  
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT INDEX_NAME, TABLE_NAME, BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, 
+  2        ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2), ROUND(AVG_DATA_BLOCKS_PER_KEY, 2), NUM_ROWS 
+  3 FROM ALL_INDEXES WHERE INDEX_NAME='IX_SVFOOBAR_01' AND TABLE_NAME='SV_FOOBAR';
+
+INDEX_NAME                                                       TABLE_NAME                                                       BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2)        ROUND(AVG_DATA_BLOCKS_PER_KEY, 2)        NUM_ROWS    
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------- ---------------------------------------- ---------------------------------------- ------------
+IX_SVFOOBAR_01                                                   SV_FOOBAR                                                        1            1            12            .08                                      .67                                      20          
+
+1 rows fetched.
+
+SQL> SELECT INDEX_NAME, TABLE_NAME, BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, 
+  2        ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2), ROUND(AVG_DATA_BLOCKS_PER_KEY, 2), NUM_ROWS 
+  3 FROM USER_INDEXES WHERE INDEX_NAME='IX_SVFOOBAR_01' AND TABLE_NAME='SV_FOOBAR';
+
+INDEX_NAME                                                       TABLE_NAME                                                       BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2)        ROUND(AVG_DATA_BLOCKS_PER_KEY, 2)        NUM_ROWS    
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------- ---------------------------------------- ---------------------------------------- ------------
+IX_SVFOOBAR_01                                                   SV_FOOBAR                                                        1            1            12            .08                                      .67                                      20          
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT INDEX_NAME, TABLE_NAME, OBJECT_TYPE, BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, 
+  2        ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2), ROUND(AVG_DATA_BLOCKS_PER_KEY, 2), NUM_ROWS 
+  3 FROM ALL_IND_STATISTICS WHERE INDEX_NAME='IX_SVFOOBAR_01' AND TABLE_NAME='SV_FOOBAR';
+
+INDEX_NAME                                                       TABLE_NAME                                                       OBJECT_TYPE BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2)        ROUND(AVG_DATA_BLOCKS_PER_KEY, 2)        NUM_ROWS    
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------ ------------ ------------- ---------------------------------------- ---------------------------------------- ------------
+IX_SVFOOBAR_01                                                   SV_FOOBAR                                                        INDEX       1            1            12            .08                                      .67                                      20          
+
+1 rows fetched.
+
+SQL> SELECT INDEX_NAME, TABLE_NAME, OBJECT_TYPE, BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, 
+  2        ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2), ROUND(AVG_DATA_BLOCKS_PER_KEY, 2), NUM_ROWS 
+  3 FROM USER_IND_STATISTICS WHERE INDEX_NAME='IX_SVFOOBAR_01' AND TABLE_NAME='SV_FOOBAR';
+
+INDEX_NAME                                                       TABLE_NAME                                                       OBJECT_TYPE BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2)        ROUND(AVG_DATA_BLOCKS_PER_KEY, 2)        NUM_ROWS    
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------- ------------ ------------ ------------- ---------------------------------------- ---------------------------------------- ------------
+IX_SVFOOBAR_01                                                   SV_FOOBAR                                                        INDEX       1            1            12            .08                                      .67                                      20          
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NULLABLE, 
+  2        NUM_DISTINCT, LOW_VALUE, HIGH_VALUE, NUM_NULLS, NUM_BUCKETS, CHAR_LENGTH, CHAR_USED, HISTOGRAM
+  3 FROM ALL_TAB_COLUMNS WHERE TABLE_NAME='SV_FOOBAR' ORDER BY COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  NULLABLE NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED HISTOGRAM                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- ----------------------------------------------------------------
+SV_FOOBAR                                                        COL1                                                             BINARY_INTEGER                                                   4            N        12           1                                                                12                                                               0            12           0                      FREQUENCY                                                       
+SV_FOOBAR                                                        COL2                                                             VARCHAR                                                          32           Y        11           aaa                                                              f                                                                0            11           32           B         FREQUENCY                                                       
+
+2 rows fetched.
+
+SQL> SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NULLABLE, 
+  2        NUM_DISTINCT, LOW_VALUE, HIGH_VALUE, NUM_NULLS, NUM_BUCKETS, CHAR_LENGTH, CHAR_USED, HISTOGRAM
+  3 FROM USER_TAB_COLUMNS WHERE TABLE_NAME='SV_FOOBAR' ORDER BY COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      DATA_TYPE                                                        DATA_LENGTH  NULLABLE NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       NUM_NULLS    NUM_BUCKETS  CHAR_LENGTH  CHAR_USED HISTOGRAM                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ --------- ----------------------------------------------------------------
+SV_FOOBAR                                                        COL1                                                             BINARY_INTEGER                                                   4            N        12           1                                                                12                                                               0            12           0                      FREQUENCY                                                       
+SV_FOOBAR                                                        COL2                                                             VARCHAR                                                          32           Y        11           aaa                                                              f                                                                0            11           32           B         FREQUENCY                                                       
+
+2 rows fetched.
+
+SQL> 
+SQL> SELECT TABLE_NAME, COLUMN_NAME, NUM_DISTINCT, LOW_VALUE, HIGH_VALUE, ROUND(DENSITY, 2), NUM_NULLS, NUM_BUCKETS, HISTOGRAM
+  2 FROM ALL_TAB_COL_STATISTICS WHERE TABLE_NAME='SV_FOOBAR' ORDER BY COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       ROUND(DENSITY, 2)                        NUM_NULLS    NUM_BUCKETS  HISTOGRAM                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- ------------ ------------ ----------------------------------------------------------------
+SV_FOOBAR                                                        COL1                                                             12           1                                                                12                                                               .08                                      0            12           FREQUENCY                                                       
+SV_FOOBAR                                                        COL2                                                             11           aaa                                                              f                                                                .09                                      0            11           FREQUENCY                                                       
+
+2 rows fetched.
+
+SQL> SELECT TABLE_NAME, COLUMN_NAME, NUM_DISTINCT, LOW_VALUE, HIGH_VALUE, ROUND(DENSITY, 2), NUM_NULLS, NUM_BUCKETS, HISTOGRAM
+  2 FROM USER_TAB_COL_STATISTICS WHERE TABLE_NAME='SV_FOOBAR' ORDER BY COLUMN_NAME;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      NUM_DISTINCT LOW_VALUE                                                        HIGH_VALUE                                                       ROUND(DENSITY, 2)                        NUM_NULLS    NUM_BUCKETS  HISTOGRAM                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- ------------ ------------ ----------------------------------------------------------------
+SV_FOOBAR                                                        COL1                                                             12           1                                                                12                                                               .08                                      0            12           FREQUENCY                                                       
+SV_FOOBAR                                                        COL2                                                             11           aaa                                                              f                                                                .09                                      0            11           FREQUENCY                                                       
+
+2 rows fetched.
+
+SQL> 
+SQL> SELECT TABLE_NAME, COLUMN_NAME, ENDPOINT_NUMBER, ENDPOINT_VALUE, ENDPOINT_ACTUAL_VALUE FROM ALL_HISTOGRAMS WHERE TABLE_NAME='SV_FOOBAR' ORDER BY COLUMN_NAME, ENDPOINT_NUMBER, ENDPOINT_VALUE;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      ENDPOINT_NUMBER ENDPOINT_VALUE ENDPOINT_ACTUAL_VALUE                                           
+---------------------------------------------------------------- ---------------------------------------------------------------- --------------- -------------- ----------------------------------------------------------------
+SV_FOOBAR                                                        COL1                                                             1               2              1                                                               
+SV_FOOBAR                                                        COL1                                                             2               3              2                                                               
+SV_FOOBAR                                                        COL1                                                             3               5              3                                                               
+SV_FOOBAR                                                        COL1                                                             4               7              4                                                               
+SV_FOOBAR                                                        COL1                                                             5               8              5                                                               
+SV_FOOBAR                                                        COL1                                                             6               10             6                                                               
+SV_FOOBAR                                                        COL1                                                             7               13             7                                                               
+SV_FOOBAR                                                        COL1                                                             8               14             8                                                               
+SV_FOOBAR                                                        COL1                                                             9               16             9                                                               
+SV_FOOBAR                                                        COL1                                                             10              17             10                                                              
+SV_FOOBAR                                                        COL1                                                             11              18             11                                                              
+SV_FOOBAR                                                        COL1                                                             12              20             12                                                              
+SV_FOOBAR                                                        COL2                                                             1               4              aaa                                                             
+SV_FOOBAR                                                        COL2                                                             2               7              b                                                               
+SV_FOOBAR                                                        COL2                                                             3               8              bb                                                              
+SV_FOOBAR                                                        COL2                                                             4               9              bbb                                                             
+SV_FOOBAR                                                        COL2                                                             5               11             cc                                                              
+SV_FOOBAR                                                        COL2                                                             6               12             ccc                                                             
+SV_FOOBAR                                                        COL2                                                             7               14             ddd                                                             
+SV_FOOBAR                                                        COL2                                                             8               15             dddd                                                            
+SV_FOOBAR                                                        COL2                                                             9               16             ee                                                              
+SV_FOOBAR                                                        COL2                                                             10              18             eeee                                                            
+SV_FOOBAR                                                        COL2                                                             11              20             f                                                               
+
+23 rows fetched.
+
+SQL> SELECT * FROM USER_HISTOGRAMS WHERE TABLE_NAME='SV_FOOBAR' ORDER BY COLUMN_NAME, ENDPOINT_NUMBER, ENDPOINT_VALUE;
+
+TABLE_NAME                                                       COLUMN_NAME                                                      ENDPOINT_NUMBER ENDPOINT_VALUE ENDPOINT_ACTUAL_VALUE                                           
+---------------------------------------------------------------- ---------------------------------------------------------------- --------------- -------------- ----------------------------------------------------------------
+SV_FOOBAR                                                        COL1                                                             1               2              1                                                               
+SV_FOOBAR                                                        COL1                                                             2               3              2                                                               
+SV_FOOBAR                                                        COL1                                                             3               5              3                                                               
+SV_FOOBAR                                                        COL1                                                             4               7              4                                                               
+SV_FOOBAR                                                        COL1                                                             5               8              5                                                               
+SV_FOOBAR                                                        COL1                                                             6               10             6                                                               
+SV_FOOBAR                                                        COL1                                                             7               13             7                                                               
+SV_FOOBAR                                                        COL1                                                             8               14             8                                                               
+SV_FOOBAR                                                        COL1                                                             9               16             9                                                               
+SV_FOOBAR                                                        COL1                                                             10              17             10                                                              
+SV_FOOBAR                                                        COL1                                                             11              18             11                                                              
+SV_FOOBAR                                                        COL1                                                             12              20             12                                                              
+SV_FOOBAR                                                        COL2                                                             1               4              aaa                                                             
+SV_FOOBAR                                                        COL2                                                             2               7              b                                                               
+SV_FOOBAR                                                        COL2                                                             3               8              bb                                                              
+SV_FOOBAR                                                        COL2                                                             4               9              bbb                                                             
+SV_FOOBAR                                                        COL2                                                             5               11             cc                                                              
+SV_FOOBAR                                                        COL2                                                             6               12             ccc                                                             
+SV_FOOBAR                                                        COL2                                                             7               14             ddd                                                             
+SV_FOOBAR                                                        COL2                                                             8               15             dddd                                                            
+SV_FOOBAR                                                        COL2                                                             9               16             ee                                                              
+SV_FOOBAR                                                        COL2                                                             10              18             eeee                                                            
+SV_FOOBAR                                                        COL2                                                             11              20             f                                                               
+
+23 rows fetched.
+
+SQL> 
+SQL> DROP INDEX IF EXISTS IX_SVFOOBAR_01 ON SV_FOOBAR;
+
+Succeed.
+
+SQL> DROP TABLE SV_FOOBAR;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS SV_RANGE_TABLE;
+
+Succeed.
+
+SQL> CREATE TABLE SV_RANGE_TABLE(ID INT) PARTITION BY RANGE(ID)
+  2 (
+  3  PARTITION P1 VALUES LESS THAN(10),
+  4  PARTITION P2 VALUES LESS THAN(MAXVALUE)
+  5 );
+
+Succeed.
+
+SQL> CREATE INDEX IX_SV_RANGE_TABLE ON SV_RANGE_TABLE(ID);
+
+Succeed.
+
+SQL> INSERT INTO SV_RANGE_TABLE VALUES(1),(100);
+
+2 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM USER_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                VALID  
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM ALL_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                VALID  
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM DBA_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                VALID  
+
+1 rows fetched.
+
+SQL> ALTER TABLE SV_RANGE_TABLE TRUNCATE PARTITION P1;
+
+Succeed.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM USER_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                INVALID
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM ALL_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                INVALID
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM DBA_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                INVALID
+
+1 rows fetched.
+
+SQL> TRUNCATE TABLE SV_RANGE_TABLE;
+
+Succeed.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM USER_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                VALID  
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM ALL_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                VALID  
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM DBA_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                VALID  
+
+1 rows fetched.
+
+SQL> INSERT INTO SV_RANGE_TABLE VALUES(1),(100);
+
+2 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> ALTER TABLE SV_RANGE_TABLE DROP PARTITION P2;
+
+Succeed.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM USER_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                INVALID
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM ALL_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                INVALID
+
+1 rows fetched.
+
+SQL> SELECT TABLE_NAME, INDEX_NAME, STATUS FROM DBA_INDEXES WHERE TABLE_NAME='SV_RANGE_TABLE' AND INDEX_NAME='IX_SV_RANGE_TABLE';
+
+TABLE_NAME                                                       INDEX_NAME                                                       STATUS 
+---------------------------------------------------------------- ---------------------------------------------------------------- -------
+SV_RANGE_TABLE                                                   IX_SV_RANGE_TABLE                                                INVALID
+
+1 rows fetched.
+
+SQL> DROP TABLE SV_RANGE_TABLE;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS SV_FOOBAR_PART;
+
+Succeed.
+
+SQL> CREATE TABLE SV_FOOBAR_PART(col1 INTEGER NOT NULL, col2 VARCHAR(32))
+  2 PARTITION BY RANGE(col1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(MAXVALUE)
+  6 );
+
+Succeed.
+
+SQL> 
+SQL> CREATE INDEX IX_SVFOOBAR_GBL on SV_FOOBAR_PART(col1);
+
+Succeed.
+
+SQL> CREATE INDEX IX_SVFOOBAR_LOC on SV_FOOBAR_PART(col2) LOCAL;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (1, 'aaa');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (2, 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (3, 'cc');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (4, 'ddd');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (5, 'eeee');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (6, 'aaa');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (7, 'bbb');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (8, 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (9, 'cc');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (10, 'dddd');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (11, 'aaa');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (12, 'f'); 
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (4, 'aaa');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (6, 'bb');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (7, 'ccc');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (9, 'ddd');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (12, 'ee');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (1, 'eeee');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (3, 'b');
+
+1 rows affected.
+
+SQL> INSERT INTO SV_FOOBAR_PART VALUES (7, 'f');
+
+1 rows affected.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --HOWEVER, ANALYZE does not support partition table, 
+SQL> --all the statistics will not be collected and the related columns are NULL 
+SQL> ANALYZE TABLE SV_FOOBAR_PART COMPUTE STATISTICS;
+
+Succeed.
+
+SQL> SELECT SLEEP(3) FROM DUAL;    -- make ANALYZE write statistics data into disk
+
+SLEEP(3)
+--------
+        
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT TABLE_NAME, PARTITIONING_TYPE, PARTITION_COUNT, PARTITIONING_KEY_COUNT, STATUS 
+  2 FROM USER_PART_TABLES WHERE TABLE_NAME='SV_FOOBAR_PART';
+
+TABLE_NAME                                                       PARTITIONING_TYPE PARTITION_COUNT PARTITIONING_KEY_COUNT STATUS
+---------------------------------------------------------------- ----------------- --------------- ---------------------- ------
+SV_FOOBAR_PART                                                   RANGE             2               1                      VALID 
+
+1 rows fetched.
+
+SQL> SELECT OWNER, TABLE_NAME, PARTITIONING_TYPE, PARTITION_COUNT, PARTITIONING_KEY_COUNT, STATUS 
+  2 FROM ALL_PART_TABLES WHERE TABLE_NAME='SV_FOOBAR_PART';
+
+OWNER                                                            TABLE_NAME                                                       PARTITIONING_TYPE PARTITION_COUNT PARTITIONING_KEY_COUNT STATUS
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------- --------------- ---------------------- ------
+SYS                                                              SV_FOOBAR_PART                                                   RANGE             2               1                      VALID 
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT INDEX_NAME, TABLE_NAME, BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, 
+  2        ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2), ROUND(AVG_DATA_BLOCKS_PER_KEY, 2), NUM_ROWS 
+  3 FROM USER_INDEXES WHERE TABLE_NAME='SV_FOOBAR_PART' ORDER BY INDEX_NAME;
+
+INDEX_NAME                                                       TABLE_NAME                                                       BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2)        ROUND(AVG_DATA_BLOCKS_PER_KEY, 2)        NUM_ROWS    
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------- ---------------------------------------- ---------------------------------------- ------------
+IX_SVFOOBAR_GBL                                                  SV_FOOBAR_PART                                                   1            1            12            .08                                      .67                                      20          
+IX_SVFOOBAR_LOC                                                  SV_FOOBAR_PART                                                   0            0            0             0                                        0                                        20          
+
+2 rows fetched.
+
+SQL> SELECT INDEX_NAME, TABLE_NAME, BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, 
+  2        ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2), ROUND(AVG_DATA_BLOCKS_PER_KEY, 2), NUM_ROWS 
+  3 FROM ALL_INDEXES WHERE TABLE_NAME='SV_FOOBAR_PART' ORDER BY INDEX_NAME;
+
+INDEX_NAME                                                       TABLE_NAME                                                       BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS ROUND(AVG_LEAF_BLOCKS_PER_KEY, 2)        ROUND(AVG_DATA_BLOCKS_PER_KEY, 2)        NUM_ROWS    
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------- ---------------------------------------- ---------------------------------------- ------------
+IX_SVFOOBAR_GBL                                                  SV_FOOBAR_PART                                                   1            1            12            .08                                      .67                                      20          
+IX_SVFOOBAR_LOC                                                  SV_FOOBAR_PART                                                   0            0            0             0                                        0                                        20          
+
+2 rows fetched.
+
+SQL> 
+SQL> SELECT INDEX_NAME, COMPOSITE, PARTITION_NAME, PARTITION_POSITION, STATUS, 
+  2 BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, AVG_LEAF_BLOCKS_PER_KEY, AVG_DATA_BLOCKS_PER_KEY
+  3 FROM USER_IND_PARTITIONS WHERE INDEX_NAME='IX_SVFOOBAR_LOC' ORDER BY INDEX_NAME, PARTITION_POSITION;
+
+INDEX_NAME                                                       COMPOSITE PARTITION_NAME                                                   PARTITION_POSITION STATUS BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS AVG_LEAF_BLOCKS_PER_KEY AVG_DATA_BLOCKS_PER_KEY
+---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------------------ ------- ------------ ------------ ------------- ----------------------- -----------------------
+IX_SVFOOBAR_LOC                                                  NO        P1                                                               1                  VALID  1            1            9             0.111111111111111       0.888888888888889      
+IX_SVFOOBAR_LOC                                                  NO        P2                                                               2                  VALID  1            1            4             0.25                    2                      
+
+2 rows fetched.
+
+SQL> SELECT COUNT(1) FROM USER_IND_PARTITIONS WHERE INDEX_NAME='IX_SVFOOBAR_GBL';  --GLOBAL index not in USER_IND_PARTITIONS
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> SELECT INDEX_NAME, COMPOSITE, PARTITION_NAME, PARTITION_POSITION, STATUS, 
+  2 BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, AVG_LEAF_BLOCKS_PER_KEY, AVG_DATA_BLOCKS_PER_KEY
+  3 FROM ALL_IND_PARTITIONS WHERE INDEX_NAME='IX_SVFOOBAR_LOC' ORDER BY INDEX_NAME, PARTITION_POSITION;
+
+INDEX_NAME                                                       COMPOSITE PARTITION_NAME                                                   PARTITION_POSITION STATUS BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS AVG_LEAF_BLOCKS_PER_KEY AVG_DATA_BLOCKS_PER_KEY
+---------------------------------------------------------------- --------- ---------------------------------------------------------------- ------------------ ------- ------------ ------------ ------------- ----------------------- -----------------------
+IX_SVFOOBAR_LOC                                                  NO        P1                                                               1                  VALID  1            1            9             0.111111111111111       0.888888888888889      
+IX_SVFOOBAR_LOC                                                  NO        P2                                                               2                  VALID  1            1            4             0.25                    2                      
+
+2 rows fetched.
+
+SQL> SELECT COUNT(1) FROM ALL_IND_PARTITIONS WHERE INDEX_NAME='IX_SVFOOBAR_GBL';  --GLOBAL index not in ALL_IND_PARTITIONS
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> SELECT TABLE_NAME, INDEX_NAME, PARTITION_NAME, PARTITION_POSITION, OBJECT_TYPE, 
+  2 BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, AVG_LEAF_BLOCKS_PER_KEY, AVG_DATA_BLOCKS_PER_KEY
+  3 FROM USER_IND_STATISTICS WHERE TABLE_NAME='SV_FOOBAR_PART' ORDER BY TABLE_NAME, INDEX_NAME, PARTITION_POSITION;
+
+TABLE_NAME                                                       INDEX_NAME                                                       PARTITION_NAME                                                   PARTITION_POSITION                       OBJECT_TYPE BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS AVG_LEAF_BLOCKS_PER_KEY AVG_DATA_BLOCKS_PER_KEY
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- ----------- ------------ ------------ ------------- ----------------------- -----------------------
+SV_FOOBAR_PART                                                   IX_SVFOOBAR_GBL                                                                                                                                                            INDEX       1            1            12            0.0833333333333333      0.666666666666667      
+SV_FOOBAR_PART                                                   IX_SVFOOBAR_LOC                                                  P1                                                               1                                        PARTITION   1            1            9             0.111111111111111       0.888888888888889      
+SV_FOOBAR_PART                                                   IX_SVFOOBAR_LOC                                                  P2                                                               2                                        PARTITION   1            1            4             0.25                    2                      
+SV_FOOBAR_PART                                                   IX_SVFOOBAR_LOC                                                                                                                                                            INDEX       0            0            0             0                       0                      
+
+4 rows fetched.
+
+SQL> SELECT TABLE_NAME, TABLE_OWNER, INDEX_NAME, PARTITION_NAME, PARTITION_POSITION, OBJECT_TYPE, 
+  2 BLEVEL, LEAF_BLOCKS, DISTINCT_KEYS, AVG_LEAF_BLOCKS_PER_KEY, AVG_DATA_BLOCKS_PER_KEY
+  3 FROM ALL_IND_STATISTICS WHERE TABLE_NAME='SV_FOOBAR_PART' ORDER BY TABLE_NAME, INDEX_NAME, PARTITION_POSITION;
+
+TABLE_NAME                                                       TABLE_OWNER                                                      INDEX_NAME                                                       PARTITION_NAME                                                   PARTITION_POSITION                       OBJECT_TYPE BLEVEL       LEAF_BLOCKS  DISTINCT_KEYS AVG_LEAF_BLOCKS_PER_KEY AVG_DATA_BLOCKS_PER_KEY
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- ----------- ------------ ------------ ------------- ----------------------- -----------------------
+SV_FOOBAR_PART                                                   SYS                                                              IX_SVFOOBAR_GBL                                                                                                                                                            INDEX       1            1            12            0.0833333333333333      0.666666666666667      
+SV_FOOBAR_PART                                                   SYS                                                              IX_SVFOOBAR_LOC                                                  P1                                                               1                                        PARTITION   1            1            9             0.111111111111111       0.888888888888889      
+SV_FOOBAR_PART                                                   SYS                                                              IX_SVFOOBAR_LOC                                                  P2                                                               2                                        PARTITION   1            1            4             0.25                    2                      
+SV_FOOBAR_PART                                                   SYS                                                              IX_SVFOOBAR_LOC                                                                                                                                                            INDEX       0            0            0             0                       0                      
+
+4 rows fetched.
+
+SQL> 
+SQL> SELECT TABLE_NAME, PARTITION_NAME, PARTITION_POSITION, OBJECT_TYPE
+  2 FROM USER_TAB_STATISTICS WHERE TABLE_NAME='SV_FOOBAR_PART' ORDER BY PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   PARTITION_POSITION                       OBJECT_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- -----------
+SV_FOOBAR_PART                                                   P1                                                               1                                        PARTITION  
+SV_FOOBAR_PART                                                   P2                                                               2                                        PARTITION  
+SV_FOOBAR_PART                                                                                                                                                             TABLE      
+
+3 rows fetched.
+
+SQL> SELECT TABLE_NAME, PARTITION_NAME, PARTITION_POSITION, OBJECT_TYPE
+  2 FROM ALL_TAB_STATISTICS WHERE TABLE_NAME='SV_FOOBAR_PART' ORDER BY PARTITION_NAME;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   PARTITION_POSITION                       OBJECT_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- -----------
+SV_FOOBAR_PART                                                   P1                                                               1                                        PARTITION  
+SV_FOOBAR_PART                                                   P2                                                               2                                        PARTITION  
+SV_FOOBAR_PART                                                                                                                                                             TABLE      
+
+3 rows fetched.
+
+SQL> 
+SQL> DROP INDEX IF EXISTS IX_SVFOOBAR_LOC on SV_FOOBAR_PART;
+
+Succeed.
+
+SQL> DROP INDEX IF EXISTS IX_SVFOOBAR_GBL on SV_FOOBAR_PART;
+
+Succeed.
+
+SQL> DROP TABLE SV_FOOBAR_PART;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018091300866
+SQL> DROP TABLE IF EXISTS T_ALL_TAB_STATISTICS_001;
+
+Succeed.
+
+SQL> CREATE TABLE T_ALL_TAB_STATISTICS_001(ID INT,NAME VARCHAR(50),EMPNO INT,SALARY INT);
+
+Succeed.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(1,'SMITH',100,5000);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(2,'ALLEN',200,3500);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(3,'JONES',100,5000);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(4,'MARTIN',300,4500);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(5,'SCOTT',300,8000);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(6,'KING',200,900);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(7,'TURNER',200,7000);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(8,'ADAMS',100,4000);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(9,'JAMES',200,6600);
+
+1 rows affected.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001 VALUES(10,'FORD',200,5500);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_ALL_TAB_STATISTICS_001_PART;
+
+Succeed.
+
+SQL> CREATE TABLE T_ALL_TAB_STATISTICS_001_PART(ID INT,NAME VARCHAR(50),EMPNO INT,SALARY INT)
+  2 PARTITION BY LIST(EMPNO)(
+  3 PARTITION T_ALL_TAB_STATISTICS_PART_001 VALUES(100),
+  4 PARTITION T_ALL_TAB_STATISTICS_PART_002 VALUES(200),
+  5 PARTITION T_ALL_TAB_STATISTICS_PART_003 VALUES(300)
+  6 );
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS IND_ALL_IND_STATISTICS_001;
+
+Succeed.
+
+SQL> CREATE INDEX IND_ALL_IND_STATISTICS_001 ON T_ALL_TAB_STATISTICS_001_PART(EMPNO) LOCAL;
+
+Succeed.
+
+SQL> INSERT INTO T_ALL_TAB_STATISTICS_001_PART SELECT * FROM T_ALL_TAB_STATISTICS_001;
+
+10 rows affected.
+
+SQL> COMMIT;                       
+
+Succeed.
+
+SQL> 
+SQL> SELECT TABLE_NAME,OWNER, PARTITION_NAME,PARTITION_POSITION,OBJECT_TYPE 
+  2 FROM ALL_TAB_STATISTICS WHERE TABLE_NAME='T_ALL_TAB_STATISTICS_001_PART' 
+  3 ORDER BY TABLE_NAME, OWNER ,PARTITION_NAME,PARTITION_POSITION,OBJECT_TYPE;
+
+TABLE_NAME                                                       OWNER                                                            PARTITION_NAME                                                   PARTITION_POSITION                       OBJECT_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- -----------
+T_ALL_TAB_STATISTICS_001_PART                                    SYS                                                              T_ALL_TAB_STATISTICS_PART_001                                    1                                        PARTITION  
+T_ALL_TAB_STATISTICS_001_PART                                    SYS                                                              T_ALL_TAB_STATISTICS_PART_002                                    2                                        PARTITION  
+T_ALL_TAB_STATISTICS_001_PART                                    SYS                                                              T_ALL_TAB_STATISTICS_PART_003                                    3                                        PARTITION  
+T_ALL_TAB_STATISTICS_001_PART                                    SYS                                                                                                                                                                        TABLE      
+
+4 rows fetched.
+
+SQL> 
+SQL> SELECT TABLE_NAME,PARTITION_NAME,PARTITION_POSITION,OBJECT_TYPE 
+  2 FROM USER_TAB_STATISTICS WHERE TABLE_NAME='T_ALL_TAB_STATISTICS_001_PART' 
+  3 ORDER BY TABLE_NAME,PARTITION_NAME,PARTITION_POSITION,OBJECT_TYPE;
+
+TABLE_NAME                                                       PARTITION_NAME                                                   PARTITION_POSITION                       OBJECT_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- -----------
+T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_001                                    1                                        PARTITION  
+T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_002                                    2                                        PARTITION  
+T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_003                                    3                                        PARTITION  
+T_ALL_TAB_STATISTICS_001_PART                                                                                                                                              TABLE      
+
+4 rows fetched.
+
+SQL> 
+SQL> SELECT INDEX_NAME,TABLE_OWNER,TABLE_NAME,PARTITION_NAME,PARTITION_POSITION,OBJECT_TYPE
+  2 FROM USER_IND_STATISTICS WHERE TABLE_NAME='T_ALL_TAB_STATISTICS_001_PART' 
+  3 ORDER BY INDEX_NAME,TABLE_OWNER,TABLE_NAME,PARTITION_NAME,PARTITION_POSITION,OBJECT_TYPE;
+
+INDEX_NAME                                                       TABLE_OWNER                                                      TABLE_NAME                                                       PARTITION_NAME                                                   PARTITION_POSITION                       OBJECT_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- -----------
+IND_ALL_IND_STATISTICS_001                                       SYS                                                              T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_001                                    1                                        PARTITION  
+IND_ALL_IND_STATISTICS_001                                       SYS                                                              T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_002                                    2                                        PARTITION  
+IND_ALL_IND_STATISTICS_001                                       SYS                                                              T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_003                                    3                                        PARTITION  
+IND_ALL_IND_STATISTICS_001                                       SYS                                                              T_ALL_TAB_STATISTICS_001_PART                                                                                                                                              INDEX      
+
+4 rows fetched.
+
+SQL> 
+SQL> SELECT INDEX_NAME,TABLE_OWNER,TABLE_NAME,PARTITION_NAME,PARTITION_POSITION,OBJECT_TYPE
+  2 FROM ALL_IND_STATISTICS WHERE TABLE_NAME='T_ALL_TAB_STATISTICS_001_PART' 
+  3 ORDER BY INDEX_NAME,TABLE_OWNER,TABLE_NAME,PARTITION_NAME,PARTITION_POSITION,OBJECT_TYPE;
+
+INDEX_NAME                                                       TABLE_OWNER                                                      TABLE_NAME                                                       PARTITION_NAME                                                   PARTITION_POSITION                       OBJECT_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- -----------
+IND_ALL_IND_STATISTICS_001                                       SYS                                                              T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_001                                    1                                        PARTITION  
+IND_ALL_IND_STATISTICS_001                                       SYS                                                              T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_002                                    2                                        PARTITION  
+IND_ALL_IND_STATISTICS_001                                       SYS                                                              T_ALL_TAB_STATISTICS_001_PART                                    T_ALL_TAB_STATISTICS_PART_003                                    3                                        PARTITION  
+IND_ALL_IND_STATISTICS_001                                       SYS                                                              T_ALL_TAB_STATISTICS_001_PART                                                                                                                                              INDEX      
+
+4 rows fetched.
+
+SQL> 
+SQL> DROP TABLE T_ALL_TAB_STATISTICS_001_PART;
+
+Succeed.
+
+SQL> DROP TABLE T_ALL_TAB_STATISTICS_001;
+
+Succeed.
+
+SQL> 
+SQL> SELECT OWNER FROM V$DB_OBJECT_CACHE WHERE NAME='SYS_TABLES';
+
+OWNER                                                           
+----------------------------------------------------------------
+SYS                                                             
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --TEST PL DTS2018101801642
+SQL> DROP TABLE IF EXISTS SYSVIEW_T1;
+
+Succeed.
+
+SQL> CREATE TABLE SYSVIEW_T1(A INT);
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE SYSVIEW_P1(A INT)
+  2 AS
+  3 C INT;
+  4 BEGIN
+  5 	SELECT COUNT(*) INTO C FROM DUAL;
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT COUNT(*) FROM USER_PROCEDURES WHERE OBJECT_NAME='SYSVIEW_P1';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> SELECT COUNT(*) FROM USER_SOURCE WHERE NAME='SYSVIEW_P1';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE SYSVIEW_T1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT COUNT(*) FROM USER_PROCEDURES WHERE OBJECT_NAME='SYSVIEW_P1';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> SELECT COUNT(*) FROM USER_SOURCE WHERE NAME='SYSVIEW_P1';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP PROCEDURE SYSVIEW_P1;
+
+Succeed.
+
+SQL> SELECT COUNT(*) FROM USER_PROCEDURES WHERE OBJECT_NAME='SYSVIEW_P1';
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> SELECT COUNT(*) FROM USER_SOURCE WHERE NAME='SYSVIEW_P1';
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select DESCRIPTION from v$temp_pool where name= 'free pages';
+
+CT-00601, [1:8]Sql syntax error: invalid column name 'DESCRIPTION'
+SQL> 
+SQL> desc V$PL_REFSQLS
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+USER#                               NOT NULL BINARY_INTEGER                      
+USER_NAME                           NOT NULL VARCHAR(64 BYTE)                    
+NAME                                NOT NULL VARCHAR(64 BYTE)                    
+ENTITY                              NOT NULL BINARY_BIGINT                       
+SQL_ID                              NOT NULL VARCHAR(10 BYTE)                    
+
+SQL> desc V$PL_MANAGER
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+USER#                               NOT NULL BINARY_INTEGER                      
+USER_NAME                           NOT NULL VARCHAR(64 BYTE)                    
+NAME                                NOT NULL VARCHAR(64 BYTE)                    
+TYPE                                NOT NULL VARCHAR(30 BYTE)                    
+BUCKET_ID                           NOT NULL BINARY_INTEGER                      
+LIST_POS                            NOT NULL BINARY_INTEGER                      
+UNUSED                              NOT NULL BINARY_INTEGER                      
+TRIG_USER                                    VARCHAR(64 BYTE)                    
+TRIG_TABLE                                   VARCHAR(64 BYTE)                    
+REF_COUNT                           NOT NULL BINARY_INTEGER                      
+ENTITY                              NOT NULL BINARY_BIGINT                       
+PAGES                               NOT NULL BINARY_INTEGER                      
+PACKAGE_NAME                                 VARCHAR(64 BYTE)                    
+
+SQL> 
+SQL> desc V$HA_SYNC_INFO
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+THREAD#                             NOT NULL BINARY_INTEGER                      
+STATUS                              NOT NULL VARCHAR(20 BYTE)                    
+LOCAL_HOST                          NOT NULL VARCHAR(64 BYTE)                    
+ROLE_VALID                          NOT NULL VARCHAR(13 BYTE)                    
+NET_MODE                            NOT NULL VARCHAR(6 BYTE)                     
+PEER_HOST                           NOT NULL VARCHAR(64 BYTE)                    
+PEER_PORT                           NOT NULL BINARY_INTEGER                      
+LOCAL_SEND_POINT                    NOT NULL VARCHAR(128 BYTE)                   
+PEER_FLUSH_POINT                    NOT NULL VARCHAR(128 BYTE)                   
+PEER_CONTFLUSH_POINT                NOT NULL VARCHAR(128 BYTE)                   
+PEER_BUILDING                       NOT NULL VARCHAR(6 BYTE)                     
+LOCAL_LFN                           NOT NULL BINARY_BIGINT                       
+LOCAL_LSN                           NOT NULL BINARY_BIGINT                       
+PEER_LFN                            NOT NULL BINARY_BIGINT                       
+PEER_LSN                            NOT NULL BINARY_BIGINT                       
+FLUSH_LAG                           NOT NULL BINARY_BIGINT                       
+REPLAY_LAG                          NOT NULL BINARY_BIGINT                       
+BUILD_TYPE                          NOT NULL VARCHAR(20 BYTE)                    
+BUILD_PROGRESS                      NOT NULL BINARY_INTEGER                      
+BUILD_STAGE                         NOT NULL VARCHAR(20 BYTE)                    
+BUILD_SYNCED_STAGE_SIZE             NOT NULL BINARY_BIGINT                       
+BUILD_TOTAL_STAGE_SIZE              NOT NULL BINARY_BIGINT                       
+BUILD_TIME                          NOT NULL BINARY_BIGINT                       
+
+SQL> 
+SQL> select 1 from (select count(1) from (select * from v$sqlarea));
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from (select count(1) from (select * from v$pl_manager));
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> select range from v$parameter where name='SESSIONS';
+
+RANGE                                                           
+----------------------------------------------------------------
+[59,19380]                                                      
+
+1 rows fetched.
+
+SQL> 
+SQL> --DTS2019010909064  security test: ALL_IND_STATISTICS ALL_TAB_MODIFICATIONS not allow to normal user
+SQL> drop user if exists anquantest_view;
+
+Succeed.
+
+SQL> create user anquantest_view identified by Cantian_123;
+
+Succeed.
+
+SQL> grant connect to anquantest_view;
+
+Succeed.
+
+SQL> conn anquantest_view/Cantian_123@127.0.0.1:1611
+
+connected.
+
+SQL> select * from      ALL_IND_STATISTICS;--error
+
+CT-01001, Permissions were insufficient
+SQL> select * from      ALL_TAB_MODIFICATIONS;--error
+
+CT-01001, Permissions were insufficient
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> DROP USER if exists test_dv_users1;
+
+Succeed.
+
+SQL> DROP USER if exists test_dv_users2;
+
+Succeed.
+
+SQL> CREATE TABLESPACE TEST_DV_USER_SPACE DATAFILE 'TEST_DV_USER_SPACE' SIZE 32M;
+
+Succeed.
+
+SQL> CREATE PROFILE TEST_DV_USER_PROFILE LIMIT PASSWORD_GRACE_TIME 10 PASSWORD_LOCK_TIME DEFAULT PASSWORD_LIFE_TIME UNLIMITED;
+
+Succeed.
+
+SQL> create user test_dv_users1 identified by cantian_234 DEFAULT TABLESPACE TEST_DV_USER_SPACE profile TEST_DV_USER_PROFILE;
+
+Succeed.
+
+SQL> create user test_dv_users2 identified by cantian_234 PASSWORD EXPIRE PERMANENT;
+
+Succeed.
+
+SQL> select USERNAME,ACCOUNT_STATUS,FAILED_LOGINS,PROFILE,DATA_TABLESPACE,TEMPORARY_TABLESPACE from dv_users where username like 'TEST_DV_USERS%' ORDER BY USERNAME;
+
+USERNAME                                                         ACCOUNT_STATUS                                                   FAILED_LOGINS PROFILE                                                          DATA_TABLESPACE                                                  TEMPORARY_TABLESPACE                                            
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+TEST_DV_USERS1                                                   OPEN                                                             0             TEST_DV_USER_PROFILE                                             TEST_DV_USER_SPACE                                               SWAP_00                                                            
+TEST_DV_USERS2                                                   PERMANENT & EXPIRED                                              0             DEFAULT                                                          USERS                                                            SWAP_00                                                            
+
+2 rows fetched.
+
+SQL> ALTER USER test_dv_users1 PASSWORD EXPIRE;
+
+Succeed.
+
+SQL> ALTER USER test_dv_users2 ACCOUNT LOCK;
+
+Succeed.
+
+SQL> ALTER USER test_dv_users2 profile TEST_DV_USER_PROFILE;
+
+Succeed.
+
+SQL> ALTER USER test_dv_users2 DEFAULT TABLESPACE TEST_DV_USER_SPACE;
+
+Succeed.
+
+SQL> select USERNAME,ACCOUNT_STATUS,FAILED_LOGINS,PROFILE,DATA_TABLESPACE,TEMPORARY_TABLESPACE from dv_users where username like 'TEST_DV_USERS%' ORDER BY USERNAME;
+
+USERNAME                                                         ACCOUNT_STATUS                                                   FAILED_LOGINS PROFILE                                                          DATA_TABLESPACE                                                  TEMPORARY_TABLESPACE                                            
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+TEST_DV_USERS1                                                   EXPIRED                                                          0             TEST_DV_USER_PROFILE                                             TEST_DV_USER_SPACE                                               SWAP_00                                                            
+TEST_DV_USERS2                                                   PERMANENT & EXPIRED & LOCKED                                     0             TEST_DV_USER_PROFILE                                             TEST_DV_USER_SPACE                                               SWAP_00                                                            
+
+2 rows fetched.
+
+SQL> DROP USER test_dv_users1 CASCADE;
+
+Succeed.
+
+SQL> DROP USER test_dv_users2 CASCADE;
+
+Succeed.
+
+SQL> DROP PROFILE TEST_DV_USER_PROFILE CASCADE;
+
+Succeed.
+
+SQL> DROP TABLESPACE TEST_DV_USER_SPACE INCLUDING CONTENTS AND DATAFILES;
+
+Succeed.
+
+SQL> 
+SQL> drop user if exists TEST_EXP_USER;
+
+Succeed.
+
+SQL> create PROFILE profile_test_user LIMIT PASSWORD_GRACE_TIME 2 PASSWORD_LOCK_TIME 1 PASSWORD_LIFE_TIME 0.0001;
+
+Succeed.
+
+SQL> create user TEST_EXP_USER identified by cantian_234 profile profile_test_user;
+
+Succeed.
+
+SQL> GRANT DBA TO TEST_EXP_USER;
+
+Succeed.
+
+SQL> select USERNAME,ACCOUNT_STATUS,EXPIRE_TIME from dv_users where username='TEST_EXP_USER';
+
+USERNAME                                                         ACCOUNT_STATUS                                                   EXPIRE_TIME           
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------
+TEST_EXP_USER                                                    OPEN                                                                                   
+
+1 rows fetched.
+
+SQL> SELECT SLEEP(15) FROM SYS_DUMMY;
+
+SLEEP(15)
+---------
+         
+
+1 rows fetched.
+
+SQL> CONN  TEST_EXP_USER/cantian_234@127.0.0.1:1611
+
+Warnning:password will expire within 1 days
+
+SQL> select USERNAME,ACCOUNT_STATUS,EXPIRE_TIME from dv_users where username='TEST_EXP_USER';
+
+USERNAME                                                         ACCOUNT_STATUS                                                   EXPIRE_TIME           
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------
+TEST_EXP_USER                                                    EXPIRED(GRACE)                                                                         
+
+1 rows fetched.
+
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> SELECT NAME,ASTATUS,EXPTIME FROM SYS_USERS WHERE NAME ='TEST_EXP_USER';
+
+NAME                                                             ASTATUS      EXPTIME               
+---------------------------------------------------------------- ------------ ----------------------
+TEST_EXP_USER                                                    2                                  
+
+1 rows fetched.
+
+SQL> drop user TEST_EXP_USER CASCADE;
+
+Succeed.
+
+SQL> DROP PROFILE profile_test_user CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+
+

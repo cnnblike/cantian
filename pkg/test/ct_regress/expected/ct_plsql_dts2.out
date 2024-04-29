@@ -1,0 +1,2738 @@
+
+
+SQL> set serveroutput on;
+
+ON
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_plsql_dts2 cascade;
+
+Succeed.
+
+SQL> create user gs_plsql_dts2 identified by Lh00420062;
+
+Succeed.
+
+SQL> grant all privileges to gs_plsql_dts2;
+
+Succeed.
+
+SQL> grant select on dba_arguments to gs_plsql_dts2;
+
+Succeed.
+
+SQL> conn gs_plsql_dts2/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --1.1 test using cursor;
+SQL> declare
+  2 v_refcur1 sys_refcursor;
+  3 aa int := 10;
+  4 BEGIN  --
+  5     execute immediate ' --vars
+  6     BEGIN  
+  7     open :1 for select :2 from dual;
+  8     close :1;
+  9     END'using in out v_refcur1,aa;
+ 10 END;
+ 11 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[9:22] PLC-00916 PL/SQL:syntax error(out param of using clause only support normal variable, not cursor)
+
+SQL> 
+SQL> --1.2 test using cursor;
+SQL> drop table if exists myt;
+
+Succeed.
+
+SQL> create table myt (c int);
+
+Succeed.
+
+SQL> insert into myt values(10);
+
+1 rows affected.
+
+SQL> insert into myt values(20);
+
+1 rows affected.
+
+SQL> declare
+  2 cursor myc is select c from myt;
+  3 BEGIN  
+  4     
+  5     execute immediate '
+  6     BEGIN  
+  7     for item in :1 loop
+  8     dbe_output.print_line(item.c);
+  9     end loop;
+ 10     END' using myc ;
+ 11 END;
+ 12 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[10:16] PLC-00601 Sql syntax error: unexpected cursor type
+
+SQL> 
+SQL> --2.1 test after pl, the same sql occur again
+SQL> declare
+  2   i int;
+  3 begin
+  4   i := 0;
+  5   select 1 into i from dual where i = 0;
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select 1 from dual where @0_0 = 0;
+
+CT-00601, [1:26]Sql syntax error: text is incorrect
+SQL> --end
+SQL> 
+SQL> --3.1 label verify, occur before end
+SQL> create  or replace procedure FVT_goto_l00P_02 
+  2 as 
+  3 a int :=0;
+  4 b int :=2;
+  5 c int :=0;
+  6 begin 
+  7 <<aaa>>
+  8 c :=c+1;
+  9 <<ccc>>
+ 10 end;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.FVT_GOTO_L00P_02) terminated with compiling errors
+[9:1] PLC-00916 PL/SQL:syntax error(CCC is an invalid label)
+
+
+SQL> 
+SQL> --3.2 label verify, occur before loop
+SQL> create  or replace procedure FVT_goto_l00P_02 
+  2 as 
+  3 a int :=0;
+  4 su int :=0;
+  5 begin 
+  6 for a in 1..10 loop
+  7 su := su + a;
+  8 <<ccc>>
+  9 end loop;
+ 10 end;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.FVT_GOTO_L00P_02) terminated with compiling errors
+[8:1] PLC-00916 PL/SQL:syntax error(CCC is an invalid label)
+
+
+SQL> 
+SQL> --3.3 label verify, occur before endif
+SQL> create  or replace procedure FVT_goto_l00P_02 
+  2 as 
+  3 a int :=0;
+  4 
+  5 begin 
+  6 if(a=0) then
+  7 dbe_output.print_line(a);
+  8 <<ccc>>
+  9 end if;
+ 10 end;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.FVT_GOTO_L00P_02) terminated with compiling errors
+[8:1] PLC-00916 PL/SQL:syntax error(CCC is an invalid label)
+
+
+SQL> 
+SQL> 
+SQL> --DTS2019013109845 
+SQL> call abs(-1);
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00828 procedure GS_PLSQL_DTS2.ABS does not exist
+
+SQL> 
+SQL> begin
+  2 abs(-1);
+  3 end;
+  4 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[2:1] PLC-00828 procedure GS_PLSQL_DTS2.ABS does not exist
+
+SQL> 
+SQL> --4.1 test too many error info
+SQL> create or replace function test_too_many_error return int is
+  2 v1 int;
+  3 v2 int;
+  4 begin
+  5   v1 = 0;
+  6   v2 = v1;
+  7   v2 = v1;
+  8   v2 = v1;
+  9   v2 = v1;
+ 10   v2 = v1;
+ 11   v2 = v1;
+ 12   v2 = v1;
+ 13   v2 = v1;
+ 14   v2 = v1;
+ 15   v2 = v1;
+ 16   v2 = v1;
+ 17   v2 = v1;
+ 18   v2 = v1;
+ 19   v2 = v1;
+ 20   v2 = v1;
+ 21   v2 = v1;
+ 22   v2 = v1;
+ 23   v2 = v1;
+ 24   return v1;
+ 25 end;
+ 26 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.TEST_TOO_MANY_ERROR) terminated with compiling errors
+[5:6] PLC-00954 ';' or ':=' expected but = found
+[6:6] PLC-00954 ';' or ':=' expected but = found
+[7:6] PLC-00954 ';' or ':=' expected but = found
+[8:6] PLC-00954 ';' or ':=' expected but = found
+[9:6] PLC-00954 ';' or ':=' expected but = found
+[10:6] PLC-00954 ';' or ':=' expected but = found
+[11:6] PLC-00954 ';' or ':=' expected but = found
+[12:6] PLC-00954 ';' or ':=' expected but = found
+[13:6] PLC-00954 ';' or ':=' expected but = found
+[14:6] PLC-00954 ';' or ':=' expected but = found
+[15:6] PLC-00954 ';' or ':=' expected but = found
+[16:6] PLC-00954 ';' or ':=' expected but = found
+[17:6] PLC-00954 ';' or ':=' expected but = found
+[18:6] PLC-00954 ';' or ':=' expected but = found
+[19:6] PLC-00954 ';' or ':=' expected but = found
+[20:6] PLC-00954 ';' or ':=' expected but = found
+[21:6] PLC-00954 ';' or ':=' expected but = found
+[22:6] PLC-00954 ';' or ':=' expected but = found
+[23:6] PLC-00954 ';' or ':=' expected but = found
+
+
+SQL> 
+SQL> begin
+  2   execute immediate 'select test_too_many_error() from dual';
+  3 end;
+  4 /
+
+CT-00932, [2:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[1:8] CT-00944, PL/SQL(GS_PLSQL_DTS2.TEST_TOO_MANY_ERROR) terminated with compiling errors
+[5:6] PLC-00954 ';' or ':=' expected but = found
+[6:6] PLC-00954 ';' or ':=' expected but = found
+[7:6] PLC-00954 ';' or ':=' expected but = found
+[8:6] PLC-00954 ';' or ':=' expected but = found
+[9:6] PLC-00954 ';' or ':=' expected but = found
+[10:6] PLC-00954 ';' or ':=' expected but = found
+[11:6] PLC-00954 ';' or ':=' expected but = found
+[12:6] PLC-00954 ';' or ':=' expected but = found
+[13:6] PLC-00954 ';' or ':=' expected but = found
+[14:6] PLC-00954 ';' or ':=' expected but = found
+[15:6] PLC-00954 ';' or ':=' expected but = found
+[16:6] PLC-00954 ';' or ':=' expected but = found
+[17:6] PLC-00954 ';' or ':=' expected but = found
+[18:6] PLC-00954 ';' or ':=' expected but = found
+[19:6] PLC-00954 ';' or ':=' expected but = found
+[20:6] PLC-00954 ';' or ':=' expected but = found
+[21:6] PLC-00954 ';' or ':=' expected but = found
+[22:6] PLC-00954 ';' or ':=' expected but = found
+[23:6] PLC-00954 ';' or ':=' expected but = found
+
+
+SQL> 
+SQL> --verify curosr setval
+SQL> drop table if exists CURSOR_FUNCTION_002_TAB_01;
+
+Succeed.
+
+SQL> create table CURSOR_FUNCTION_002_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into CURSOR_FUNCTION_002_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> create or replace view CURSOR_FUNCTION_002_VIEW_01 as select * from CURSOR_FUNCTION_002_TAB_01;
+
+Succeed.
+
+SQL> create or replace function CURSOR_FUNCTION_002_FUN_01 (str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor;
+  4 a int;
+  5 begin
+  6  select empno into a from CURSOR_FUNCTION_002_VIEW_01;
+  7    dbe_output.print_line(a);
+  8     return length(str1);
+  9    exception
+ 10    when  TOO_MANY_ROWS  then
+ 11    begin
+ 12       select empno into a from CURSOR_FUNCTION_002_VIEW_01 limit 1;
+ 13      dbe_output.print_line(a);
+ 14      return length(str1);
+ 15    end;
+ 16 end;
+ 17 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function CURSOR_FUNCTION_002_FUN_02 (str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor cursor1(a int,b varchar) is  select CURSOR_FUNCTION_002_FUN_01(b)*a from CURSOR_FUNCTION_002_TAB_01; 
+  4 begin
+  5 open cursor1(2,'aaa') ;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.CURSOR_FUNCTION_002_FUN_02) terminated with compiling errors
+[6:8] PLC-00601 Sql syntax error: unexpected cursor type
+
+
+SQL> 
+SQL> create or replace function CURSOR_FUNCTION_002_FUN_02 (str1 varchar) return int
+  2 is 
+  3 cursor cursor1(a int,b varchar) is  select CURSOR_FUNCTION_002_FUN_01(b)*a from CURSOR_FUNCTION_002_TAB_01; 
+  4 cursor2 sys_refcursor;
+  5 begin
+  6 open cursor1(2,'aaa') ;
+  7 cursor2 := cursor1;
+  8 close cursor1;
+  9 return 1;
+ 10 end;
+ 11 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.CURSOR_FUNCTION_002_FUN_02) terminated with compiling errors
+[7:12] PLC-00601 Sql syntax error: unexpected cursor type
+
+
+SQL> create or replace function liu_func (str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor2 sys_refcursor;
+  4 begin
+  5 return cursor2;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> select liu_func('aa') from dual;
+
+CT-00905, The cursor was invalid.
+SQL> 
+SQL> declare
+  2 cursor cursor1 is select 1 from dual;
+  3 cursor2 sys_refcursor;
+  4 begin
+  5 open cursor1;
+  6 cursor2 := cursor1;
+  7 close cursor1;
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[6:12] PLC-00601 Sql syntax error: unexpected cursor type
+
+SQL> declare
+  2 cursor cursor1(a int default 0) is select a from dual;
+  3 cursor2 sys_refcursor;
+  4 begin
+  5 open cursor1(10);
+  6 cursor2 := cursor1;
+  7 close cursor1;
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[6:12] PLC-00601 Sql syntax error: unexpected cursor type
+
+SQL> declare
+  2 cursor1 sys_refcursor;
+  3 cursor2 sys_refcursor;
+  4 begin
+  5 open cursor1 for select 1 from dual;
+  6 cursor2 := cursor1;
+  7 close cursor1;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> --ent verify cursor setval
+SQL> drop table if exists CURSOR_PROC_FUN_001_TAB_01;
+
+Succeed.
+
+SQL> create table CURSOR_PROC_FUN_001_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into CURSOR_PROC_FUN_001_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace view CURSOR_PROC_FUN_001_VIEW_01 as select * from CURSOR_PROC_FUN_001_TAB_01;
+
+Succeed.
+
+SQL> --functionA
+SQL> create or replace function CURSOR_PROC_FUN_001_FUN_01 (str1 varchar) return int 
+  2 is 
+  3 mycursor1 sys_refcursor;
+  4 a int;
+  5 begin
+  6      return length(str1);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function CURSOR_PROC_FUN_001_FUN_05 (a int,b varchar,str1 varchar) return sys_refcursor
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 v_empno int;
+  5 v_ename varchar(10);
+  6 v_sal int;
+  7 begin
+  8 open cursor1 for  select empno,ename, sal*a from CURSOR_PROC_FUN_001_TAB_01 where job like  b||'%' and ename like str1||'%' order by empno,ename,sal;
+  9 fetch cursor1 into v_empno,v_ename,v_sal;
+ 10 dbe_output.print_line(v_empno||'  '||v_ename||'  '||v_sal);
+ 11 return cursor1;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> create or replace procedure CURSOR_PROC_FUN_001_Proc_05_2 is 
+  2 cur1 sys_refcursor;
+  3 v_empno int;
+  4 v_ename varchar(10);
+  5 v_sal int;
+  6 begin
+  7 cur1 := CURSOR_PROC_FUN_001_FUN_05(4,'doctor','zhangsan');
+  8 fetch cur1 into v_empno,v_ename,v_sal;
+  9 loop
+ 10 if cur1%found then
+ 11 dbe_output.print_line(v_empno||'  '||v_ename||'  '||v_sal);
+ 12 fetch cur1 into v_empno,v_ename,v_sal; 
+ 13 else exit;
+ 14 end if;
+ 15 end loop;
+ 16 dbe_sql.return_cursor(cur1);
+ 17 end;
+ 18 /
+
+Succeed.
+
+SQL> 
+SQL> exec CURSOR_PROC_FUN_001_Proc_05_2;
+
+1  zhangsan  40000
+CT-00932, [1:2] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[16:1] PL/SQL(GS_PLSQL_DTS2.CURSOR_PROC_FUN_001_PROC_05_2) terminated with execute errors
+[16:1] PL/SQL(DBE_SQL.RETURN_CURSOR) terminated with execute errors
+[16:23] CT-00905, The cursor was invalid.
+
+SQL> 
+SQL> drop table if exists CURSOR_PROC_002_TAB_01;
+
+Succeed.
+
+SQL> create table CURSOR_PROC_002_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into CURSOR_PROC_002_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_PROC_002_TAB_01 values(2,'zggg','doctor1',20000);
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function CURSOR_PROC_002_FUN_01 (str1 varchar) return int
+  2 is 
+  3 a int;
+  4 begin
+  5      return length(str1);
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> select CURSOR_PROC_002_FUN_01('aaaa') from dual;
+
+CURSOR_PROC_002_FUN_01('AAAA')
+------------------------------
+4                             
+
+1 rows fetched.
+
+SQL> 
+SQL> --test 1
+SQL> create or replace procedure CURSOR_PROC_002_Proc_07_1 (b varchar) 
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select CURSOR_PROC_002_FUN_01(ename)*2 from CURSOR_PROC_002_TAB_01 ;
+  6 dbe_sql.return_cursor(cursor1);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> call  CURSOR_PROC_002_Proc_07_1('abcdeff');
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+CURSOR_PROC_002_FUN_01(ENAME) * 2
+---------------------------------
+16                               
+8                                
+
+2 rows fetched.
+
+
+SQL> 
+SQL> --test 2
+SQL> create or replace procedure CURSOR_PROC_002_Proc_07_1 (b varchar) 
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select CURSOR_PROC_002_FUN_01(b)*2 from CURSOR_PROC_002_TAB_01;
+  6 dbe_sql.return_cursor(cursor1);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> call  CURSOR_PROC_002_Proc_07_1('abcdeff');
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+CURSOR_PROC_002_FUN_01(:1 ) * 2
+-------------------------------
+14                             
+14                             
+
+2 rows fetched.
+
+
+SQL> 
+SQL> --test 3
+SQL> create or replace procedure CURSOR_PROC_002_Proc_07_1 (a int) 
+  2 is 
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select CURSOR_PROC_002_FUN_01(ename)*2 from CURSOR_PROC_002_TAB_01 where sal>a;
+  6 dbe_sql.return_cursor(cursor1);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> call  CURSOR_PROC_002_Proc_07_1(10);
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+CURSOR_PROC_002_FUN_01(ENAME) * 2
+---------------------------------
+16                               
+8                                
+
+2 rows fetched.
+
+
+SQL> 
+SQL> drop table if exists CURSOR_PROC_002_TAB_01;
+
+Succeed.
+
+SQL> create table CURSOR_PROC_002_TAB_01(empno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into CURSOR_PROC_002_TAB_01 values(1,'zhangsan','doctor1',10000);
+
+1 rows affected.
+
+SQL> insert into CURSOR_PROC_002_TAB_01 values(2,'zggg','doctor1',20000);
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace procedure test_ttt_proc(a varchar)
+  2 as
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open cursor1 for select ename from CURSOR_PROC_002_TAB_01 ;
+  6 dbe_sql.return_cursor(cursor1); 
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function CURSOR_PROC_002_FUN_01 (str1 varchar) return int
+  2 is 
+  3 a int;
+  4 cursor1 sys_refcursor;
+  5 begin
+  6     test_ttt_proc(str1);
+  7     return length(str1);
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> select CURSOR_PROC_002_FUN_01('aaaa') from dual;
+
+CT-00932, [6:5] PL/SQL(GS_PLSQL_DTS2.CURSOR_PROC_002_FUN_01) terminated with execute errors
+[6:1] PL/SQL(GS_PLSQL_DTS2.TEST_TTT_PROC) terminated with execute errors
+[6:1] PL/SQL(DBE_SQL.RETURN_CURSOR) terminated with execute errors
+[6:23] CT-00940, Return_result be allowed in procedure or anonymous block
+
+SQL> 
+SQL> 
+SQL> create or replace function return_normal_cursor_test (b varchar) return sys_refcursor
+  2 is 
+  3 cursor cursor1 is  select 1 from dual;  
+  4 begin
+  5 open cursor1 ;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.RETURN_NORMAL_CURSOR_TEST) terminated with compiling errors
+[6:8] PLC-00601 Sql syntax error: unexpected cursor type
+
+
+SQL> 
+SQL> create or replace function normal_cursor_setval_test (b varchar) return sys_refcursor
+  2 is 
+  3 cursor cursor1 is  select 1 from dual;  
+  4 begin
+  5 open cursor1 ;
+  6 return cursor1;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.NORMAL_CURSOR_SETVAL_TEST) terminated with compiling errors
+[6:8] PLC-00601 Sql syntax error: unexpected cursor type
+
+
+SQL> 
+SQL> -- DTS2019031105905 
+SQL> --4.2 test too many error info
+SQL> create or replace procedure p_OnexcLicenseInfo as
+  2 (v_xcTypeSDHnum IN OUT INT,
+  3    v_xcTypeOTNnum IN OUT INT,
+  4    v_xcTypePacketU16num IN OUT INT,
+  5    v_xcTypePacketU32num IN OUT INT,
+  6    v_xcTypePacketU64num IN OUT INT,
+  7    v_xcCap360num IN OUT INT,
+  8    v_xcCap640num IN OUT INT,
+  9    v_xcCap720num IN OUT INT,
+ 10    v_xcCap1280num IN OUT INT,
+ 11    v_xcCap2560num IN OUT INT,
+ 12    v_xcCap5120num IN OUT INT,
+ 13    v_xcCap3200num IN OUT INT,
+ 14    v_xcCap6400num IN OUT INT,
+ 15    v_xcCap800Num IN OUT INT,
+ 16    v_xcCap1601Num IN OUT INT,
+ 17    v_xcCap2400Num IN OUT INT,
+ 18    v_xcCap4000Num IN OUT INT,
+ 19    v_xc1588v2num IN OUT INT,
+ 20    v_xcVC12T32num IN OUT INT,
+ 21    v_xcVC12T16num IN OUT INT,
+ 22    v_xcCap100320num IN OUT INT,
+ 23    v_xcCap100640num IN OUT INT,
+ 24    v_xcCap100C80num IN OUT INT,
+ 25    v_xcCap101900num IN OUT INT,
+ 26    v_xcCap101900num_96 IN OUT INT,
+ 27    v_xcCap103200num IN OUT INT,
+ 28    v_xcCap103200num_96 IN OUT INT,
+ 29    v_xcCap106400num IN OUT INT,
+ 30    v_xcCap106400Num_96 IN OUT INT,
+ 31    v_xcCap1600num IN OUT INT,
+ 32    v_xcTypeSDHnum_1800V IN OUT INT,
+ 33    v_xcTypePacketnum_1800V IN OUT INT,
+ 34    v_xcTypeOTNnum_1800V IN OUT INT,
+ 35    v_xc1588v2num_1800V IN OUT INT,
+ 36    v_clusterNum_En IN OUT INT,
+ 37    SWP_Ret_Value IN OUT INT)
+ 38 AS
+ 39         v_xcTypeSDHnum_refcur SYS_REFCURSOR;
+ 40         v_xcTypeOTNnum_refcur SYS_REFCURSOR;
+ 41    v_xcTypePacketU16num_refcur SYS_REFCURSOR;
+ 42    v_xcTypePacketU32num_refcur SYS_REFCURSOR;
+ 43    v_xcTypePacketU64num_refcur SYS_REFCURSOR;
+ 44    v_xcCap360num_refcur SYS_REFCURSOR;
+ 45    v_xcCap640num_refcur SYS_REFCURSOR;
+ 46    v_xcCap720num_refcur SYS_REFCURSOR;
+ 47    v_xcCap1280num_refcur SYS_REFCURSOR;
+ 48    v_xcCap2560num_refcur SYS_REFCURSOR;
+ 49    v_xcCap5120num_refcur SYS_REFCURSOR;
+ 50    v_xcCap3200num_refcur SYS_REFCURSOR;
+ 51    v_xcCap6400num_refcur SYS_REFCURSOR;
+ 52    v_xcCap800Num_refcur SYS_REFCURSOR;
+ 53    v_xcCap1601Num_refcur SYS_REFCURSOR;
+ 54    v_xcCap2400Num_refcur SYS_REFCURSOR;
+ 55    v_xcCap4000Num_refcur SYS_REFCURSOR;
+ 56    v_xc1588v2num_refcur SYS_REFCURSOR;
+ 57    v_xcVC12T32num_refcur SYS_REFCURSOR;
+ 58    v_xcVC12T16num_refcur SYS_REFCURSOR;
+ 59    v_xcCap100320num_refcur SYS_REFCURSOR;
+ 60    v_xcCap100640num_refcur SYS_REFCURSOR;
+ 61    v_xcCap100C80num_refcur SYS_REFCURSOR;
+ 62    v_xcCap101900num_refcur SYS_REFCURSOR;
+ 63    v_xcCap101900num_96_refcur SYS_REFCURSOR;
+ 64    v_xcCap103200num_refcur SYS_REFCURSOR;
+ 65    v_xcCap103200num_96_refcur SYS_REFCURSOR;
+ 66    v_xcCap106400num_refcur SYS_REFCURSOR;
+ 67    v_xcCap106400Num_96_refcur SYS_REFCURSOR;
+ 68    v_xcCap1600num_refcur SYS_REFCURSOR;
+ 69    v_xcTypeSDHnum_1800V_refcur SYS_REFCURSOR;
+ 70    v_xcTypePacketnum_1800V_refcur SYS_REFCURSOR;
+ 71    v_xcTypeOTNnum_1800V_refcur SYS_REFCURSOR;
+ 72    v_xc1588v2num_1800V_refcur SYS_REFCURSOR;
+ 73    v_clusterNum_En_refcur SYS_REFCURSOR;
+ 74 BEGIN
+ 75 
+ 76 
+ 77     execute immediate ' select count(*) from t_inv_chassis where svcType = 1 or svcType = 3 or svcType = 5
+ 78     or svcType = 7' into v_xcTypeSDHnum;
+ 79     open v_xcTypeSDHnum_refcur for select v_xcTypeSDHnum from dual;
+ 80         dbe_sql.return_cursor(v_xcTypeSDHnum_refcur);
+ 81 
+ 82    EXCEPTION
+ 83        when others then
+ 84            SWP_Ret_Value := SQL_ERR_CODE;
+ 85    RETURN;
+ 86 
+ 87 commit;
+ 88 end;
+ 89 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.P_ONEXCLICENSEINFO) terminated with compiling errors
+[2:2] PLC-00954 variant name expected but v_xcTypeSDHnum IN OUT INT,
+   v_xcTypeOTNnum IN OUT INT,
+   v_xcTypePacketU16num IN OUT INT,
+   v_xcTypePacketU32num IN OUT INT,
+   v_xcTypePacketU64num IN OUT INT,
+   v_xcCap360num IN OUT INT,
+   v_xcCap640num IN OUT INT,
+   v_xcCap720num IN OUT INT,
+   v_xcCap1280num IN OUT INT,
+   v_xcCap2560num IN OUT INT,
+   v_xcCap5120num IN OUT INT,
+   v_xcCap3200num IN OUT INT,
+   v_xcCap6400num IN OUT INT,
+   v_xcCap800Num IN OUT INT,
+   v_xcCap1601Num IN OUT INT,
+   v_xcCap2400Num IN OUT INT,
+   v_xcCap4000Num IN OUT INT,
+   v_xc1588v2num IN OUT INT,
+   v_xcVC12T32num IN OUT INT,
+   v_xcVC12T16num IN OUT INT,
+   v_xcCap100320num IN OUT INT,
+   v_xcCap100640num IN OUT INT,
+   v_xcCap100C80num IN OUT INT,
+   v_xcCap101900num IN OUT INT,
+   v_xcCap101900num_96 IN OUT INT,
+   v_xcCap103200num IN OUT INT,
+   v_xcCap103200num_96 IN OUT INT,
+   v_xcCap106400num IN OUT INT,
+   v_xcCap106400Num_96 IN OUT INT,
+   v_xcCap1600num IN OUT INT,
+   v_xcTypeSDHnum_1800V IN OUT INT,
+   v_xcTypePacketnum_1800V IN OUT INT,
+   v_xcTypeOTNnum_1800V IN OUT INT,
+   v_xc1588v2num_1800V IN OUT INT,
+   v_clusterNum_En IN OUT INT,
+   SWP_Ret_Value IN OUT INT found
+
+
+SQL> 
+SQL> 
+SQL> create or replace Procedure  FUNCTION_PROC_DDL_001_Proc_01  is
+  2 begin
+  3 null;
+  4 execute immediate 'set transaction ISOLATION LEVEL READ COMMITTED';
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> create or replace function  FUNCTION_PROC_DDL_001_Fun_01 return int is
+  2 begin
+  3 FUNCTION_PROC_DDL_001_Proc_01;
+  4 return 1;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> select FUNCTION_PROC_DDL_001_Fun_01;
+
+CT-00932, [3:1] PL/SQL(GS_PLSQL_DTS2.FUNCTION_PROC_DDL_001_FUN_01) terminated with execute errors
+[4:1] PL/SQL(GS_PLSQL_DTS2.FUNCTION_PROC_DDL_001_PROC_01) terminated with execute errors
+[4:1] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> create or replace procedure  FUNCTION_Proc_DDL_002_Proc_11  is
+  2 begin
+  3 null;
+  4 execute immediate 'alter session set COMMIT_WAIT_LOGGING = WAIT';
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> create or replace function  FUNCTION_PROC_DDL_001_Fun_02 return int is
+  2 begin
+  3 FUNCTION_Proc_DDL_002_Proc_11;
+  4 return 1;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> select FUNCTION_PROC_DDL_001_Fun_02;
+
+CT-00932, [3:1] PL/SQL(GS_PLSQL_DTS2.FUNCTION_PROC_DDL_001_FUN_02) terminated with execute errors
+[4:1] PL/SQL(GS_PLSQL_DTS2.FUNCTION_PROC_DDL_002_PROC_11) terminated with execute errors
+[4:1] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> create or replace procedure  FUNCTION_Proc_DDL_001_Proc_12  is
+  2 begin
+  3 null;
+  4 execute immediate 'alter system kill session ''49,9'' ' ;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> create or replace function  FUNCTION_PROC_DDL_001_Fun_02 return int is
+  2 begin
+  3 FUNCTION_Proc_DDL_001_Proc_12;
+  4 return 1;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> select FUNCTION_PROC_DDL_001_Fun_02;
+
+CT-00932, [3:1] PL/SQL(GS_PLSQL_DTS2.FUNCTION_PROC_DDL_001_FUN_02) terminated with execute errors
+[4:1] PL/SQL(GS_PLSQL_DTS2.FUNCTION_PROC_DDL_001_PROC_12) terminated with execute errors
+[4:1] CT-00973, There was a statement that affects transaction commission or rollback in the user-defined function invoked by the DML operation.
+
+SQL> 
+SQL> -- DTS2019052101664  
+SQL> drop table if exists hashjointest_big_table;
+
+Succeed.
+
+SQL> create table hashjointest_big_table(id int, name varchar(64));
+
+Succeed.
+
+SQL> drop table if exists hashjointest_little_table;
+
+Succeed.
+
+SQL> create table hashjointest_little_table(id int, age int);
+
+Succeed.
+
+SQL> begin
+  2   for i in 1 .. 100000 loop
+  3     insert into hashjointest_big_table values(1, to_char(i));
+  4   end loop;
+  5   for i in 1 .. 10 loop
+  6     insert into hashjointest_little_table values(2, i);
+  7   end loop;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 v1 int := 1;
+  3 v2 int;
+  4 begin
+  5 	select count(*) into v2 from hashjointest_big_table big 
+  6 	    join hashjointest_little_table little on big.id = v1 and  big.id = little.age and v1 in (1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+  7 	dbe_output.print_line(v2);
+  8 end;
+  9 /
+
+100000
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table if exists hashjointest_big_table;
+
+Succeed.
+
+SQL> drop table if exists hashjointest_little_table;
+
+Succeed.
+
+SQL> 
+SQL> -- test record + other type
+SQL> declare
+  2 type zzz is record(a int);
+  3 c_r zzz;
+  4 c1_r zzz;
+  5 begin
+  6   select c_r + 2 into c1_r from dual;
+  7   dbe_output.print_line(c1_r.a);
+  8 end;
+  9 /
+
+CT-00932, [6:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[6:13] CT-01320, Undefined operator: RECORD + BINARY_INTEGER
+
+SQL> 
+SQL> -- test record * other type
+SQL> declare
+  2 type zzz is record(a int);
+  3 type yyy is record(r zzz);
+  4 c_r yyy;
+  5 c1_r zzz;
+  6 begin
+  7   select c_r.r * 2 into c1_r from dual;
+  8   dbe_output.print_line(c1_r.a);
+  9 end;
+ 10 /
+
+CT-00932, [7:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[7:14] CT-01320, Undefined operator: RECORD * BINARY_INTEGER
+
+SQL> 
+SQL> -- DTS2019061105262 
+SQL> declare
+  2 ct SYS_REFCURSOR; 
+  3 begin
+  4 	ct := null;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- DTS2019061107304 
+SQL> drop table if exists exception001_t001;
+
+Succeed.
+
+SQL> create table exception001_t001
+  2  (
+  3     f_int1 integer,
+  4     f_bigint1 bigint,
+  5     f_bool1 boolean,
+  6     f_num1 number(38, 0),
+  7     f_dec1 decimal(38, 0),
+  8     f_float float,
+  9     f_double double,
+ 10     f_real real,
+ 11     f_char1 char(128),
+ 12     f_varchar1 varchar(512),
+ 13     f_varchar2 varchar2(512),
+ 14     f_date1 date,
+ 15     f_timestamp timestamp
+ 16  );
+
+Succeed.
+
+SQL> drop table if exists exception001_t002;
+
+Succeed.
+
+SQL> create table exception001_t002
+  2 (
+  3     f_int1 integer,
+  4         f_bool2 boolean,
+  5     f_varchar3 varchar(512),
+  6         f_date2 date
+  7 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists exception001_t003;
+
+Succeed.
+
+SQL> create table exception001_t003 as
+  2 ( select exception001_t001.f_int1,f_bool1,f_varchar1,f_date1,f_bool2,f_varchar3,f_date2
+  3         from exception001_t001,exception001_t002
+  4 );
+
+Succeed.
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> drop procedure if exists exception001_p001;
+
+Succeed.
+
+SQL> create or replace procedure exception001_p001
+  2 as
+  3 cursor c1 is select exception001_t001.f_int1,f_bool1,f_varchar1,f_date1,f_bool2,f_varchar3,f_date2
+  4                             from exception001_t001 join exception001_t002 on exception001_t001.f_int1 = exception001_t002.f_int1
+  5                                 where f_bool2 = false or f_bool1 = true
+  6                                       and exception001_t002.f_int1 in (length('tru'), power(1,3), find_in_set('a','b,c,d,a') )
+  7                                       order by exception001_t001.f_int1;
+  8 c2 sys_refcursor;
+  9 type t1 is record(a exception001_t003%rowtype);
+ 10 v1 t1;
+ 11 c_str varchar2(1024);
+ 12 i int :=0;
+ 13 tmp int;
+ 14 tmp_str char(1);
+ 15 begin
+ 16     insert into exception001_t001 values(1,2,false,3,4,5,6,7,'a','aa','aaa','2018-12-23','2018-12-23');
+ 17     insert into exception001_t001 values(2,2,'0',3,4,5,6,7,'c','cc','ccc','2018-12-24','2018-12-24');
+ 18     insert into exception001_t001 values(3,2,'0',3,4,5,6,7,'d','dd','ddd','2018-12-25','2018-12-25');
+ 19     insert into exception001_t001 values(4,2,true,3,4,5,6,7,'e','ee','eee','2018-12-26','2018-12-26');
+ 20     insert into exception001_t001 values(5,2,'0',3,4,5,6,7,'f','ff','fff','2018-12-27','2018-12-27');
+ 21     insert into exception001_t002 values(1,true,'a','2018-12-23');
+ 22     insert into exception001_t002 values(2,'1','c','2018-12-24');
+ 23         insert into exception001_t002 values(3,'1','d','2018-12-25');
+ 24         insert into exception001_t002 values(4,false,'e','2018-12-26');
+ 25         insert into exception001_t002 values(5,'1','f','2018-12-27');
+ 26         c_str := 'select exception001_t001.f_int1,f_bool1,f_varchar1,f_date1,f_bool2,f_varchar3,f_date2
+ 27                             from exception001_t001 join exception001_t002 on exception001_t001.f_int1 = exception001_t002.f_int1
+ 28                                 where f_bool2 = false or f_bool1 = true
+ 29                                       and exception001_t002.f_int1 in (length(''tru''), power(1,3), find_in_set(''a'',''b,c,d,a'') )
+ 30                                       order by exception001_t001.f_int1';
+ 31         --CASE_NOT_FOUND
+ 32         begin
+ 33             for i in 1..10 loop
+ 34                 if i<=5 then
+ 35                select exception001_t001.f_int1,f_bool1,f_varchar1,f_date1,f_bool2,f_varchar3,f_date2 into v1.a
+ 36                               from exception001_t001 join exception001_t002 on exception001_t001.f_int1 = exception001_t002.f_int1
+ 37                                   where f_bool2 = true  or f_bool1 = true
+ 38                                   and exception001_t002.f_int1 in (length('tru'), power(1,3), find_in_set('a','b,c,d,a') )
+ 39                                   order by exception001_t001.f_int1 limit 1;
+ 40                            case v1.a.f_varchar1
+ 41                         when  v1.a.f_varchar3 then  dbe_output.print_line(true);
+ 42                    end case;
+ 43                 else
+ 44                    select exception001_t001.f_int1,f_bool1,f_varchar1,f_date1,f_bool2,f_varchar3,f_date2 into v1.a
+ 45                               from exception001_t001 join exception001_t002 on exception001_t001.f_int1 = exception001_t002.f_int1
+ 46                                   where f_bool2 = true  or f_bool1 = true
+ 47                                   and exception001_t002.f_int1 in (length('tru'), power(1,3), find_in_set('a','b,c,d,a') )
+ 48                                   order by exception001_t001.f_int1 limit 1;
+ 49                 end if;
+ 50             end loop;
+ 51         exception
+ 52             when CASE_NOT_FOUND then                                                                                                                                                                   
+ 53               dbe_output.print_line('9 error: CASE_NOT_FOUND');
+ 54                           dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG);
+ 55             when others then
+ 56                       dbe_output.print_line('others error');
+ 57                           dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG);
+ 58         end;
+ 59 
+ 60     execute immediate 'truncate table exception001_t001';
+ 61         execute immediate 'truncate table exception001_t002';
+ 62         execute immediate 'truncate table exception001_t003';
+ 63     exception
+ 64         when others then
+ 65                     dbe_output.print_line('others error');
+ 66                         dbe_output.print_line(SQL_ERR_CODE || ' error ' || SQL_ERR_MSG);
+ 67 end;
+ 68 /
+
+Succeed.
+
+SQL> call exception001_p001;
+
+9 error: CASE_NOT_FOUND
+902 error The declaration of CASE was not found when the CASE statement was executed.
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists TEST_LPAD12;
+
+Succeed.
+
+SQL> create table TEST_LPAD12 (COL1 VARCHAR2(20),COL2 integer,COL3 VARCHAR2(20));
+
+Succeed.
+
+SQL> insert into TEST_LPAD12 values('hi', 20, $$abc$$);
+
+CT-00601, Sql syntax error: Convert uint32 failed, text = $abc$$
+SQL> insert into TEST_LPAD12 values($$hi123$$, 20, 'abc');
+
+CT-00601, Sql syntax error: Convert uint32 failed, text = $hi123$$
+SQL> insert into TEST_LPAD12 values($$nihao$$, 20,$$zaoshanghao$$);
+
+CT-00601, Sql syntax error: Convert uint32 failed, text = $nihao$$
+SQL> select lpad(COL1,COL2,COL3) as RESULT from TEST_LPAD12 order by RESULT;
+
+RESULT                                                          
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> drop table TEST_LPAD12;
+
+Succeed.
+
+SQL> 
+SQL> select log(log(null,2)+'adbcd',2)  from dual;
+
+LOG(LOG(NULL,2)+'ADBCD',2)              
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> select log(2,log(null,3)+'$#NDSau=') from dual;
+
+LOG(2,LOG(NULL,3)+'$#NDSAU=')             
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> select log(3,log(null,2)||'$#ND') from dual;
+
+CT-00636, [1:14]Invalid number -- unexpected character
+SQL> select log(3,log(null,2) +$#ND) from dual;
+
+CT-00601, Sql syntax error: Convert uint32 failed, text = #ND
+SQL> select log(2,log(null,3)*'$#NDSau=') from dual;
+
+LOG(2,LOG(NULL,3)*'$#NDSAU=')             
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists LOB_TAB_001;
+
+Succeed.
+
+SQL> CREATE TABLE LOB_TAB_001
+  2 (
+  3 	C_ID INT,
+  4 	c_data clob
+  5 ); 
+
+Succeed.
+
+SQL> declare
+  2 	str varchar(32767) :='welcome to lob wrong example.welcome to lob wrong example.welcome to lob wrong example.welcome to lob wrong example.welcome to lob wrong example.';
+  3 begin
+  4     for i in 1..8 loop
+  5         str := str||str;
+  6     end loop;
+  7 	for i in 1..2 loop
+  8         str:= str||i;
+  9 		insert into LOB_TAB_001 values(i,str);
+ 10 		end loop;
+ 11 	commit;
+ 12 end;
+ 13 /
+
+PL/SQL procedure successfully completed.
+
+SQL> select DBE_LOB.SUBSTR((select t1.c_data from LOB_TAB_001 t1 limit 1),10,3) STR from dual;
+
+STR                                                             
+----------------------------------------------------------------
+lcome to l                                                      
+
+1 rows fetched.
+
+SQL> drop  table if exists LOB_TAB_001;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2019061406641
+SQL> create table employees(employeesno int,ename varchar(10),job varchar(10) ,sal integer);
+
+Succeed.
+
+SQL> insert into employees values(1,'zhangsan','doctor1',10000),(2,'zhangsan2','doctor2',10010),(123,'zhangsan3','doctor3',10020);
+
+3 rows affected.
+
+SQL> alter table employees add  hiretime datetime;
+
+Succeed.
+
+SQL> 
+SQL> create or replace  function test_outf1   return sys_refcursor is
+  2 type mycurtp is  ref cursor;
+  3 cursorv1  mycurtp;
+  4 sys_cur1  sys_refcursor;
+  5 type  XXX is record(
+  6 a varchar2(100),
+  7 b number(10,1),
+  8 c number(11,1)
+  9 );
+ 10 var1 XXX;
+ 11 begin
+ 12 --先赋值；
+ 13 sys_cur1 := cursorv1;
+ 14 open  cursorv1 for  select ename as name, sal, sal*2 ep_sal from employees where ename like 'zhangsan%' ;
+ 15 return  sys_cur1;
+ 16 end;
+ 17 /
+
+Succeed.
+
+SQL> select OWNER , OBJECT_NAME ,ARGUMENT_NAME ,POSITION ,SEQUENCE ,DATA_LEVEL ,DATA_TYPE ,DEFAULTED ,IN_OUT,DATA_LENGTH,DATA_PRECISION,DATA_SCALE  from dba_arguments where OWNER = 'GS_PLSQL_DTS2' and OBJECT_NAME like 'TEST_OUTF1'  order by  POSITION,ARGUMENT_NAME;
+
+OWNER                                                            OBJECT_NAME                                                      ARGUMENT_NAME                                                    POSITION     SEQUENCE     DATA_LEVEL   DATA_TYPE                                                        DEFAULTED IN_OUT DATA_LENGTH  DATA_PRECISION DATA_SCALE  
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------ ---------------------------------------------------------------- --------- ------ ------------ -------------- ------------
+GS_PLSQL_DTS2                                                    TEST_OUTF1                                                                                                                        0            1            0            CURSOR                                                           N         OUT                                            
+
+1 rows fetched.
+
+SQL> drop function test_outf1;
+
+Succeed.
+
+SQL> drop table employees;
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2019062105223
+SQL> declare
+  2 a '9090898dfdkfkdsjfskjslkdflsdkfjksdlfjsdlfdjklfjsdklfjsdlkfjklgjklfdjglkfdjglkfdjgdflkgjdflkgfdjlkgfd'%type;
+  3 begin
+  4    null;
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[2:3] PLC-00748 variant name length is exceeded. name len = 102, max_len = 64
+
+SQL> 
+SQL> -- DTS2019070200731
+SQL> DECLARE
+  2   my_except EXCEPTION;
+  3   PRAGMA EXCEPTION_INIT(my_except, 932);
+  4 BEGIN
+  5   raise my_except;
+  6 END;
+  7 /
+
+CT-00932, [5:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[5:3] CT-00932, message of error code not found
+
+SQL> 
+SQL> -- DTS2019070105010
+SQL> drop table if exists PROC_USING_BIND_test_self ;
+
+Succeed.
+
+SQL> create table PROC_USING_BIND_test_self (a blob, b varbinary(20));
+
+Succeed.
+
+SQL> insert into PROC_USING_BIND_test_self  values(RAWTOHEX ('0123456789abcdef')|| hex('h#2312#%$#@$'), cast(IFNULL(null,'AAAB0141fG') as varbinary(20)));
+
+1 rows affected.
+
+SQL> create or replace procedure PROC_USING_BIND_014_02 (p1 blob, p2 varbinary)
+  2 is
+  3 cursor1 sys_refcursor;
+  4 begin
+  5 open  cursor1 for 'select * from  PROC_USING_BIND_test_self where a = :p1 and b = :p2'
+  6 using 
+  7 p1, p2;
+  8 dbe_sql.return_cursor(cursor1);
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> call PROC_USING_BIND_014_02(RAWTOHEX ('0123456789abcdef')|| hex('h#2312#%$#@$'), cast(IFNULL(null,'AAAB0141fG') as varbinary(20)));
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+A                                                                B                                                               
+---------------------------------------------------------------- ----------------------------------------------------------------
+30313233343536373839616263646566682332333132232524234024         AAAB0141fG                                                      
+
+1 rows fetched.
+
+
+SQL> 
+SQL> -- DTS2019070806102
+SQL> drop table insert_into_outparam_tt;
+
+CT-00843, The table or view GS_PLSQL_DTS2.INSERT_INTO_OUTPARAM_TT does not exist.
+SQL> create table insert_into_outparam_tt(name_str char(10));
+
+Succeed.
+
+SQL> create or replace procedure pInvalidCursor(p1 out char) 
+  2 is
+  3 begin
+  4 	p1 := '012345'; 
+  5 	insert into insert_into_outparam_tt values(p1); 
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2   str char(10) := 'abc';
+  3 BEGIN
+  4   pInvalidCursor(str);
+  5   dbe_output.print_line(length(str));
+  6   dbe_output.print_line(str);
+  7 END;
+  8 /
+
+10
+012345    
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from insert_into_outparam_tt;
+
+NAME_STR  
+----------
+012345    
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists func_verify_out_arg_table;
+
+Succeed.
+
+SQL> create table func_verify_out_arg_table(id int);
+
+Succeed.
+
+SQL> insert into func_verify_out_arg_table values(2);
+
+1 rows affected.
+
+SQL> create or replace function func_verify_out_arg_function(p1 in out int) return int
+  2 is
+  3 v1 int;
+  4 begin
+  5     v1 := p1;
+  6 	p1 := 123;
+  7 	return v1;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2   v1 int := 3;
+  3   v2 int := 4;
+  4 BEGIN
+  5   execute immediate 'drop table func_verify_out_arg_table';
+  6   execute immediate 'create table func_verify_out_arg_table(id int)';
+  7   execute immediate 'insert into func_verify_out_arg_table values(2)';
+  8   select id into v1 from func_verify_out_arg_table where id = func_verify_out_arg_function(v2);
+  9   dbe_output.print_line('v1');
+ 10   dbe_output.print_line(v1);
+ 11   dbe_output.print_line(v2);
+ 12 END;
+ 13 /
+
+CT-00932, [8:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[8:53] CT-00949, The 1th argument of FUNC_VERIFY_OUT_ARG_FUNCTION cannot be used as an assignment target
+
+SQL> 
+SQL> -- create out char --------------------------------------------
+SQL> create or replace procedure test_out_param_proc(p1 out char) 
+  2 is
+  3 begin
+  4   p1 := '2147483647';
+  5   dbe_output.print_line(length(p1));
+  6   p1 := '2147483647000000000000000000000000000000';
+  7   dbe_output.print_line(length(p1));
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> -- char to char
+SQL> DECLARE
+  2   v1 char(5) := 'abc';
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+CT-00932, [4:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(GS_PLSQL_DTS2.TEST_OUT_PARAM_PROC) terminated with execute errors
+[4:3] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> -- varchar to char
+SQL> DECLARE
+  2   v1 varchar(5) := 'abc';
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+CT-00932, [4:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(GS_PLSQL_DTS2.TEST_OUT_PARAM_PROC) terminated with execute errors
+[4:3] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> -- int to char
+SQL> DECLARE
+  2   v1 int := 0;
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+10
+40
+CT-00932, [4:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] CT-00659, INTEGER out of range
+
+SQL> 
+SQL> -- create inout char --------------------------------------------
+SQL> create or replace procedure test_out_param_proc(p1 in out char) 
+  2 is
+  3 begin
+  4   p1 := '2147483647';
+  5   dbe_output.print_line(length(p1));
+  6   p1 := '2147483647000000000000000000000000000000';
+  7   dbe_output.print_line(length(p1));
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> -- varchar to char
+SQL> DECLARE
+  2   v1 varchar(50) := '2147483647000000000000000000000000000000';
+  3 BEGIN
+  4   dbe_output.print_line(length(v1));
+  5   test_out_param_proc(v1);
+  6   dbe_output.print_line(length(v1));
+  7   dbe_output.print_line(v1);
+  8 END;
+  9 /
+
+40
+50
+50
+50
+2147483647000000000000000000000000000000          
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- create out varchar --------------------------------------------
+SQL> create or replace procedure test_out_param_proc(p1 out varchar) 
+  2 is
+  3 begin
+  4   p1 := '2147483647';
+  5   dbe_output.print_line(length(p1));
+  6   p1 := '2147483647000000000000000000000000000000';
+  7   dbe_output.print_line(length(p1));
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> -- char to varchar
+SQL> DECLARE
+  2   v1 char(5) := 'abc';
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+CT-00932, [4:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(GS_PLSQL_DTS2.TEST_OUT_PARAM_PROC) terminated with execute errors
+[4:3] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> -- varchar to varchar
+SQL> DECLARE
+  2   v1 varchar(5) := 'abc';
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+CT-00932, [4:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] PL/SQL(GS_PLSQL_DTS2.TEST_OUT_PARAM_PROC) terminated with execute errors
+[4:3] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> -- int to varchar
+SQL> DECLARE
+  2   v1 int := 0;
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+10
+40
+CT-00932, [4:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] CT-00659, INTEGER out of range
+
+SQL> 
+SQL> -- create out number --------------------------------------------
+SQL> create or replace procedure test_out_param_proc(p1 out number) 
+  2 is
+  3 begin
+  4   p1 := 32.4494;
+  5   p1 := p1 + 0.0006;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> -- int to number
+SQL> DECLARE
+  2   v1 int := 0;
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+2
+32
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- number to number
+SQL> DECLARE
+  2   v1 number(10,1) := 0;
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+4
+32.5
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- number to number
+SQL> DECLARE
+  2   v1 number(3,2) := 0;
+  3 BEGIN
+  4   test_out_param_proc(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+CT-00932, [4:3] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:3] CT-00635, Value error: value larger than specified precision
+
+SQL> 
+SQL> -- create return char --------------------------------------------
+SQL> create or replace function test_out_param_func(p1 out char) return char
+  2 is
+  3 v1 char(10) := '2147483';
+  4 begin
+  5   p1 := v1;
+  6   dbe_output.print_line(length(p1));
+  7   return p1;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> -- char return char
+SQL> DECLARE
+  2   v1 char(20) := 'abc';
+  3   v2 int := 0;
+  4 BEGIN
+  5   v1 := test_out_param_func(v2);
+  6   dbe_output.print_line(length(v1));
+  7   dbe_output.print_line(v1);
+  8 END;
+  9 /
+
+10
+20
+2147483             
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- create return char --------------------------------------------
+SQL> create or replace function test_out_param_func(p1 out char) return char
+  2 is
+  3 begin
+  4   p1 := '2147483';
+  5   dbe_output.print_line(length(p1));
+  6   p1 := '21474';
+  7   dbe_output.print_line(length(p1));
+  8   return p1;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> -- char return char
+SQL> DECLARE
+  2   v1 char(10) := 'abc';
+  3   v2 int := 0;
+  4 BEGIN
+  5   v1 := test_out_param_func(v2);
+  6   dbe_output.print_line(length(v1));
+  7   dbe_output.print_line(v1);
+  8 END;
+  9 /
+
+7
+5
+10
+21474     
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- char return char
+SQL> DECLARE
+  2   v1 char(10);
+  3 BEGIN
+  4   v1 := test_out_param_func(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+10
+10
+10
+21474     
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- char return char
+SQL> DECLARE
+  2   v1 varchar(10);
+  3 BEGIN
+  4   v1 := test_out_param_func(v1);
+  5   dbe_output.print_line(length(v1));
+  6   dbe_output.print_line(v1);
+  7 END;
+  8 /
+
+10
+10
+10
+21474     
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- create return char --------------------------------------------
+SQL> create or replace function test_out_param_func(p1 in out char) return char
+  2 is
+  3 begin
+  4   dbe_output.print_line(length(p1));
+  5   return p1;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2   v1 varchar(5) := '321';
+  3   v2 varchar(5) := '4563';
+  4 BEGIN
+  5   dbe_output.print_line(test_out_param_func(v1) || test_out_param_func(v2));
+  6 END;
+  7 /
+
+5
+5
+321  4563 
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- DTS2019071110397
+SQL> drop table if exists func_verify_out_arg_table;
+
+Succeed.
+
+SQL> create table func_verify_out_arg_table(id int);
+
+Succeed.
+
+SQL> insert into func_verify_out_arg_table values(2);
+
+1 rows affected.
+
+SQL> declare 
+  2 pragma autonomous_transaction;
+  3 begin
+  4  execute immediate 'begin insert into func_verify_out_arg_table values(3); end;';
+  5  execute immediate'prepare transaction ''0.ABABAAA000.006501''';
+  6  execute immediate 'begin insert into func_verify_out_arg_table values(4); end;';
+  7  commit;
+  8 end;
+  9 /
+
+CT-00932, [5:2] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[5:2] CT-00885, Cannot prepare XA in autonomous transaction
+
+SQL> select * from func_verify_out_arg_table;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> 
+SQL> -- DTS2019071807624
+SQL> create or replace function FVT_FUN_01_01(id int) return int 
+  2 is
+  3 ret int;
+  4 begin
+  5 	ret := id;
+  6 	if id > 0 then
+  7 	select FVT_FUN_01_01(id - 1) + id into ret from dual;
+  8 	end if;
+  9 	return ret;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> select FVT_FUN_01_01(4);
+
+FVT_FUN_01_01(4)
+----------------
+10              
+
+1 rows fetched.
+
+SQL> create or replace procedure FVT_PROC_01_01(id int)
+  2 is
+  3 ret int;
+  4 begin
+  5 	ret := id;
+  6 	if id > 0 then
+  7 	select FVT_PROC_01_01(id - 1) + id into ret from dual;
+  8 	end if;
+  9 end;
+ 10 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.FVT_PROC_01_01) terminated with compiling errors
+[7:9] PLC-00828 function GS_PLSQL_DTS2.FVT_PROC_01_01 does not exist
+[10:1] PLC-00954 more text expected but EOF found
+
+
+SQL> select max from dual;
+
+CT-00615, [1:8]Invalid argument number for MAX, min=1, max=1
+SQL> select exp;
+
+CT-00615, [1:8]Invalid argument number for EXP, min=1, max=1
+SQL> 
+SQL> -- DTS2019072909080
+SQL> drop table if exists FVT_TABLE_TEST_01_01;
+
+Succeed.
+
+SQL> create table FVT_TABLE_TEST_01_01(a int);
+
+Succeed.
+
+SQL> insert into FVT_TABLE_TEST_01_01 values(1);
+
+1 rows affected.
+
+SQL> select * from FVT_TABLE_TEST_01_01;
+
+A           
+------------
+1           
+
+1 rows fetched.
+
+SQL> create or replace procedure FVT_PRO_TEST_02_01 AS
+  2 	v_sql varchar(8000);
+  3 BEGIN
+  4 	v_sql:='create or replace procedure ABCDEFGHIJKis a int; begin a:=0; end';
+  5 	dbe_output.print_line(v_sql);
+  6 	execute immediate v_sql;
+  7 	insert into FVT_TABLE_TEST_01_01 values(3);
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> call FVT_PRO_TEST_02_01();
+
+create or replace procedure ABCDEFGHIJKis a int; begin a:=0; end
+CT-00932, [1:2] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[6:2] PL/SQL(GS_PLSQL_DTS2.FVT_PRO_TEST_02_01) terminated with execute errors
+[6:2] CT-00944, PL/SQL(GS_PLSQL_DTS2.ABCDEFGHIJKIS) terminated with compiling errors
+[1:43] PLC-00601 Sql syntax error: IS or AS expected
+
+
+SQL> select * from FVT_TABLE_TEST_01_01;
+
+A           
+------------
+1           
+
+1 rows fetched.
+
+SQL> create or replace procedure pro_uu_1 is
+  2 begin
+  3 null;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> grant select on sys.sys_procs to gs_plsql_dts2;
+
+Succeed.
+
+SQL> conn gs_plsql_dts2/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> select TRIG_STATUS from sys.sys_procs where name='PRO_UU_1';
+
+TRIG_STATUS     
+----------------
+                
+
+1 rows fetched.
+
+SQL> create or replace procedure pro_uu_1 is
+  2 begin
+  3 null;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> select TRIG_STATUS from sys.sys_procs where name='PRO_UU_1';
+
+TRIG_STATUS     
+----------------
+                
+
+1 rows fetched.
+
+SQL> 
+SQL> -- DTS2019080702341
+SQL> drop table if exists using_for_proc_table;
+
+Succeed.
+
+SQL> create table using_for_proc_table(id int default 0, name varchar(20) default 'abc');
+
+Succeed.
+
+SQL> declare
+  2 v1 using_for_proc_table%rowtype;
+  3 v2 using_for_proc_table.id%type;
+  4 begin
+  5   if v1.id is null then
+  6    dbe_output.print_line('null');
+  7   end if;
+  8   if v1.name is null then
+  9    dbe_output.print_line('null');
+ 10   end if;
+ 11   if v2 is null then
+ 12    dbe_output.print_line('null');
+ 13   end if;
+ 14 end;
+ 15 /
+
+null
+null
+null
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> drop table if exists fun_dynamic_sql_table;
+
+Succeed.
+
+SQL> create table fun_dynamic_sql_table(id int);
+
+Succeed.
+
+SQL> create or replace procedure dynamic_sql_fail_func(id int) 
+  2 is
+  3 begin
+  4     execute immediate 'insert into fun_dynamic_sql_table values(:1)' using id;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> call dynamic_sql_fail_func(0);
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table fun_dynamic_sql_table;
+
+Succeed.
+
+SQL> call dynamic_sql_fail_func(1);
+
+CT-00932, [1:2] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:5] PL/SQL(GS_PLSQL_DTS2.DYNAMIC_SQL_FAIL_FUNC) terminated with execute errors
+[1:13] CT-00843, The table or view GS_PLSQL_DTS2.FUN_DYNAMIC_SQL_TABLE does not exist.
+
+SQL> create table fun_dynamic_sql_table(id int);
+
+Succeed.
+
+SQL> call dynamic_sql_fail_func(2);
+
+PL/SQL procedure successfully completed.
+
+SQL> select id from fun_dynamic_sql_table;
+
+ID          
+------------
+2           
+
+1 rows fetched.
+
+SQL> 
+SQL> -- DTS2019080710386
+SQL> set charset gbk;
+
+GBK
+SQL> DECLARE
+  2     vc_sql varchar(2 char); 
+  3     c_sql char(4 char); 
+  4 BEGIN
+  5     vc_sql := '一二';
+  6     dbe_output.print_line('---' || vc_sql);
+  7     dbe_output.print_line(length(vc_sql));
+  8     c_sql := '一二';
+  9     dbe_output.print_line('---' || c_sql);
+ 10     dbe_output.print_line(length(c_sql));
+ 11 END;
+ 12 /
+
+---一二
+2
+---一二  
+4
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> DECLARE
+  2     vc_sql varchar(2 char); 
+  3 BEGIN
+  4     vc_sql := '一二三';
+  5 END;
+  6 /
+
+CT-00932, [4:5] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[4:5] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> DECLARE
+  2     vc_sql varchar(16000 char); 
+  3 BEGIN
+  4     for i in 1..2000 loop
+  5     vc_sql := vc_sql || '一二三四五六';
+  6 	end loop;
+  7 END;
+  8 /
+
+CT-00932, [5:5] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[5:5] CT-00217, Nls internal error, invalid utf-8 buffer
+
+SQL> 
+SQL> DECLARE
+  2     c_sql char(4000 char); 
+  3 BEGIN
+  4     for i in 1..1000 loop
+  5     c_sql := c_sql || '一二三';
+  6 	end loop;
+  7 END;
+  8 /
+
+CT-00932, [5:5] PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with execute errors
+[5:5] CT-00635, Value error: character string buffer too small
+
+SQL> 
+SQL> create or replace procedure varchar_param_out_proc(p1 out varchar) is
+  2 begin
+  3 	p1 := '一三';
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> -- DTS2019082809321
+SQL> create or replace procedure varchar_param_out_proc(p1 out varchar) is
+  2 begin
+  3 	p1 := '一三一三一三一三一三';
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> DECLARE
+  2     vc_sql varchar(10 char);
+  3 BEGIN
+  4 	execute immediate 'begin varchar_param_out_proc(:1); end;' using out vc_sql;
+  5     dbe_output.print_line('---' || vc_sql);
+  6     dbe_output.print_line(length(vc_sql));
+  7 END;
+  8 /
+
+---一三一三一三一三一三
+10
+
+PL/SQL procedure successfully completed.
+
+SQL> set charset utf8;
+
+UTF8
+SQL> 
+SQL> -- DTS2019083010567
+SQL> declare
+  2 type zzz is record(
+  3 a int,
+  4 a int);
+  5 a zzz;
+  6 begin
+  7  a.a := 1;
+  8 end;
+  9 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[4:1] PLC-00604 Duplicate attribute name a
+
+SQL> 
+SQL> -- DTS2019111103442
+SQL> declare
+  2   TYPE varray1 IS VARRAY(4) OF clob;
+  3   var1 varray1 := varray1('null', 'null', '', '');
+  4 begin
+  5     dbe_output.print_line(var1(3));
+  6 end;
+  7 /
+
+
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- DTS2019112011773 start
+SQL> create or replace type array_varchar2 is varray(10) of varchar(100);
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 zz array_varchar2:=array_varchar2('a','b');
+  3 yy array_varchar2;
+  4 str_l_querysql varchar(100);
+  5 begin
+  6     str_l_querysql := 
+  7 	' begin
+  8 	:1 := :2;
+  9 	end;';
+ 10     execute immediate str_l_querysql using out yy, zz;
+ 11 	dbe_output.print_line(yy(2));
+ 12 end;
+ 13 /
+
+b
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace type object_varchar2 is object(a varchar(100));
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 zz object_varchar2:=object_varchar2('cd');
+  3 yy object_varchar2;
+  4 str_l_querysql varchar(100);
+  5 begin
+  6     str_l_querysql := 
+  7 	' begin
+  8 	:1 := :2;
+  9 	end;';
+ 10     execute immediate str_l_querysql using out yy, zz;
+ 11 	dbe_output.print_line(yy.a);
+ 12 end;
+ 13 /
+
+cd
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure bind_param_func_test(p1 object_varchar2, p2 out object_varchar2)
+  2 is
+  3 begin
+  4  p2 := p1;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 zz object_varchar2:=object_varchar2('cd');
+  3 yy object_varchar2;
+  4 str_l_querysql varchar(100);
+  5 begin
+  6     str_l_querysql := 
+  7 	' begin
+  8 	bind_param_func_test(:1, :2);
+  9 	end;';
+ 10     execute immediate str_l_querysql using zz, out yy;
+ 11 	dbe_output.print_line(yy.a);
+ 12 end;
+ 13 /
+
+cd
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- DTS2019112011773 end
+SQL> --table function cast
+SQL> create or replace type my_type1 is object (id number, name varchar2(32));
+  2  /
+
+Succeed.
+
+SQL> create or replace type my_type2 is table of my_type1;
+  2  /
+
+Succeed.
+
+SQL> drop table if exists test_cast_table;
+
+Succeed.
+
+SQL> 
+SQL> create table test_cast_table(id number, name varchar2(32));
+
+Succeed.
+
+SQL> 
+SQL> insert into test_cast_table values(1,'happy');
+
+1 rows affected.
+
+SQL> insert into test_cast_table values(2,'like');
+
+1 rows affected.
+
+SQL> insert into test_cast_table values(3,'love');
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace function g_DV_LOG_FILES1 return my_type2
+  2   is
+  3      l_DV_LOG_FILES_tab my_type2 ;
+  4 	 n integer := 0;
+  5   begin
+  6        l_DV_LOG_FILES_tab := my_type2();
+  7     for r in (select id, name from test_cast_table)
+  8      loop
+  9         l_DV_LOG_FILES_tab.extend;
+ 10         n := n + 1;
+ 11        l_DV_LOG_FILES_tab(n) := my_type1(r.id, r.name);
+ 12      end loop;
+ 13      return l_DV_LOG_FILES_tab;
+ 14   end;
+ 15   /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> select * from table(cast(g_DV_LOG_FILES1 as my_type2));
+
+ID                                       NAME                            
+---------------------------------------- --------------------------------
+1                                        happy                           
+2                                        like                            
+3                                        love                            
+
+3 rows fetched.
+
+SQL> select * from table(cast(g_DV_LOG_FILES1 as my_type2)) where id > 1;
+
+ID                                       NAME                            
+---------------------------------------- --------------------------------
+2                                        like                            
+3                                        love                            
+
+2 rows fetched.
+
+SQL> select * from table(cast(g_DV_LOG_FILES1 as my_type2)) where name = 'love';
+
+ID                                       NAME                            
+---------------------------------------- --------------------------------
+3                                        love                            
+
+1 rows fetched.
+
+SQL> select * from table(cast(g_DV_LOG_FILES1 as my_type2)) order by id desc;
+
+ID                                       NAME                            
+---------------------------------------- --------------------------------
+3                                        love                            
+2                                        like                            
+1                                        happy                           
+
+3 rows fetched.
+
+SQL> select * from table(cast(g_DV_LOG_FILES1 as my_type2)) order by name desc;
+
+ID                                       NAME                            
+---------------------------------------- --------------------------------
+3                                        love                            
+2                                        like                            
+1                                        happy                           
+
+3 rows fetched.
+
+SQL> 
+SQL>  declare
+  2  l_DV_LOG_FILES_tab my_type2 ;
+  3  begin
+  4  l_DV_LOG_FILES_tab := g_DV_LOG_FILES1;
+  5  end;
+  6  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create table cast_table(id number, name varchar2(32));
+
+Succeed.
+
+SQL> BEGIN
+  2     insert into cast_table select * from table(cast(g_DV_LOG_FILES1 as my_type2));
+  3 END;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from cast_table;
+
+ID                                       NAME                            
+---------------------------------------- --------------------------------
+1                                        happy                           
+2                                        like                            
+3                                        love                            
+
+3 rows fetched.
+
+SQL> 
+SQL> create or replace type test_type_varchar1 is table of varchar2(24);  
+  2 / 
+
+Succeed.
+
+SQL> 
+SQL> create or replace function my_func_1 return test_type_varchar1
+  2   is
+  3      l_DV_LOG_FILES_tab test_type_varchar1:= test_type_varchar1();
+  4   begin	
+  5     l_DV_LOG_FILES_tab := test_type_varchar1('abc', 'def');
+  6      return l_DV_LOG_FILES_tab;
+  7   end;
+  8  /
+
+Succeed.
+
+SQL> 
+SQL> create table if not exists test_t1(f1 varchar(30));
+
+Succeed.
+
+SQL> 
+SQL> select * from table(cast(my_func_1 as test_type_varchar1)) where column_value = 'def';
+
+COLUMN_VALUE            
+------------------------
+def                     
+
+1 rows fetched.
+
+SQL> 
+SQL> BEGIN
+  2 	insert  into test_t1 select * from table(cast(my_func_1 as test_type_varchar1));
+  3 END;
+  4 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select * from test_t1;
+
+F1                            
+------------------------------
+abc                           
+def                           
+
+2 rows fetched.
+
+SQL> select * from table(cast(my_func_1 as test_type_varchar1));
+
+COLUMN_VALUE            
+------------------------
+abc                     
+def                     
+
+2 rows fetched.
+
+SQL> drop type my_type1 force;
+
+Succeed.
+
+SQL> drop type my_type2 force;
+
+Succeed.
+
+SQL> drop table test_cast_table;
+
+Succeed.
+
+SQL> drop table test_t1;
+
+Succeed.
+
+SQL> drop table cast_table;
+
+Succeed.
+
+SQL> drop type test_type_varchar1 force;
+
+Succeed.
+
+SQL> drop function my_func_1;
+
+Succeed.
+
+SQL> drop function g_DV_LOG_FILES1;
+
+Succeed.
+
+SQL> --DTS2019120907768
+SQL> CREATE OR REPLACE TYPE ARRAY_NUMBER is table of number(20);
+  2 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function f_ring_di_getdirexcludetones1() return array_number
+  2 is
+  3     vntbl_l_dirindex array_number;
+  4 begin
+  5     return vntbl_l_dirindex;      
+  6 end f_ring_di_getdirexcludetones1;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> select * from table(cast(f_ring_di_getdirexcludetones1 as gs_plsql_dts2.array_number));
+
+COLUMN_VALUE                            
+----------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> create or replace procedure p_ring_qr_getdirtonecount1 as
+  2     vntbl_l_dirindex array_number;
+  3     i_l_countdirindex number(5);
+  4 begin
+  5      vntbl_l_dirindex := f_ring_di_getdirexcludetones1();
+  6    select count('X') into i_l_countdirindex from table(cast(vntbl_l_dirindex as array_number)) where 1 =1;                                                          
+  7     return;
+  8 end p_ring_qr_getdirtonecount1;
+  9 /
+
+Succeed.
+
+SQL> call p_ring_qr_getdirtonecount1;
+
+PL/SQL procedure successfully completed.
+
+SQL> drop TYPE ARRAY_NUMBER force;
+
+Succeed.
+
+SQL> drop function f_ring_di_getdirexcludetones1;
+
+Succeed.
+
+SQL> drop procedure p_ring_qr_getdirtonecount1;
+
+Succeed.
+
+SQL> 
+SQL> -- s lock up to x lock start
+SQL> create or replace procedure test_replace_self_proc() 
+  2 is
+  3 sql_str varchar(200);
+  4 begin
+  5   sql_str := 'create or replace procedure test_replace_self_proc() 
+  6 is
+  7 begin
+  8   dbe_output.print_line(''replace self success!!'');
+  9 end;';
+ 10   execute immediate sql_str;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> call test_replace_self_proc();
+
+PL/SQL procedure successfully completed.
+
+SQL> call test_replace_self_proc();
+
+replace self success!!
+
+PL/SQL procedure successfully completed.
+
+SQL> -- s lock up to x lock end
+SQL> --DTS2019121211155
+SQL> declare
+  2 type type_table1 is table of int;
+  3 type type_table2 is table of type_table1;
+  4 types type_table2:= type_table2(type_table1(1,2,3),type_table1(1,2,3));
+  5 begin
+  6 types(1)(jhfalj):=1;
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(GS_PLSQL_DTS2.ANONYMOUS BLOCK) terminated with compiling errors
+[6:10] PLC-00601 Sql syntax error: invalid column name 'JHFALJ'
+
+SQL> 
+SQL> create or replace procedure casttype is
+  2 type type_table is table of int;
+  3 types type_table:=type_table(1,2,3);
+  4 begin
+  5 types(/122):=1;
+  6 types(afg):=1;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(GS_PLSQL_DTS2.CASTTYPE) terminated with compiling errors
+[5:7] PLC-00601 Sql syntax error: the word "/" is not correct
+[6:7] PLC-00601 Sql syntax error: invalid column name 'AFG'
+
+
+SQL> 
+SQL> drop procedure casttype;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_plsql_dts2 cascade;
+
+Succeed.
+
+SQL> 
+SQL> --ple_push_decls
+SQL> declare
+  2 a varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+  3 b varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+  4 c varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+  5 d varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+  6 e varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+  7 f varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+  8 g varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+  9 h varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 10 i varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 11 j varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 12 k varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 13 l varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 14 m varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 15 n varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 16 o varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 17 p varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 18 q varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 19 r varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 20 s varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 21 t varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 22 u varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 23 v varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 24 w varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 25 x varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 26 y varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 27 a1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 28 b1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 29 c1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 30 d1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 31 e1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 32 f1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 33 g1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 34 h1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 35 i1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 36 j1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 37 k1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 38 l1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 39 m1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 40 n1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 41 o1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 42 p1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 43 q1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 44 r1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 45 s1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 46 t1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 47 u1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 48 v1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 49 w1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 50 x1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 51 y1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 52 a2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 53 b2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 54 c2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 55 d2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 56 e2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 57 f2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 58 g2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 59 h2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 60 i2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 61 j2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 62 k2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 63 l2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 64 m2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 65 n2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 66 o2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 67 p2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 68 q2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 69 r2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 70 s2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 71 t2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 72 u2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 73 v2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 74 w2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 75 x2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 76 y2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 77 qa varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 78 qb varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 79 qc varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 80 qd varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 81 qe varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 82 qf varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 83 qg varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 84 qh varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 85 qi varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 86 qj varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 87 qk varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 88 ql varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 89 qm varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 90 qn varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 91 qo varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 92 qp varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 93 qq varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 94 qr varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 95 qs varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 96 qt varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 97 qu varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 98 qv varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+ 99 qw varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+100 qx varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+101 qy varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+102 qa1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+103 qb1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+104 qc1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+105 qd1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+106 qe1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+107 qf1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+108 qg1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+109 qh1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+110 qi1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+111 qj1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+112 qk1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+113 ql1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+114 qm1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+115 qn1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+116 qo1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+117 qqq varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+118 qq1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+119 qr1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+120 qs1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+121 qt1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+122 qu1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+123 qv1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+124 qw1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+125 qx1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+126 qy1 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+127 qa2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+128 qb2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+129 qc2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+130 qd2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+131 qe2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+132 qf2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+133 qg2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+134 qh2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+135 qi2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+136 qj2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+137 qk2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+138 ql2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+139 qm2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+140 qn2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+141 qo2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+142 qp2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+143 qq2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+144 qr2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+145 qs2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+146 qt2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+147 qu2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+148 qv2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+149 qw2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+150 qx2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+151 qy2 varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+152 wa varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+153 wb varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+154 wc varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+155 wd varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+156 we varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+157 wf varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+158 wg varchar(8000):='sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+159 type z is table of int;
+160 BEGIN
+161   dbe_output.print_line('a');
+162 END;
+163 /
+
+a
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> set serveroutput off;
+OFF
+
+
+

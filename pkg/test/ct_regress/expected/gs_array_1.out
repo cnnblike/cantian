@@ -1,0 +1,1647 @@
+
+
+SQL> -- create table/alter table
+SQL> ALTER SESSION SET TIME_ZONE='+08:00';
+
+Succeed.
+
+SQL>
+SQL> -- specify the capacity of array
+SQL> drop table if exists array_1;
+
+Succeed.
+
+SQL> create table array_1(name varchar(30),pay_by_quarter integer[4]);
+
+Succeed.
+
+SQL> insert into array_1 values ('paul',array[1,2,3,4,5,6]);
+
+1 rows affected.
+
+SQL> insert into array_1 values ('willim', array[1,2,3]);
+
+1 rows affected.
+
+SQL> desc array_1
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+NAME                                         VARCHAR(30 BYTE)
+PAY_BY_QUARTER                               BINARY_INTEGER[]
+
+SQL> select * from array_1;
+
+NAME                           PAY_BY_QUARTER
+------------------------------ ----------------------------------------------------------------
+paul                           {1,2,3,4,5,6}
+willim                         {1,2,3}
+
+2 rows fetched.
+
+SQL>
+SQL> -- Multidimensional arrays are not supported
+SQL> drop table if exists array_0;
+
+Succeed.
+
+SQL> create table array_0 (f1 int,f2 integer[][]);
+
+CT-00601, [1:42]Sql syntax error: text is incorrect
+SQL>
+SQL> -- create not null
+SQL> drop table if exists array_3;
+
+Succeed.
+
+SQL> create table array_3 (f1 integer[] not null,f2 varchar(30));
+
+Succeed.
+
+SQL>
+SQL> -- select clause
+SQL> drop table if exists array_4;
+
+Succeed.
+
+SQL> create table array_4 as (select name as f1 from array_1);
+
+Succeed.
+
+SQL> desc array_4
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+F1                                           VARCHAR(30 BYTE)
+
+SQL> drop table if exists array_5;
+
+Succeed.
+
+SQL> drop table if exists array_6;
+
+Succeed.
+
+SQL> drop table if exists array_7;
+
+Succeed.
+
+SQL> drop table if exists array_8;
+
+Succeed.
+
+SQL> create table array_5 (id int,f1 varchar(30),f2 varchar(30),f3 varchar(30)[]);
+
+Succeed.
+
+SQL> create table array_6 as (select concat(f1,'(',f2,')') as f1 from array_5);
+
+Succeed.
+
+SQL> create table array_7 as (select concat(f1,'(',f3,')') as f1 from array_5);
+
+CT-01366, [1:33]Invalid function argument type
+SQL> insert into array_5 values(1,'a','b',array['a','b']);
+
+1 rows affected.
+
+SQL> insert into array_5 values(2,'a','d',array['a','d']);
+
+1 rows affected.
+
+SQL> create table array_8 as (select id,f3 from array_5);
+
+Succeed.
+
+SQL> select * from array_8;
+
+ID           F3
+------------ ----------------------------------------------------------------
+1            {a,b}
+2            {a,d}
+
+2 rows fetched.
+
+SQL>
+SQL> -- alter table
+SQL> drop table if exists array_1;
+
+Succeed.
+
+SQL> drop table if exists array_3;
+
+Succeed.
+
+SQL> drop table if exists array_4;
+
+Succeed.
+
+SQL> drop table if exists array_5;
+
+Succeed.
+
+SQL> drop table if exists array_6;
+
+Succeed.
+
+SQL> drop table if exists array_7;
+
+Succeed.
+
+SQL> drop table if exists array_8;
+
+Succeed.
+
+SQL> create table array_1 (f1 int[]);
+
+Succeed.
+
+SQL> alter table array_1 add f2 int[];
+
+Succeed.
+
+SQL> desc array_1
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+F1                                           BINARY_INTEGER[]
+F2                                           BINARY_INTEGER[]
+
+SQL> insert into array_1 values(array[1,2],array[5,6,7]);
+
+1 rows affected.
+
+SQL> insert into array_1 values('{5,6}','{7,8,9}');
+
+1 rows affected.
+
+SQL> alter table array_1 add f3 varchar(30)[];
+
+Succeed.
+
+SQL> desc array_1
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+F1                                           BINARY_INTEGER[]
+F2                                           BINARY_INTEGER[]
+F3                                           VARCHAR(30 BYTE)[]
+
+SQL> select * from array_1;
+
+F1                                                               F2                                                               F3
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+{1,2}                                                            {5,6,7}
+{5,6}                                                            {7,8,9}
+
+2 rows fetched.
+
+SQL>
+SQL> -- alter type
+SQL> create table array_3 (id int,f1 int[],f2 varchar(30),f3 varchar(30)[]);
+
+Succeed.
+
+SQL> alter table array_3 modify f3 varchar(30);
+
+CT-01373, Can not modify column(F3) to non-array type
+SQL> alter table array_3 modify f1 int[];
+
+CT-00613, Invalid operation,invalid modification of columns
+SQL> alter table array_3 modify f2 int;
+
+Succeed.
+
+SQL> alter table array_3 modify f3 varchar(60)[];
+
+CT-00613, Invalid operation,invalid modification of columns
+SQL> desc array_3
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+ID                                           BINARY_INTEGER                      
+F1                                           BINARY_INTEGER[]                    
+F2                                           BINARY_INTEGER                      
+F3                                           VARCHAR(30 BYTE)[]                  
+
+SQL>
+SQL> -- drop array
+SQL> alter table array_3 drop f1;
+
+Succeed.
+
+SQL> alter table array_1 drop f1;
+
+Succeed.
+
+SQL>
+SQL> -- insert
+SQL> drop table if exists array_1;
+
+Succeed.
+
+SQL> create table array_1(id int,f1 int[],f2 varchar(30)[]);
+
+Succeed.
+
+SQL> insert into array_1 values(1,array[1,2,3,6,8],array['a','c']);
+
+1 rows affected.
+
+SQL> insert into array_1 values(2,'{3,5,7,9}','{"b","d"}');
+
+1 rows affected.
+
+SQL> insert into array_1 values(3,array[3,5,9],['f','v']);
+
+CT-00601, [1:43]Sql syntax error: text is incorrect
+SQL> insert into array_1 values(4,'{8,9}','{'a','g'}');
+
+CT-00601, [1:41]Sql syntax error: , expected but a found
+SQL> insert into array_1 values(5,'{8,11}','{"f",y}');
+
+1 rows affected.
+
+SQL> insert into array_1 values(6,array[1,3,5],array["h","g"]);
+
+CT-00601, [1:49]Sql syntax error: invalid column name 'h'
+SQL> insert into array_1 values(7,'{3,7}','{4,7}');
+
+1 rows affected.
+
+SQL> insert into array_1 values(5,'{b,c}','{f,y}');
+
+CT-00636, Invalid number -- unexpected character
+SQL> select * from array_1;
+
+ID           F1                                                               F2
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3,6,8}                                                      {a,c}
+2            {3,5,7,9}                                                        {b,d}
+5            {8,11}                                                           {f,y}
+7            {3,7}                                                            {4,7}
+
+4 rows fetched.
+
+SQL> drop table if exists array_3;
+
+Succeed.
+
+SQL> create table array_3(f1 varchar(30)[]);
+
+Succeed.
+
+SQL> insert into array_3 values ('{who''s bread,It''s ok}');
+
+1 rows affected.
+
+SQL> select * from array_3;
+
+F1
+----------------------------------------------------------------
+{who's bread,It's ok}
+
+1 rows fetched.
+
+SQL>
+SQL> -- type transform
+SQL> insert into array_3 values (array[2019-07-22,'a',9]);
+
+1 rows affected.
+
+SQL> insert into array_3 values (array['2019-07-25 12:00:00',7]);
+
+1 rows affected.
+
+SQL> alter table array_3 add f2 int[];
+
+Succeed.
+
+SQL> alter table array_3 add f3 bool[];
+
+Succeed.
+
+SQL> desc array_3
+
+Name                                Null?    Type
+----------------------------------- -------- ------------------------------------
+F1                                           VARCHAR(30 BYTE)[]
+F2                                           BINARY_INTEGER[]
+F3                                           BOOLEAN[]
+
+SQL> insert into array_3 values(array['a','b','c'],array['1','3','9'],null);
+
+1 rows affected.
+
+SQL> insert into array_3 values(array['d','e','f'],array[2.1,3.578],null);
+
+1 rows affected.
+
+SQL> insert into array_3 values(array['g','h','k'],array[0110,0010],null);
+
+1 rows affected.
+
+SQL> insert into array_3 values(array['b','t','b'],array[2019-07-25,3,5],null);
+
+1 rows affected.
+
+SQL> insert into array_3 values(null,null,array[0,1,'true','false','t','f']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(null,null,array[0,101]);
+
+1 rows affected.
+
+SQL> select * from array_3;
+
+F1                                                               F2                                                               F3
+---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+{who's bread,It's ok}
+{1990,a,9}
+{2019-07-25 12:00:00,7}
+{a,b,c}                                                          {1,3,9}
+{d,e,f}                                                          {2,4}
+{g,h,k}                                                          {110,10}
+{b,t,b}                                                          {1987,3,5}
+                                                                                                                                  {FALSE,TRUE,TRUE,FALSE,TRUE,FALSE}
+                                                                                                                                  {FALSE,TRUE}
+
+9 rows fetched.
+
+SQL> create table array_4 (f1 date[]);
+
+Succeed.
+
+SQL> insert into array_4 values(array['2019-07-25 12:00']);
+
+1 rows affected.
+
+SQL> insert into array_4 values(array['abc']);
+
+CT-00105, Invalid format of datetime
+SQL> insert into array_4 values(array[1011]);
+
+CT-00606, [1:28]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> insert into array_4 values(array['1011']);
+
+1 rows affected.
+
+SQL> insert into array_4 values(array['2019-07-25']);
+
+1 rows affected.
+
+SQL> insert into array_4 values(array[null]);
+
+1 rows affected.
+
+SQL> insert into array_4 values(null);
+
+1 rows affected.
+
+SQL> select * from array_4;
+
+F1
+----------------------------------------------------------------
+{2019-07-25 12:00:00}
+{1011-01-01 00:00:00}
+{2019-07-25 00:00:00}
+{NULL}
+
+
+5 rows fetched.
+
+SQL>
+SQL> -- update
+SQL> drop table if exists array_1;
+
+Succeed.
+
+SQL> drop table if exists array_3;
+
+Succeed.
+
+SQL> drop table if exists array_4;
+
+Succeed.
+
+SQL> create table array_1 (id int,f1 int[]);
+
+Succeed.
+
+SQL> insert into array_1 values(1,array[1,3,5]);
+
+1 rows affected.
+
+SQL> insert into array_1 values(2,array[1,7,5]);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from array_1;
+
+ID           F1
+------------ ----------------------------------------------------------------
+1            {1,3,5}
+2            {1,7,5}
+
+2 rows fetched.
+
+SQL> update array_1 set f1[2147483647]=100 where id=1;
+
+1 rows affected.
+
+SQL> select array_length(f1) from array_1 where id=1;
+
+ARRAY_LENGTH(F1)
+----------------
+2147483647
+
+1 rows fetched.
+
+SQL> update array_1 set f1[2147483648]=100 where id=1;
+
+CT-00601, [1:22]Sql syntax error: text is incorrect
+SQL> rollback;
+
+Succeed.
+
+SQL> select * from array_1;
+
+ID           F1
+------------ ----------------------------------------------------------------
+1            {1,3,5}
+2            {1,7,5}
+
+2 rows fetched.
+
+SQL> update array_1 set f1[1:2]=array[1,5] where id=2;
+
+1 rows affected.
+
+SQL> update array_1 set f1[1:2]=array[1,5,9] where id=2;
+
+CT-01363, Source array elements count does not match
+SQL> create table array_3 (id int,f1 int[],f2 varchar(30)[]);
+
+Succeed.
+
+SQL> insert into array_3 values(1,array[1,2],array['a','b']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(2,array[2,7],array['k','m']);
+
+1 rows affected.
+
+SQL> select * from array_3;
+
+ID           F1                                                               F2
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2}                                                            {a,b}
+2            {2,7}                                                            {k,m}
+
+2 rows fetched.
+
+SQL> update array_1 set f1 = (select f1 from array_3 where id=1) where id=2;
+
+1 rows affected.
+
+SQL> select * from array_1;
+
+ID           F1
+------------ ----------------------------------------------------------------
+1            {1,3,5}
+2            {1,2}
+
+2 rows fetched.
+
+SQL> update array_3 set f1=(select f1 from array_1 where id=2),f2=array['m','m','z'];
+
+2 rows affected.
+
+SQL> select * from array_3;
+
+ID           F1                                                               F2
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2}                                                            {m,m,z}
+2            {1,2}                                                            {m,m,z}
+
+2 rows fetched.
+
+SQL> update array_1 set f1 = (select f2 from array_3 where id=1) where id=1;
+
+CT-00636, Invalid number -- unexpected character
+SQL>
+SQL> -- select / test operator
+SQL> drop table if exists array_1;
+
+Succeed.
+
+SQL> drop table if exists array_3;
+
+Succeed.
+
+SQL> create table array_3(id int,f1 int[],f2 varchar(30)[],f3 date[]);
+
+Succeed.
+
+SQL> insert into array_3 values(1,array[1,2,3],array['a','b','c'],array['2019-03-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(2,array[1,3,5],array['b','e','c'],array['2019-04-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(3,array[5,2,3],array['g','b','m'],null);
+
+1 rows affected.
+
+SQL> insert into array_3 values(4,array[4,6,8],array['b','f','c'],array['2019-05-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(5,array[3,7,3],array['m','m','z'],array['2019-06-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(6,array[7,8,9],array['g','g','c'],null);
+
+1 rows affected.
+
+SQL> insert into array_3 values(1,array[9,2,3],array['s','f','c'],array[null]);
+
+1 rows affected.
+
+SQL> select * from array_3 where f3 is not null;
+
+ID           F1                                                               F2                                                               F3                                                              
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3}                                                          {a,b,c}                                                          {2019-03-22 12:00:00}                                           
+2            {1,3,5}                                                          {b,e,c}                                                          {2019-04-22 12:00:00}                                           
+4            {4,6,8}                                                          {b,f,c}                                                          {2019-05-22 12:00:00}                                           
+5            {3,7,3}                                                          {m,m,z}                                                          {2019-06-22 12:00:00}                                           
+1            {9,2,3}                                                          {s,f,c}                                                          {NULL}                                                          
+
+5 rows fetched.
+
+SQL> select * from array_3 where f3 is null;
+
+ID           F1                                                               F2                                                               F3                                                              
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+3            {5,2,3}                                                          {g,b,m}                                                                                                                          
+6            {7,8,9}                                                          {g,g,c}                                                                                                                          
+
+2 rows fetched.
+
+SQL> select f2 from array_3 where f2[1] regexp'[a-d]';
+
+F2
+----------------------------------------------------------------
+{a,b,c}
+{b,e,c}
+{b,f,c}
+
+3 rows fetched.
+
+SQL> select * from array_3 where f1 = 1;
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 != 1;
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 >= 1;
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 <= 1;
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 > 1;
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 < 1;
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 between 1 and 2;
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 not between 1 and 2;
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 regexp 1;
+
+ID           F1                                                               F2                                                               F3                                                              
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3}                                                          {a,b,c}                                                          {2019-03-22 12:00:00}                                           
+2            {1,3,5}                                                          {b,e,c}                                                          {2019-04-22 12:00:00}                                           
+
+2 rows fetched.
+
+SQL> select * from array_3 where f1 not regexp 1;
+
+ID           F1                                                               F2                                                               F3                                                              
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+3            {5,2,3}                                                          {g,b,m}                                                                                                                          
+4            {4,6,8}                                                          {b,f,c}                                                          {2019-05-22 12:00:00}                                           
+5            {3,7,3}                                                          {m,m,z}                                                          {2019-06-22 12:00:00}                                           
+6            {7,8,9}                                                          {g,g,c}                                                                                                                          
+1            {9,2,3}                                                          {s,f,c}                                                          {NULL}                                                          
+
+5 rows fetched.
+
+SQL> select * from array_3 where f1 in (1,2);
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where f1 not in (1,2);
+
+CT-00601, [1:29]Sql syntax error: unexpected array expression
+SQL> select * from array_3 where id in (select f1 from array_3);
+
+CT-00601, Sql syntax error: unsupported ARRAY expression in IN list
+SQL> select * from array_3 where id not in (select f1 from array_3);
+
+CT-00601, Sql syntax error: unsupported ARRAY expression in IN list
+SQL> select * from array_3 where id = any (select f1 from array_3);
+
+CT-00601, Sql syntax error: unsupported ARRAY expression in IN list
+SQL> select * from array_3 where id != any (select f1 from array_3);
+
+CT-00601, Sql syntax error: unsupported ARRAY expression in IN list
+SQL> select * from array_3 where exists(select f3 from array_3);
+
+ID           F1                                                               F2                                                               F3                                                              
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3}                                                          {a,b,c}                                                          {2019-03-22 12:00:00}                                           
+2            {1,3,5}                                                          {b,e,c}                                                          {2019-04-22 12:00:00}                                           
+3            {5,2,3}                                                          {g,b,m}                                                                                                                          
+4            {4,6,8}                                                          {b,f,c}                                                          {2019-05-22 12:00:00}                                           
+5            {3,7,3}                                                          {m,m,z}                                                          {2019-06-22 12:00:00}                                           
+6            {7,8,9}                                                          {g,g,c}                                                                                                                          
+1            {9,2,3}                                                          {s,f,c}                                                          {NULL}                                                          
+
+7 rows fetched.
+
+SQL> select * from array_3 t1 join array_3 t2 on t1.f1 = t2.f3;
+
+CT-00601, [1:45]Sql syntax error: unexpected array expression
+SQL> 
+SQL> -- array function
+SQL> select array_length(array[null]) from dual;
+
+ARRAY_LENGTH(ARRAY[NULL])
+-------------------------
+1                        
+
+1 rows fetched.
+
+SQL> select array_length('{"a","b"}');
+
+ARRAY_LENGTH('{"A","B"}')
+-------------------------
+2                        
+
+1 rows fetched.
+
+SQL> update array_3 set f1=array[3,5,7,9,10] where id=3;
+
+1 rows affected.
+
+SQL> update array_3 set f1=array[4,5,6,9] where id=5;
+
+1 rows affected.
+
+SQL> select * from array_3;
+
+ID           F1                                                               F2                                                               F3
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- 
+1            {1,2,3}                                                          {a,b,c}                                                          {2019-03-22 12:00:00}
+2            {1,3,5}                                                          {b,e,c}                                                          {2019-04-22 12:00:00}
+3            {3,5,7,9,10}                                                     {g,b,m}
+4            {4,6,8}                                                          {b,f,c}                                                          {2019-05-22 12:00:00}
+5            {4,5,6,9}                                                        {m,m,z}                                                          {2019-06-22 12:00:00}
+6            {7,8,9}                                                          {g,g,c}
+1            {9,2,3}                                                          {s,f,c}                                                          {NULL}
+
+7 rows fetched.
+ 
+SQL> select id,array_length(f1) from array_3;  
+                                         
+ID           ARRAY_LENGTH(F1)            
+------------ ----------------            
+1            3                           
+2            3                           
+3            5                           
+4            3                           
+5            4                           
+6            3                           
+1            3                           
+                                         
+7 rows fetched.  
+
+SQL> select * from array_3 where array_length(f1)=array_length(f2);
+
+ID           F1                                                               F2                                                               F3
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- 
+1            {1,2,3}                                                          {a,b,c}                                                          {2019-03-22 12:00:00}
+2            {1,3,5}                                                          {b,e,c}                                                          {2019-04-22 12:00:00}
+4            {4,6,8}                                                          {b,f,c}                                                          {2019-05-22 12:00:00}
+6            {7,8,9}                                                          {g,g,c}
+1            {9,2,3}                                                          {s,f,c}                                                          {NULL}
+
+5 rows fetched.
+
+SQL> drop table if exists test_agg;
+
+Succeed.
+
+SQL> create table test_agg (id int,v int);   
+                                                                     
+Succeed.                                                                              
+                                             
+SQL> insert into test_agg values(1,1);       
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(1,4);       
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(1,9);       
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(2,11);      
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(2,13);      
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(2,16);      
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(2,23);      
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(3,15);      
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(3,7);       
+                                             
+1 rows affected.                             
+                                             
+SQL> insert into test_agg values(3,18);      
+                                             
+1 rows affected.  
+
+SQL> select * from test_agg;
+
+ID           V
+------------ ------------
+1            1
+1            4
+1            9
+2            11
+2            13
+2            16
+2            23
+3            15
+3            7
+3            18
+
+10 rows fetched.
+
+SQL> select id,array_agg(v) from test_agg group by id;
+
+ID           ARRAY_AGG(V)
+------------ ----------------------------------------------------------------
+2            {11,13,16,23}
+1            {1,4,9}
+3            {15,7,18}
+
+3 rows fetched.
+ 
+SQL> delete from test_agg;
+
+10 rows affected.
+
+SQL> alter table test_agg modify v varchar(30);
+
+Succeed.
+
+SQL> alter table test_agg add t date;
+
+Succeed.
+
+SQL> insert into test_agg values(1,'baby','2019-03-22 12:00:00'),(1,'cdd','2019-04-22 12:00:00'),(2,'full',null),(2,'happy','2019-03-22 12:00:00'),(2,'up','2019-05-22 12:00:00'),(3,'go','2019-05-22 12:00:00'),(3,'tt','2019-04-22 12:00:00');
+
+7 rows affected.
+
+SQL> select * from test_agg order by id, v;
+
+ID           V                              T
+------------ ------------------------------ ----------------------
+1            baby                           2019-03-22 12:00:00   
+1            cdd                            2019-04-22 12:00:00   
+2            full                                                 
+2            happy                          2019-03-22 12:00:00   
+2            up                             2019-05-22 12:00:00
+3            go                             2019-05-22 12:00:00   
+3            tt                             2019-04-22 12:00:00   
+
+7 rows fetched.
+
+SQL> --unstable result
+SQL> --select id,array_agg(v) from test_agg group by id order by id;
+SQL> --select id,array_agg(t) from test_agg group by id order by id;
+SQL> 
+SQL> -- join
+SQL> drop table if exists array_3;
+
+Succeed.
+
+SQL> drop table if exists array_4;
+
+Succeed.
+
+SQL> create table array_3(id int,f1 int[],f2 varchar(30)[],f3 date[]);
+
+Succeed.
+
+SQL> insert into array_3 values(1,array[1,2,3],array['a','b','c'],array['2019-03-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(2,array[4,5,6],array['d','e','f'],array['2019-04-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(3,array[7,8,9],array['g','h','i'],array['2019-05-22 12:00:00']);
+
+1 rows affected.
+
+SQL> create table array_4(id int,m1 int[],m2 varchar(30)[],m3 date[]);
+
+Succeed.
+
+SQL> insert into array_4 values(1,array[1,3,5],array['a','d','c'],array['2019-03-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_4 values(3,array[4,6,5],array['a','d','c'],array['2019-05-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_4 values(5,array[7,8,9],array['a','d','e'],array['2019-07-22 12:00:00']);
+
+1 rows affected.
+ 
+SQL> select array_3.id,array_3.f1,array_4.m3 from array_3,array_4;
+
+ID           F1                                                               M3
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3}                                                          {2019-03-22 12:00:00}
+1            {1,2,3}                                                          {2019-05-22 12:00:00}
+1            {1,2,3}                                                          {2019-07-22 12:00:00}
+2            {4,5,6}                                                          {2019-03-22 12:00:00}
+2            {4,5,6}                                                          {2019-05-22 12:00:00}
+2            {4,5,6}                                                          {2019-07-22 12:00:00}
+3            {7,8,9}                                                          {2019-03-22 12:00:00}
+3            {7,8,9}                                                          {2019-05-22 12:00:00}
+3            {7,8,9}                                                          {2019-07-22 12:00:00}
+
+9 rows fetched.
+
+SQL> select array_3.id,array_3.f1,array_4.m3 from array_3 join array_4 on array_3.id=array_4.id;
+
+ID           F1                                                               M3
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3}                                                          {2019-03-22 12:00:00}
+3            {7,8,9}                                                          {2019-05-22 12:00:00}
+
+2 rows fetched.
+
+SQL> select array_3.id,array_3.f1,array_4.m3 from array_3 right join array_4 on array_3.id=array_4.id;
+
+ID           F1                                                               M3
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3}                                                          {2019-03-22 12:00:00}
+3            {7,8,9}                                                          {2019-05-22 12:00:00}
+                                                                              {2019-07-22 12:00:00}
+
+3 rows fetched.
+
+SQL> select array_3.id,array_3.f1,array_4.m3 from array_3 full join array_4 on array_3.id=array_4.id;
+
+ID           F1                                                               M3                                                              
+------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3}                                                          {2019-03-22 12:00:00}
+2            {4,5,6}
+3            {7,8,9}                                                          {2019-05-22 12:00:00}
+                                                                              {2019-07-22 12:00:00}
+
+4 rows fetched.
+
+SQL> select f3 from array_3 where id=(select id from array_4 where m1[1]=4);
+
+F3
+----------------------------------------------------------------
+{2019-05-22 12:00:00}
+
+1 rows fetched.
+
+SQL> 
+SQL> -- order by/group by
+SQL> insert into array_3 values(4,array[7,1,3],array['m','g','z'],array['2019-06-22 12:00:00']);
+
+1 rows affected.
+
+SQL> select * from array_3;
+
+ID           F1                                                               F2                                                               F3
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- 
+1            {1,2,3}                                                          {a,b,c}                                                          {2019-03-22 12:00:00}
+2            {4,5,6}                                                          {d,e,f}                                                          {2019-04-22 12:00:00}
+3            {7,8,9}                                                          {g,h,i}                                                          {2019-05-22 12:00:00}
+4            {7,1,3}                                                          {m,g,z}                                                          {2019-06-22 12:00:00}
+
+4 rows fetched.
+
+SQL> select * from array_3 order by f1[2];
+
+ID           F1                                                               F2                                                               F3
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- 
+4            {7,1,3}                                                          {m,g,z}                                                          {2019-06-22 12:00:00}
+1            {1,2,3}                                                          {a,b,c}                                                          {2019-03-22 12:00:00}
+2            {4,5,6}                                                          {d,e,f}                                                          {2019-04-22 12:00:00}
+3            {7,8,9}                                                          {g,h,i}                                                          {2019-05-22 12:00:00}
+
+4 rows fetched.
+
+SQL> select f1[1],count(*) from array_3 group by f1[1];
+
+F1           COUNT(*)
+------------ --------------------
+7            2
+4            1
+1            1
+
+3 rows fetched.
+
+SQL> select f1[1],count(*) from array_3 group by f1[1] order by count(*);
+
+F1           COUNT(*)
+------------ --------------------
+4            1
+1            1
+7            2
+
+3 rows fetched.
+
+SQL> select f1[1],count(*) from array_3 group by f1[1] order by f1[1];
+
+F1           COUNT(*)
+------------ --------------------
+1            1
+4            1
+7            2
+
+3 rows fetched.
+
+SQL> insert into array_3 values(5,array[7,2,3],array['m','g','z'],array['2019-07-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(6,array[3,5,3],array['m','g','z'],array['2019-08-22 12:00:00']);
+
+1 rows affected.
+
+SQL> insert into array_3 values(7,array[6,2,6],array['m','g','z'],array['2019-09-22 12:00:00']);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select f1[2],count(*) from array_3 group by f1[2] having count(*)>=2 order by count(*);
+
+F1           COUNT(*)
+------------ --------------------
+5            2
+2            3
+
+2 rows fetched.
+
+SQL> select * from array_3 order by id limit 2,5;                                                                                                                                                                    
+                                                                                                                                                                                                                
+ID           F1                                                               F2                                                               F3                                                               
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- 
+3            {7,8,9}                                                          {g,h,i}                                                          {2019-05-22 12:00:00}                                            
+4            {7,1,3}                                                          {m,g,z}                                                          {2019-06-22 12:00:00}                                            
+5            {7,2,3}                                                          {m,g,z}                                                          {2019-07-22 12:00:00}                                            
+6            {3,5,3}                                                          {m,g,z}                                                          {2019-08-22 12:00:00}                                            
+7            {6,2,6}                                                          {m,g,z}                                                          {2019-09-22 12:00:00}                                            
+                                                                                                                                                                                                                
+5 rows fetched.                                                                                                                                                                                                 
+                                                                                                                                                                                                                
+SQL> select * from array_3 offset 1 limit 2;                                                                                                                                                                         
+                                                                                                                                                                                                                
+ID           F1                                                               F2                                                               F3                                                               
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- 
+2            {4,5,6}                                                          {d,e,f}                                                          {2019-04-22 12:00:00}                                            
+3            {7,8,9}                                                          {g,h,i}                                                          {2019-05-22 12:00:00}                                            
+                                                                                                                                                                                                                
+2 rows fetched.                                                                                                                                                                                                 
+                                                                                                                                                                                                                
+SQL> select * from array_3 limit 2 offset 1;                                                                                                                                                                         
+                                                                                                                                                                                                                
+ID           F1                                                               F2                                                               F3                                                               
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- 
+2            {4,5,6}                                                          {d,e,f}                                                          {2019-04-22 12:00:00}                                            
+3            {7,8,9}                                                          {g,h,i}                                                          {2019-05-22 12:00:00}                                            
+                                                                                                                                                                                                                
+2 rows fetched.                                                                                                                                                                                                 
+                                                                                                                                                                                                                
+SQL>  
+SQL> -- merge
+SQL> merge into array_4 using array_3 on (array_4.id=array_3.id) when matched then update set array_4.m1[1]=array_3.f1[1] when not matched then insert (id,m1,m2,m3) values (array_3.id,array_3.f1,array_3.f2,array_3.f3);
+
+7 rows affected.
+
+SQL> select * from array_4;
+
+ID           M1                                                               M2                                                               M3
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- 
+1            {1,3,5}                                                          {a,d,c}                                                          {2019-03-22 12:00:00}
+3            {7,6,5}                                                          {a,d,c}                                                          {2019-05-22 12:00:00}
+5            {7,8,9}                                                          {a,d,e}                                                          {2019-07-22 12:00:00}
+2            {4,5,6}                                                          {d,e,f}                                                          {2019-04-22 12:00:00}
+4            {7,1,3}                                                          {m,g,z}                                                          {2019-06-22 12:00:00}
+6            {3,5,3}                                                          {m,g,z}                                                          {2019-08-22 12:00:00}
+7            {6,2,6}                                                          {m,g,z}                                                          {2019-09-22 12:00:00}
+
+7 rows fetched.
+
+SQL>  
+SQL> -- delete
+SQL> rollback;
+
+Succeed.
+
+SQL> delete from array_3 where f3=array['2019-07-22 12:00:00'];
+
+CT-00601, [1:27]Sql syntax error: unexpected array expression
+SQL> delete from array_3 where f3[1]='2019-07-22 12:00:00';
+
+1 rows affected.
+
+SQL> update array_3 set f3=array['2019-05-22 12:00:00'] where id=4;
+
+1 rows affected.
+
+SQL> update array_3 set f1=array[1,2,3,4] where id=1;
+
+1 rows affected.
+
+SQL> select * from array_3;
+
+ID           F1                                                               F2                                                               F3
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1            {1,2,3,4}                                                        {a,b,c}                                                          {2019-03-22 12:00:00}
+2            {4,5,6}                                                          {d,e,f}                                                          {2019-04-22 12:00:00}
+3            {7,8,9}                                                          {g,h,i}                                                          {2019-05-22 12:00:00}
+4            {7,1,3}                                                          {m,g,z}                                                          {2019-05-22 12:00:00}
+6            {3,5,3}                                                          {m,g,z}                                                          {2019-08-22 12:00:00}
+7            {6,2,6}                                                          {m,g,z}                                                          {2019-09-22 12:00:00}
+
+6 rows fetched.
+
+SQL> delete from array_3 where f3[1]='2019-05-22 12:00:00' and id=3;
+
+1 rows affected.
+
+SQL> delete from array_3 where array_length(f1)=4;
+
+1 rows affected.  
+
+SQL> select * from array_3;                                                                                                                                                                                                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                           
+ID           F1                                                               F2                                                               F3                                                                                          
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------                            
+2            {4,5,6}                                                          {d,e,f}                                                          {2019-04-22 12:00:00}                                                                       
+4            {7,1,3}                                                          {m,g,z}                                                          {2019-05-22 12:00:00}                                                                       
+6            {3,5,3}                                                          {m,g,z}                                                          {2019-08-22 12:00:00}                                                                       
+7            {6,2,6}                                                          {m,g,z}                                                          {2019-09-22 12:00:00}                                                                       
+                                                                                                                                                                                                                                           
+4 rows fetched.                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                           
+SQL> rollback;                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                           
+Succeed.                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                           
+SQL> delete from array_3 using array_4 join array_3 on array_3.id=array_4.id;                                                                                                                                                                                       
+                                                                                                                                                                                                                                           
+3 rows affected.                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                           
+SQL> select * from array_3;                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                           
+ID           F1                                                               F2                                                               F3                                                                                          
+------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------                            
+2            {4,5,6}                                                          {d,e,f}                                                          {2019-04-22 12:00:00}                                                                       
+4            {7,1,3}                                                          {m,g,z}                                                          {2019-06-22 12:00:00}                                                                       
+6            {3,5,3}                                                          {m,g,z}                                                          {2019-08-22 12:00:00}                                                                       
+7            {6,2,6}                                                          {m,g,z}                                                          {2019-09-22 12:00:00}                                                                       
+                                                                                                                                                                                                                                           
+4 rows fetched.                                                                                                                                                                                                                            
+ 
+SQL> 
+SQL> -- DTS2019110500628
+SQL> DROP TABLE IF EXISTS t_group_by_rollup_004;
+
+Succeed.
+
+SQL> CREATE TABLE t_group_by_rollup_004 (
+  2  fact_1_id int,
+  3  fact_2_id int,
+  4  fact_3_id int,
+  5  fact_4_id int[],
+  6  sales_value int
+  7 );
+
+Succeed.
+
+SQL>
+SQL> INSERT INTO t_group_by_rollup_004 VALUES (1,2,3,'{1,2,3}',5);
+
+1 rows affected.
+
+SQL> INSERT INTO t_group_by_rollup_004 VALUES (2,9,3,'{1,2,3}',5);
+
+1 rows affected.
+
+SQL> INSERT INTO t_group_by_rollup_004 VALUES (3,9,3,'{4,5,6}',5);
+
+1 rows affected.
+
+SQL> INSERT INTO t_group_by_rollup_004 VALUES (4,9,3,'{4,5,6}',8);
+
+1 rows affected.
+
+SQL> INSERT INTO t_group_by_rollup_004 VALUES (5,9,3,'{4,5,6}',8);
+
+1 rows affected.
+
+SQL> INSERT INTO t_group_by_rollup_004 VALUES (6,2,3,'{7,8,9}',8);
+
+1 rows affected.
+
+SQL> INSERT INTO t_group_by_rollup_004 VALUES (7,2,3,'{7,8,9}',8);
+
+1 rows affected.
+
+SQL> INSERT INTO t_group_by_rollup_004 VALUES (8,2,4,'{7,8,9}',5);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL>
+SQL> SELECT fact_1_id, fact_4_id[1], fact_4_id[2], fact_4_id[3], SUM(sales_value) AS sales_value
+  2  FROM t_group_by_rollup_004 GROUP BY rollup (fact_1_id,fact_4_id[1],fact_4_id[2],fact_4_id[3])
+  3  ORDER BY fact_1_id,fact_4_id[1],fact_4_id[2],fact_4_id[3];
+
+FACT_1_ID    FACT_4_ID    FACT_4_ID    FACT_4_ID    SALES_VALUE
+------------ ------------ ------------ ------------ --------------------
+1            1            2            3            5
+1            1            2                         5
+1            1                                      5
+1                                                   5
+2            1            2            3            5
+2            1            2                         5
+2            1                                      5
+2                                                   5
+3            4            5            6            5
+3            4            5                         5
+3            4                                      5
+3                                                   5
+4            4            5            6            8
+4            4            5                         8
+4            4                                      8
+4                                                   8
+5            4            5            6            8
+5            4            5                         8
+5            4                                      8
+5                                                   8
+6            7            8            9            8
+6            7            8                         8
+6            7                                      8
+6                                                   8
+7            7            8            9            8
+7            7            8                         8
+7            7                                      8
+7                                                   8
+8            7            8            9            5
+8            7            8                         5
+8            7                                      5
+8                                                   5
+                                                    52
+
+33 rows fetched.
+
+SQL> 
+SQL> -- select array into array
+SQL> drop table if exists t_array2array;
+
+Succeed.
+
+SQL> create table t_array2array (COL1 int,COL2 number(38,8)[]);
+
+Succeed.
+
+SQL> insert into t_array2array values(1,array[58814,546223077,1234567.67,12345.4567,12.1234567,null,2345.89,-12345.4567,12.1234567,12.55]);
+
+1 rows affected.
+
+SQL> insert into t_array2array values(2,array[-0.9E12 , 1.0E26 -1 , -89.0000001]);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> CREATE OR REPLACE PROCEDURE p_array2array()
+  2 AS
+  3 V1 number[];
+  4 BEGIN
+  5 	select COL2 into V1 from t_array2array where COL1=1;
+  6 	if (V1[3]>10000)and(V1[8]<0)
+  7 	then
+  8 		dbe_output.print_line('array[3] is: '||V1[3]);
+  9 	else
+ 10 		dbe_output.print_line('V1[6] is : '||V1[6]);
+ 11 	end if;
+ 12 END;
+ 13 /
+
+Succeed.
+
+SQL> call p_array2array();
+
+array[3] is: 1234567.67
+
+PL/SQL procedure successfully completed.
+
+SQL> call p_array2array();
+
+array[3] is: 1234567.67
+
+PL/SQL procedure successfully completed.
+
+SQL> call p_array2array();
+
+array[3] is: 1234567.67
+
+PL/SQL procedure successfully completed.
+
+SQL> drop PROCEDURE p_array2array;
+
+Succeed.
+
+SQL> drop table t_array2array;
+
+Succeed.
+
+SQL> 
+SQL> -- common don't support knl_array
+SQL> DROP TABLE IF EXISTS t_array2array;
+
+Succeed.
+
+SQL> CREATE TABLE  t_array2array(
+  2      COL_1 integer,
+  3      COL_2 bigint,
+  4      COL_3 double,
+  5      COL_4 decimal(12,6),
+  6      COL_5 bool,
+  7      COL_6 char(30),
+  8      COL_7 varchar2(50),
+  9      COL_8 varchar(30),
+ 10      COL_9 interval day to second,
+ 11      COL_10 TIMESTAMP,
+ 12      COL_11 date,
+ 13      COL_12 datetime,
+ 14      COL_13 TIMESTAMP WITHOUT TIME ZONE,
+ 15      COL_14 blob,
+ 16      COL_15 clob,
+ 17      COL_16 int[]
+ 18 );
+
+Succeed.
+
+SQL> 
+SQL> drop sequence if exists s_array2array;
+
+Succeed.
+
+SQL> create sequence s_array2array increment by 1 start with 10;
+
+Succeed.
+
+SQL> 
+SQL> begin
+  2  for i in 1..50 loop
+  3       insert into t_array2array values(
+  4    i,
+  5       s_array2array.nextval,
+  6    i+445.255,
+  7    98*0.99*i,
+  8    true,
+  9    lpad('abc','30','@'),
+ 10    lpad('abc','30','b'),
+ 11    rpad('abc','30','e'),
+ 12    (INTERVAL '4 5:12:10.222' DAY TO SECOND(3)),
+ 13    to_timestamp('2019-01-03 14:58:54.000000','YYYY-MM-DD HH24:MI:SS.FFFFFF'),
+ 14    TIMESTAMPADD(SECOND,i,'2018-11-03 14:14:12'),
+ 15    TIMESTAMPADD(MINUTE,i,'2019-01-03 14:14:12'),
+ 16    TIMESTAMPADD(HOUR,i,'2019-01-03 14:14:12'),
+ 17    lpad('10','12','01010'),
+ 18    rpad('abc','9','a@123&^%djgk'),
+ 19    '{32,535,5645645,6767,76,67,56,48,979,978,7}'
+ 20    );
+ 21       commit;
+ 22     end loop;
+ 23 end;
+ 24 /
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select * from t_array2array t where t.COL_16 like '%' order by COL_1;
+
+COL_1        COL_2                COL_3                COL_4                                    COL_5  COL_6                          COL_7                                              COL_8                          COL_9                    COL_10                           COL_11                 COL_12                 COL_13                           COL_14                                                           COL_15                                                           COL_16                                                          
+------------ -------------------- -------------------- ---------------------------------------- ------ ------------------------------ -------------------------------------------------- ------------------------------ ------------------------ -------------------------------- ---------------------- ---------------------- -------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1            10                   446.255              97.02                                    TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:13    2019-01-03 14:15:12    2019-01-03 15:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+2            11                   447.255              194.04                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:14    2019-01-03 14:16:12    2019-01-03 16:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+3            12                   448.255              291.06                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:15    2019-01-03 14:17:12    2019-01-03 17:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+4            13                   449.255              388.08                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:16    2019-01-03 14:18:12    2019-01-03 18:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+5            14                   450.255              485.1                                    TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:17    2019-01-03 14:19:12    2019-01-03 19:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+6            15                   451.255              582.12                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:18    2019-01-03 14:20:12    2019-01-03 20:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+7            16                   452.255              679.14                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:19    2019-01-03 14:21:12    2019-01-03 21:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+8            17                   453.255              776.16                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:20    2019-01-03 14:22:12    2019-01-03 22:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+9            18                   454.255              873.18                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:21    2019-01-03 14:23:12    2019-01-03 23:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+10           19                   455.255              970.2                                    TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:22    2019-01-03 14:24:12    2019-01-04 00:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+11           20                   456.255              1067.22                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:23    2019-01-03 14:25:12    2019-01-04 01:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+12           21                   457.255              1164.24                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:24    2019-01-03 14:26:12    2019-01-04 02:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+13           22                   458.255              1261.26                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:25    2019-01-03 14:27:12    2019-01-04 03:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+14           23                   459.255              1358.28                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:26    2019-01-03 14:28:12    2019-01-04 04:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+15           24                   460.255              1455.3                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:27    2019-01-03 14:29:12    2019-01-04 05:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+16           25                   461.255              1552.32                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:28    2019-01-03 14:30:12    2019-01-04 06:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+17           26                   462.255              1649.34                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:29    2019-01-03 14:31:12    2019-01-04 07:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+18           27                   463.255              1746.36                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:30    2019-01-03 14:32:12    2019-01-04 08:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+19           28                   464.255              1843.38                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:31    2019-01-03 14:33:12    2019-01-04 09:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+20           29                   465.255              1940.4                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:32    2019-01-03 14:34:12    2019-01-04 10:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+21           30                   466.255              2037.42                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:33    2019-01-03 14:35:12    2019-01-04 11:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+22           31                   467.255              2134.44                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:34    2019-01-03 14:36:12    2019-01-04 12:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+23           32                   468.255              2231.46                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:35    2019-01-03 14:37:12    2019-01-04 13:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+24           33                   469.255              2328.48                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:36    2019-01-03 14:38:12    2019-01-04 14:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+25           34                   470.255              2425.5                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:37    2019-01-03 14:39:12    2019-01-04 15:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+26           35                   471.255              2522.52                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:38    2019-01-03 14:40:12    2019-01-04 16:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+27           36                   472.255              2619.54                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:39    2019-01-03 14:41:12    2019-01-04 17:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+28           37                   473.255              2716.56                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:40    2019-01-03 14:42:12    2019-01-04 18:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+29           38                   474.255              2813.58                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:41    2019-01-03 14:43:12    2019-01-04 19:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+30           39                   475.255              2910.6                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:42    2019-01-03 14:44:12    2019-01-04 20:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+31           40                   476.255              3007.62                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:43    2019-01-03 14:45:12    2019-01-04 21:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+32           41                   477.255              3104.64                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:44    2019-01-03 14:46:12    2019-01-04 22:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+33           42                   478.255              3201.66                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:45    2019-01-03 14:47:12    2019-01-04 23:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+34           43                   479.255              3298.68                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:46    2019-01-03 14:48:12    2019-01-05 00:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+35           44                   480.255              3395.7                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:47    2019-01-03 14:49:12    2019-01-05 01:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+36           45                   481.255              3492.72                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:48    2019-01-03 14:50:12    2019-01-05 02:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+37           46                   482.255              3589.74                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:49    2019-01-03 14:51:12    2019-01-05 03:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+38           47                   483.255              3686.76                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:50    2019-01-03 14:52:12    2019-01-05 04:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+39           48                   484.255              3783.78                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:51    2019-01-03 14:53:12    2019-01-05 05:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+40           49                   485.255              3880.8                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:52    2019-01-03 14:54:12    2019-01-05 06:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+41           50                   486.255              3977.82                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:53    2019-01-03 14:55:12    2019-01-05 07:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+42           51                   487.255              4074.84                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:54    2019-01-03 14:56:12    2019-01-05 08:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+43           52                   488.255              4171.86                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:55    2019-01-03 14:57:12    2019-01-05 09:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+44           53                   489.255              4268.88                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:56    2019-01-03 14:58:12    2019-01-05 10:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+45           54                   490.255              4365.9                                   TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:57    2019-01-03 14:59:12    2019-01-05 11:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+46           55                   491.255              4462.92                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:58    2019-01-03 15:00:12    2019-01-05 12:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+47           56                   492.255              4559.94                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:14:59    2019-01-03 15:01:12    2019-01-05 13:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+48           57                   493.255              4656.96                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:15:00    2019-01-03 15:02:12    2019-01-05 14:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+49           58                   494.255              4753.98                                  TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:15:01    2019-01-03 15:03:12    2019-01-05 15:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+50           59                   495.255              4851                                     TRUE   @@@@@@@@@@@@@@@@@@@@@@@@@@@abc bbbbbbbbbbbbbbbbbbbbbbbbbbbabc                     abceeeeeeeeeeeeeeeeeeeeeeeeeee +04 05:12:10.222000      2019-01-03 14:58:54.000000       2018-11-03 14:15:02    2019-01-03 15:04:12    2019-01-05 16:14:12.000000       010100101010                                                     abca@123&                                                        {32,535,5645645,6767,76,67,56,48,979,978,7}                     
+
+50 rows fetched.
+
+SQL> drop table t_array2array;
+
+Succeed.
+
+SQL> drop sequence s_array2array;
+
+Succeed.
+
+SQL> 
+SQL> --ISSUE #29903
+SQL> drop table if exists exp_imp_arr_test;
+
+Succeed.
+
+SQL> create table exp_imp_arr_test(f5 NUMBER(9,2)[]);
+
+Succeed.
+
+SQL> insert into exp_imp_arr_test values(array[12345678]);
+
+CT-00635, Value error: value larger than specified precision
+SQL> drop table if exists exp_imp_arr_test;
+Succeed.
+
+SQL> 
+SQL> --DTS202010210DONY2P1J00
+SQL> set serveroutput on;
+
+ON
+SQL> drop table if exists ARRAY_TAB_001;
+
+Succeed.
+
+SQL> create table ARRAY_TAB_001(f1 integer[10], f2 integer);
+
+Succeed.
+
+SQL> create or replace procedure ARRAY_PRO_001 (ARRAY_C integer[])
+  2 as
+  3 ARRAY_A ARRAY_TAB_001.f1%type;
+  4 begin
+  5         ARRAY_A:=ARRAY_C;
+  6         dbe_output.print_line(ARRAY_A);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> declare
+  2 ARRAY_B integer[] :=array[1,2,3];
+  3 begin
+  4         ARRAY_PRO_001(ARRAY_B);
+  5 end;
+  6 /
+
+{1,2,3}
+
+PL/SQL procedure successfully completed.
+
+SQL> declare
+  2 ARRAY_A integer[] :=array[1,2,3,4,5,6,7,8,9,10];
+  3 begin
+  4         dbe_output.print_line(ARRAY[ARRAY_A[1],   ARRAY_A[2]]);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:44] PLC-00601 Sql syntax error: text is incorrect
+
+SQL> 
+SQL> create or replace function SYN_FUN_001(ARRAY_C integer[]) return integer[]
+  2 as
+  3 ARRAY_A integer[];
+  4 begin
+  5         ARRAY_A:=ARRAY_C;
+  6         return ARRAY_A;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> drop synonym if exists SYN_FUN_SYN_001;
+
+Succeed.
+
+SQL> create or replace synonym SYN_FUN_SYN_001 for SYN_FUN_001;
+
+Succeed.
+
+SQL> declare
+  2         ARRAY_A integer[]:=array[1,2,3,4,5,6,7,8,9,10];
+  3 begin
+  4         ARRAY_A:= SYN_FUN_SYN_001(ARRAY_A);
+  5         dbe_output.print_line(SYN_FUN_SYN_001(ARRAY_A));
+  6 end;
+  7 /
+
+{1,2,3,4,5,6,7,8,9,10}
+
+PL/SQL procedure successfully completed.
+
+SQL> drop table ARRAY_TAB_001;
+
+Succeed.
+
+SQL> drop procedure ARRAY_PRO_001;
+
+Succeed.
+
+SQL> drop synonym SYN_FUN_SYN_001;
+
+Succeed.
+
+SQL> drop function SYN_FUN_001;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput off;
+OFF
+SQL> 
+SQL> -- DTS202104230FBB6HP1200
+SQL> drop table if exists test_array_rs_t;
+
+Succeed.
+
+SQL> create table test_array_rs_t(c_int int[]);
+
+Succeed.
+
+SQL> insert into test_array_rs_t values(array[1,2,null,10,11]);
+
+1 rows affected.
+
+SQL> insert into test_array_rs_t values(array[1,2,2,10]);
+
+1 rows affected.
+
+SQL> insert into test_array_rs_t values(array[1,2,2]);
+
+1 rows affected.
+
+SQL> select ref_0.c as c0, ref_0.c as c1 from (select array_agg(array_length(c_int)) c from test_array_rs_t) as ref_0;
+
+C0                                                               C1                                                              
+---------------------------------------------------------------- ----------------------------------------------------------------
+{5,4,3}                                                          {5,4,3}                                                         
+
+1 rows fetched.
+
+SQL> select array_agg(array_length(c_int)) as c0, array_agg(array_length(c_int)) as c1 from test_array_rs_t as ref_0;
+
+C0                                                               C1                                                              
+---------------------------------------------------------------- ----------------------------------------------------------------
+{5,4,3}                                                          {5,4,3}                                                         
+
+1 rows fetched.
+
+SQL> 
+SQL> drop view if exists test_array_rs_v;
+
+Succeed.
+
+SQL> create view test_array_rs_v(c1,c2) as 
+  2 select t1.c_int,t2.c_int from test_array_rs_t t1 join test_array_rs_t t2 
+  3 on case when t1.c_int[2]=2 then array_length(t1.c_int) end=array_length(t2.c_int);
+
+Succeed.
+
+SQL> 
+SQL> select
+  2   (select c1 from test_array_rs_v limit 1) as c0
+  3 from
+  4   sys_dummy as ref_0;
+
+C0                                                              
+----------------------------------------------------------------
+{1,2,NULL,10,11}                                                
+
+1 rows fetched.
+
+SQL> 
+SQL> drop view test_array_rs_v;
+
+Succeed.
+
+SQL> drop table test_array_rs_t;
+Succeed.
+
+
+
+

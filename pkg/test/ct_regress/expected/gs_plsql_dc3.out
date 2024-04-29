@@ -1,0 +1,130 @@
+
+
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS PL_DC3 CASCADE;
+
+Succeed.
+
+SQL> CREATE USER PL_DC3 IDENTIFIED BY Cantian_123456;
+
+Succeed.
+
+SQL> GRANT DBA TO PL_DC3;
+
+Succeed.
+
+SQL> GRANT EXECUTE ON DBE_DIAGNOSE TO PL_DC3;
+
+Succeed.
+
+SQL> conn PL_DC3/Cantian_123456@127.0.0.1:1611
+
+connected.
+
+SQL> SET SERVEROUTPUT ON
+
+ON
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE PKG1 IS
+  2  FUNCTION F1(C1 INT) RETURN INT;
+  3  PROCEDURE P1(C1 INT);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY PKG1 IS
+  2  FUNCTION F1(C1 INT) RETURN INT IS
+  3  BEGIN
+  4   P1(C1);
+  5   RETURN C1;
+  6  END;
+  7  PROCEDURE P1(C1 INT) IS
+  8  BEGIN
+  9   dbe_output.print_line('I AM PL_DC3.PKG1');
+ 10  END;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT PL_DC3.PKG1.F1(1);
+
+PL_DC3.PKG1.F1(1)
+-----------------
+1                
+
+1 rows fetched.
+
+I AM PL_DC3.PKG1
+
+SQL> CALL PL_DC3.PKG1.P1(1);
+
+I AM PL_DC3.PKG1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CALL PL_DC3.PKG1.F1(1);
+
+CT-00944, PL/SQL(PL_DC3.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00828 procedure PL_DC3.PKG1.F1 does not exist
+
+SQL> SELECT PL_DC3.PKG1.P1(1);
+
+CT-00828, [1:8]function PL_DC3.PKG1.P1 does not exist
+SQL> 
+SQL> CREATE OR REPLACE SYNONYM PKG1 FOR PKG1;--ERROR
+
+CT-00604, Duplicate object name PKG1
+SQL> CREATE OR REPLACE SYNONYM PKG2 FOR PKG1;
+
+Succeed.
+
+SQL> 
+SQL> SELECT PL_DC3.PKG2.F1(1);
+
+PL_DC3.PKG2.F1(1)
+-----------------
+1                
+
+1 rows fetched.
+
+I AM PL_DC3.PKG1
+
+SQL> CALL PL_DC3.PKG2.P1(1);
+
+I AM PL_DC3.PKG1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CALL PL_DC3.PKG2.F1(1);
+
+CT-00944, PL/SQL(PL_DC3.ANONYMOUS BLOCK) terminated with compiling errors
+[1:2] PLC-00828 procedure PL_DC3.PKG2.F1 does not exist
+
+SQL> SELECT PL_DC3.PKG2.P1(1);
+
+CT-00828, [1:8]function PL_DC3.PKG2.P1 does not exist
+SQL> 
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP USER IF EXISTS PL_DC3 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+
+

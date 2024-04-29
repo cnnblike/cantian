@@ -1,0 +1,1670 @@
+
+
+SQL> conn   sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists tab_check_null;
+
+Succeed.
+
+SQL> create table tab_check_null (a int not null);
+
+Succeed.
+
+SQL> alter table tab_check_null modify ( a int check ( a is null));
+
+Succeed.
+
+SQL> insert into tab_check_null values(4);
+
+CT-01127, Check constraint violated
+SQL> drop table if exists tab_check_null;
+
+Succeed.
+
+SQL> create user constraints_user identified by cao102_cao;
+
+Succeed.
+
+SQL> grant connect to constraints_user;
+
+Succeed.
+
+SQL> grant create table  to constraints_user;
+
+Succeed.
+
+SQL> grant create view to constraints_user;
+
+Succeed.
+
+SQL> conn   constraints_user/cao102_cao@127.0.0.1:1611
+
+connected.
+
+SQL> drop table if exists caot1;
+
+Succeed.
+
+SQL> create  table caot1(id int constraint caot1_pri primary key ,name int constraint caot1_check check (name>10)); 
+
+Succeed.
+
+SQL> select TABLE_NAME,CONSTRAINT_NAME,CONSTRAINT_type,CONS_COLS from ALL_CONSTRAINTS where TABLE_NAME='CAOT1';
+
+TABLE_NAME                                                       CONSTRAINT_NAME                                                  CONSTRAINT_TYPE CONS_COLS                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- --------------- ----------------------------------------------------------------
+CAOT1                                                            CAOT1_PRI                                                        P               ID                                                              
+CAOT1                                                            CAOT1_CHECK                                                      C               NAME                                                            
+
+2 rows fetched.
+
+SQL> conn   sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select TABLE_NAME,CONSTRAINT_NAME,CONSTRAINT_type,CONS_COLS from DBA_CONSTRAINTS where TABLE_NAME='CAOT1';
+
+TABLE_NAME                                                       CONSTRAINT_NAME                                                  CONSTRAINT_TYPE CONS_COLS                                                       
+---------------------------------------------------------------- ---------------------------------------------------------------- --------------- ----------------------------------------------------------------
+CAOT1                                                            CAOT1_PRI                                                        P               ID                                                              
+CAOT1                                                            CAOT1_CHECK                                                      C               NAME                                                            
+
+2 rows fetched.
+
+SQL> drop user constraints_user cascade;
+
+Succeed.
+
+SQL> CREATE TABLE T_CHECK_FAILED_1
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)   not null constraint chk_sec_level check(logLevel in ('WARNING','MINOR','RISK', 'aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'asdfasdlkfjasldjfalksdjfkasdasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfa', 
+  5 	'111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+  6 '211111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+  7 '311111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+  8 '411111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+  9 '511111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 10 '611111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 11 '711111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 12 '811111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 13 '911111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 14 '1011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 15 '111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 16 '121111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 17 '131111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 18 '141111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 19 '151111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 20 '161111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 21 '171111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 22 '181111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 23 '191111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
+ 24 '201111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111')),   
+ 25     PRIMARY KEY ( sn ) using index tablespace users
+ 26 )tablespace users;
+
+CT-00601, [4:70]Sql syntax error: length of CHECK's value exceed maximum: 2048
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_2
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)  not null constraint chk_sec_level  check(logLevel in ('WARNING','MINOR','RISK')) check(logLevel in ('WARNING','MINOR','RISK')),   
+  5     PRIMARY KEY ( sn ) using index tablespace users
+  6 )tablespace users;
+
+CT-00601, [4:110]Sql syntax error: duplicate or conflicting check specifications
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_3
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)   not null constraint chk_sec_level  check( 'ABC'  = CASE logLevel  WHEN 'WARNING' THEN 'WARNING' ELSE NULL END),   
+  5     PRIMARY KEY ( sn ) using index tablespace users
+  6 )tablespace users;
+
+CT-00601, [4:81]Sql syntax error: unexpected case when occurs
+SQL> 
+SQL> drop table if exists T_CHECK_SUCESS_0;
+
+Succeed.
+
+SQL> CREATE TABLE T_CHECK_SUCESS_0
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)   not null constraint chk_sec_level  check(logLevel in ('WARNING','MINOR','RISK')),   
+  5 	result       VARCHAR2(10)    not null constraint "Chk_SEC_level" check(result in ('SUCCESSFUL','FAILURE','POK'))   
+  6 )tablespace users;
+
+Succeed.
+
+SQL> SELECT CONS_NAME FROM SYS_CONSTRAINT_DEFS WHERE USER#=0 AND  TABLE# = (SELECT ID  FROM SYS_TABLES WHERE  NAME = 'T_CHECK_SUCESS_0') order by CONS_NAME;
+
+CONS_NAME                                                       
+----------------------------------------------------------------
+CHK_SEC_LEVEL                                                   
+Chk_SEC_level                                                   
+
+2 rows fetched.
+
+SQL> drop table T_CHECK_SUCESS_0;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_4
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)   not null constraint chk_sec_level  check(logLevel in ('WARNING','MINOR','RISK')),   
+  5 	result       VARCHAR2(10)    not null constraint chk_sec_level check(result in ('SUCCESSFUL','FAILURE','POK')), 
+  6     PRIMARY KEY ( sn ) using index tablespace users
+  7 )tablespace users;
+
+CT-00753, The object constraint CHK_SEC_LEVEL already exists.
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_5
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)   not null constraint chk_sec_level  check(logLevel in ('WARNING','MINOR','RISK')),   
+  5 	result       VARCHAR2(10)    not null , 
+  6 	constraint chk_sec_level check(result in ('SUCCESSFUL','FAILURE','POK')),
+  7     PRIMARY KEY ( sn ) using index tablespace users
+  8 )tablespace users;
+
+CT-00753, The object constraint CHK_SEC_LEVEL already exists.
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_6
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)   not null constraint chk_sec_level  check(logLevel in ('WARNING','MINOR','RISK')),   
+  5 	result       VARCHAR2(10)    not null , 
+  6 	constraint chk_sec_result check(result in ('SUCCESSFUL','FAILURE','POK')),
+  7 	constraint chk_sec_result check(result in ('SUCCESSFUL','FAILURE','POK')),
+  8     PRIMARY KEY ( sn ) using index tablespace users
+  9 )tablespace users;
+
+CT-00753, The object constraint CHK_SEC_RESULT already exists.
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_7
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)   not null constraint chk_sec_level  check(logLevel1 in ('WARNING','MINOR','RISK')),  
+  5     PRIMARY KEY ( sn ) using index tablespace users
+  6 )tablespace users;
+
+CT-00601, [4:71]Sql syntax error: inline constraint can not reference with other column
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_8
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     CLOB  not null constraint chk_sec_level  check(logLevel in ('WARNING','MINOR','RISK')),  
+  5     PRIMARY KEY ( sn ) using index tablespace users
+  6 )tablespace users;
+
+CT-00601, [4:61]Sql syntax error: unexpected lob column occurs
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_9(F_CHAR CHAR(10) CHECK (EXISTS (SELECT NAME FROM SYS_TABLES)));
+
+CT-01316, [1:69]Unexpected SUBSELECT
+SQL> 
+SQL> DROP TABLE IF EXISTS T_CHECK_SUCESS_1;
+
+Succeed.
+
+SQL> CREATE TABLE T_CHECK_SUCESS_1
+  2 (
+  3     sn           NUMBER(38),   
+  4     logLevel     VARCHAR2(100)   not null constraint chk_sec_level  check(logLevel in ('WARNING','MINOR','RISK')),   
+  5 	result       VARCHAR2(10)    not null , 
+  6 	F1           INT,
+  7 	F2           NUMBER(38),
+  8 	F3           INT,
+  9 	F4           INT,
+ 10 	constraint chk_sec_result check(result in ('SUCCESSFUL','FAILURE','POK')),
+ 11 	constraint chk_outline_cons check((F1, F2) in ((1,1),(1,2),(10,1))),
+ 12 	constraint chk_outline_cons_1 check(F3 + F4 > 100),
+ 13     PRIMARY KEY ( sn ) using index tablespace users
+ 14 )tablespace users;
+
+Succeed.
+
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (1, 'WARNIN',  'SUCCESSFUL', 1,  2,  10, 10);
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (1, 'WARNING', 'FAILUR',     11, 1,  10, 10);
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (1, 'WARNING', 'FAILURE',    1,  3,  10, 10);
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (1, 'WARNING', 'FAILURE',    1,  10, 10, 10);
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (1, 'MINOR',   'SUCCESSFUL', 1,  1,  10, 100);
+
+1 rows affected.
+
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (2, 'MINOR',   'SUCCESSFUL', 1,  2,  100, 10);
+
+1 rows affected.
+
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (3, 'MINOR',   'SUCCESSFUL', 10, 1,  90, 100);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_1;
+
+SN                                       LOGLEVEL                                                         RESULT     F1           F2                                       F3           F4          
+---------------------------------------- ---------------------------------------------------------------- ---------- ------------ ---------------------------------------- ------------ ------------
+1                                        MINOR                                                            SUCCESSFUL 1            1                                        10           100         
+2                                        MINOR                                                            SUCCESSFUL 1            2                                        100          10          
+3                                        MINOR                                                            SUCCESSFUL 10           1                                        90           100         
+
+3 rows fetched.
+
+SQL> 
+SQL> UPDATE T_CHECK_SUCESS_1 SET F1 = 1,  F2 = 3 WHERE sn = 2;
+
+CT-01127, Check constraint violated
+SQL> UPDATE T_CHECK_SUCESS_1 SET F1 = 10, F2 = 1 WHERE sn = 2;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_1 WHERE sn = 2;
+
+SN                                       LOGLEVEL                                                         RESULT     F1           F2                                       F3           F4          
+---------------------------------------- ---------------------------------------------------------------- ---------- ------------ ---------------------------------------- ------------ ------------
+2                                        MINOR                                                            SUCCESSFUL 10           1                                        100          10          
+
+1 rows fetched.
+
+SQL> UPDATE T_CHECK_SUCESS_1 SET F3 = 90  WHERE sn = 2;
+
+CT-01127, Check constraint violated
+SQL> UPDATE T_CHECK_SUCESS_1 SET F4 = 100 WHERE sn = 2;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_1 WHERE sn = 2;
+
+SN                                       LOGLEVEL                                                         RESULT     F1           F2                                       F3           F4          
+---------------------------------------- ---------------------------------------------------------------- ---------- ------------ ---------------------------------------- ------------ ------------
+2                                        MINOR                                                            SUCCESSFUL 10           1                                        100          100         
+
+1 rows fetched.
+
+SQL> 
+SQL> CREATE TABLE T_CHECK_FAILED_10
+  2 (
+  3     sn           NUMBER(38),   
+  4     result       VARCHAR2(10)    not null constraint chk_sec_result check(result in ('SUCCESSFUL','FAILURE','POK')), 	
+  5     PRIMARY KEY ( sn ) using index tablespace users
+  6 )tablespace users;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE T_CHECK_SUCESS_1;
+
+Succeed.
+
+SQL> FLASHBACK TABLE T_CHECK_SUCESS_1 TO BEFORE DROP;
+
+Succeed.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_1;
+
+SN                                       LOGLEVEL                                                         RESULT     F1           F2                                       F3           F4          
+---------------------------------------- ---------------------------------------------------------------- ---------- ------------ ---------------------------------------- ------------ ------------
+1                                        MINOR                                                            SUCCESSFUL 1            1                                        10           100         
+2                                        MINOR                                                            SUCCESSFUL 10           1                                        100          100         
+3                                        MINOR                                                            SUCCESSFUL 10           1                                        90           100         
+
+3 rows fetched.
+
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (4, 'MINO', 'SUCCESSFUL', 10,1,10, 10);
+
+CT-01127, Check constraint violated
+SQL> UPDATE T_CHECK_SUCESS_1 SET F3 = 0 WHERE sn = 2;
+
+CT-01127, Check constraint violated
+SQL> ALTER TABLE T_CHECK_SUCESS_1  DROP CONSTRAINT chk_outline_cons_1;
+
+CT-00811, The constraint CHK_OUTLINE_CONS_1 does not exist.
+SQL> ALTER TABLE T_CHECK_SUCESS_1  ADD CONSTRAINT chk_outline_cons_2 check(F3 - F4 > 100);
+
+CT-01127, Check constraint violated
+SQL> ALTER TABLE T_CHECK_SUCESS_1  ADD CONSTRAINT chk_outline_cons_2 check(F3 - F4 <= 0 );
+
+Succeed.
+
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (4, 'MINOR', 'SUCCESSFUL', 1, 1, 100, 90);
+
+CT-01127, Check constraint violated
+SQL> ALTER TABLE T_CHECK_SUCESS_1  DROP CONSTRAINT chk_outline_cons_2;
+
+Succeed.
+
+SQL> INSERT INTO T_CHECK_SUCESS_1 VALUES (4, 'MINOR', 'SUCCESSFUL', 1, 2, 100, 90);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_1 WHERE SN =4;
+
+SN                                       LOGLEVEL                                                         RESULT     F1           F2                                       F3           F4          
+---------------------------------------- ---------------------------------------------------------------- ---------- ------------ ---------------------------------------- ------------ ------------
+4                                        MINOR                                                            SUCCESSFUL 1            2                                        100          90          
+
+1 rows fetched.
+
+SQL> DROP TABLE T_CHECK_SUCESS_1 PURGE;
+
+Succeed.
+
+SQL> FLASHBACK TABLE T_CHECK_SUCESS_1 TO BEFORE DROP;
+
+CT-00829, Recyclebin object SYS.T_CHECK_SUCESS_1 does not exist
+SQL> 
+SQL> DROP TABLE IF EXISTS T_CHECK_SUCESS_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_CHECK_SUCESS_2
+  2 (
+  3     sn           NUMBER(38),
+  4     operation    VARCHAR2(516)  not null,
+  5     logLevel     VARCHAR2(7)   not null constraint chk_sec_level check(logLevel in ('WARNING','MINOR','RISK')),
+  6     userId       VARCHAR2(512) not null,
+  7     datetime     NUMBER(38)    not null,
+  8     source       VARCHAR2(300)  not null,
+  9     terminal     VARCHAR2(60)  not null,
+ 10     targetObj    VARCHAR2(765)  not null,
+ 11     result       VARCHAR2(10)  not null constraint chk_sec_result check(result in ('SUCCESSFUL','FAILURE','POK')),
+ 12     detail       VARCHAR2(3072) not null,
+ 13     addInfo      VARCHAR2(2400),
+ 14     PRIMARY KEY ( sn ) using index tablespace users
+ 15 )tablespace users;
+
+Succeed.
+
+SQL> SELECT CONS_TYPE, COLS, COL_LIST, COND_TEXT FROM SYS_CONSTRAINT_DEFS WHERE USER#=0 AND  TABLE# = (SELECT ID  FROM SYS_TABLES WHERE  NAME = 'T_CHECK_SUCESS_2') ORDER BY CONS_TYPE DESC, COLS DESC, COL_LIST DESC;
+
+CONS_TYPE    COLS         COL_LIST                                                         COND_TEXT                                                       
+------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+3            1            8                                                                result in ('SUCCESSFUL','FAILURE','POK')                        
+3            1            2                                                                logLevel in ('WARNING','MINOR','RISK')                          
+0            1            0                                                                                                                                
+
+3 rows fetched.
+
+SQL> DROP TABLE T_CHECK_SUCESS_2;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> DROP TABLE IF EXISTS T_CHECK_SUCESS_3;
+
+Succeed.
+
+SQL> create table T_CHECK_SUCESS_3 (
+  2     ObjectTypeId number(10) not null,
+  3     NeTypeId number(10) not null,
+  4     ServiceType number(10) null check(ServiceType in(0,1,2,3,107)),
+  5     primary key(ObjectTypeId,NeTypeId)
+  6 );
+
+Succeed.
+
+SQL> SELECT CONS_TYPE, COLS, COL_LIST, COND_TEXT FROM SYS_CONSTRAINT_DEFS WHERE USER#=0 AND  TABLE# = (SELECT ID  FROM SYS_TABLES WHERE  NAME = 'T_CHECK_SUCESS_3') ORDER BY CONS_TYPE DESC, COLS DESC, COL_LIST DESC;
+
+CONS_TYPE    COLS         COL_LIST                                                         COND_TEXT                                                       
+------------ ------------ ---------------------------------------------------------------- ----------------------------------------------------------------
+3            1            2                                                                ServiceType in(0,1,2,3,107)                                     
+0            2            0,1                                                                                                                              
+
+2 rows fetched.
+
+SQL> DROP TABLE T_CHECK_SUCESS_3;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists T_CHECK_SUCESS_4;
+
+Succeed.
+
+SQL> create table T_CHECK_SUCESS_4(f1 int, f2 real, f3 number, f4 char(30), f5 varchar(30), f6 date, f7 timestamp, check (f1 + f2 < 40))
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> insert into T_CHECK_SUCESS_4 values (9, 30, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3')); 
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_4 values (9, 31, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3')); 
+
+CT-01127, Check constraint violated
+SQL> insert into T_CHECK_SUCESS_4 values (19, 20, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3')); 
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_4 values (19, 21, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3')); 
+
+CT-01127, Check constraint violated
+SQL> insert into T_CHECK_SUCESS_4 values (29, 10, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_4 values (29, 11, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3'));
+
+CT-01127, Check constraint violated
+SQL> insert into T_CHECK_SUCESS_4 values (31, 8, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3')); 
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_4 values (31, 9, 28, 'abcd', 'abcd', to_date('2018/01/24', 'YYYY/MM/DD'), to_timestamp('2018-01-24 16:00:00.00', 'YYYY-MM-DD HH24:MI:SS.FF3')); 
+
+CT-01127, Check constraint violated
+SQL> 
+SQL> select * from T_CHECK_SUCESS_4;
+
+F1           F2                   F3                                       F4                             F5                             F6                     F7                              
+------------ -------------------- ---------------------------------------- ------------------------------ ------------------------------ ---------------------- --------------------------------
+9            30                   28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+19           20                   28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+29           10                   28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+31           8                    28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+
+4 rows fetched.
+
+SQL> update T_CHECK_SUCESS_4 SET f2 = 100 WHERE f1 = 9;
+
+CT-01127, Check constraint violated
+SQL> update T_CHECK_SUCESS_4 SET f2 = 19 WHERE f1 = 9;
+
+1 rows affected.
+
+SQL> select * from T_CHECK_SUCESS_4 where f1 = 9;
+
+F1           F2                   F3                                       F4                             F5                             F6                     F7                              
+------------ -------------------- ---------------------------------------- ------------------------------ ------------------------------ ---------------------- --------------------------------
+9            19                   28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+
+1 rows fetched.
+
+SQL> update T_CHECK_SUCESS_4 SET f2 = 100 WHERE f1 = 29;
+
+CT-01127, Check constraint violated
+SQL> update T_CHECK_SUCESS_4 SET f2 = 9 WHERE f1 = 29;
+
+1 rows affected.
+
+SQL> select * from T_CHECK_SUCESS_4 where f1 = 29;
+
+F1           F2                   F3                                       F4                             F5                             F6                     F7                              
+------------ -------------------- ---------------------------------------- ------------------------------ ------------------------------ ---------------------- --------------------------------
+29           9                    28                                       abcd                           abcd                           2018-01-24 00:00:00    2018-01-24 16:00:00.000000      
+
+1 rows fetched.
+
+SQL> drop table T_CHECK_SUCESS_4;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_CHECK_SUCESS_5;
+
+Succeed.
+
+SQL> CREATE TABLE T_CHECK_SUCESS_5
+  2 ( 
+  3     F_INT_1 INT check (F_INT_1 IS NOT NULL), 
+  4 	F_INT_2 INT, 
+  5     F_FLOAT_1 FLOAT,	
+  6 	F_INT_3 INT, 	
+  7 	F_FLOAT_2 FLOAT,	
+  8 	F_CHAR CHAR(10) check(F_CHAR NOT IN ('1','2','3') AND F_CHAR <>  ANY('aaa', 'bbb', 'ccc')),  
+  9 	F_NUM_0 NUMBER,
+ 10 	F_NUM_1 NUMBER,
+ 11     F_NUM_2 NUMBER,
+ 12 	F_NUM_3 NUMBER,
+ 13 	F_VHARCHAR VARCHAR(10) check (F_VHARCHAR like 'ABC\%%123_' ESCAPE '\'),
+ 14   --constraint chk_outline_comparison_cons check ((F_INT_2, F_FLOAT_1) = ANY ((1,1.00), (2,2.00), (3, 3.00), (4,4.00))),
+ 15 	constraint chk_outline_in_cons check ((F_INT_3, F_FLOAT_2) NOT IN ((5, 5.00), (6,6.00), (7, 7.00),(8,8.00))),
+ 16 	constraint chk_outline_logical check (F_NUM_0 > 10 AND F_NUM_1 < 1000 OR NOT F_NUM_2 = 10),
+ 17 	constraint chk_outline_range check (F_NUM_3 BETWEEN 2 AND 6)
+ 18 )tablespace users;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(NULL, 1, 1.00, 4, 4.00, '4',   11, 100,  10, 2, 'ABC%DE123*');
+
+CT-01127, Check constraint violated
+SQL> --INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    5, 5.00, 4, 4.00, '4',   11, 100,  10, 2, 'ABC%DE123*');
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    1, 1.00, 5, 5.00, '4',   11, 100,  10, 2, 'ABC%DE123*');
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    1, 1.00, 4, 4.00, 'aaa', 11, 100,  10, 2, 'ABC%DE123*');
+
+1 rows affected.
+
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    1, 1.00, 4, 4.00, '4',   11, 1001, 10, 2, 'ABC%DE123*');
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    1, 1.00, 4, 4.00, '4',   11, 100,  10, 7, 'ABC%DE123*');
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    1, 1.00, 4, 4.00, '4',   11, 100,  10, 1, 'ABC%DE123*');
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    1, 1.00, 4, 4.00, '4',   11, 100,  10, 2, 'AB%DE123*');
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    1, 1.00, 4, 4.00, '4',   11, 100,  10, 2, 'ABC%DE123');
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(1,    1, 1.00, 4, 4.00, '4',   11, 100,  10, 2, 'ABC%123*');
+
+1 rows affected.
+
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(2,    1, 1.00, 4, 4.00, '4',   11, 100,  10, 2, 'ABC%DE123A');
+
+1 rows affected.
+
+SQL> INSERT INTO T_CHECK_SUCESS_5 VALUES(3,    2, 2.00, 9, 9.00, 'ddd', 10, 1001, 11, 5, 'ABC%DE123B');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_5;
+
+F_INT_1      F_INT_2      F_FLOAT_1            F_INT_3      F_FLOAT_2            F_CHAR     F_NUM_0                                  F_NUM_1                                  F_NUM_2                                  F_NUM_3                                  F_VHARCHAR
+------------ ------------ -------------------- ------------ -------------------- ---------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ---------------------------------------- ----------
+1            1            1                    4            4                    aaa        11                                       100                                      10                                       2                                        ABC%DE123*
+1            1            1                    4            4                    4          11                                       100                                      10                                       2                                        ABC%123*  
+2            1            1                    4            4                    4          11                                       100                                      10                                       2                                        ABC%DE123A
+3            2            2                    9            9                    ddd        10                                       1001                                     11                                       5                                        ABC%DE123B
+
+4 rows fetched.
+
+SQL> DROP TABLE T_CHECK_SUCESS_5;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_CHECK_SUCESS_6;
+
+Succeed.
+
+SQL> CREATE TABLE T_CHECK_SUCESS_6
+  2 ( 
+  3     F_INT_1 INT, 
+  4 	F_INT_2 INT  
+  5 )tablespace users;
+
+Succeed.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_6 ADD COLUMN F_INT_3 INT CONSTRAINT F_INT_3_CHECK CHECK(F_INT_3_CHECK > 10);
+
+CT-00601, [1:84]Sql syntax error: inline constraint can not reference with other column
+SQL> ALTER TABLE T_CHECK_SUCESS_6 ADD COLUMN F_INT_3 INT CONSTRAINT F_INT_3_CHECK CHECK(F_INT_2 > 10);
+
+CT-00601, [1:84]Sql syntax error: inline constraint can not reference with other column
+SQL> 
+SQL> ALTER TABLE T_CHECK_SUCESS_6 ADD COLUMN F_INT_3 INT CONSTRAINT F_INT_3_CHECK CHECK(F_INT_3 > 10);
+
+Succeed.
+
+SQL> INSERT INTO T_CHECK_SUCESS_6 VALUES(1,1,10);
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_6 VALUES(1,1,100);
+
+1 rows affected.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_6;
+
+F_INT_1      F_INT_2      F_INT_3     
+------------ ------------ ------------
+1            1            100         
+
+1 rows fetched.
+
+SQL> update T_CHECK_SUCESS_6 SET F_INT_3 = 10 WHERE F_INT_1 = 1;
+
+CT-01127, Check constraint violated
+SQL> update T_CHECK_SUCESS_6 SET F_INT_3 = 200 WHERE F_INT_1 = 1;
+
+1 rows affected.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_6;
+
+F_INT_1      F_INT_2      F_INT_3     
+------------ ------------ ------------
+1            1            200         
+
+1 rows fetched.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_6 ADD CONSTRAINT F_INT_2_3_CHECK CHECK(F_INT_3 + F_INT_2 < 100);
+
+CT-01127, Check constraint violated
+SQL> ALTER TABLE T_CHECK_SUCESS_6 ADD CONSTRAINT F_INT_2_3_CHECK CHECK(F_INT_3 + F_INT_2 > 100);
+
+Succeed.
+
+SQL> INSERT INTO T_CHECK_SUCESS_6 VALUES(2, 89, 11);
+
+CT-01127, Check constraint violated
+SQL> INSERT INTO T_CHECK_SUCESS_6 VALUES(2, 90, 11);
+
+1 rows affected.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_6 DROP COLUMN F_INT_3;
+
+CT-00755, The column was referenced as a constraint.
+SQL> ALTER TABLE T_CHECK_SUCESS_6 DROP CONSTRAINT F_INT_2_3_CHECK;
+
+Succeed.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_6 MODIFY F_INT_3 NUMBER;
+
+CT-00805, Column F_INT_3 is not empty in table T_CHECK_SUCESS_6
+SQL> ALTER TABLE T_CHECK_SUCESS_6 DROP COLUMN F_INT_3;
+
+Succeed.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_6;
+
+F_INT_1      F_INT_2     
+------------ ------------
+1            1           
+2            90          
+
+2 rows fetched.
+
+SQL> DROP TABLE  T_CHECK_SUCESS_6;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_CHECK_SUCESS_7;
+
+Succeed.
+
+SQL> CREATE TABLE T_CHECK_SUCESS_7
+  2 ( 
+  3     F_VARCHAR_1 VARCHAR(100), 
+  4 	F_VARCHAR_2 VARCHAR(100),
+  5 	constraint REGEXP_LIKE_CHECK check (REGEXP_LIKE (F_VARCHAR_1,'([aeiou])\1', 'i') AND REGEXP_LIKE (F_VARCHAR_2, '^Ste(v|ph)en$'))	
+  6 )tablespace users;
+
+Succeed.
+
+SQL> 
+SQL> insert into T_CHECK_SUCESS_7 values('De Haan', 'Steven');
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_7 values('De Haan', 'Stephen');
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_7 values('De Haan', 'Stepven');
+
+CT-01127, Check constraint violated
+SQL> insert into T_CHECK_SUCESS_7 values('De Haan', 'StepHen');
+
+CT-01127, Check constraint violated
+SQL> 
+SQL> insert into T_CHECK_SUCESS_7 values('De Haan',   'Steven');
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_7 values('bbb',       'Steven');
+
+CT-01127, Check constraint violated
+SQL> insert into T_CHECK_SUCESS_7 values('b Aabb',    'Steven');
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_7 values('Greenberg', 'Steven');
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_7 values('Khoo',      'Steven');
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_7 values('Lee',       'Steven');
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_7 values('Bloom',     'Steven');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_CHECK_SUCESS_7;
+
+F_VARCHAR_1                                                      F_VARCHAR_2                                                     
+---------------------------------------------------------------- ----------------------------------------------------------------
+De Haan                                                          Steven                                                          
+De Haan                                                          Stephen                                                         
+De Haan                                                          Steven                                                          
+b Aabb                                                           Steven                                                          
+Greenberg                                                        Steven                                                          
+Khoo                                                             Steven                                                          
+Lee                                                              Steven                                                          
+Bloom                                                            Steven                                                          
+
+8 rows fetched.
+
+SQL> DROP TABLE  T_CHECK_SUCESS_7;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_CHECK_SUCESS_8;
+
+Succeed.
+
+SQL> CREATE TABLE T_CHECK_SUCESS_8
+  2 (
+  3     sn           NUMBER(38),
+  4 	logLevel     VARCHAR2(7)   not null ,
+  5 	result       VARCHAR2(20)  not null	,
+  6     PRIMARY KEY ( sn ) using index tablespace users
+  7 )tablespace users;
+
+Succeed.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_8 ADD CONSTRAINT CHK_SEC_LEVEL CHECK(LOGLEVEL IN ('WARNING','MINOR','RISK'));
+
+Succeed.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_8 ADD CONSTRAINT CHK_SEC_RESULT CHECK(RESULT IN ('SUCCESSFUL','FAILURE','PARTIAL_SUCCESS'));
+
+Succeed.
+
+SQL> insert into T_CHECK_SUCESS_8 values (1, 'WARNING', 'PARTIAL_SUCCESS');
+
+1 rows affected.
+
+SQL> insert into T_CHECK_SUCESS_8 values (2, 'MINOR1', 'SUCCESSFUL');
+
+CT-01127, Check constraint violated
+SQL> insert into T_CHECK_SUCESS_8 values (3, 'RISK', 'FAILURE1');
+
+CT-01127, Check constraint violated
+SQL> DROP TABLE T_CHECK_SUCESS_8;
+
+Succeed.
+
+SQL> 
+SQL> drop table IF EXISTS tbl_Statistic_UserQueryFreq;
+
+Succeed.
+
+SQL> create table tbl_Statistic_UserQueryFreq(name varchar(4));
+
+Succeed.
+
+SQL> insert into tbl_Statistic_UserQueryFreq values('Jhon');
+
+1 rows affected.
+
+SQL> ALTER TABLE tbl_Statistic_UserQueryFreq ADD CONSTRAINT CUSTOM_constr1 CHECK (Name='Sand');
+
+CT-01127, Check constraint violated
+SQL> insert into tbl_Statistic_UserQueryFreq values('Jhon');
+
+1 rows affected.
+
+SQL> drop table  tbl_Statistic_UserQueryFreq;
+
+Succeed.
+
+SQL> 
+SQL> create table tbl_Statistic_UserQueryFreq(f1 int, name varchar(4))
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> insert into tbl_Statistic_UserQueryFreq values(15,'Jhon'),(5, 'Sand'), (123, 'Sand');
+
+3 rows affected.
+
+SQL> ALTER TABLE tbl_Statistic_UserQueryFreq ADD CONSTRAINT CUSTOM_constr1 CHECK (Name='Sand');
+
+CT-01127, Check constraint violated
+SQL> insert into tbl_Statistic_UserQueryFreq values(15,'Jhon'),(5, 'Sand'), (123, 'Sand');
+
+3 rows affected.
+
+SQL> drop table  tbl_Statistic_UserQueryFreq;
+
+Succeed.
+
+SQL> 
+SQL> drop table IF EXISTS T_CHECK_SUCESS_9;
+
+Succeed.
+
+SQL> create table T_CHECK_SUCESS_9(fd int);
+
+Succeed.
+
+SQL> insert into T_CHECK_SUCESS_9 values (10),(20);
+
+2 rows affected.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_9 ADD CONSTRAINT CHK_FD CHECK(FD > 15);
+
+CT-01127, Check constraint violated
+SQL> select SQL_TEXT,REF_COUNT,IS_FREE,CLEANED from v$sqlarea where SQL_TEXT = 'SELECT * FROM SYS.T_CHECK_SUCESS_9 WHERE NOT FD > 15';
+
+SQL_TEXT                                                         REF_COUNT    IS_FREE CLEANED
+---------------------------------------------------------------- ------------ ------- -------
+
+0 rows fetched.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_9 ADD CONSTRAINT CHK_FD CHECK(FD > 5);
+
+Succeed.
+
+SQL> select SQL_TEXT,REF_COUNT,IS_FREE,CLEANED from v$sqlarea where SQL_TEXT = 'SELECT * FROM SYS.T_CHECK_SUCESS_9 WHERE NOT FD > 5';
+
+SQL_TEXT                                                         REF_COUNT    IS_FREE CLEANED
+---------------------------------------------------------------- ------------ ------- -------
+
+0 rows fetched.
+
+SQL> DROP TABLE T_CHECK_SUCESS_9;
+
+Succeed.
+
+SQL> 
+SQL> CREATE USER TEST_CHECK IDENTIFIED BY Root1234;
+
+Succeed.
+
+SQL> GRANT DBA TO TEST_CHECK;
+
+Succeed.
+
+SQL> CONNECT TEST_CHECK/Root1234@127.0.0.1:1611
+
+connected.
+
+SQL> drop table IF EXISTS T_CHECK_SUCESS_9;
+
+Succeed.
+
+SQL> create table T_CHECK_SUCESS_9(fd int);
+
+Succeed.
+
+SQL> insert into T_CHECK_SUCESS_9 values (10),(20);
+
+2 rows affected.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_9 ADD CONSTRAINT CHK_FD CHECK(FD > 15);
+
+CT-01127, Check constraint violated
+SQL> select SQL_TEXT,REF_COUNT,IS_FREE,CLEANED from v$sqlarea where SQL_TEXT = 'SELECT * FROM TEST_CHECK.T_CHECK_SUCESS_9 WHERE NOT FD > 15';
+
+SQL_TEXT                                                         REF_COUNT    IS_FREE CLEANED
+---------------------------------------------------------------- ------------ ------- -------
+
+0 rows fetched.
+
+SQL> ALTER TABLE T_CHECK_SUCESS_9 ADD CONSTRAINT CHK_FD CHECK(FD > 5);
+
+Succeed.
+
+SQL> select SQL_TEXT,REF_COUNT,IS_FREE,CLEANED from v$sqlarea where SQL_TEXT = 'SELECT * FROM TEST_CHECK.T_CHECK_SUCESS_9 WHERE NOT FD > 5';
+
+SQL_TEXT                                                         REF_COUNT    IS_FREE CLEANED
+---------------------------------------------------------------- ------------ ------- -------
+
+0 rows fetched.
+
+SQL> DROP TABLE T_CHECK_SUCESS_9 cascade CONSTRAINTS purge;
+
+Succeed.
+
+SQL> CONNECT sys/Huawei@123@127.0.0.1:1611 
+
+connected.
+
+SQL> DROP USER TEST_CHECK CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test;
+
+Succeed.
+
+SQL> create table test (fd_int int constraint c_fd_int check (fd_int > 10), fd_varchar varchar(10), constraint c_fd_int_fd_varchar check( fd_int < 20 and fd_varchar in ('WARNING','MINOR','RISK')));
+
+Succeed.
+
+SQL> insert into test values(null, 'WARNING');
+
+1 rows affected.
+
+SQL> insert into test values(15, 'WARNING');
+
+1 rows affected.
+
+SQL> insert into test (fd_varchar, fd_int) values(null, null);
+
+1 rows affected.
+
+SQL> alter table test drop constraint c_fd_int_fd_varchar;
+
+Succeed.
+
+SQL> update test set fd_int=null, fd_varchar=null where fd_int = 15;
+
+1 rows affected.
+
+SQL> select * from test order by fd_varchar;
+
+FD_INT       FD_VARCHAR
+------------ ----------
+             WARNING   
+                       
+                       
+
+3 rows fetched.
+
+SQL> drop table test;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> CREATE TABLE I_SYS_VOLUMETYPE
+  2 (
+  3 id VARBINARY(16) NOT NULL DEFAULT null,
+  4 class_Name VARCHAR(60 BYTE) NOT NULL DEFAULT ' ',
+  5 class_Id BINARY_BIGINT NOT NULL DEFAULT 0,
+  6 last_Modified BINARY_BIGINT NOT NULL DEFAULT 0,
+  7 collectorId VARCHAR(36 BYTE),
+  8 reportSn BINARY_BIGINT,
+  9 ownerType VARCHAR(64 BYTE),
+ 10 ownerName VARCHAR(128 BYTE),
+ 11 lastMonitorTime BINARY_BIGINT,
+ 12 regionId VARBINARY(16),
+ 13 name VARCHAR(255 BYTE) NOT NULL DEFAULT ' ',
+ 14 confirmStatus VARCHAR(4000 BYTE),
+ 15 remark VARCHAR(4096 BYTE),
+ 16 nativeId VARCHAR(256 BYTE),
+ 17 ownerId BINARY_BIGINT,
+ 18 extraSpecs VARCHAR(4096 BYTE),
+ 19 tags VARCHAR(4096 BYTE),
+ 20 keystoneId BINARY_BIGINT,
+ 21 keystoneIdDriver VARCHAR(256 BYTE),
+ 22 PRIMARY KEY(id),
+ 23 CHECK(`confirmStatus` in ('confirmed','unconfirmed'))
+ 24 );
+
+CT-00601, [23:7]Sql syntax error: invalid column name 'confirmStatus'
+SQL> 
+SQL>  DROP TABLE IF EXISTS I_SYS_VOLUMETYPE;
+
+Succeed.
+
+SQL>  CREATE TABLE I_SYS_VOLUMETYPE
+  2  (
+  3  id VARBINARY(16) NOT NULL,
+  4  confirmStatus VARCHAR(4000 BYTE),
+  5  confirmStatus2 VARCHAR(4000 BYTE),
+  6  confirmStatus3 VARCHAR(4000 BYTE),
+  7  confirmStatus4 VARCHAR(4000 BYTE),
+  8  confirmStatus5 VARCHAR(4000 BYTE),
+  9  confirmStatus6 VARCHAR(4000 BYTE),
+ 10  confirmStatus7 VARCHAR(4000 BYTE),
+ 11  confirmStatus8 VARCHAR(4000 BYTE),
+ 12  confirmStatus9 VARCHAR(4000 BYTE),
+ 13  confirmStatus10 VARCHAR(4000 BYTE),
+ 14  PRIMARY KEY(id),
+ 15  CHECK(confirmStatus in ('confirmed','unconfirmed'))
+ 16  );
+
+Succeed.
+
+SQL> insert into I_SYS_VOLUMETYPE (id,confirmStatus) values('xyz','unconfirmed');
+
+1 rows affected.
+
+SQL> insert into I_SYS_VOLUMETYPE (id,confirmStatus) values('xyz1',upper('unconfirmed'));
+
+CT-01127, Check constraint violated
+SQL> update I_SYS_VOLUMETYPE set confirmStatus='confirmed' where id='xyz';
+
+1 rows affected.
+
+SQL> update I_SYS_VOLUMETYPE set confirmStatus=upper('confirmed') where id='xyz';
+
+CT-01127, Check constraint violated
+SQL> DROP TABLE IF EXISTS I_SYS_VOLUMETYPE;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_check_foobar1;
+
+Succeed.
+
+SQL> create table t_check_foobar1 (c1 int,`ad` VARCHAR(4000) NULL,`AD` VARCHAR(4000) NULL);
+
+Succeed.
+
+SQL> alter table t_check_foobar1 add constraint cc check(ad default 30);
+
+CT-00601, [1:56]Sql syntax error: invalid word 'default' found
+SQL> drop table t_check_foobar1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> create table t1(a int,check(a in(1,2)),b int);
+
+Succeed.
+
+SQL> insert into t1 values(null,2);
+
+1 rows affected.
+
+SQL> update t1 set a=3;
+
+CT-01127, Check constraint violated
+SQL> drop table t1;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018112404018
+SQL> drop table if exists t2;
+
+Succeed.
+
+SQL> create table t2(a int,b char(10));
+
+Succeed.
+
+SQL> insert into t2 values(-32,78);
+
+1 rows affected.
+
+SQL> alter table t2 add c int;
+
+Succeed.
+
+SQL> alter table t2 modify c int check(c <0);
+
+Succeed.
+
+SQL> update t2 set a=10 where b='78';
+
+1 rows affected.
+
+SQL> select * from t2;
+
+A            B          C           
+------------ ---------- ------------
+10           78                     
+
+1 rows fetched.
+
+SQL> update t2 set a=10,c = 9 where b='78';
+
+CT-01127, Check constraint violated
+SQL> update t2 set a=10,c = -1 where b='78';
+
+1 rows affected.
+
+SQL> select * from t2;
+
+A            B          C           
+------------ ---------- ------------
+10           78         -1          
+
+1 rows fetched.
+
+SQL> drop table t2;
+
+Succeed.
+
+SQL> --DTS2018120314928
+SQL> drop table if exists check_minus;
+
+Succeed.
+
+SQL> create table check_minus(a int,check(-a!=3));
+
+Succeed.
+
+SQL> insert into check_minus values(-3);
+
+CT-01127, Check constraint violated
+SQL> insert into check_minus values(3);
+
+1 rows affected.
+
+SQL> 
+SQL> --DTS2019030806421
+SQL> DROP TABLE IF EXISTS TBL_TWAMP_TEST CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE TBL_TWAMP_TEST
+  2 (
+  3   ID bigint NOT NULL,
+  4   STATUS int,
+  5   MONITORMODEL int,
+  6   TENANTID VARCHAR(255),
+  7   TENANTNAME VARCHAR(255),
+  8   LEASEDLINEID VARCHAR(255),
+  9   LEASEDLINENAME VARCHAR(255),
+ 10   CONNECTIONID VARCHAR(255),
+ 11   SRCSEGMENTID VARCHAR(255),
+ 12   TARGETSEGMENTID VARCHAR(255),
+ 13   SENDERTYPE int,
+ 14   SOURCEADDRESS VARCHAR(16),
+ 15   SRCDEVICEIFNAME VARCHAR(32),
+ 16   SRCDEVICEOWNERID VARCHAR(255),
+ 17   SRCDEVICEID VARCHAR(255),
+ 18   SRCDEVICEUUID VARCHAR(255),
+ 19   SRCDEVICEIFUUID VARCHAR(255),
+ 20   SRCTESTID bigint,
+ 21   SRCTESTSTATUS int,
+ 22   SRCDEVICENAME VARCHAR(255),
+ 23   SRCDEVICETYPE int,
+ 24   TARGETADDRESS VARCHAR(16),
+ 25   TARGETNAME VARCHAR(255),
+ 26   TESTSTATUS int,
+ 27   NICKNAME VARCHAR(32),
+ 28   VRFNAME VARCHAR(32),
+ 29   TESTFLAG int,
+ 30   TARGETDEVICETYPE int,
+ 31   TARGETDEVICEOWNERID VARCHAR(255),
+ 32   TARGETDEVICEID VARCHAR(255),
+ 33   TARGETDEVICEUUID VARCHAR(255),
+ 34   TARGETDEVICEIFUUID VARCHAR(255),
+ 35   REFLECTORSTATUS int,
+ 36   REFLECTORID bigint,
+ 37   CYCTPGROUP int,
+ 38   CYCTPID bigint,
+ 39   CYCTPNAME VARCHAR(255),
+ 40   DOMAINSRCTESTUUID VARCHAR(64),
+ 41   SRCDEVICEIFID VARCHAR(36),
+ 42   TARGETDEVICEIFID VARCHAR(36),
+ 43   CREATETIME int,
+ 44   UPDATETIME int,
+ 45   ERRORCODE int,
+ 46   ERRORMESSAGE VARCHAR(255),
+ 47   PRIMARY KEY(ID)
+ 48 );
+
+Succeed.
+
+SQL> INSERT INTO TBL_TWAMP_TEST (ID,STATUS,MONITORMODEL,TENANTID,TENANTNAME,LEASEDLINEID,LEASEDLINENAME,CONNECTIONID,SRCSEGMENTID,TARGETSEGMENTID,SENDERTYPE,SOURCEADDRESS,SRCDEVICEIFNAME,SRCDEVICEOWNERID,SRCDEVICEID,SRCDEVICEUUID,SRCDEVICEIFUUID,SRCTESTID,SRCTESTSTATUS,SRCDEVICENAME,SRCDEVICETYPE,TARGETADDRESS,TARGETNAME,TESTSTATUS,NICKNAME,VRFNAME,TESTFLAG,TARGETDEVICETYPE,TARGETDEVICEOWNERID,TARGETDEVICEID,TARGETDEVICEUUID,TARGETDEVICEIFUUID,REFLECTORSTATUS,REFLECTORID,CYCTPGROUP,CYCTPID,CYCTPNAME,DOMAINSRCTESTUUID,SRCDEVICEIFID,TARGETDEVICEIFID,CREATETIME,UPDATETIME,ERRORCODE,ERRORMESSAGE) values
+  2   (1,0,0,'8978817485070337','Carrier','8990307659661321','optionA_L3VPN_vlan1700','8990307659661325','8990307659661319','8990307659661319',0,'117.0.2.1','GigabitEthernet0/3/10.3','9134228721622858249','8987417376411648','7e19387a-3efa-11e9-a6fc-1d99d9171280','66d81b33-3f46-11e9-8ce8-286ed488d02a',null,0,'Core3_NE40E-M2E',0,'117.0.1.1','Core1_CX600-M2F',0,null,null,null,0,'9134228721622858249','8985439409082368','28e69a10-3e6d-11e9-a6fc-1d99d9171280','153a4bf6-3f31-11e9-8ce8-286ed488d02a',0,null,null,null,null,null,null,null,null,null,null,null);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> ALTER TABLE TBL_TWAMP_TEST MODIFY ID AUTO_INCREMENT;
+
+Succeed.
+
+SQL> ALTER TABLE TBL_TWAMP_TEST AUTO_INCREMENT = 101;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS TBL_TWAMP_TEST_EXT CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE TBL_TWAMP_TEST_EXT
+  2 (
+  3   ID bigint NOT NULL,
+  4   STATUS int,
+  5   FREQUENCY int NOT NULL,
+  6   RESULTPROCESSORURLS VARCHAR(255),
+  7   CEVLAN int NOT NULL,
+  8   CLIENTSDLFLAG bigint NOT NULL,
+  9   CODETYPE int,
+ 10   CONTINUETEST bigint NOT NULL,
+ 11   DATAFILL VARCHAR(255),
+ 12   DATASIZE int NOT NULL,
+ 13   DSFIELD int NOT NULL,
+ 14   DURATION int NOT NULL,
+ 15   IFINDEX int NOT NULL,
+ 16   L3VPNSERVICENAME VARCHAR(255),
+ 17   LOOPCHECK bigint NOT NULL,
+ 18   NEGOTIATE bigint NOT NULL,
+ 19   PACKETCOUNT int NOT NULL,
+ 20   PADDINGTYPE bigint NOT NULL,
+ 21   PEVLAN int NOT NULL,
+ 22   PTNREFLECTORID int NOT NULL,
+ 23   PWE3SERVICENAME VARCHAR(255),
+ 24   REFLECTORPORT int NOT NULL,
+ 25   SENDINTERVAL int NOT NULL,
+ 26   SESSIONID int NOT NULL,
+ 27   SRCUDPPORT int NOT NULL,
+ 28   TARGETDEVICEIFNAME VARCHAR(255),
+ 29   TARGETVPN VARCHAR(255),
+ 30   THRESHOLDTEMPLATEID VARCHAR(255),
+ 31   TIMEMODE int,
+ 32   TIMEOUT int NOT NULL,
+ 33   CITYNODEIP VARCHAR(16),
+ 34   CITYNODETESTID bigint NOT NULL,
+ 35   TWAMPPERIOD int,
+ 36   MULTIFLOW bigint NOT NULL,
+ 37   PRIMARY KEY(ID),
+ 38   CHECK(ceVlan>=0),
+ 39   CHECK(ifIndex>=0),
+ 40   CHECK(peVlan>=0),
+ 41   CHECK(reflectorPort<=65535),
+ 42   CHECK(srcUdpPort>=0)
+ 43 );
+
+Succeed.
+
+SQL> INSERT INTO TBL_TWAMP_TEST_EXT (ID,STATUS,FREQUENCY,RESULTPROCESSORURLS,CEVLAN,CLIENTSDLFLAG,CODETYPE,CONTINUETEST,DATAFILL,DATASIZE,DSFIELD,DURATION,IFINDEX,L3VPNSERVICENAME,LOOPCHECK,NEGOTIATE,PACKETCOUNT,PADDINGTYPE,PEVLAN,PTNREFLECTORID,PWE3SERVICENAME,REFLECTORPORT,SENDINTERVAL,SESSIONID,SRCUDPPORT,TARGETDEVICEIFNAME,TARGETVPN,THRESHOLDTEMPLATEID,TIMEMODE,TIMEOUT,CITYNODEIP,CITYNODETESTID,TWAMPPERIOD,MULTIFLOW) values
+  2   (1,1,300,null,0,0,null,0,'superutrafficutraffic',1454,0,300,0,null,0,0,20,0,0,0,null,863,20,0,863,'GigabitEthernet0/3/15.1',null,null,null,3,null,0,1,0);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> UPDATE TBL_TWAMP_TEST T1 INNER JOIN TBL_TWAMP_TEST_EXT T2   SET T1.STATUS = 1 ,T2.STATUS = 2   WHERE T1.ID = T2.ID  AND T1.LEASEDLINEID IN   ( 8990307659661321   );
+
+2 rows affected.
+
+SQL> SELECT STATUS FROM TBL_TWAMP_TEST;
+
+STATUS      
+------------
+1           
+
+1 rows fetched.
+
+SQL> SELECT STATUS FROM TBL_TWAMP_TEST_EXT;
+
+STATUS      
+------------
+2           
+
+1 rows fetched.
+
+SQL> UPDATE TBL_TWAMP_TEST T1 INNER JOIN TBL_TWAMP_TEST_EXT T2   SET T1.STATUS = 1 ,T2.ceVlan = -1   WHERE T1.ID = T2.ID  AND T1.LEASEDLINEID IN   ( 8990307659661321   );
+
+CT-01127, Check constraint violated
+SQL> UPDATE TBL_TWAMP_TEST T1 INNER JOIN TBL_TWAMP_TEST_EXT T2   SET T1.STATUS = 1 ,T2.reflectorPort = 65536   WHERE T1.ID = T2.ID  AND T1.LEASEDLINEID IN   ( 8990307659661321   );
+
+CT-01127, Check constraint violated
+SQL> DROP TABLE IF EXISTS TBL_TWAMP_TEST;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS TBL_TWAMP_TEST_EXT;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019081512936
+SQL> CONN / AS SYSDBA
+
+connected.
+
+SQL> DROP TABLE IF EXISTS MODIFY_COLUMN_ZZC_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS MODIFY_COLUMN_ZZC_T2;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE MODIFY_COLUMN_ZZC_T1 (ID INT NOT NULL CHECK(ID>100),NAME VARCHAR(20));
+
+Succeed.
+
+SQL> INSERT INTO MODIFY_COLUMN_ZZC_T1(ID) VALUES (200); 
+
+1 rows affected.
+
+SQL> ALTER TABLE MODIFY_COLUMN_ZZC_T1 MODIFY NAME VARCHAR(20) CHECK (NAME IS NOT NULL);
+
+CT-01127, Check constraint violated
+SQL> ALTER TABLE MODIFY_COLUMN_ZZC_T1 MODIFY ID INT CHECK (ID<150);
+
+CT-01127, Check constraint violated
+SQL> 
+SQL> CREATE TABLE MODIFY_COLUMN_ZZC_T2(COL_1 TIMESTAMP WITHOUT TIME ZONE CHECK(COL_1<(UTC_TIMESTAMP + 1)), COL_2 TIMESTAMP WITH TIME ZONE, COL_3 INTERVAL DAY TO SECOND, COL_4 TIMESTAMP WITH LOCAL TIME ZONE, COL_5 TIMESTAMP, COL_6 INTERVAL YEAR TO MONTH, COL_7 DATE, COL_8 DATETIME);
+
+Succeed.
+
+SQL> INSERT INTO MODIFY_COLUMN_ZZC_T2 VALUES(UTC_TIMESTAMP,UTC_TIMESTAMP,(INTERVAL '4 5:12:10.222' DAY TO SECOND(3)),UTC_TIMESTAMP,UTC_TIMESTAMP,(INTERVAL '12' YEAR),UTC_TIMESTAMP,UTC_TIMESTAMP);
+
+1 rows affected.
+
+SQL> ALTER TABLE MODIFY_COLUMN_ZZC_T2 MODIFY COL_1 TIMESTAMP WITHOUT TIME ZONE CHECK (COL_1<(UTC_TIMESTAMP-1));
+
+CT-01127, Check constraint violated
+SQL> 
+SQL> DROP TABLE IF EXISTS MODIFY_COLUMN_ZZC_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS MODIFY_COLUMN_ZZC_T2;
+
+Succeed.
+
+SQL> 
+SQL> --first step, expected right
+SQL> drop table if exists datatype_alter_table_001;
+
+Succeed.
+
+SQL> create table datatype_alter_table_001(c_date date);
+
+Succeed.
+
+SQL> alter table datatype_alter_table_001 modify c_date INT SIGNED CONSTRAINT t_alter_constr5 check(c_date!=4567888);
+
+Succeed.
+
+SQL> 
+SQL> --seconde step, expected error
+SQL> drop table datatype_alter_table_001;
+
+Succeed.
+
+SQL> create table datatype_alter_table_001(c_date date);
+
+Succeed.
+
+SQL> insert into datatype_alter_table_001 values(to_date('2018-08-11', 'YYYY-MM-DD'));
+
+1 rows affected.
+
+SQL> alter table datatype_alter_table_001 modify c_date INT SIGNED CONSTRAINT t_alter_constr5 check(c_date!=4567888);
+
+CT-00805, Column C_DATE is not empty in table DATATYPE_ALTER_TABLE_001
+SQL> 
+SQL> --seconde step, expected right
+SQL> drop table datatype_alter_table_001;
+
+Succeed.
+
+SQL> create table datatype_alter_table_001(c_date date);
+
+Succeed.
+
+SQL> insert into datatype_alter_table_001 values(to_date('2018-08-11', 'YYYY-MM-DD'));
+
+1 rows affected.
+
+SQL> insert into datatype_alter_table_001 values(to_date('2018-08-11', 'YYYY-MM-DD'));
+
+1 rows affected.
+
+SQL> delete from datatype_alter_table_001;
+
+2 rows affected.
+
+SQL> alter table datatype_alter_table_001 modify c_date INT SIGNED CONSTRAINT t_alter_constr5 check(c_date!=4567888);
+
+Succeed.
+
+SQL> drop table datatype_alter_table_001;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists tab_check_rewrite_cond;
+
+Succeed.
+
+SQL> drop table if exists tab_check_any_cond2;
+
+Succeed.
+
+SQL> create table tab_check_any_cond2(id int);
+
+Succeed.
+
+SQL> create table tab_check_rewrite_cond(fd int CHECK (fd < (select id from tab_check_any_cond2))); --failed
+
+CT-01316, [1:64]Unexpected SUBSELECT
+SQL> drop table tab_check_any_cond2;
+
+Succeed.
+
+SQL> 
+SQL> create table tab_check_rewrite_cond(fd int, fd2 varchar(100), CONSTRAINT tab_check_any_chk2 check (fd in (10)));
+
+Succeed.
+
+SQL> insert into tab_check_rewrite_cond (fd) values(10);
+
+1 rows affected.
+
+SQL> insert into tab_check_rewrite_cond (fd) values(20);
+
+CT-01127, Check constraint violated
+SQL> alter table tab_check_rewrite_cond drop constraint tab_check_any_chk2;
+
+Succeed.
+
+SQL> alter table tab_check_rewrite_cond add constraint tab_check_any_chk1 CHECK ((fd, fd2) in ((0,'0'),(1,'1'),(2,'2'),(3,'3'),(4,'4'),(5,'5'),(6,'6'),(7,'7'),(8,'8'),(9,'9'),(10,'10')));
+
+Succeed.
+
+SQL> insert into tab_check_rewrite_cond values(0,'1');
+
+CT-01127, Check constraint violated
+SQL> insert into tab_check_rewrite_cond values(0,'0');
+
+1 rows affected.
+
+SQL> insert into tab_check_rewrite_cond values(10,'10');
+
+1 rows affected.
+
+SQL> select * from tab_check_rewrite_cond order by fd, fd2;
+
+FD           FD2                                                             
+------------ ----------------------------------------------------------------
+0            0                                                               
+10           10                                                              
+10                                                                           
+
+3 rows fetched.
+
+SQL> alter table tab_check_rewrite_cond drop constraint tab_check_any_chk1;
+
+Succeed.
+
+SQL> alter table tab_check_rewrite_cond add constraint tab_check_any_chk1 CHECK (fd = any (0,1,2,3,4,5,6,7,8,9,10));
+
+Succeed.
+
+SQL> insert into tab_check_rewrite_cond values(10, '11');
+
+1 rows affected.
+
+SQL> insert into tab_check_rewrite_cond values(11, '11');
+
+CT-01127, Check constraint violated
+SQL> select * from tab_check_rewrite_cond order by fd, fd2;
+
+FD           FD2                                                             
+------------ ----------------------------------------------------------------
+0            0                                                               
+10           10                                                              
+10           11                                                              
+10                                                                           
+
+4 rows fetched.
+
+SQL> 
+SQL> drop table tab_check_rewrite_cond;
+
+Succeed.
+
+SQL> --20201028
+SQL> DROP TABLE IF EXISTS "I_SYS_PSU" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE "I_SYS_PSU"
+  2 (
+  3   "id" VARBINARY(16) NOT NULL,
+  4   "class_Name" VARCHAR(384 BYTE) NOT NULL,
+  5   "class_Id" BINARY_BIGINT NOT NULL,
+  6   "collectorId" VARCHAR(36 BYTE),
+  7   "reportSn" BINARY_BIGINT,
+  8   "last_Modified" BINARY_BIGINT NOT NULL,
+  9   "tenantId" VARCHAR(64 BYTE),
+ 10   "ownerType" VARCHAR(192 BYTE),
+ 11   "ownerName" VARCHAR(384 BYTE),
+ 12   "lastMonitorTime" BINARY_BIGINT,
+ 13   "regionId" VARBINARY(16),
+ 14   "name" VARCHAR(384 BYTE) NOT NULL,
+ 15   "confirmStatus" VARCHAR(4000 BYTE),
+ 16   "remark" CLOB,
+ 17   "nativeId" VARCHAR(768 BYTE),
+ 18   "ownerId" BINARY_BIGINT,
+ 19   "productName" VARCHAR(384 BYTE),
+ 20   "manufacturer" VARCHAR(384 BYTE),
+ 21   "moDN" VARCHAR(768 BYTE),
+ 22   "inputMode" VARCHAR(4000 BYTE),
+ 23   "power" BINARY_DOUBLE,
+ 24   "status" VARCHAR(4000 BYTE),
+ 25   "healthStatus" VARCHAR(4000 BYTE),
+ 26   "powerConsumedWatts" BINARY_INTEGER,
+ 27   "vimResOriginId" VARCHAR(768 BYTE),
+ 28   "powerCapacityWatts" BINARY_DOUBLE,
+ 29   "slot" VARCHAR(144 BYTE)
+ 30 );
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_I_SYS_PSU_CLASS_ID" ON "I_SYS_PSU"("class_Id");
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_I_SYS_PSU_COLLECTORID" ON "I_SYS_PSU"("collectorId");
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_I_SYS_PSU_TENANTID_COLLECTORID" ON "I_SYS_PSU"("tenantId", "collectorId");
+
+Succeed.
+
+SQL> ALTER TABLE "I_SYS_PSU" ADD PRIMARY KEY("id");
+
+Succeed.
+
+SQL> ALTER TABLE "I_SYS_PSU" ADD CHECK(`inputMode` in ('AC','DC','AC_DC'));
+
+Succeed.
+
+SQL> ALTER TABLE "I_SYS_PSU" ADD CHECK(`status` in ('normal','offline','abnormal','unknown'));
+
+Succeed.
+
+SQL> ALTER TABLE "I_SYS_PSU" ADD CHECK(`healthStatus` in ('OK','Warning','Error','Critical','Offline','Unknown'));
+
+Succeed.
+
+SQL> INSERT INTO "I_SYS_PSU" ("id","class_Name","class_Id","collectorId","reportSn","last_Modified","tenantId","ownerType","ownerName","lastMonitorTime","regionId","name","confirmStatus","remark","nativeId","ownerId","productName","manufacturer","moDN","inputMode","power","status","healthStatus","powerConsumedWatts","vimResOriginId","powerCapacityWatts","slot") values
+  2   (0x11EAFD943F595EA0AD81FA163E588E82,'SYS_Psu',10021,'c235bdc0-c1ac-39ef-a1ec-6993c18e88e9',1603286644392,1603286644602,null,'pimOps','pimOps_az2.dc2_oKQtR',1603286644568,0x01,'serverChassis#&#NE=34605950#&#4',null,null,'serverChassis#&#NE=34605950#&#4',6573640023318446379,'LTEON 750W SERVER PS',null,null,null,null,null,'Offline',125,'4',750,'5');
+
+1 rows affected.
+
+SQL> INSERT INTO "I_SYS_PSU" ("id","class_Name","class_Id","collectorId","reportSn","last_Modified","tenantId","ownerType","ownerName","lastMonitorTime","regionId","name","confirmStatus","remark","nativeId","ownerId","productName","manufacturer","moDN","inputMode","power","status","healthStatus","powerConsumedWatts","vimResOriginId","powerCapacityWatts","slot") values
+  2   (0x11EAFD943F595EA1AD81FA163E588E82,'SYS_Psu',10021,'c235bdc0-c1ac-39ef-a1ec-6993c18e88e9',1603286644392,1603286644602,null,'pimOps','pimOps_az2.dc2_oKQtR',1603286644568,0x01,'serverChassis#&#NE=34605950#&#5',null,null,'serverChassis#&#NE=34605950#&#5',6573640023318446379,'LTEON 750W SERVER PS',null,null,null,null,null,'Unknown',125,'5',750,'6');
+
+1 rows affected.
+
+SQL> INSERT INTO "I_SYS_PSU" ("id","class_Name","class_Id","collectorId","reportSn","last_Modified","tenantId","ownerType","ownerName","lastMonitorTime","regionId","name","confirmStatus","remark","nativeId","ownerId","productName","manufacturer","moDN","inputMode","power","status","healthStatus","powerConsumedWatts","vimResOriginId","powerCapacityWatts","slot") values
+  2   (0x11EAFD943F595EA2AD81FA163E588E82,'SYS_Psu',10021,'c235bdc0-c1ac-39ef-a1ec-6993c18e88e9',1603286644392,1603286644602,null,'pimOps','pimOps_az2.dc2_oKQtR',1603286644568,0x01,'serverChassis#&#NE=34605952#&#0',null,null,'serverChassis#&#NE=34605952#&#0',6573640023318446379,'LTEON 750W SERVER PS',null,null,null,null,null,'OK',112,'0',750,'1');
+
+1 rows affected.
+
+SQL> INSERT INTO "I_SYS_PSU" ("id","class_Name","class_Id","collectorId","reportSn","last_Modified","tenantId","ownerType","ownerName","lastMonitorTime","regionId","name","confirmStatus","remark","nativeId","ownerId","productName","manufacturer","moDN","inputMode","power","status","healthStatus","powerConsumedWatts","vimResOriginId","powerCapacityWatts","slot") values
+  2   (0x11EAFD943F595EA3AD81FA163E588E82,'SYS_Psu',10021,'c235bdc0-c1ac-39ef-a1ec-6993c18e88e9',1603286644392,1603286644602,null,'pimOps','pimOps_az2.dc2_oKQtR',1603286644568,0x01,'serverChassis#&#NE=34605952#&#1',null,null,'serverChassis#&#NE=34605952#&#1',6573640023318446379,'LTEON 750W SERVER PS',null,null,null,null,null,'Error',125,'1',750,'2');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> CREATE OR REPLACE PROCEDURE PRO_COLUMNOPER (TableName VARCHAR,ColumnName VARCHAR,CType INT,SqlStr VARCHAR)
+  2 AS
+  3    Rows1 INT;
+  4    concatSqlStr VARCHAR(4000);
+  5 BEGIN
+  6 Rows1 := 0;
+  7 SELECT COUNT(*) INTO Rows1  FROM MY_TAB_COLS WHERE TABLE_NAME=UPPER(TableName) AND COLUMN_NAME=REPLACE(ColumnName, '`', '');
+  8 IF CType=1 AND Rows1<=0 THEN
+  9         concatSqlStr := CONCAT( 'ALTER TABLE ',TableName,' ADD COLUMN ',ColumnName,' ',SqlStr);
+ 10 ELSIF CType=2 AND Rows1>0  THEN
+ 11         concatSqlStr := CONCAT('ALTER TABLE ',TableName,' MODIFY ',ColumnName,' ',SqlStr);
+ 12 ELSIF CType=3 AND Rows1>0 THEN
+ 13         concatSqlStr := CONCAT('ALTER TABLE  ',TableName,' DROP COLUMN  ',ColumnName);
+ 14 ELSE
+ 15         concatSqlStr :='';
+ 16 END IF;
+ 17 IF (concatSqlStr is not null) THEN
+ 18         EXECUTE IMMEDIATE concatSqlStr;
+ 19 END IF;
+ 20 END;
+ 21 /
+
+Succeed.
+
+SQL> begin
+  2  Pro_ColumnOper('I_SYS_PSU','`healthStatus`',2,'VARCHAR(4000) CHECK (`healthStatus` in (''OK'',''Warning'',''Critical'',''Offline'',''Unknown''))  ');
+  3  end;
+  4 /
+
+CT-00932, [2:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[18:9] PL/SQL(SYS.PRO_COLUMNOPER) terminated with execute errors
+[18:9] CT-01127, Check constraint violated

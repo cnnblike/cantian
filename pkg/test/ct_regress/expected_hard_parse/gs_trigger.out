@@ -1,0 +1,5099 @@
+
+
+SQL> --before IDU statement
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> -- begin test alter session disable|enable triggers
+SQL> alter session disable triggers;
+
+Succeed.
+
+SQL> drop table if exists t_enable_triggers;
+
+Succeed.
+
+SQL> create table t_enable_triggers(f1 int, f2 int);
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER trig_enable_triggers1 BEFORE INSERT OR UPDATE OR DELETE ON t_enable_triggers
+  2 BEGIN
+  3 	dbe_output.print_line('BEFORE t_enable_triggers');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER trig_enable_triggers2 AFTER INSERT OR UPDATE OR DELETE ON t_enable_triggers
+  2 BEGIN
+  3 	dbe_output.print_line('AFTER t_enable_triggers');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> insert into t_enable_triggers values(1, 2);
+
+1 rows affected.
+
+SQL> update t_enable_triggers set f2=3;
+
+1 rows affected.
+
+SQL> delete from t_enable_triggers;
+
+1 rows affected.
+
+SQL> drop table t_enable_triggers;
+
+Succeed.
+
+SQL> 
+SQL> alter session enable triggers;
+
+Succeed.
+
+SQL> drop table if exists t_enable_triggers;
+
+Succeed.
+
+SQL> create table t_enable_triggers(f1 int, f2 int);
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER trig_enable_triggers1 BEFORE INSERT OR UPDATE OR DELETE ON t_enable_triggers
+  2 BEGIN
+  3 	dbe_output.print_line('BEFORE t_enable_triggers');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER trig_enable_triggers2 AFTER INSERT OR UPDATE OR DELETE ON t_enable_triggers
+  2 BEGIN
+  3 	dbe_output.print_line('AFTER t_enable_triggers');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> insert into t_enable_triggers values(1, 2);
+
+BEFORE t_enable_triggers
+AFTER t_enable_triggers
+
+1 rows affected.
+
+SQL> update t_enable_triggers set f2=3;
+
+BEFORE t_enable_triggers
+AFTER t_enable_triggers
+
+1 rows affected.
+
+SQL> delete from t_enable_triggers;
+
+BEFORE t_enable_triggers
+AFTER t_enable_triggers
+
+1 rows affected.
+
+SQL> drop table t_enable_triggers;
+
+Succeed.
+
+SQL> 
+SQL> -- end test alter session disable|enable triggers
+SQL> 
+SQL> -- nologging + triggers
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> CREATE OR REPLACE TRIGGER TEST_NOLOGGING_TRIG BEFORE INSERT ON T_TRIG_1
+  2    FOR EACH ROW
+  3    BEGIN
+  4      UPDATE T_TRIG_1 SET F_INT1 = 1;
+  5 	 insert into T_TRIG_2(F_INT1) values(2);
+  6    END;
+  7    /
+
+Succeed.
+
+SQL> INSERT /*+nologging*/ INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TEST_NOLOGGING_TRIG BEFORE INSERT ON T_TRIG_1
+  2    FOR EACH ROW
+  3    BEGIN
+  4      UPDATE T_TRIG_1 SET F_INT1 = 1;
+  5 	 insert into /*+nologging*/ T_TRIG_2(F_INT1) values(2);
+  6    END;
+  7    /
+
+Succeed.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> -- nologging + insert select
+SQL> DROP TABLE IF EXISTS T_TRIG_1 CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1
+  2 (
+  3   "OBJECTID" NUMBER(11) NOT NULL
+  4 );
+
+Succeed.
+
+SQL> CREATE INDEX T_TRIG_1_IDX ON T_TRIG_1("OBJECTID");
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2 CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2
+  2 (
+  3   "CMENEID" BINARY_INTEGER NOT NULL,
+  4   "CRCKEY" NUMBER(17) NOT NULL,
+  5   "CRCNOTKEY" NUMBER(17) NOT NULL,
+  6   "UUMEASCTRLTIMERLEN" NUMBER(17),
+  7   "IUBMEASCTRLINITTIMERLEN" NUMBER(17),
+  8   "IURMEASCTRLINITTIMERLEN" NUMBER(17),
+  9   "MACDMEASCTRLTIMERLEN" NUMBER(17),
+ 10   "IUBMEASCTRLINITFAILDLYTIMERLEN" NUMBER(17),
+ 11   "IURMEASCTRLINITFAILDLYTIMERLEN" NUMBER(17),
+ 12   "OLPCTIMERLEN" NUMBER(17),
+ 13   "RLCMEASCTRLTIMERLEN" NUMBER(17),
+ 14   "CHANNELRETRYTIMERLEN" NUMBER(17),
+ 15   "CHANNELRETRYHOTIMERLEN" NUMBER(17),
+ 16   "RABMODIFYTIMERLEN" NUMBER(17),
+ 17   "ZERORATEUPFAILTORELTIMERLEN" NUMBER(17),
+ 18   "ADAPRETRANPUNTIMER" NUMBER(17),
+ 19   "SRBFASTHRETRYTIMERLEN" BINARY_INTEGER,
+ 20   "PARKINGRELTIMER" BINARY_INTEGER,
+ 21   "DCHSUPAHRETRYPENALTYTIME" BINARY_INTEGER,
+ 22   "DELAYTRIGAMRRBRECFGTIMER" BINARY_INTEGER,
+ 23   "TFCCTRLFAILTIMER" BINARY_INTEGER,
+ 24   PRIMARY KEY("CMENEID")
+ 25 );
+
+Succeed.
+
+SQL> INSERT INTO T_TRIG_2 ("CMENEID","CRCKEY","CRCNOTKEY","UUMEASCTRLTIMERLEN","IUBMEASCTRLINITTIMERLEN","IURMEASCTRLINITTIMERLEN","MACDMEASCTRLTIMERLEN","IUBMEASCTRLINITFAILDLYTIMERLEN","IURMEASCTRLINITFAILDLYTIMERLEN","OLPCTIMERLEN","RLCMEASCTRLTIMERLEN","CHANNELRETRYTIMERLEN","CHANNELRETRYHOTIMERLEN","RABMODIFYTIMERLEN","ZERORATEUPFAILTORELTIMERLEN","ADAPRETRANPUNTIMER","SRBFASTHRETRYTIMERLEN","PARKINGRELTIMER","DCHSUPAHRETRYPENALTYTIME","DELAYTRIGAMRRBRECFGTIMER","TFCCTRLFAILTIMER") values(38690,1810552692,1810552692,3000,20000,20000,20000,5000,5000,3000,20000,5,2,5,180,10,20,300,10,50,5);
+
+1 rows affected.
+
+SQL> alter session enable nologging;
+
+Succeed.
+
+SQL> insert into T_TRIG_1 select CMENEID from T_TRIG_2;
+
+1 rows affected.
+
+SQL> alter session disable nologging;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_3;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_STMT BEFORE UPDATE ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_1 VALUES(4,2,'A','2017-12-11 14:08:00');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_STMT BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_1
+  2 BEGIN
+  3   dbe_output.print_line('insert into T_TRIG_2 one row');
+  4   INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TRIGGER_NAME = 'TRIG_BEFORE_STMT' AND OWNER = 'SYS';
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+SYS                                                              TRIG_BEFORE_STMT                                                 SYS                                                              T_TRIG_1                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_1
+BEGIN
+  dbe_output.print_line('insert into T_TRIG_2 one row');
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+
+1 rows fetched.
+
+SQL> SELECT * FROM DBA_TRIGGERS WHERE TRIGGER_NAME = 'TRIG_BEFORE_STMT' AND OWNER = 'SYS';
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+SYS                                                              TRIG_BEFORE_STMT                                                 SYS                                                              T_TRIG_1                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_1
+BEGIN
+  dbe_output.print_line('insert into T_TRIG_2 one row');
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+
+1 rows fetched.
+
+SQL> SELECT * FROM USER_TRIGGERS WHERE TRIGGER_NAME = 'TRIG_BEFORE_STMT';
+
+TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+TRIG_BEFORE_STMT                                                 SYS                                                              T_TRIG_1                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_1
+BEGIN
+  dbe_output.print_line('insert into T_TRIG_2 one row');
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP USER IF EXISTS TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> CREATE USER TEST_TRIG_USER1 IDENTIFIED BY Cantian_234;
+
+Succeed.
+
+SQL> GRANT DBA TO TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> grant  select on T_TRIG_1 to TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> grant  select on T_TRIG_2 to TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> grant insert on T_TRIG_2 to TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> grant delete on T_TRIG_1 to TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> grant update on T_TRIG_1 to TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> grant insert on T_TRIG_1 to TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> CONN TEST_TRIG_USER1/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> INSERT INTO SYS.T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+insert into T_TRIG_2 one row
+
+1 rows affected.
+
+SQL> INSERT INTO SYS.T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+insert into T_TRIG_2 one row
+
+1 rows affected.
+
+SQL> INSERT INTO SYS.T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+insert into T_TRIG_2 one row
+
+1 rows affected.
+
+SQL> INSERT INTO SYS.T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+insert into T_TRIG_2 one row
+
+1 rows affected.
+
+SQL> SELECT * FROM SYS.T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM SYS.T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+4 rows fetched.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> CONN sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> DROP USER TEST_TRIG_USER1;
+
+Succeed.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT1 = 10,F_CHAR1='TRIG' WHERE F_INT1 = 1;
+
+insert into T_TRIG_2 one row
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+10           2            TRIG             2017-12-11 14:08:00   
+10           3            TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+5 rows fetched.
+
+SQL> 
+SQL> DELETE FROM T_TRIG_1 WHERE F_INT1 = 10;
+
+insert into T_TRIG_2 one row
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+6 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT2 = 5;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            B                2017-12-11 16:08:00   
+3            5            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+6 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=1) WHEN MATCHED THEN UPDATE SET F_CHAR1 = 'MERGE_UPDATE';
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            MERGE_UPDATE     2017-12-11 16:08:00   
+3            5            MERGE_UPDATE     2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+6 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=1) WHEN MATCHED THEN UPDATE SET F_INT1 = 100;
+
+insert into T_TRIG_2 one row
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+100          5            MERGE_UPDATE     2017-12-11 16:08:00   
+100          5            MERGE_UPDATE     2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+7 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=0) WHEN NOT MATCHED THEN INSERT (F_CHAR1) VALUES ('MERGE_INSERT');
+
+insert into T_TRIG_2 one row
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+100          5            MERGE_UPDATE     2017-12-11 16:08:00   
+100          5            MERGE_UPDATE     2017-12-12 16:08:00   
+                          MERGE_INSERT                           
+
+3 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+8 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> --after IDU statement
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_AFTER_STMT AFTER INSERT OR DELETE OR UPDATE OF F_INT1,F_INT2 ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT1 = 10,F_CHAR1='TRIG' WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+10           2            TRIG             2017-12-11 14:08:00   
+10           3            TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+5 rows fetched.
+
+SQL> 
+SQL> DELETE FROM T_TRIG_1 WHERE F_INT1 = 10;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+6 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT2 = 5;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            B                2017-12-11 16:08:00   
+3            5            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+7 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=1) WHEN MATCHED THEN UPDATE SET F_CHAR1 = 'MERGE_UPDATE';
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            MERGE_UPDATE     2017-12-11 16:08:00   
+3            5            MERGE_UPDATE     2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+7 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=1) WHEN MATCHED THEN UPDATE SET F_INT1 = 100;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+100          5            MERGE_UPDATE     2017-12-11 16:08:00   
+100          5            MERGE_UPDATE     2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+8 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=0) WHEN NOT MATCHED THEN INSERT (F_CHAR1) VALUES ('MERGE_INSERT');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+100          5            MERGE_UPDATE     2017-12-11 16:08:00   
+100          5            MERGE_UPDATE     2017-12-12 16:08:00   
+                          MERGE_INSERT                           
+
+3 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+4            2            A                2017-12-11 14:08:00   
+
+9 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> 
+SQL> --before IDU each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_EACH_ROW BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT1 = 10,F_CHAR1='TRIG' WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+10           2            TRIG             2017-12-11 14:08:00   
+10           3            TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+3            10           A                2017-12-11 14:18:00   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+6 rows fetched.
+
+SQL> 
+SQL> DELETE FROM T_TRIG_1 WHERE F_INT1 = 10;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+8 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT2 = 5;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            B                2017-12-11 16:08:00   
+3            5            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+8 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=1) WHEN MATCHED THEN UPDATE SET F_CHAR1 = 'MERGE_UPDATE';
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            MERGE_UPDATE     2017-12-11 16:08:00   
+3            5            MERGE_UPDATE     2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+8 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=1) WHEN MATCHED THEN UPDATE SET F_INT1 = 100;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+100          5            MERGE_UPDATE     2017-12-11 16:08:00   
+100          5            MERGE_UPDATE     2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+5            100          MERGE_UPDATE     2017-12-11 16:08:00   
+5            100          MERGE_UPDATE     2017-12-12 16:08:00   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+10 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=0) WHEN NOT MATCHED THEN INSERT (F_CHAR1) VALUES ('MERGE_INSERT');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+100          5            MERGE_UPDATE     2017-12-11 16:08:00   
+100          5            MERGE_UPDATE     2017-12-12 16:08:00   
+                          MERGE_INSERT                           
+
+3 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+5            100          MERGE_UPDATE     2017-12-11 16:08:00   
+5            100          MERGE_UPDATE     2017-12-12 16:08:00   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+                                                                 
+
+11 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> --after IDU each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_AFTER_EACH_ROW BEFORE INSERT OR DELETE OR UPDATE OF F_INT1,F_INT2 ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT1 = 10,F_CHAR1='TRIG' WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+10           2            TRIG             2017-12-11 14:08:00   
+10           3            TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+3            10           A                2017-12-11 14:18:00   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+6 rows fetched.
+
+SQL> 
+SQL> DELETE FROM T_TRIG_1 WHERE F_INT1 = 10;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+8 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT2 = 5;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            B                2017-12-11 16:08:00   
+3            5            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            2            B                2017-12-11 16:08:00   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+4            3            C                2017-12-12 16:08:00   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+10 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=1) WHEN MATCHED THEN UPDATE SET F_CHAR1 = 'MERGE_UPDATE';
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            MERGE_UPDATE     2017-12-11 16:08:00   
+3            5            MERGE_UPDATE     2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            2            B                2017-12-11 16:08:00   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+4            3            C                2017-12-12 16:08:00   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+10 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=1) WHEN MATCHED THEN UPDATE SET F_INT1 = 100;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+100          5            MERGE_UPDATE     2017-12-11 16:08:00   
+100          5            MERGE_UPDATE     2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            2            B                2017-12-11 16:08:00   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+4            3            C                2017-12-12 16:08:00   
+5            100          MERGE_UPDATE     2017-12-11 16:08:00   
+5            100          MERGE_UPDATE     2017-12-12 16:08:00   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+
+12 rows fetched.
+
+SQL> 
+SQL> MERGE INTO T_TRIG_1 USING DUAL ON (1=0) WHEN NOT MATCHED THEN INSERT (F_CHAR1) VALUES ('MERGE_INSERT');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+100          5            MERGE_UPDATE     2017-12-11 16:08:00   
+100          5            MERGE_UPDATE     2017-12-12 16:08:00   
+                          MERGE_INSERT                           
+
+3 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            10           A                2017-12-11 14:08:00   
+2                         TRIG                                   
+3            2            B                2017-12-11 16:08:00   
+3            10           A                2017-12-11 14:18:00   
+3                         TRIG                                   
+4            3            C                2017-12-12 16:08:00   
+5            100          MERGE_UPDATE     2017-12-11 16:08:00   
+5            100          MERGE_UPDATE     2017-12-12 16:08:00   
+             1                             2017-12-11 14:08:00   
+             1                             2017-12-11 14:18:00   
+             2                             2017-12-11 16:08:00   
+             3                             2017-12-12 16:08:00   
+                                                                 
+
+13 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --before update each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_UPDATE_EACH_ROW BEFORE UPDATE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_CHAR1='TRIG' WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            TRIG             2017-12-11 14:08:00   
+1            3            TRIG             2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            1            A                2017-12-11 14:08:00   
+3            1            A                2017-12-11 14:18:00   
+
+2 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT1 = 10 WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+10           2            TRIG             2017-12-11 14:08:00   
+10           3            TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            1            A                2017-12-11 14:08:00   
+2            10           TRIG             2017-12-11 14:08:00   
+3            1            A                2017-12-11 14:18:00   
+3            10           TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT2 = 5;
+
+4 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            5            B                2017-12-11 16:08:00   
+3            5            C                2017-12-12 16:08:00   
+10           5            TRIG             2017-12-11 14:08:00   
+10           5            TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            1            A                2017-12-11 14:08:00   
+2            10           TRIG             2017-12-11 14:08:00   
+2            10           TRIG             2017-12-11 14:08:00   
+3            1            A                2017-12-11 14:18:00   
+3            2            B                2017-12-11 16:08:00   
+3            10           TRIG             2017-12-11 14:18:00   
+3            10           TRIG             2017-12-11 14:18:00   
+4            3            C                2017-12-12 16:08:00   
+
+8 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --before update each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_UPDATE_EACH_ROW_2 BEFORE UPDATE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW."F_INT2" := 1234;
+  5   :NEW.`F_INT2` := 123;
+  6   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_CHAR1='TRIG' WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            123          TRIG             2017-12-11 14:08:00   
+1            123          TRIG             2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            1            A                2017-12-11 14:08:00   
+3            1            A                2017-12-11 14:18:00   
+
+2 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT1 = 10 WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+10           123          TRIG             2017-12-11 14:08:00   
+10           123          TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            1            A                2017-12-11 14:08:00   
+3            1            A                2017-12-11 14:18:00   
+123          10           TRIG             2017-12-11 14:08:00   
+123          10           TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT2 = 5;
+
+4 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            123          B                2017-12-11 16:08:00   
+3            123          C                2017-12-12 16:08:00   
+10           123          TRIG             2017-12-11 14:08:00   
+10           123          TRIG             2017-12-11 14:18:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            1            A                2017-12-11 14:08:00   
+3            1            A                2017-12-11 14:18:00   
+3            2            B                2017-12-11 16:08:00   
+4            3            C                2017-12-12 16:08:00   
+123          10           TRIG             2017-12-11 14:08:00   
+123          10           TRIG             2017-12-11 14:08:00   
+123          10           TRIG             2017-12-11 14:18:00   
+123          10           TRIG             2017-12-11 14:18:00   
+
+8 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --before update each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT);
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2);
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4);
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3);
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE T_TRIG_1 ADD column F_CHAR1 char(16);
+
+Succeed.
+
+SQL> ALTER TABLE T_TRIG_2 ADD column F_CHAR1 char(16);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_UPDATE_EACH_ROW_2 BEFORE UPDATE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW."F_INT2" := 1234;
+  5   :NEW.`F_INT2` := 123;
+  6   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1;
+
+F_INT1       F_INT2       F_CHAR1         
+------------ ------------ ----------------
+1            2                            
+1            3                            
+2            3                            
+3            4                            
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1;
+
+F_INT1       F_INT2       F_CHAR1         
+------------ ------------ ----------------
+
+0 rows fetched.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_CHAR1='TRIG' WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1;
+
+F_INT1       F_INT2       F_CHAR1         
+------------ ------------ ----------------
+1            123          TRIG            
+1            123          TRIG            
+2            3                            
+3            4                            
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1;
+
+F_INT1       F_INT2       F_CHAR1         
+------------ ------------ ----------------
+2            1                            
+3            1                            
+
+2 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --before insert each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW.f_int1 := 123;
+  5   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+123          2            A                2017-12-11 14:08:00   
+123          3            A                2017-12-11 14:18:00   
+123          3            B                2017-12-11 16:08:00   
+123          4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+             123                           2017-12-11 14:08:00   
+             123                           2017-12-11 14:18:00   
+             123                           2017-12-11 16:08:00   
+             123                           2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --before insert each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   SELECT 123 INTO :NEW.f_int1 FROM DUAL;
+  5   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+123          2            A                2017-12-11 14:08:00   
+123          3            A                2017-12-11 14:18:00   
+123          3            B                2017-12-11 16:08:00   
+123          4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+             123                           2017-12-11 14:08:00   
+             123                           2017-12-11 14:18:00   
+             123                           2017-12-11 16:08:00   
+             123                           2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --before insert each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   EXECUTE IMMEDIATE 'SELECT 123 FROM DUAL' INTO :NEW.f_int1;
+  5   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+123          2            A                2017-12-11 14:08:00   
+123          3            A                2017-12-11 14:18:00   
+123          3            B                2017-12-11 16:08:00   
+123          4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+             123                           2017-12-11 14:08:00   
+             123                           2017-12-11 14:18:00   
+             123                           2017-12-11 16:08:00   
+             123                           2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --before insert each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE P1(A INT,B OUT INT)
+  2 AS
+  3 BEGIN
+  4   B := 123;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   P1(1,:NEW.f_int1);
+  5   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+123          2            A                2017-12-11 14:08:00   
+123          3            A                2017-12-11 14:18:00   
+123          3            B                2017-12-11 16:08:00   
+123          4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+             123                           2017-12-11 14:08:00   
+             123                           2017-12-11 14:18:00   
+             123                           2017-12-11 16:08:00   
+             123                           2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --before delete each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_DELETE_EACH_ROW BEFORE DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 DECLARE
+  4 	v_UsertId NUMBER(10);
+  5 	v_NESeqId NUMBER(10);
+  6 BEGIN
+  7 	SELECT ( SELECT :OLD.F_INT1 FROM DUAL ) INTO v_UsertId FROM DUAL ;
+  8 	SELECT ( SELECT :OLD.F_INT2 FROM DUAL ) INTO v_NESeqId FROM DUAL ;
+  9 	DELETE FROM T_TRIG_2 WHERE v_UsertId = F_INT1;
+ 10 	DELETE T_TRIG_2 WHERE v_NESeqId = F_INT2;
+ 11 END;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(3,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_2 VALUES(0,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_2 VALUES(1,4,'C','2017-12-12 16:08:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_2 VALUES(1,3,'A','2017-12-11 14:18:00');
+
+1 rows affected.
+
+SQL> INSERT INTO T_TRIG_2 VALUES(2,3,'B','2017-12-11 16:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+4 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+0            2            A                2017-12-11 14:08:00   
+1            3            A                2017-12-11 14:18:00   
+1            4            C                2017-12-12 16:08:00   
+2            3            B                2017-12-11 16:08:00   
+
+4 rows fetched.
+
+SQL> DELETE FROM T_TRIG_1 WHERE F_INT1 = 1;
+
+2 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+2            3            B                2017-12-11 16:08:00   
+3            4            C                2017-12-12 16:08:00   
+
+2 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --begin: test trigger compile failed
+SQL> --before IDU each row
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_EACH_ROW BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_BEFORE_EACH_ROW) terminated with compiling errors
+[4:15] PLC-00843 The table or view SYS.T_TRIG_2 does not exist.
+
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+CT-00944, PL/SQL(SYS.TRIG_BEFORE_EACH_ROW) terminated with compiling errors
+[4:15] PLC-00843 The table or view SYS.T_TRIG_2 does not exist.
+
+SQL> 
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_EACH_ROW BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_2
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_1 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+CT-00937, The trigger SYS.TRIG_BEFORE_EACH_ROW already exists on another table
+SQL> --end: test trigger compile failed
+SQL> 
+SQL> --bein:the triggered table is not allowed in the row trigger
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> SELECT * FROM USER_TRIGGERS;
+
+TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+
+0 rows fetched.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TEST_TRIG AFTER INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   UPDATE T_TRIG_1 SET F_INT1 = 1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+CT-00932, [4:3] PL/SQL(SYS.TEST_TRIG) terminated with execute errors
+[4:3] CT-00927, The trigger or user-defined function used by a SQL statement which is adjusting a table SYS.T_TRIG_1 did not find the table.
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TEST_TRIG BEFORE UPDATE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   UPDATE T_TRIG_1 SET F_INT1 = 2;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT1 = 10;
+
+CT-00932, [4:3] PL/SQL(SYS.TEST_TRIG) terminated with execute errors
+[4:3] CT-00927, The trigger or user-defined function used by a SQL statement which is adjusting a table SYS.T_TRIG_1 did not find the table.
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TEST_TRIG AFTER UPDATE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   UPDATE T_TRIG_1 SET F_INT1 = 2;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> UPDATE T_TRIG_1 SET F_INT1 = 10;
+
+CT-00932, [4:3] PL/SQL(SYS.TEST_TRIG) terminated with execute errors
+[4:3] CT-00927, The trigger or user-defined function used by a SQL statement which is adjusting a table SYS.T_TRIG_1 did not find the table.
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TEST_TRIG BEFORE DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   UPDATE T_TRIG_1 SET F_INT1 = 2;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> DELETE FROM T_TRIG_1;
+
+CT-00932, [4:3] PL/SQL(SYS.TEST_TRIG) terminated with execute errors
+[4:3] CT-00927, The trigger or user-defined function used by a SQL statement which is adjusting a table SYS.T_TRIG_1 did not find the table.
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TEST_TRIG BEFORE DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   DELETE T_TRIG_1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> DELETE FROM T_TRIG_1;
+
+CT-00932, [4:3] PL/SQL(SYS.TEST_TRIG) terminated with execute errors
+[4:3] CT-00927, The trigger or user-defined function used by a SQL statement which is adjusting a table SYS.T_TRIG_1 did not find the table.
+
+SQL> --end:the triggered table is not allowed in the row trigger
+SQL> 
+SQL> 
+SQL> --bein:DDL or DCL is not allowed in a trigger
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 BEGIN
+  3   COMMIT;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+CT-00932, [3:3] PL/SQL(SYS.TRIG_BEFORE_INSERT_EACH_ROW) terminated with execute errors
+[3:3] CT-00928, DDL or DCL is not allowed in a trigger
+
+SQL> --end:DDL or DCL is not allowed in a trigger
+SQL> 
+SQL> --bein:DDL or DCL is not allowed in a trigger
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 BEGIN
+  3   ROLLBACK;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+CT-00932, [3:3] PL/SQL(SYS.TRIG_BEFORE_INSERT_EACH_ROW) terminated with execute errors
+[3:3] CT-00928, DDL or DCL is not allowed in a trigger
+
+SQL> --end:DDL or DCL is not allowed in a trigger
+SQL> 
+SQL> --bein:DDL or DCL is not allowed in a trigger
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 BEGIN
+  3   SAVEPOINT A;
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+CT-00932, [3:3] PL/SQL(SYS.TRIG_BEFORE_INSERT_EACH_ROW) terminated with execute errors
+[3:3] CT-00928, DDL or DCL is not allowed in a trigger
+
+SQL> --end:DDL or DCL is not allowed in a trigger
+SQL> 
+SQL> --bein:DDL or DCL is not allowed in a trigger
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 BEGIN
+  3   execute immediate 'COMMIT';
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+CT-00932, [3:3] PL/SQL(SYS.TRIG_BEFORE_INSERT_EACH_ROW) terminated with execute errors
+[3:3] CT-00928, DDL or DCL is not allowed in a trigger
+
+SQL> --end:DDL or DCL is not allowed in a trigger
+SQL> 
+SQL> --begin:test trigger status
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_AFTER_STMT_INSERT AFTER INSERT ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_AFTER_STMT_DELETE AFTER DELETE ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_AFTER_STMT_UPDATE AFTER UPDATE OF F_INT1,F_INT2 ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TABLE_OWNER = 'SYS' AND TABLE_NAME= 'T_TRIG_1' ORDER BY TRIGGER_NAME;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+SYS                                                              TRIG_AFTER_STMT_DELETE                                           SYS                                                              T_TRIG_1                                                         AFTER DELETE ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_AFTER_STMT_INSERT                                           SYS                                                              T_TRIG_1                                                         AFTER INSERT ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_AFTER_STMT_UPDATE                                           SYS                                                              T_TRIG_1                                                         AFTER UPDATE OF F_INT1,F_INT2 ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+
+3 rows fetched.
+
+SQL> ALTER TABLE t_trig_1 DISABLE ALL TRIGGERS;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TABLE_OWNER = 'SYS' AND TABLE_NAME= 'T_TRIG_1' ORDER BY TRIGGER_NAME;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+SYS                                                              TRIG_AFTER_STMT_DELETE                                           SYS                                                              T_TRIG_1                                                         AFTER DELETE ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ DISABLED        
+SYS                                                              TRIG_AFTER_STMT_INSERT                                           SYS                                                              T_TRIG_1                                                         AFTER INSERT ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ DISABLED        
+SYS                                                              TRIG_AFTER_STMT_UPDATE                                           SYS                                                              T_TRIG_1                                                         AFTER UPDATE OF F_INT1,F_INT2 ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ DISABLED        
+
+3 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_AFTER_STMT_UPDATE AFTER UPDATE OF F_INT1,F_INT2 ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TABLE_OWNER = 'SYS' AND TABLE_NAME= 'T_TRIG_1' ORDER BY TRIGGER_NAME;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+SYS                                                              TRIG_AFTER_STMT_DELETE                                           SYS                                                              T_TRIG_1                                                         AFTER DELETE ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ DISABLED        
+SYS                                                              TRIG_AFTER_STMT_INSERT                                           SYS                                                              T_TRIG_1                                                         AFTER INSERT ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ DISABLED        
+SYS                                                              TRIG_AFTER_STMT_UPDATE                                           SYS                                                              T_TRIG_1                                                         AFTER UPDATE OF F_INT1,F_INT2 ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+
+3 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE T_TRIG_1 ENABLE ALL TRIGGERS;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TABLE_OWNER = 'SYS' AND TABLE_NAME= 'T_TRIG_1' ORDER BY TRIGGER_NAME;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+SYS                                                              TRIG_AFTER_STMT_DELETE                                           SYS                                                              T_TRIG_1                                                         AFTER DELETE ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_AFTER_STMT_INSERT                                           SYS                                                              T_TRIG_1                                                         AFTER INSERT ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_AFTER_STMT_UPDATE                                           SYS                                                              T_TRIG_1                                                         AFTER UPDATE OF F_INT1,F_INT2 ON T_TRIG_1
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(4,2,'A','2017-12-11 14:08:00');
+END;
+/
+ ENABLED         
+
+3 rows fetched.
+
+SQL> 
+SQL> ALTER TABLE t_trig_1 DISABLE ALL TRIGGERS;
+
+Succeed.
+
+SQL> DROP TABLE t_trig_1;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TABLE_OWNER = 'SYS' AND TABLE_NAME= 'T_TRIG_1' ORDER BY TRIGGER_NAME;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+
+0 rows fetched.
+
+SQL> 
+SQL> --end:test trigger status
+SQL> 
+SQL> --begin DTS2018071607476: test insert null into not null column 
+SQL> DROP TABLE IF EXISTS tbl_negrouptype;
+
+Succeed.
+
+SQL> CREATE TABLE tbl_negrouptype
+  2 (
+  3 type_id number(10,0) not null,
+  4 type_name varchar2(765) not null,
+  5 featurename varchar2(255) not null,
+  6 featurevalue varchar2(765) not null,
+  7 data_type number(10,0) not null,
+  8 parent_typeid number(10,0) not null,
+  9 id number(10, 0) not null
+ 10 );
+
+Succeed.
+
+SQL> create unique index tbl_negrouptype_idx on tbl_negrouptype(type_id, featurename);
+
+Succeed.
+
+SQL> 
+SQL> DROP SEQUENCE IF EXISTS next_tbl_negrouptype;
+
+Succeed.
+
+SQL> create sequence next_tbl_negrouptype
+  2 start with 1
+  3 increment by 1
+  4 minvalue 1
+  5 maxvalue 2147483647 
+  6 cycle
+  7 order;
+
+Succeed.
+
+SQL> 
+SQL> DROP TRIGGER IF EXISTS identity_tbl_negrouptype;
+
+Succeed.
+
+SQL> 
+SQL> insert into tbl_negrouptype(type_id, type_name, featurename, featurevalue, data_type, parent_typeid, id) values (0, 'type1', 'label', 'NeGroupType1', 1, 1, 1);
+
+1 rows affected.
+
+SQL> insert into tbl_negrouptype(type_id, type_name, featurename, featurevalue, data_type, parent_typeid) values (1, 'type1', 'label', 'NeGroupType1', 1, 1);
+
+CT-00620, Can't set NULL value for column 'ID'
+SQL> UPDATE tbl_negrouptype set id = null;
+
+CT-00620, Can't set NULL value for column 'ID'
+SQL> 
+SQL> create or replace trigger identity_tbl_negrouptype before INSERT OR UPDATE on tbl_negrouptype
+  2 for each row
+  3 declare
+  4 next_id NUMBER(10,0);
+  5 begin 
+  6 select next_tbl_negrouptype.nextval into next_id from dual;
+  7 :new.id:=next_id;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> insert into tbl_negrouptype(type_id, type_name, featurename, featurevalue, data_type, parent_typeid) values (1, 'type1', 'label', 'NeGroupType1', 1, 1);
+
+1 rows affected.
+
+SQL> select * from tbl_negrouptype order by type_id;
+
+TYPE_ID                                  TYPE_NAME                                                        FEATURENAME                                                      FEATUREVALUE                                                     DATA_TYPE                                PARENT_TYPEID                            ID                                      
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+0                                        type1                                                            label                                                            NeGroupType1                                                     1                                        1                                        1                                       
+1                                        type1                                                            label                                                            NeGroupType1                                                     1                                        1                                        1                                       
+
+2 rows fetched.
+
+SQL> UPDATE tbl_negrouptype set id = null;
+
+2 rows affected.
+
+SQL> select * from tbl_negrouptype order by type_id;
+
+TYPE_ID                                  TYPE_NAME                                                        FEATURENAME                                                      FEATUREVALUE                                                     DATA_TYPE                                PARENT_TYPEID                            ID                                      
+---------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------- ---------------------------------------- ----------------------------------------
+0                                        type1                                                            label                                                            NeGroupType1                                                     1                                        1                                        2                                       
+1                                        type1                                                            label                                                            NeGroupType1                                                     1                                        1                                        3                                       
+
+2 rows fetched.
+
+SQL> DROP TRIGGER identity_tbl_negrouptype;
+
+Succeed.
+
+SQL> --end DTS2018071607476
+SQL> 
+SQL> 
+SQL> --test drop trigger
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW.F_INT1 := 123;
+  5   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> DROP TRIGGER TRIG_BEFORE_INSERT_EACH_ROW;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+1            2            A                2017-12-11 14:08:00   
+
+1 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> --begin:test drop user
+SQL> DROP USER if exists user_trig1 CASCADE;
+
+Succeed.
+
+SQL> DROP USER if exists user_trig2 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE USER user_trig1 identified by Cantian_234;
+
+Succeed.
+
+SQL> CREATE USER user_trig2 identified by Cantian_234;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE user_trig1.T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE user_trig1.T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> GRANT INSERT ON user_trig1.T_TRIG_2 TO user_trig2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER user_trig2.TRIG_BEFORE_EACH_ROW BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON user_trig1.T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO user_trig1.T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> DROP USER user_trig2 CASCADE;
+
+Succeed.
+
+SQL> DROP TABLE user_trig1.T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE user_trig1.T_TRIG_2;
+
+Succeed.
+
+SQL> DROP USER user_trig1 CASCADE;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TABLE_OWNER = UPPER('user_trig2') OR  TABLE_OWNER = UPPER('user_trig1') ORDER BY TRIGGER_NAME;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+
+0 rows fetched.
+
+SQL> --end:test drop user
+SQL> 
+SQL> --begin:test drop user
+SQL> DROP USER if exists user_trig1 CASCADE;
+
+Succeed.
+
+SQL> DROP USER if exists user_trig2 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE USER user_trig1 identified by Cantian_234;
+
+Succeed.
+
+SQL> CREATE USER user_trig2 identified by Cantian_234;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE user_trig1.T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE user_trig1.T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> GRANT INSERT ON user_trig1.T_TRIG_2 TO user_trig2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER user_trig2.TRIG_BEFORE_EACH_ROW BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON user_trig1.T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO user_trig1.T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> DROP USER user_trig2 CASCADE;
+
+Succeed.
+
+SQL> DROP USER user_trig1 CASCADE;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TABLE_OWNER = UPPER('user_trig2') OR  TABLE_OWNER = UPPER('user_trig1') ORDER BY TRIGGER_NAME;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+
+0 rows fetched.
+
+SQL> --end:test drop user
+SQL> 
+SQL> 
+SQL> --begin:test drop user
+SQL> DROP USER if exists user_trig1 CASCADE;
+
+Succeed.
+
+SQL> DROP USER if exists user_trig2 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE USER user_trig1 identified by Cantian_234;
+
+Succeed.
+
+SQL> CREATE USER user_trig2 identified by Cantian_234;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE user_trig1.T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE user_trig1.T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE user_trig2.T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE user_trig2.T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> GRANT INSERT ON user_trig1.T_TRIG_2 TO user_trig2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER user_trig2.TRIG_BEFORE_EACH_ROW_1 BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON user_trig1.T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO user_trig1.T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER user_trig1.TRIG_BEFORE_EACH_ROW2 BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON user_trig1.T_TRIG_2
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO user_trig1.T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER user_trig1.TRIG_BEFORE_EACH_ROW1 BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON user_trig2.T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO user_trig1.T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER user_trig2.TRIG_BEFORE_EACH_ROW2 BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON user_trig2.T_TRIG_2
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO user_trig1.T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> DROP USER user_trig2 CASCADE;
+
+Succeed.
+
+SQL> DROP USER user_trig1 CASCADE;
+
+Succeed.
+
+SQL> SELECT * FROM ALL_TRIGGERS WHERE TABLE_OWNER = UPPER('user_trig2') OR  TABLE_OWNER = UPPER('user_trig1') ORDER BY TRIGGER_NAME;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+
+0 rows fetched.
+
+SQL> --end:test drop user
+SQL> 
+SQL> --begin:alter table(exist trigger) rename
+SQL> DROP USER if exists user_trig1 CASCADE;
+
+Succeed.
+
+SQL> DROP USER if exists user_trig2 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> CREATE USER user_trig1 identified by Cantian_234;
+
+Succeed.
+
+SQL> CREATE USER user_trig2 identified by Cantian_234;
+
+Succeed.
+
+SQL> 
+SQL> CREATE TABLE user_trig1.T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE user_trig1.T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> GRANT INSERT ON user_trig1.T_TRIG_2 TO user_trig2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER user_trig2.TRIG_BEFORE_EACH_ROW BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON user_trig1.T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO user_trig1.T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> ALTER TABLE user_trig1.T_TRIG_1 rename to T_TRIG_3;
+
+Succeed.
+
+SQL> 
+SQL> select * from all_triggers where owner = 'USER_TRIG2';
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+USER_TRIG2                                                       TRIG_BEFORE_EACH_ROW                                             USER_TRIG1                                                       T_TRIG_3                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON user_trig1.T_TRIG_3
+FOR EACH ROW
+BEGIN
+  INSERT INTO user_trig1.T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_EACH_ROW BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_EACH_ROW1 BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_2
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_EACH_ROW2 BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON sys.T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_EACH_ROW3 BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON sys."T_TRIG_1"
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> ALTER TABLE T_TRIG_1 rename to T_TRIG_3;
+
+Succeed.
+
+SQL> select * from all_triggers where owner = 'SYS' AND trigger_name like 'TRIG_BEFORE_EACH_ROW%' order by trigger_name;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+SYS                                                              TRIG_BEFORE_EACH_ROW                                             SYS                                                              T_TRIG_3                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_3
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_BEFORE_EACH_ROW1                                            SYS                                                              T_TRIG_2                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_2
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_BEFORE_EACH_ROW2                                            SYS                                                              T_TRIG_3                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON sys.T_TRIG_3
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_BEFORE_EACH_ROW3                                            SYS                                                              T_TRIG_3                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON sys."T_TRIG_3"
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+
+4 rows fetched.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_EACH_ROW3 BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON sys."T_TRIG_3"
+  2 FOR EACH ROW
+  3 BEGIN
+  4   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT1, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE T_TRIG_3 rename to T_TRIG_1;
+
+Succeed.
+
+SQL> select * from all_triggers where owner = 'SYS' AND trigger_name like 'TRIG_BEFORE_EACH_ROW%' order by trigger_name;
+
+OWNER                                                            TRIGGER_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                       SOURCE                                                           STATUS          
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------
+SYS                                                              TRIG_BEFORE_EACH_ROW                                             SYS                                                              T_TRIG_1                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_1
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_BEFORE_EACH_ROW1                                            SYS                                                              T_TRIG_2                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON T_TRIG_2
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_BEFORE_EACH_ROW2                                            SYS                                                              T_TRIG_1                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON sys.T_TRIG_1
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+SYS                                                              TRIG_BEFORE_EACH_ROW3                                            SYS                                                              T_TRIG_1                                                         BEFORE INSERT OR UPDATE OF F_INT1 OR DELETE ON sys."T_TRIG_1"
+FOR EACH ROW
+BEGIN
+  INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT1, :NEW.f_int1, :OLD."F_CHAR1",:NEW.`F_DATE`);
+END;
+/
+ ENABLED         
+
+4 rows fetched.
+
+SQL> --end:alter table(exist trigger) rename
+SQL> 
+SQL> 
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> --expect error
+SQL> select count(1) from user_triggers where trigger_name = 'BEFORE';
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> CREATE OR REPLACE TRIGGER BEFORE INSERT ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_1(F_INT1) VALUES(1);
+  4 END;
+  5 /
+
+CT-00916, [1:34]PL/SQL:syntax error(only support 'after' or 'before' or 'instead')
+SQL> select count(1) from user_triggers where trigger_name = 'BEFORE';
+
+COUNT(1)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_1 BEFORE INSERT ON USER_TRIGGERS
+  2 BEGIN
+  3   INSERT INTO T_TRIG_1(F_INT1) VALUES(1);
+  4 END;
+  5 /
+
+CT-00916, [1:57]PL/SQL:syntax error(view SYS.USER_TRIGGERS only support instead of trigger)
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_1 BEFORE INSERT ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_1(F_INT1) VALUES(1);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> INSERT INTO T_TRIG_1(F_INT1) VALUES(1);
+
+CT-00932, [3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[3:3] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+[1:1] PL/SQL(SYS.TRIG_ERROR_1) terminated with execute errors
+CT-00027, Stack depth limit exceeded
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_1;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_1 BEFORE INSERT OR UPDATE OR DELETE ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_2(F_INT1) VALUES(:OLD.F_INT1);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_1) terminated with compiling errors
+[3:39] PLC-00916 PL/SQL:syntax error(':new.' or ':old.' can only appear in row trigger or instead of trigger.)
+
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_2;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_2 BEFORE INSERT OR UPDATE OR DELETE ON T_TRIG_1
+  2 BEGIN
+  3   INSERT INTO T_TRIG_2(F_INT1) VALUES(:NEW.F_INT1);
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_2) terminated with compiling errors
+[3:39] PLC-00916 PL/SQL:syntax error(':new.' or ':old.' can only appear in row trigger or instead of trigger.)
+
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_3;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_3 BEFORE INSERT OR UPDATE OR DELETE ON T_TRIG_1
+  2 BEGIN
+  3   :OLD.F_INT2 := 1;
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_3) terminated with compiling errors
+[3:3] PLC-00916 PL/SQL:syntax error(':new.' or ':old.' can only appear in row trigger or instead of trigger.)
+
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_4;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_4 BEFORE INSERT OR UPDATE OR DELETE ON T_TRIG_1
+  2 BEGIN
+  3   :NEW.F_INT2 := 1;
+  4 END;
+  5 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_4) terminated with compiling errors
+[3:3] PLC-00916 PL/SQL:syntax error(':new.' or ':old.' can only appear in row trigger or instead of trigger.)
+
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_5;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_5 BEFORE INSERT OR UPDATE OR DELETE ON T_TRIG_1
+  2 DECLARE
+  3 X INT := 1;
+  4 BEGIN
+  5   X := :OLD.F_INT2;
+  6 END;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_5) terminated with compiling errors
+[5:8] PLC-00601 Sql syntax error: ':new.' or ':old.' can only appear in row trigger. word = :OLD.F_INT2
+
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_6;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_6 BEFORE INSERT OR UPDATE OR DELETE ON T_TRIG_1
+  2 DECLARE
+  3 X INT := 1;
+  4 BEGIN
+  5   X := :NEW.F_INT2;
+  6 END;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_6) terminated with compiling errors
+[5:8] PLC-00601 Sql syntax error: ':new.' or ':old.' can only appear in row trigger. word = :NEW.F_INT2
+
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_7;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_7 BEFORE INSERT OR UPDATE OR DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :OLD.F_INT2 := 1;
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_7) terminated with compiling errors
+[4:3] PLC-00916 PL/SQL:syntax error(Assigning value to ':old.' is not supported. word = :OLD.F_INT2)
+
+
+SQL> 
+SQL> --expect error
+SQL> DROP TRIGGER IF EXISTS TRIG_ERROR_8;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_8 BEFORE INSERT OR UPDATE OR DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW.F_INT2 := 1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_8 BEFORE DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   select 1 into :NEW.F_INT2 from dual;
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_8) terminated with compiling errors
+[4:17] PLC-00916 PL/SQL:syntax error(':new.' can only modified in before insert/update row trigger, word = :NEW.F_INT2)
+
+
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_8 BEFORE DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   execute immediate 'select 1 from dual' into :NEW.F_INT2;
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_8) terminated with compiling errors
+[4:47] PLC-00916 PL/SQL:syntax error(':new.' can only modified in before insert/update row trigger, word = :NEW.F_INT2)
+
+
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_8 BEFORE DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   execute immediate 'select 1 from dual' using out :NEW.F_INT2;
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_8) terminated with compiling errors
+[4:52] PLC-00916 PL/SQL:syntax error(':new.' can only modified in before insert/update row trigger, word = :NEW.F_INT2)
+
+
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_8 BEFORE DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   execute immediate 'begin :x := 1;end;' using in out :NEW.F_INT2;
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_8) terminated with compiling errors
+[4:55] PLC-00916 PL/SQL:syntax error(':new.' can only modified in before insert/update row trigger, word = :NEW.F_INT2)
+
+
+SQL> 
+SQL> --begin:expect error
+SQL> CREATE OR REPLACE PROCEDURE P1(A INT,B OUT INT)
+  2 AS
+  3 BEGIN
+  4   B := 1;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_ERROR_8 BEFORE DELETE ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   P1(1, :NEW.F_INT2);
+  5 END;
+  6 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.TRIG_ERROR_8) terminated with compiling errors
+[4:9] PLC-00916 PL/SQL:syntax error(':new.' can only modified in before insert/update row trigger, word = :NEW.F_INT2)
+
+
+SQL> --end:expect error
+SQL> 
+SQL> --test create trigger with quotes
+SQL> --add 2018/07/10
+SQL> 
+SQL> DROP TABLE IF EXISTS T_TRIG_1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS T_TRIG_2;
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_1 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> CREATE TABLE T_TRIG_2 (F_INT1 INT, F_INT2 INT, F_CHAR1 CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> 
+SQL> --expect success
+SQL> CREATE OR REPLACE TRIGGER "trig_BEFORE_INSERT_EACH_ROW" BEFORE INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW.F_INT1 := 123;
+  5   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  6 END;
+  7 /
+
+Succeed.
+
+SQL> select count(*) from SYS_PROCS where name='trig_BEFORE_INSERT_EACH_ROW';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TRIGGER TRIG_BEFORE_INSERT_EACH_ROW;
+
+CT-00828, trigger SYS.TRIG_BEFORE_INSERT_EACH_ROW does not exist
+SQL> DROP TRIGGER "trig_BEFORE_INSERT_EACH_ROW";
+
+Succeed.
+
+SQL> 
+SQL> select count(*) from SYS_PROCS where name='trig_BEFORE_INSERT_EACH_ROW';
+
+COUNT(*)            
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> 
+SQL> --expect success
+SQL> CREATE OR REPLACE TRIGGER sys."trig_BEFORE_INSERT_EACH_ROW" BEFORE INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW.F_INT1 := 123;
+  5   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  6 END "trig_BEFORE_INSERT_EACH_ROW";
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO T_TRIG_1 VALUES(1,2,'A','2017-12-11 14:08:00');
+
+1 rows affected.
+
+SQL> SELECT * FROM T_TRIG_1 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+123          2            A                2017-12-11 14:08:00   
+
+1 rows fetched.
+
+SQL> SELECT * FROM T_TRIG_2 ORDER BY F_INT1,F_INT2,F_CHAR1,F_DATE;
+
+F_INT1       F_INT2       F_CHAR1          F_DATE                
+------------ ------------ ---------------- ----------------------
+             123                           2017-12-11 14:08:00   
+
+1 rows fetched.
+
+SQL> 
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> DROP TRIGGER "trig_BEFORE_INSERT_EACH_ROW";
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> CREATE OR REPLACE TRIGGER "trig_BEFORE_INSERT_EACH_ROW" BEFORE INSERT ON T_TRIG_1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW.F_INT1 := 123;
+  5   INSERT INTO T_TRIG_2 VALUES(:OLD.F_INT2, :NEW.F_INT1, :OLD.F_CHAR1,:NEW.F_DATE);
+  6 END "Trig_BEFORE_INSERT_EACH_ROW";
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.trig_BEFORE_INSERT_EACH_ROW) terminated with compiling errors
+[6:5] PLC-00920 Undefined symbol Trig_BEFORE_INSERT_EACH_ROW
+
+
+SQL> 
+SQL> --expect success
+SQL> drop table if exists "t11";
+
+Succeed.
+
+SQL> create table "t11"(f1 int);
+
+Succeed.
+
+SQL>  create or replace trigger "tr_t1"       
+  2  before insert on "t11"                   
+  3  for each row
+  4  begin                                   
+  5   :new.f1 := :new.f1 +1;                 
+  6  end;                                    
+  7  /
+
+Succeed.
+
+SQL> 
+SQL> --trigger support clob
+SQL> drop table if exists pl_trigger_table_test;
+
+Succeed.
+
+SQL> drop table if exists pl_trigger_table_test_rec;
+
+Succeed.
+
+SQL> create table pl_trigger_table_test(t_a clob);
+
+Succeed.
+
+SQL> create table pl_trigger_table_test_rec(t_a clob);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER pl_trigger_before_insert BEFORE INSERT ON pl_trigger_table_test
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW.t_a := 'wangwei';
+  5   INSERT INTO pl_trigger_table_test_rec VALUES(:OLD.t_a || 'bakup');
+  6   INSERT INTO pl_trigger_table_test_rec VALUES(:NEW.t_a || 'new');  
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> insert into pl_trigger_table_test values('wanghaifeng');
+
+1 rows affected.
+
+SQL> select count(*) from pl_trigger_table_test;
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> select count(*) from pl_trigger_table_test_rec where t_a like 'wangwei%';
+
+COUNT(*)            
+--------------------
+1                   
+
+1 rows fetched.
+
+SQL> --end test create trigger with quotes
+SQL> drop table if exists test_trig_insert;
+
+Succeed.
+
+SQL> create table test_trig_insert(f1 int, f2 int)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION p1 values less than(10),
+  5  PARTITION p2 values less than(20),
+  6  PARTITION p3 values less than(30),
+  7  PARTITION p4 values less than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_INSERT_EACH_ROW BEFORE INSERT ON test_trig_insert
+  2 FOR EACH ROW
+  3 BEGIN
+  4   :NEW.f1 := 15;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> insert into test_trig_insert values(5,5);
+
+1 rows affected.
+
+SQL> select * from test_trig_insert partition (p1);
+
+F1           F2          
+------------ ------------
+
+0 rows fetched.
+
+SQL> select * from test_trig_insert partition (p2);
+
+F1           F2          
+------------ ------------
+15           5           
+
+1 rows fetched.
+
+SQL> 
+SQL> --DTS2018092000730
+SQL> drop table if exists gs_tri_test;
+
+Succeed.
+
+SQL> drop table if exists gs_tri_test1;
+
+Succeed.
+
+SQL> create table gs_tri_test(id int,name varchar(20),information clob);
+
+Succeed.
+
+SQL> insert into gs_tri_test values(1000,'aaaaaaaa','������');
+
+1 rows affected.
+
+SQL> insert into gs_tri_test values(2000,'aaaaaaaa','������');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create table gs_tri_test1(informations clob);
+
+Succeed.
+
+SQL> insert into gs_tri_test1 values('������');
+
+1 rows affected.
+
+SQL> insert into gs_tri_test1 values('������');
+
+1 rows affected.
+
+SQL> insert into gs_tri_test1 values('������');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> set define on;
+
+ON
+SQL> set serveroutput on;
+
+ON
+SQL> create or replace trigger triger_003
+  2 before delete on gs_tri_test for each row
+  3 declare
+  4 v_inf gs_tri_test1.informations%TYPE;
+  5 begin
+  6    select informations INTO v_inf from gs_tri_test1 WHERE ROWNUM=1;
+  7    dbe_output.print_line(v_inf);
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> delete from gs_tri_test where id=1000;
+
+������
+
+1 rows affected.
+
+SQL> set serveroutput off;
+
+OFF
+SQL> drop table if exists test_trig_insert;
+
+Succeed.
+
+SQL> 
+SQL> --test unsupport create trigger on local temp table
+SQL> --begin
+SQL> create user gs_tri_user identified by root_1234;
+
+Succeed.
+
+SQL> grant dba to gs_tri_user;
+
+Succeed.
+
+SQL> conn gs_tri_user/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> alter system set LOCAL_TEMPORARY_TABLE_ENABLED = true;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists PROC_LOCALTEMPTAB_T_007;
+
+Succeed.
+
+SQL> create table  PROC_T_007(id  int,num numeric ,ctime date,name varchar(100));
+
+Succeed.
+
+SQL> create sequence PROC_LOCALTEMPTAB_SEQ_007 start with 100 increment by 10 maxvalue 200 cycle ;
+
+Succeed.
+
+SQL> create temporary table #PROC_LOCALTEMPTAB_T_007 as select * from PROC_T_007;
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> create or replace trigger PROC_LOCALTEMPTAB_TRI_007 
+  2 before insert on #PROC_LOCALTEMPTAB_T_007 
+  3 begin
+  4   insert into PROC_T_007 values(PROC_LOCALTEMPTAB_SEQ_007.nextval,9999.9999,sysdate,'Trigger'||PROC_LOCALTEMPTAB_SEQ_007.nextval);
+  5 end;
+  6 /
+
+CT-00916, [2:18]PL/SQL:syntax error(unsupport create trigger on local temp table)
+SQL> 
+SQL> select object_name, status from user_objects where object_name = 'PROC_LOCALTEMPTAB_TRI_007';
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+
+0 rows fetched.
+
+SQL> 
+SQL> create or replace trigger PROC_LOCALTEMPTAB_TRI_007
+  2 before insert on PROC_T_007
+  3 begin
+  4   insert into #PROC_LOCALTEMPTAB_T_007 values(1 ,9999.9999,sysdate,'Trigger'||PROC_LOCALTEMPTAB_SEQ_007.nextval);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> select object_name, status from user_objects where object_name = 'PROC_LOCALTEMPTAB_TRI_007';
+
+OBJECT_NAME                                                      STATUS 
+---------------------------------------------------------------- -------
+PROC_LOCALTEMPTAB_TRI_007                                        VALID  
+
+1 rows fetched.
+
+SQL> 
+SQL> --expect success
+SQL> insert into PROC_T_007 values (1,12.3,'2018-09-17 16:10:28','jim');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select * from PROC_T_007;
+
+ID           NUM                                      CTIME                  NAME                                                            
+------------ ---------------------------------------- ---------------------- ----------------------------------------------------------------
+1            12.3                                     2018-09-17 16:10:28    jim                                                             
+
+1 rows fetched.
+
+SQL> select ID, NUM  from #PROC_LOCALTEMPTAB_T_007;
+
+ID           NUM                                     
+------------ ----------------------------------------
+1            9999.9999                               
+
+1 rows fetched.
+
+SQL> 
+SQL> alter system set LOCAL_TEMPORARY_TABLE_ENABLED = false;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> select sleep(2);
+
+SLEEP(2)
+--------
+        
+
+1 rows fetched.
+
+SQL> conn gs_tri_user/root_1234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> --expect error
+SQL> insert into PROC_T_007 values (2,12.3,'2018-09-17 16:10:28','jim');
+
+CT-00932, [3:3] PL/SQL(GS_TRI_USER.PROC_LOCALTEMPTAB_TRI_007) terminated with execute errors
+[3:15] CT-00843, The table or view GS_TRI_USER.#PROC_LOCALTEMPTAB_T_007 does not exist.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> select * from PROC_T_007;
+
+ID           NUM                                      CTIME                  NAME                                                            
+------------ ---------------------------------------- ---------------------- ----------------------------------------------------------------
+1            12.3                                     2018-09-17 16:10:28    jim                                                             
+
+1 rows fetched.
+
+SQL> select * from #PROC_LOCALTEMPTAB_T_007;
+
+CT-00843, [1:15]The table or view GS_TRI_USER.#PROC_LOCALTEMPTAB_T_007 does not exist.
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> drop user gs_tri_user cascade;
+
+Succeed.
+
+SQL> --end
+SQL> 
+SQL> --test trigger on synonym DTS2019021410338
+SQL> --begin
+SQL> drop table if exists tri_tab_1;
+
+Succeed.
+
+SQL> drop table if exists tri_tab_2;
+
+Succeed.
+
+SQL> create table tri_tab_1(a int);
+
+Succeed.
+
+SQL> create table tri_tab_2(a int);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE SYNONYM  syn_tab_1 FOR tri_tab_1;
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER TRIG_BEFORE_TAB1_SYN BEFORE INSERT OR UPDATE on syn_tab_1
+  2 BEGIN
+  3   INSERT INTO tri_tab_2 VALUES(4);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> --end
+SQL> set charset gbk
+
+GBK
+SQL> drop table if exists test_trigger_A;
+
+Succeed.
+
+SQL> drop table if exists test_trigger_B;
+
+Succeed.
+
+SQL> create table test_trigger_A(c1 nvarchar2(32));
+
+Succeed.
+
+SQL> create table test_trigger_B(c1 nvarchar2(32));
+
+Succeed.
+
+SQL> insert into test_trigger_A values('����������������������������������');
+
+1 rows affected.
+
+SQL> drop trigger if exists addeleteoperation;
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER
+  2 addeleteoperation AFTER DELETE ON test_trigger_A
+  3 FOR EACH ROW
+  4 BEGIN
+  5     INSERT INTO test_trigger_B(c1)  VALUES
+  6     (:OLD.C1);
+  7 END;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> delete from test_trigger_A; 
+
+1 rows affected.
+
+SQL> drop table if exists test_trigger_A;
+
+Succeed.
+
+SQL> drop table if exists test_trigger_B;
+
+Succeed.
+
+SQL> 
+SQL> ------------Begin test story: trigger pseudo column -----------
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> drop tablespace myspc_liu_test INCLUDING CONTENTS and datafiles;
+
+CT-00780, The tablespace MYSPC_LIU_TEST does not exist.
+SQL> create tablespace myspc_liu_test datafile 'myspc_liu_test' size 20M autoextend on next 10M;
+
+Succeed.
+
+SQL> drop user if exists gs_trigger_pseudo cascade;
+
+Succeed.
+
+SQL> create user gs_trigger_pseudo identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to gs_trigger_pseudo;
+
+Succeed.
+
+SQL> 
+SQL> conn gs_trigger_pseudo/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> drop table if exists test_trigger;
+
+Succeed.
+
+SQL> create table test_trigger(a int, b int) tablespace myspc_liu_test;
+
+Succeed.
+
+SQL> insert into test_trigger values(1,2);
+
+1 rows affected.
+
+SQL> 
+SQL> -- expect wrong
+SQL> create or replace trigger test_trigger_pseudo before insert on test_trigger
+  2 is
+  3 begin
+  4 dbe_output.print_line(:OLD.rowid);
+  5 dbe_output.print_line(:OLD.rowscn);
+  6 dbe_output.print_line(:New.rowid);
+  7 dbe_output.print_line(:New.rowscn);
+  8 end;
+  9 /
+
+Succeed.
+Warning:
+PL/SQL(GS_TRIGGER_PSEUDO.TEST_TRIGGER_PSEUDO) terminated with compiling errors
+[4:23] PLC-00601 Sql syntax error: ':new.' or ':old.' can only appear in row trigger. word = :OLD.rowid
+[5:23] PLC-00601 Sql syntax error: ':new.' or ':old.' can only appear in row trigger. word = :OLD.rowscn
+[6:23] PLC-00601 Sql syntax error: ':new.' or ':old.' can only appear in row trigger. word = :New.rowid
+[7:23] PLC-00601 Sql syntax error: ':new.' or ':old.' can only appear in row trigger. word = :New.rowscn
+
+
+SQL> 
+SQL> -- expect wrong
+SQL> create or replace trigger test_trigger_pseudo before insert on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 :OLD.rowid := a;
+  6 :OLD.rowscn := a;
+  7 :New.rowid := a;
+  8 :New.rowscn := a;
+  9 end;
+ 10 /
+
+Succeed.
+Warning:
+PL/SQL(GS_TRIGGER_PSEUDO.TEST_TRIGGER_PSEUDO) terminated with compiling errors
+[5:1] PLC-00916 PL/SQL:syntax error(Assigning value to ':old.' is not supported. word = :OLD.rowid)
+[6:1] PLC-00916 PL/SQL:syntax error(Assigning value to ':old.' is not supported. word = :OLD.rowscn)
+[7:1] PLC-00950 The expression :NEW.ROWID was used as the assignment target (left operand of the assignment statement).
+[8:1] PLC-00950 The expression :NEW.ROWSCN was used as the assignment target (left operand of the assignment statement).
+
+
+SQL> -- expect wrong
+SQL> create or replace trigger test_trigger_pseudo before insert on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 :OLD.rowid := a;
+  6 :OLD.rowscn := a;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(GS_TRIGGER_PSEUDO.TEST_TRIGGER_PSEUDO) terminated with compiling errors
+[5:1] PLC-00916 PL/SQL:syntax error(Assigning value to ':old.' is not supported. word = :OLD.rowid)
+[6:1] PLC-00916 PL/SQL:syntax error(Assigning value to ':old.' is not supported. word = :OLD.rowscn)
+
+
+SQL> -- expect wrong
+SQL> create or replace trigger test_trigger_pseudo after insert on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 :OLD.rowid := a;
+  6 :OLD.rowscn := a;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(GS_TRIGGER_PSEUDO.TEST_TRIGGER_PSEUDO) terminated with compiling errors
+[5:1] PLC-00916 PL/SQL:syntax error(Assigning value to ':old.' is not supported. word = :OLD.rowid)
+[6:1] PLC-00916 PL/SQL:syntax error(Assigning value to ':old.' is not supported. word = :OLD.rowscn)
+
+
+SQL> -- expect wrong
+SQL> create or replace trigger test_trigger_pseudo before delete on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 :New.rowid := a;
+  6 :New.rowscn := a;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(GS_TRIGGER_PSEUDO.TEST_TRIGGER_PSEUDO) terminated with compiling errors
+[5:1] PLC-00950 The expression :NEW.ROWID was used as the assignment target (left operand of the assignment statement).
+[6:1] PLC-00950 The expression :NEW.ROWSCN was used as the assignment target (left operand of the assignment statement).
+
+
+SQL> -- expect wrong
+SQL> create or replace trigger test_trigger_pseudo after delete on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 :New.rowid := a;
+  6 :New.rowscn := a;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(GS_TRIGGER_PSEUDO.TEST_TRIGGER_PSEUDO) terminated with compiling errors
+[5:1] PLC-00950 The expression :NEW.ROWID was used as the assignment target (left operand of the assignment statement).
+[6:1] PLC-00950 The expression :NEW.ROWSCN was used as the assignment target (left operand of the assignment statement).
+
+
+SQL> 
+SQL> create or replace function get_spacename_by_id(id int) return varchar2
+  2 is
+  3 spacename varchar2(64);
+  4 begin
+  5 select tablespace_name into spacename from adm_data_files where file_id = id;
+  6 return spacename;
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> -- base ability
+SQL> create or replace trigger test_trigger_pseudo before insert on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 if :New.rowid is not null then
+  6 dbe_output.print_line(get_spacename_by_id(to_number(left(:New.rowid,4))));
+  7 end if;
+  8 if :New.rowscn is not null then
+  9 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:New.rowscn)));
+ 10 end if;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> insert into test_trigger values(3,4);
+
+1 rows affected.
+
+SQL> create or replace trigger test_trigger_pseudo after insert on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 if :New.rowid is not null then
+  6 dbe_output.print_line(get_spacename_by_id(to_number(left(:New.rowid,4))));
+  7 end if;
+  8 if :New.rowscn is not null then
+  9 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:New.rowscn)));
+ 10 end if;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> insert into test_trigger values(5,6);
+
+MYSPC_LIU_TEST
+
+1 rows affected.
+
+SQL> create or replace trigger test_trigger_pseudo before update on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 dbe_output.print_line(get_spacename_by_id(to_number(left(:OLD.rowid,4))));
+  6 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:OLD.rowscn)));
+  7 dbe_output.print_line(get_spacename_by_id(to_number(left(:New.rowid,4))));
+  8 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:New.rowscn)));
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> update test_trigger set a = 10 where a = 5;
+
+MYSPC_LIU_TEST
+0
+MYSPC_LIU_TEST
+0
+
+1 rows affected.
+
+SQL> create or replace trigger test_trigger_pseudo before update on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 dbe_output.print_line(get_spacename_by_id(to_number(left(:OLD.rowid,4))));
+  6 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:OLD.rowscn)));
+  7 dbe_output.print_line(get_spacename_by_id(to_number(left(:New.rowid,4))));
+  8 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:New.rowscn)));
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> update test_trigger set a = 11 where a = 10;
+
+MYSPC_LIU_TEST
+0
+MYSPC_LIU_TEST
+0
+
+1 rows affected.
+
+SQL> create or replace trigger test_trigger_pseudo before delete on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 dbe_output.print_line(get_spacename_by_id(to_number(left(:OLD.rowid,4))));
+  6 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:OLD.rowscn)));
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> delete test_trigger where a = 11;
+
+MYSPC_LIU_TEST
+0
+
+1 rows affected.
+
+SQL> create or replace trigger test_trigger_pseudo before delete on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 dbe_output.print_line(get_spacename_by_id(to_number(left(:OLD.rowid,4))));
+  6 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:OLD.rowscn)));
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> delete test_trigger where a = 1;
+
+MYSPC_LIU_TEST
+0
+
+1 rows affected.
+
+SQL> drop trigger test_trigger_pseudo;
+
+Succeed.
+
+SQL> delete from test_trigger;
+
+1 rows affected.
+
+SQL> -- combination test
+SQL> create or replace trigger test_trigger_pseudo before update or insert or delete on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 if :OLD.rowid is not null then
+  6 dbe_output.print_line(get_spacename_by_id(to_number(left(:OLD.rowid,4))));
+  7 end if;
+  8 if :OLD.rowscn is not null then
+  9 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:OLD.rowscn)));
+ 10 end if;
+ 11 if :New.rowid is not null then
+ 12 dbe_output.print_line(get_spacename_by_id(to_number(left(:New.rowid,4))));
+ 13 end if;
+ 14 if :NEW.rowscn is not null then
+ 15 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:New.rowscn)));
+ 16 end if;
+ 17 end;
+ 18 /
+
+Succeed.
+
+SQL> insert into test_trigger values(10,20);
+
+1 rows affected.
+
+SQL> update test_trigger set a = 11 where a = 10;
+
+MYSPC_LIU_TEST
+0
+MYSPC_LIU_TEST
+0
+
+1 rows affected.
+
+SQL> delete from test_trigger;
+
+MYSPC_LIU_TEST
+0
+
+1 rows affected.
+
+SQL> create or replace trigger test_trigger_pseudo after update or insert or delete on test_trigger for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 if :OLD.rowid is not null then
+  6 dbe_output.print_line(get_spacename_by_id(to_number(left(:OLD.rowid,4))));
+  7 end if;
+  8 if :OLD.rowscn is not null then
+  9 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:OLD.rowscn)));
+ 10 end if;
+ 11 if :New.rowid is not null then
+ 12 dbe_output.print_line(get_spacename_by_id(to_number(left(:New.rowid,4))));
+ 13 end if;
+ 14 if :NEW.rowscn is not null then
+ 15 dbe_output.print_line(EXTRACT(year from now)-extract(year from scn2date(:New.rowscn)));
+ 16 end if;
+ 17 end;
+ 18 /
+
+Succeed.
+
+SQL> insert into test_trigger values(10,20);
+
+MYSPC_LIU_TEST
+
+1 rows affected.
+
+SQL> update test_trigger set a = 11 where a = 10;
+
+MYSPC_LIU_TEST
+0
+MYSPC_LIU_TEST
+0
+
+1 rows affected.
+
+SQL> delete from test_trigger;
+
+MYSPC_LIU_TEST
+0
+
+1 rows affected.
+
+SQL> 
+SQL> create or replace procedure proc28
+  2 (
+  3     bb1 in varchar,
+  4     bb2 out varchar,
+  5     bb3 in varchar
+  6 )
+  7 is
+  8 str varchar(80) := 'ab';
+  9 begin
+ 10     bb2 := (bb1 + bb3+1) /length(str) + MOD(bb3,2);
+ 11     dbe_output.print_line('bb2 is '||bb2);
+ 12 end ;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists fvt_trigger_table_028;
+
+Succeed.
+
+SQL> create table fvt_trigger_table_028(c_int number,c_varchar varchar(80),loc varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_trigger_table_028 values(1,'1','a');
+
+1 rows affected.
+
+SQL> create or replace trigger fvt_trigger_028 before update on fvt_trigger_table_028
+  2 for each row 
+  3 declare
+  4 begin
+  5 	proc28(:new.rowid,:new.rowid,:new.rowid);
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(GS_TRIGGER_PSEUDO.FVT_TRIGGER_028) terminated with compiling errors
+[5:2] PLC-00949 The 2th argument of PROC28 IN bind variable bound to an OUT position
+
+
+SQL> create or replace procedure proc28
+  2 (
+  3     bb1 in number,
+  4     bb2 out number,
+  5     bb3 in number
+  6 )
+  7 is
+  8 str varchar(80) := 'ab';
+  9 begin
+ 10     bb2 := (bb1 + bb3+1) /length(str) + MOD(bb3,2);
+ 11     dbe_output.print_line('bb2 is '||bb2);
+ 12 end ;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists fvt_trigger_table_028;
+
+Succeed.
+
+SQL> create table fvt_trigger_table_028(c_int number,c_varchar varchar(80),loc varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_trigger_table_028 values(1,'1','a');
+
+1 rows affected.
+
+SQL> drop table if exists fvt_trigger_table_28;
+
+Succeed.
+
+SQL> create table fvt_trigger_table_28(c_int number,c_varchar varchar(80),loc varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_trigger_table_28 values(1,'1','a');
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists fvt_trigger_table_0028;
+
+Succeed.
+
+SQL> create table fvt_trigger_table_0028(c_int number,c_varchar varchar(80),loc varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_trigger_table_0028 values(1,'10000','b');
+
+1 rows affected.
+
+SQL> insert into fvt_trigger_table_0028 values(100,'100','b00');
+
+1 rows affected.
+
+SQL> create or replace trigger fvt_trigger_028 after insert or update or delete on fvt_trigger_table_28  
+  2   for each row
+  3 begin 
+  4     execute immediate 'call proc28(:col1, :col2, :col3)' using in :NEW.rowid, out :NEW.rowid, in :old.rowid;
+  5     execute immediate 'call proc28(:col1, :col2, :col3)' using in :NEW.rowscn, out :NEW.rowscn, in :old.rowscn;
+  6     execute immediate 'call proc28(:col1, :col2, :col3)' using in :NEW.rowid, out :old.rowid, in :old.rowid;
+  7     execute immediate 'call proc28(:col1, :col2, :col3)' using in :NEW.rowscn, out :old.rowscn, in :old.rowscn;
+  8     dbe_output.print_line( ':OLD.ROWid'|| :OLD.roWid);
+  9      dbe_output.print_line( ':NEW.ROWid'||:New.rowid);
+ 10      dbe_output.print_line( ':OLD.ROWSCn'|| :OLD.roWSCn);
+ 11      dbe_output.print_line( ':NEW.ROWSCn'||:New.rowSCn);
+ 12     if INSERTING then 
+ 13         insert into fvt_trigger_table_028 values(:old.roWid,:old.c_varchar,:old.loc);
+ 14     elsif UPDATING then 
+ 15         insert into fvt_trigger_table_028 values(:old.roWSCn,:new.c_varchar,:old.loc);
+ 16     else
+ 17         insert into fvt_trigger_table_028 values(:new.roWSCn,:new.c_varchar,:new.loc);
+ 18     end if;
+ 19 end;
+ 20 /
+
+Succeed.
+Warning:
+PL/SQL(GS_TRIGGER_PSEUDO.FVT_TRIGGER_028) terminated with compiling errors
+[4:83] PLC-00950 The expression :NEW.ROWID was used as the assignment target (left operand of the assignment statement).
+[5:84] PLC-00950 The expression :NEW.ROWSCN was used as the assignment target (left operand of the assignment statement).
+[6:83] PLC-00950 The expression :OLD.ROWID was used as the assignment target (left operand of the assignment statement).
+[7:84] PLC-00950 The expression :OLD.ROWSCN was used as the assignment target (left operand of the assignment statement).
+
+
+SQL> 
+SQL> drop table if exists test_part_t2;
+
+Succeed.
+
+SQL> drop table if exists test_subpart;
+
+Succeed.
+
+SQL> create table test_part_t2(f1 int, f2 real, f3 number)
+  2 PARTITION BY RANGE(f1)
+  3 (
+  4  PARTITION par1 values less than(10),
+  5  PARTITION par2 values less than(20),
+  6  PARTITION par3 values less than(30),
+  7  PARTITION par4 values less than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger trigger_test_insert before insert on test_part_t2 for each row
+  2 is
+  3 a int := 100;
+  4 begin
+  5 :New.f1 := a;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> insert into test_part_t2 values(1,2,3);
+
+1 rows affected.
+
+SQL> 
+SQL> create table test_subpart(id int, c_id int, name varchar(20)) partition by range(id) subpartition by range(c_id)
+  2 (
+  3 partition p1 values less than(50)
+  4 (
+  5 subpartition p11 values less than(50),
+  6 subpartition p12 values less than(100)
+  7 ),
+  8 partition p2 values less than(100)
+  9 (
+ 10 subpartition p21 values less than(50),
+ 11 subpartition p22 values less than(100)
+ 12 )
+ 13 );
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger trigger_test_insert2 before insert on test_subpart for each row
+  2 is
+  3 a int := 90;
+  4 begin
+  5 :New.id := a;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> insert into test_subpart values(1,2,'name');
+
+1 rows affected.
+
+SQL> drop table test_part_t2;
+
+Succeed.
+
+SQL> drop table test_subpart;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/sys@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_trigger_pseudo cascade;
+
+Succeed.
+
+SQL> drop tablespace myspc_liu_test INCLUDING CONTENTS and datafiles;
+
+Succeed.
+
+SQL> drop table if exists fvt_trigger_table_036;
+
+Succeed.
+
+SQL> create table fvt_trigger_table_036(c_int number,c_varchar varchar(80),loc varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_trigger_table_036 values(1,'1','a');
+
+1 rows affected.
+
+SQL> drop table if exists fvt_trigger_table_36;
+
+Succeed.
+
+SQL> create table fvt_trigger_table_36(c_int number,c_varchar varchar(80),loc varchar(80));
+
+Succeed.
+
+SQL> drop table if exists fvt_trigger_table_0036;
+
+Succeed.
+
+SQL> create table fvt_trigger_table_0036(c_int number,c_varchar varchar(80),loc varchar(80));
+
+Succeed.
+
+SQL> insert into fvt_trigger_table_0036 values(1,'10000','b');
+
+1 rows affected.
+
+SQL> insert into fvt_trigger_table_0036 values(100,'100','b00');
+
+1 rows affected.
+
+SQL> create or replace trigger fvt_trigger_036 before insert or update or delete  on fvt_trigger_table_36
+  2 for each row 
+  3 declare
+  4 begin
+  5 if updating then 
+  6 		merge into fvt_trigger_table_036 a using fvt_trigger_table_0036 b1 on (a.c_int = b1.c_int) when matched then update set a.c_varchar = b1.c_varchar 
+  7 	 when not matched then insert (c_int,c_varchar,loc) values(b1.c_int,b1.c_varchar,b1.loc);
+  8 	end if;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> insert into fvt_trigger_table_36 values(1,'insert','1');
+
+1 rows affected.
+
+SQL> update fvt_trigger_table_36 set LOC = '7' where c_int = 1;
+
+1 rows affected.
+
+SQL> select * from fvt_trigger_table_36;
+
+C_INT                                    C_VARCHAR                                                        LOC                                                             
+---------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+1                                        insert                                                           7                                                               
+
+1 rows fetched.
+
+SQL> --not support trigger on column lob
+SQL> drop table if exists TBL_TEST_08_02;
+
+Succeed.
+
+SQL> create table TBL_TEST_08_02(id int not null,name clob) ;
+
+Succeed.
+
+SQL> drop table if exists TBL_TEST_08_01;
+
+Succeed.
+
+SQL> create table TBL_TEST_08_01(id int not null,name varchar(100)) ;
+
+Succeed.
+
+SQL> create or replace trigger TRIG_TEST_08_01 after update of name on TBL_TEST_08_02 
+  2 declare
+  3 begin
+  4  null;
+  5 end;
+  6 /
+
+CT-00958, [1:59]Unsupported feature
+SQL> 
+SQL> drop table if exists TBL_TEST_DEPENDENCY;
+
+Succeed.
+
+SQL> create table TBL_TEST_DEPENDENCY(id int,name varchar(20)) ;
+
+Succeed.
+
+SQL> drop table if exists TBL_TEST_DEPENDENCY;
+
+Succeed.
+
+SQL> create table TBL_TEST_DEPENDENCY(id int not null,name varchar(100)) ;
+
+Succeed.
+
+SQL> create or replace trigger TRIG_TEST_DEP after update of name on TBL_TEST_DEPENDENCY 
+  2 declare
+  3 begin
+  4  null;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> select * from my_dependencies where NAME='TRIG_TEST_DEP';
+
+OWNER                                                            NAME                                                             TYPE         REFERENCED_OWNER                                                 REFERENCED_NAME                                                  REFERENCED_TYPE
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ---------------
+SYS                                                              TRIG_TEST_DEP                                                    TRIGGER      SYS                                                              TBL_TEST_DEPENDENCY                                              TABLE          
+
+1 rows fetched.
+
+SQL> alter table TBL_TEST_DEPENDENCY rename COLUMN id to id_new;
+
+Succeed.
+
+SQL> select STATUS from my_procedures where OBJECT_NAME='TRIG_TEST_DEP';
+
+STATUS 
+-------
+UNKNOWN
+
+1 rows fetched.
+
+SQL> ------------End test story: trigger pseydo column -----------
+SQL>
+SQL> -- duplicate create test
+SQL> drop table if exists dup_trig;
+
+Succeed.
+
+SQL> drop trigger if exists dup_trig_test;
+
+Succeed.
+
+SQL> create table dup_trig(f1 int, f2 int);
+
+Succeed.
+
+SQL> CREATE TRIGGER dup_trig_test BEFORE INSERT OR UPDATE OR DELETE ON dup_trig
+  2 BEGIN
+  3     dbe_output.print_line('BEFORE t_enable_triggers');
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> CREATE TRIGGER dup_trig_test BEFORE INSERT OR UPDATE OR DELETE ON dup_trig
+  2 BEGIN
+  3     dbe_output.print_line('BEFORE t_enable_triggers');
+  4 END;
+  5 /
+
+CT-00604, Duplicate object name DUP_TRIG_TEST
+SQL> drop trigger dup_trig_test;
+
+Succeed.
+
+SQL> drop table dup_trig;
+
+Succeed.
+
+SQL>
+SQL> drop user if exists abcde_user cascade;
+
+Succeed.
+
+SQL> drop user if exists test cascade;
+
+Succeed.
+
+SQL> create user abcde_user identified by Cantian_234;
+
+Succeed.
+
+SQL> create user test identified by Cantian_234;
+
+Succeed.
+
+SQL>
+SQL> create or replace function abcde_user.function_test(a in int)
+  2 return int as
+  3 begin
+  4     return 123;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> create or replace function abcde_user.function_invoke()
+  2 return int as
+  3 begin
+  4     return function_test(123);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> GRANT EXECUTE ON abcde_user.function_invoke TO test;
+
+Succeed.
+
+SQL> 
+SQL> create table test.test_table(i int);
+
+Succeed.
+
+SQL> create table test.log_table(i int);
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER test.test_trigger AFTER INSERT ON test_table
+  2 BEGIN
+  3     insert into test.log_table select abcde_user.function_invoke();
+  4 END;
+  5 /
+
+Succeed.
+
+SQL>
+SQL> insert into test.test_table values(10);
+
+1 rows affected.
+
+SQL> drop table if exists myt;
+
+Succeed.
+
+SQL> create table myt(a int,b clob);
+
+Succeed.
+
+SQL> create or replace trigger mytrig before insert on myt for each row
+  2 is
+  3 begin
+  4 :new.a :=:new.a+1;
+  5 :new.b :=:new.b||'_liuhang';
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 sql1 clob;
+  3 begin
+  4 for i in 1..3000 loop
+  5 sql1 := sql1||'abcdeabcde';
+  6 end loop;
+  7 for i in 1..100 loop
+  8 insert into myt values(i, sql1);
+  9 end loop;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace trigger mytrig before update on myt for each row
+  2 is
+  3 begin
+  4 :new.a :=:new.a+1;
+  5 :new.b :=:new.b||'_liuhang';
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> update myt set a=a+1 , b=b||'a' where a<50;
+
+48 rows affected.
+
+SQL> select len, count(*) from (select lengthb(b) as len from myt) t group by t.len order by 1,2;
+
+LEN                  COUNT(*)            
+-------------------- --------------------
+30008                52                  
+30017                48                  
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists myt;
+
+Succeed.
+
+SQL> drop user abcde_user cascade;
+
+Succeed.
+
+SQL> drop user test cascade;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_t6;
+
+Succeed.
+
+SQL> create table test_t6 (f1 int);
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER test_trig6
+  2 AFTER UPDATE OF F1 ON test_t6
+  3 BEGIN
+  4   NULL;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE test_t6 rename column f1 to f2;
+
+Succeed.
+
+SQL> update test_t6 set f2 = 2;
+
+CT-00920, [1:17]Undefined symbol F1
+SQL> 
+SQL> drop table if exists test_t6;
+
+Succeed.
+
+SQL> create table test_t6 (f1 int, f2 int);
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER test_trig6
+  2 AFTER UPDATE OF F1 ON test_t6
+  3 BEGIN
+  4   NULL;
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE test_t6 rename column f1 to f3;
+
+Succeed.
+
+SQL> update test_t6 set f2 = 2;
+
+CT-00920, [1:17]Undefined symbol F1
+SQL> 
+SQL> set serveroutput off
+
+OFF
+SQL> 
+SQL> --DTS202106300FCG82P0H00 START
+SQL> DROP TABLE IF EXISTS DTS202106300FCG82P0H00_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS DTS202106300FCG82P0H00_T2;
+
+Succeed.
+
+SQL> CREATE TABLE DTS202106300FCG82P0H00_T1(C1 INT);
+
+Succeed.
+
+SQL> CREATE TABLE DTS202106300FCG82P0H00_T2(C1 INT);
+
+Succeed.
+
+SQL> INSERT INTO DTS202106300FCG82P0H00_T1 VALUES(1);
+
+1 rows affected.
+
+SQL> INSERT INTO DTS202106300FCG82P0H00_T2 VALUES(1);
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER DTS202106300FCG82P0H00_TRIG AFTER INSERT ON DTS202106300FCG82P0H00_T1 FOR EACH ROW
+  2 BEGIN
+  3   INSERT INTO DTS202106300FCG82P0H00_T2 VALUES(1);
+  4 END;
+  5 /
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO DTS202106300FCG82P0H00_T1 VALUES(1);
+
+1 rows affected.
+
+SQL> INSERT INTO DTS202106300FCG82P0H00_T1 SELECT * FROM DTS202106300FCG82P0H00_T1 UNION ALL SELECT * FROM DTS202106300FCG82P0H00_T2;
+
+4 rows affected.
+
+SQL> DROP TABLE IF EXISTS DTS202106300FCG82P0H00_T1;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS DTS202106300FCG82P0H00_T2;
+
+Succeed.
+
+SQL> --DTS202106300FCG82P0H00 END
+SQL> 
+
+

@@ -1,0 +1,297 @@
+
+
+SQL> --dml语句中的存储过程对象，如果出现了一个解析位置更靠前的，那么该dml的cache立即失效
+SQL> --在table定义中存储过程对象，例如在default表达式中，如果出现了一个解析位置更靠前的，表不感知，还是按照CREATE TABLE时解析的存储过程对象处理
+SQL> --test soft parse
+SQL> --1.one word
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop function if exists f1;
+
+Succeed.
+
+SQL> drop user if exists user1 cascade;
+
+Succeed.
+
+SQL> drop user if exists user2 cascade;
+
+Succeed.
+
+SQL> create user user1 identified by Cantian_234;
+
+Succeed.
+
+SQL> create user user2 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to user2;
+
+Succeed.
+
+SQL> create or replace function user1.f1(c1 int) return int is
+  2 begin
+  3  return 1123213;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> create or replace public synonym f1 for user1.f1;
+
+Succeed.
+
+SQL> --expect 1123213
+SQL> select f1(1) from sys_dummy; 
+
+F1(1)       
+------------
+1123213     
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> create table t1(c1 int,c2 int default f1(1));
+
+Succeed.
+
+SQL> insert into t1(c1) values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> --expect 1123213
+SQL> select * from t1 order by c1;
+
+C1           C2          
+------------ ------------
+1            1123213     
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace function f1(c1 int) return int is
+  2 begin
+  3  return 1;
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> --为了性能，目前对一个标识符没有做检查
+SQL> --expect 1123213
+SQL> select f1(1) from sys_dummy;
+
+F1(1)       
+------------
+1
+
+1 rows fetched.
+
+SQL> 
+SQL> --expect 1
+SQL> Select f1(1) from sys_dummy;
+
+F1(1)       
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> insert into t1(c1) values(2);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> --expect 1123213
+SQL> select * from t1 order by c1;
+
+C1           C2          
+------------ ------------
+1            1123213     
+2            1123213     
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> create table t1(c1 int,c2 int default f1(1));
+
+Succeed.
+
+SQL> insert into t1(c1) values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> --expect 1
+SQL> select * from t1 order by c1;
+
+C1           C2          
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> 
+SQL> drop function f1;
+
+Succeed.
+
+SQL> --expect 1123213
+SQL> select f1(1) from sys_dummy;
+
+F1(1)       
+------------
+1123213     
+
+1 rows fetched.
+
+SQL> select F1(1) from sys_dummy;
+
+F1(1)       
+------------
+1123213     
+
+1 rows fetched.
+
+SQL> 
+SQL> --为了性能，目前对一个标识符没有做检查
+SQL> --expect success
+SQL> create or replace function f1(c1 int,c2 int) return int is
+  2  a int;
+  3 begin
+  4  select f1(1) into a from sys_dummy;
+  5  return 1;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> --expect fail
+SQL> create or replace function f1(c1 int,c2 int) return int is
+  2  a int;
+  3 begin
+  4  select f1(2) into a from sys_dummy;
+  5  return 1;
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.F1) terminated with compiling errors
+[4:9] PLC-00644 Too few arguments for procedure/function
+
+
+SQL> 
+SQL> --2.two word
+SQL> conn user2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> --expect 1123213
+SQL> select USER1.F1(1);
+
+USER1.F1(1) 
+------------
+1123213     
+
+1 rows fetched.
+
+SQL> 
+SQL> create or replace package USER1 is
+  2  function F1(c1 int) return int;
+  3 end;
+  4 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace package body USER1 is
+  2  function F1(c1 int) return int is
+  3  begin
+  4   return 235235;
+  5  end;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> --expect 1123213
+SQL> select USER1.F1(1);
+
+USER1.F1(1) 
+------------
+235235
+
+1 rows fetched.
+
+SQL> 
+SQL> --expect 235235
+SQL> select USER1.F1(2);
+
+USER1.F1(2) 
+------------
+235235      
+
+1 rows fetched.
+
+SQL> drop package USER1;
+
+Succeed.
+
+SQL> 
+SQL> --expect 1123213
+SQL> select USER1.F1(1);
+
+USER1.F1(1) 
+------------
+1123213     
+
+1 rows fetched.
+
+SQL> 
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop function if exists f1;
+
+Succeed.
+
+SQL> drop table if exists t1;
+
+Succeed.
+
+SQL> drop user if exists user1 cascade;
+
+Succeed.
+
+SQL> drop user if exists user2 cascade;
+
+Succeed.
+
+SQL> 
+
+

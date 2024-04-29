@@ -1,0 +1,432 @@
+
+
+SQL> -- CAST test
+SQL> select cast(100 as timestamp) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected TIMESTAMP - got BINARY_INTEGER
+SQL> select cast('100' as timestamp) from dual;
+
+CAST('100' AS TIMESTAMP)        
+--------------------------------
+0100-01-01 00:00:00.000000      
+
+1 rows fetched.
+
+SQL> select cast(21E10 as timestamp) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected TIMESTAMP - got NUMBER
+SQL> select cast('21E10' as timestamp) from dual;
+
+CT-00105, [1:8]Invalid format of datetime
+SQL> select cast(4294967296 as timestamp) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected TIMESTAMP - got BINARY_BIGINT
+SQL> select cast('4294967296' as timestamp) from dual;
+
+CT-00105, [1:8]Invalid format of datetime
+SQL> select cast(4294967296e200 as timestamp) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected TIMESTAMP - got BINARY_DOUBLE
+SQL> select cast('4294967296e200' as timestamp) from dual;
+
+CT-00105, [1:8]Invalid format of datetime
+SQL> select cast(100 as raw(100)) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected RAW - got BINARY_INTEGER
+SQL> select cast(1.00 as raw(100)) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected RAW - got NUMBER
+SQL> select cast('1.00' as raw(100)) from dual;
+
+CT-00105, [1:8]Invalid format of hex
+SQL> select cast(100E200 as raw(100)) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected RAW - got BINARY_DOUBLE
+SQL> select cast('100E20' as raw(100)) from dual;
+
+CAST('100E20' AS RAW(100))                                      
+----------------------------------------------------------------
+100E20                                                          
+
+1 rows fetched.
+
+SQL> 
+SQL> select cast(sysdate as int) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected BINARY_INTEGER - got DATE
+SQL> select cast(sysdate as bigint) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected BINARY_BIGINT - got DATE
+SQL> select cast(sysdate as real) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected BINARY_DOUBLE - got DATE
+SQL> select cast(sysdate as decimal) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected NUMBER - got DATE
+SQL> select cast(sysdate as raw(100)) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected RAW - got DATE
+SQL> 
+SQL> select cast(systimestamp as int) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected BINARY_INTEGER - got TIMESTAMP_TZ
+SQL> select cast(systimestamp as bigint) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected BINARY_BIGINT - got TIMESTAMP_TZ
+SQL> select cast(systimestamp as real) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected BINARY_DOUBLE - got TIMESTAMP_TZ
+SQL> select cast(systimestamp as decimal) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected NUMBER - got TIMESTAMP_TZ
+SQL> select cast(systimestamp as raw(100)) from dual;
+
+CT-00606, [1:13]Inconsistent datatypes, expected RAW - got TIMESTAMP_TZ
+SQL> 
+SQL> select cast(null as int) from dual;
+
+CAST(NULL AS INT)
+-----------------
+                 
+
+1 rows fetched.
+
+SQL> select cast(null as bigint) from dual;
+
+CAST(NULL AS BIGINT)
+--------------------
+                    
+
+1 rows fetched.
+
+SQL> select cast(null as real) from dual;
+
+CAST(NULL AS REAL)  
+--------------------
+                    
+
+1 rows fetched.
+
+SQL> select cast(null as number) from dual;
+
+CAST(NULL AS NUMBER)                    
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> select cast(null as datetime) from dual;
+
+CAST(NULL AS DATETIME)
+----------------------
+                      
+
+1 rows fetched.
+
+SQL> select cast(null as timestamp) from dual;
+
+CAST(NULL AS TIMESTAMP)         
+--------------------------------
+                                
+
+1 rows fetched.
+
+SQL> select cast(null as varchar(100)) from dual;
+
+CAST(NULL AS VARCHAR(100))                                      
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select cast(null as raw(20)) from dual;
+
+CAST(NULL AS RAW(20))                                           
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> select cast(cast('123' as bigint) as number) from dual;
+
+CAST(CAST('123' AS BIGINT) AS NUMBER)   
+----------------------------------------
+123                                     
+
+1 rows fetched.
+
+SQL> select cast(null::timestamp as int);
+
+CT-00606, [1:17]Inconsistent datatypes, expected BINARY_INTEGER - got TIMESTAMP
+SQL> select 123123::decimal::varchar(10)::timestamp;
+
+CT-00105, [1:36]Invalid format of datetime
+SQL> select 123123::decimal::varchar(10)::timestamp::int;
+
+CT-00606, [1:36]Inconsistent datatypes, expected BINARY_INTEGER - got TIMESTAMP
+SQL> SELECT * FROM DUAL WHERE NULL::VARCHAR(10) IS NULL;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> 
+SQL> --- Problematic test cases
+SQL> select cast(cast(null as bigint) as number) from dual;
+
+CAST(CAST(NULL AS BIGINT) AS NUMBER)    
+----------------------------------------
+                                        
+
+1 rows fetched.
+
+SQL> select cast(cast(null as varchar(100)) as number) from dual;
+
+CAST(CAST(NULL AS VARCHAR(100)) AS NUMBER)
+------------------------------------------
+                                          
+
+1 rows fetched.
+
+SQL> select null::timestamp::varchar(100)::int::bigint::decimal;
+
+NULL::TIMESTAMP::VARCHAR(100)::INT::BIGINT::DECIMAL
+---------------------------------------------------
+                                                   
+
+1 rows fetched.
+
+SQL> select null::timestamp::varchar(100)::int::bigint::decimal::varchar(40)::timestamp;
+
+NULL::TIMESTAMP::VARCHAR(100)::INT::BIGINT::DECIMAL::VARCHAR(40)
+----------------------------------------------------------------
+                                                                
+
+1 rows fetched.
+
+SQL> 
+SQL> --- WHERE test
+SQL> select * from dual where sysdate > 10;
+
+CT-00606, [1:36]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> select * from dual where sysdate > '10';
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from dual where 10 = systimestamp;
+
+CT-00606, [1:31]Inconsistent datatypes, expected BINARY_INTEGER - got TIMESTAMP_TZ
+SQL> select * from dual where '10' >= systimestamp;
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> select * from dual where 1.0 <> systimestamp;
+
+CT-00606, [1:33]Inconsistent datatypes, expected NUMBER - got TIMESTAMP_TZ
+SQL> select * from dual where 100E200 > systimestamp;
+
+CT-00606, [1:36]Inconsistent datatypes, expected BINARY_DOUBLE - got TIMESTAMP_TZ
+SQL> select * from dual where 100E200 > sysdate;
+
+CT-00606, [1:36]Inconsistent datatypes, expected BINARY_DOUBLE - got DATE
+SQL> select * from dual where '123' + 123 > sysdate;
+
+CT-00606, [1:40]Inconsistent datatypes, expected NUMBER - got DATE
+SQL> select * from dual where sysdate > '123' + 123;
+
+CT-00606, [1:42]Inconsistent datatypes, expected DATE - got NUMBER
+SQL> select * from dual where '123' + 123 > sysdate;
+
+CT-00606, [1:40]Inconsistent datatypes, expected NUMBER - got DATE
+SQL> select * from dual where cast('7777' as raw(10)) > '123' + 123;
+
+CT-00606, [1:58]Inconsistent datatypes, expected RAW - got NUMBER
+SQL> select * from dual where 123 > cast('7777' as raw(10));
+
+CT-00606, [1:32]Inconsistent datatypes, expected BINARY_INTEGER - got RAW
+SQL> select * from dual where sysdate > cast('7777' as raw(10));
+
+CT-00606, [1:36]Inconsistent datatypes, expected DATE - got RAW
+SQL> select * from dual where cast('7777' as raw(10)) <= systimestamp;
+
+CT-00606, [1:53]Inconsistent datatypes, expected RAW - got TIMESTAMP_TZ
+SQL> -- WHERE test IN clause
+SQL> select * from dual where sysdate in (sysdate, 100);
+
+CT-00606, [1:47]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> select * from dual where sysdate in (sysdate - 1, systimestamp + 1);
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> select * from dual where sysdate in (sysdate, systimestamp, 100);
+
+CT-00606, [1:61]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> select * from dual where 2 in (sysdate, systimestamp, 100);
+
+CT-00606, [1:32]Inconsistent datatypes, expected BINARY_INTEGER - got DATE
+SQL> select * from dual where (2, 1) in ((2, 1), (3, 2));
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from dual where (2, 1) in ((2, '123'), (3, 2));
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> select * from dual where (2, 1) in ((2, sysdate), (3, 2));
+
+CT-00606, [1:41]Inconsistent datatypes, expected BINARY_INTEGER - got DATE
+SQL> select * from dual where ((2, sysdate) in ((5, 5), (3, 2));
+
+CT-00601, [1:26]Sql syntax error: text is not completed
+SQL> select * from dual where 2 in (select sysdate from dual);
+
+CT-00606, [1:39]Inconsistent datatypes, expected BINARY_INTEGER - got DATE
+SQL> select * from dual where sysdate in (select sysdate - 1 from dual);
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> select * from dual where sysdate in (select 2 from dual);
+
+CT-00606, [1:45]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> select * from dual where (sysdate, 2) in (select 2, 2 from dual);
+
+CT-00606, [1:50]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> select * from dual where sysdate between (select sysdate - 1 from dual) and (select sysdate + 1 from dual);
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from dual where sysdate between (select sysdate - 1 from dual) and (select 1000000 from dual);
+
+CT-00606, Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> select * from dual where sysdate between (select sysdate - 1 from dual) and (select '1000000' from dual);
+
+CT-00105, Invalid format of datetime
+SQL> 
+SQL> -- WHERE test BETWWEEN clause
+SQL> select * from dual where sysdate between 3 and 2;
+
+CT-00606, [1:42]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> select * from dual where sysdate between '3' and '2';
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --- WHERE clause for datatype deduction 
+SQL> DROP TABLE IF EXISTS PFA_20180120;
+
+Succeed.
+
+SQL> Create table PFA_20180120(
+  2     c_int        int,
+  3 	c_bigint     BIGINT,
+  4 	c_real       real,
+  5 	c_number     number,
+  6 	c_raw        raw(100),
+  7 	c_vchar      varchar(100),
+  8 	c_ts         timestamp,
+  9     c_date       date
+ 10 );
+
+Succeed.
+
+SQL> 
+SQL> update PFA_20180120 set c_ts = 100;
+
+CT-00606, [1:32]Inconsistent datatypes, expected TIMESTAMP - got BINARY_INTEGER
+SQL> update PFA_20180120 set c_ts = '100';
+
+0 rows affected.
+
+SQL> update PFA_20180120 set c_date = 100;
+
+CT-00606, [1:34]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> update PFA_20180120 set c_date = '100';
+
+0 rows affected.
+
+SQL> update PFA_20180120 set c_date = '100';
+
+0 rows affected.
+
+SQL> update PFA_20180120 set c_date = c_int;
+
+CT-00606, [1:34]Inconsistent datatypes, expected DATE - got BINARY_INTEGER
+SQL> update PFA_20180120 set c_date = c_real;
+
+CT-00606, [1:34]Inconsistent datatypes, expected DATE - got BINARY_DOUBLE
+SQL> update PFA_20180120 set c_real = c_ts;
+
+CT-00606, [1:34]Inconsistent datatypes, expected BINARY_DOUBLE - got TIMESTAMP
+SQL> update PFA_20180120 set c_real = c_raw;
+
+CT-00606, [1:34]Inconsistent datatypes, expected BINARY_DOUBLE - got RAW
+SQL> update PFA_20180120 set c_real = c_vchar;
+
+0 rows affected.
+
+SQL> update PFA_20180120 set c_ts = c_raw;
+
+CT-00606, [1:32]Inconsistent datatypes, expected TIMESTAMP - got RAW
+SQL> update PFA_20180120 set c_date = c_int + c_ts;
+
+0 rows affected.
+
+SQL> update PFA_20180120 set c_date = c_ts + c_int;
+
+0 rows affected.
+
+SQL> update PFA_20180120 set c_date = c_ts + c_vchar;
+
+0 rows affected.
+
+SQL> update PFA_20180120 set c_date = c_number + c_vchar;
+
+CT-00606, [1:43]Inconsistent datatypes, expected DATE - got NUMBER
+SQL> update PFA_20180120 set c_date = c_vchar + c_number;
+
+CT-00606, [1:42]Inconsistent datatypes, expected DATE - got NUMBER
+SQL> -- update PFA_20180120 set c_date = c_ts + c_date;  -- support latter
+SQL> INSERT into PFA_20180120(ts) values(100);
+
+CT-00618, [1:26]The column 'TS' was invalid
+SQL> INSERT into PFA_20180120(ts) values('200');
+
+CT-00618, [1:26]The column 'TS' was invalid
+SQL> INSERT into PFA_20180120(ts) values(2131.3);
+
+CT-00618, [1:26]The column 'TS' was invalid
+SQL> INSERT into PFA_20180120(ts) values(2131.3E200);
+CT-00618, [1:26]The column 'TS' was invalid
+
+
+

@@ -1,0 +1,143 @@
+
+
+SQL> -- DTS2019052102250
+SQL> -- 1.ddl
+SQL> ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';
+
+Succeed.
+
+SQL> ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF';
+
+Succeed.
+
+SQL> ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF TZH:TZM';
+
+Succeed.
+
+SQL> ALTER SESSION SET NLS_TIME_FORMAT = 'HH:MI:SS.FF AM';
+
+Succeed.
+
+SQL> ALTER SESSION SET NLS_TIME_TZ_FORMAT = 'HH:MI:SS.FF AM TZR';
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "TEST_STACK_T1" CASCADE CONSTRAINTS;
+
+Succeed.
+
+SQL> CREATE TABLE "TEST_STACK_T1"
+  2 (
+  3   "COL_INT" BINARY_INTEGER NOT NULL,
+  4   "COL_INTEGER" BINARY_INTEGER,
+  5   "COL_BINARY_INTEGER" BINARY_INTEGER,
+  6   "COL_SMALLINT" BINARY_INTEGER NOT NULL DEFAULT '7',
+  7   "COL_BIGINT" BINARY_BIGINT NOT NULL DEFAULT '3',
+  8   "COL_BINARY_BIGINT" BINARY_BIGINT,
+  9   "COL_REAL" BINARY_DOUBLE,
+ 10   "COL_DOUBLE" BINARY_DOUBLE,
+ 11   "COL_FLOAT" BINARY_DOUBLE,
+ 12   "COL_BINARY_DOUBLE" BINARY_DOUBLE,
+ 13   "COL_DECIMAL" NUMBER,
+ 14   "COL_NUMBER1" NUMBER,
+ 15   "COL_NUMBER2" NUMBER(38),
+ 16   "COL_NUMBER3" NUMBER(38, -84),
+ 17   "COL_NUMBER4" NUMBER(38, 127),
+ 18   "COL_NUMBER5" NUMBER(38, 7),
+ 19   "COL_NUMERIC" NUMBER,
+ 20   "COL_CHAR1" CHAR(100 BYTE),
+ 21   "COL_CHAR2" CHAR(8000 BYTE),
+ 22   "COL_NCHAR1" CHAR(100 CHAR),
+ 23   "COL_NCHAR2" CHAR(8000 CHAR),
+ 24   "COL_VARCHAR_200" VARCHAR(100 BYTE),
+ 25   "COL_VARCHAR_8000" VARCHAR(8000 BYTE) DEFAULT 'aaaabbbb',
+ 26   "COL_VARCHAR2_1000" VARCHAR(100 BYTE),
+ 27   "COL_VARCHAR2_8000" VARCHAR(8000 BYTE),
+ 28   "COL_NVARCHAR1" VARCHAR(100 CHAR),
+ 29   "COL_NVARCHAR2" VARCHAR(8000 CHAR),
+ 30   "COL_NVARCHAR2_1000" VARCHAR(100 CHAR),
+ 31   "COL_NVARCHAR2_8000" VARCHAR(8000 CHAR),
+ 32   "COL_CLOB" CLOB,
+ 33   "COL_TEXT" CLOB,
+ 34   "COL_LONGTEXT" CLOB,
+ 35   "COL_IMAGE" IMAGE,
+ 36   "COL_BINARY1" BINARY(100),
+ 37   "COL_BINARY2" BINARY(8000),
+ 38   "COL_VARBINARY1" VARBINARY(100),
+ 39   "COL_VARBINARY2" VARBINARY(8000),
+ 40   "COL_RAW1" RAW(100),
+ 41   "COL_RAW2" RAW(8000),
+ 42   "COL_BLOB" BLOB,
+ 43   "COL_DATE" DATE,
+ 44   "COL_DATETIME" DATE DEFAULT '2018-01-07 08:08:08',
+ 45   "COL_TIMESTAMP1" TIMESTAMP(6),
+ 46   "COL_TIMESTAMP2" TIMESTAMP(6),
+ 47   "COL_TIMESTAMP3" TIMESTAMP(6),
+ 48   "COL_TIMESTAMP4" TIMESTAMP(6) WITH LOCAL TIME ZONE,
+ 49   "COL_BOOL" BOOLEAN,
+ 50   "COL_BOOLEAN" BOOLEAN,
+ 51   "COL_INTERVAL1" INTERVAL YEAR(2) TO MONTH,
+ 52   "COL_INTERVAL2" INTERVAL DAY(2) TO SECOND(6)
+ 53 )
+ 54 PARTITION BY RANGE ("COL_INT", "COL_NUMBER1", "COL_VARCHAR2_1000", "COL_BINARY1", "COL_DATETIME")
+ 55 (
+ 56     PARTITION P_RANGE_01 VALUES LESS THAN (100,100,'abcde','00001010001','2018-01-01 08:08:08') INITRANS 2 PCTFREE 8,
+ 57     PARTITION P_RANGE_02 VALUES LESS THAN (1000,1000,'abcdfffyghfy','00011010001','2018-03-01 08:08:08') INITRANS 2 PCTFREE 8,
+ 58     PARTITION P_RANGE_03 VALUES LESS THAN (10000,10000,'dghyhhhhgggk','00111010001','2018-05-01 08:08:08') INITRANS 2 PCTFREE 8,
+ 59     PARTITION P_RANGE_04 VALUES LESS THAN (100000,100000,'ghujkkjiypouy','01111010001','2018-07-01 08:08:08') INITRANS 2 PCTFREE 8,
+ 60     PARTITION P_RANGE_05 VALUES LESS THAN (200000,200000,'ijgqjnbmgbufdc','11111010001','2018-09-01 08:08:08') INITRANS 2 PCTFREE 8,
+ 61     PARTITION P_RANGE_06 VALUES LESS THAN (300000,300000,'kijgnhnjhufffvh','11111010011','2018-11-01 08:08:08') INITRANS 2 PCTFREE 8,
+ 62     PARTITION P_RANGE_07 VALUES LESS THAN (maxvalue,maxvalue,maxvalue,maxvalue,maxvalue) INITRANS 2 PCTFREE 8
+ 63 );
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_TEST_STACK_T1_FUN_01" ON "TEST_STACK_T1"(TO_CHAR(COL_DATE), UPPER(COL_NUMBER2));
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_TEST_STACK_T1_FUN_02" ON "TEST_STACK_T1"(TO_CHAR(COL_BINARY_BIGINT), "COL_TIMESTAMP3");
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_TEST_STACK_T1_GLOBAL_01" ON "TEST_STACK_T1"("COL_INT", "COL_DOUBLE", "COL_CHAR1", "COL_BOOL");
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_TEST_STACK_T1_GLOBAL_02" ON "TEST_STACK_T1"("COL_DECIMAL", "COL_NUMBER2", "COL_BINARY1", "COL_DATETIME");
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_TEST_STACK_T1_GLOBAL_03" ON "TEST_STACK_T1"("COL_BINARY_BIGINT", "COL_VARCHAR2_1000", "COL_TIMESTAMP1");
+
+Succeed.
+
+SQL> CREATE INDEX "IDX_TEST_STACK_T1_LOCAL_01" ON "TEST_STACK_T1"("COL_INT", "COL_NUMBER1", "COL_BOOLEAN", "COL_INTERVAL1");
+
+Succeed.
+
+SQL> ALTER TABLE "TEST_STACK_T1" ADD CONSTRAINT "COS_RANGE_PK1" PRIMARY KEY("COL_INT");
+
+Succeed.
+
+SQL> ALTER TABLE "TEST_STACK_T1" ADD CONSTRAINT "COS_RANGE_UK1" UNIQUE("COL_BINARY1");
+
+Succeed.
+
+SQL> 
+SQL> -- 2.sql
+SQL> select ft1.* from ( select yt1.* from ( select dt1.* from ( select st1.* from (select s1.col_int,s1.col_bigint,s1.col_datetime,s1.col_double,s1.col_real from TEST_STACK_T1 s1 inner join TEST_STACK_T1 s2 on s1.col_decimal = s2.col_decimal and s1.col_datetime = s2.col_datetime inner join TEST_STACK_T1 s3 on s2.col_decimal = s3.col_decimal and s2.col_datetime = s3.col_datetime inner join TEST_STACK_T1 s4 on s3.col_decimal = s4.col_decimal and s3.col_datetime = s4.col_datetime inner join TEST_STACK_T1 s5 on s4.col_decimal = s5.col_decimal and s4.col_datetime = s5.col_datetime inner join TEST_STACK_T1 s6 on s5.col_decimal = s6.col_decimal and s5.col_datetime = s6.col_datetime inner join TEST_STACK_T1 s7 on s6.col_decimal = s7.col_decimal and s6.col_datetime = s7.col_datetime inner join TEST_STACK_T1 s8 on s7.col_decimal = s8.col_decimal and s7.col_datetime = s8.col_datetime inner join TEST_STACK_T1 s9 on s8.col_decimal = s9.col_decimal and s8.col_datetime = s9.col_datetime inner join TEST_STACK_T1 s10 on s9.col_decimal = s10.col_decimal and s9.col_datetime = s10.col_datetime inner join TEST_STACK_T1 s11 on s10.col_decimal = s11.col_decimal and s10.col_datetime = s11.col_datetime inner join TEST_STACK_T1 s12 on s11.col_decimal = s12.col_decimal and s11.col_datetime = s12.col_datetime inner join TEST_STACK_T1 s13 on s12.col_decimal = s13.col_decimal and s12.col_datetime = s13.col_datetime inner join TEST_STACK_T1 s14 on s13.col_decimal = s14.col_decimal and s13.col_datetime = s14.col_datetime inner join TEST_STACK_T1 s15 on s14.col_decimal = s15.col_decimal and s14.col_datetime = s15.col_datetime inner join TEST_STACK_T1 s16 on s15.col_decimal = s16.col_decimal and s15.col_datetime = s16.col_datetime inner join TEST_STACK_T1 s17 on s16.col_decimal = s17.col_decimal and s16.col_datetime = s17.col_datetime inner join TEST_STACK_T1 s18 on s17.col_decimal = s18.col_decimal and s17.col_datetime = s18.col_datetime inner join TEST_STACK_T1 s19 on s18.col_decimal = s19.col_decimal and s18.col_datetime = s19.col_datetime inner join TEST_STACK_T1 s20 on s19.col_decimal = s20.col_decimal and s19.col_datetime = s20.col_datetime inner join TEST_STACK_T1 s21 on s20.col_decimal = s21.col_decimal and s20.col_datetime = s21.col_datetime inner join TEST_STACK_T1 s22 on s21.col_decimal = s22.col_decimal and s21.col_datetime = s22.col_datetime inner join TEST_STACK_T1 s23 on s22.col_decimal = s23.col_decimal and s22.col_datetime = s23.col_datetime inner join TEST_STACK_T1 s24 on s23.col_decimal = s24.col_decimal and s23.col_datetime = s24.col_datetime inner join TEST_STACK_T1 s25 on s24.col_decimal = s25.col_decimal and s24.col_datetime = s25.col_datetime inner join TEST_STACK_T1 s26 on s25.col_decimal = s26.col_decimal and s25.col_datetime = s26.col_datetime inner join TEST_STACK_T1 s27 on s26.col_decimal = s27.col_decimal and s26.col_datetime = s27.col_datetime inner join TEST_STACK_T1 s28 on s27.col_decimal = s28.col_decimal and s27.col_datetime = s28.col_datetime inner join TEST_STACK_T1 s29 on s28.col_decimal = s29.col_decimal and s28.col_datetime = s29.col_datetime inner join TEST_STACK_T1 s30 on s29.col_decimal = s30.col_decimal and s29.col_datetime = s30.col_datetime inner join TEST_STACK_T1 s31 on s30.col_decimal = s31.col_decimal and s30.col_datetime = s31.col_datetime inner join TEST_STACK_T1 s32 on s31.col_decimal = s32.col_decimal and s31.col_datetime = s32.col_datetime inner join TEST_STACK_T1 s33 on s32.col_decimal = s33.col_decimal and s32.col_datetime = s33.col_datetime inner join TEST_STACK_T1 s34 on s33.col_decimal = s34.col_decimal and s33.col_datetime = s34.col_datetime inner join TEST_STACK_T1 s35 on s34.col_decimal = s35.col_decimal and s34.col_datetime = s35.col_datetime inner join TEST_STACK_T1 s36 on s35.col_decimal = s36.col_decimal and s35.col_datetime = s36.col_datetime inner join TEST_STACK_T1 s37 on s36.col_decimal = s37.col_decimal and s36.col_datetime = s37.col_datetime inner join TEST_STACK_T1 s38 on s37.col_decimal = s38.col_decimal and s37.col_datetime = s38.col_datetime inner join TEST_STACK_T1 s39 on s38.col_decimal = s39.col_decimal and s38.col_datetime = s39.col_datetime inner join TEST_STACK_T1 s40 on s39.col_decimal = s40.col_decimal and s39.col_datetime = s40.col_datetime inner join TEST_STACK_T1 s41 on s40.col_decimal = s41.col_decimal and s40.col_datetime = s41.col_datetime inner join TEST_STACK_T1 s42 on s41.col_decimal = s42.col_decimal and s41.col_datetime = s42.col_datetime inner join TEST_STACK_T1 s43 on s42.col_decimal = s43.col_decimal and s42.col_datetime = s43.col_datetime inner join TEST_STACK_T1 s44 on s43.col_decimal = s44.col_decimal and s43.col_datetime = s44.col_datetime inner join TEST_STACK_T1 s45 on s44.col_decimal = s45.col_decimal and s44.col_datetime = s45.col_datetime inner join TEST_STACK_T1 s46 on s45.col_decimal = s46.col_decimal and s45.col_datetime = s46.col_datetime inner join TEST_STACK_T1 s47 on s46.col_decimal = s47.col_decimal and s46.col_datetime = s47.col_datetime inner join TEST_STACK_T1 s48 on s47.col_decimal = s48.col_decimal and s47.col_datetime = s48.col_datetime inner join TEST_STACK_T1 s49 on s48.col_decimal = s49.col_decimal and s48.col_datetime = s49.col_datetime inner join TEST_STACK_T1 s50 on s49.col_decimal = s50.col_decimal and s49.col_datetime = s50.col_datetime inner join TEST_STACK_T1 s51 on s50.col_decimal = s51.col_decimal and s50.col_datetime = s51.col_datetime inner join TEST_STACK_T1 s52 on s51.col_decimal = s52.col_decimal and s51.col_datetime = s52.col_datetime inner join TEST_STACK_T1 s53 on s52.col_decimal = s53.col_decimal and s52.col_datetime = s53.col_datetime inner join TEST_STACK_T1 s54 on s53.col_decimal = s54.col_decimal and s53.col_datetime = s54.col_datetime inner join TEST_STACK_T1 s55 on s54.col_decimal = s55.col_decimal and s54.col_datetime = s55.col_datetime inner join TEST_STACK_T1 s56 on s55.col_decimal = s56.col_decimal and s55.col_datetime = s56.col_datetime inner join TEST_STACK_T1 s57 on s56.col_decimal = s57.col_decimal and s56.col_datetime = s57.col_datetime inner join TEST_STACK_T1 s58 on s57.col_decimal = s58.col_decimal and s57.col_datetime = s58.col_datetime inner join TEST_STACK_T1 s59 on s58.col_decimal = s59.col_decimal and s58.col_datetime = s59.col_datetime inner join TEST_STACK_T1 s60 on s59.col_decimal = s60.col_decimal and s59.col_datetime = s60.col_datetime inner join TEST_STACK_T1 s61 on s60.col_decimal = s61.col_decimal and s60.col_datetime = s61.col_datetime inner join TEST_STACK_T1 s62 on s61.col_decimal = s62.col_decimal and s61.col_datetime = s62.col_datetime inner join TEST_STACK_T1 s63 on s62.col_decimal = s63.col_decimal and s62.col_datetime = s63.col_datetime inner join TEST_STACK_T1 s64 on s63.col_decimal = s64.col_decimal and s63.col_datetime = s64.col_datetime inner join TEST_STACK_T1 s65 on s64.col_decimal = s65.col_decimal and s64.col_datetime = s65.col_datetime inner join TEST_STACK_T1 s66 on s65.col_decimal = s66.col_decimal and s65.col_datetime = s66.col_datetime inner join TEST_STACK_T1 s67 on s66.col_decimal = s67.col_decimal and s66.col_datetime = s67.col_datetime inner join TEST_STACK_T1 s68 on s67.col_decimal = s68.col_decimal and s67.col_datetime = s68.col_datetime inner join TEST_STACK_T1 s69 on s68.col_decimal = s69.col_decimal and s68.col_datetime = s69.col_datetime inner join TEST_STACK_T1 s70 on s69.col_decimal = s70.col_decimal and s69.col_datetime = s70.col_datetime inner join TEST_STACK_T1 s71 on s70.col_decimal = s71.col_decimal and s70.col_datetime = s71.col_datetime inner join TEST_STACK_T1 s72 on s71.col_decimal = s72.col_decimal and s71.col_datetime = s72.col_datetime ) st1 ) dt1 ) yt1 ) ft1;
+
+COL_INT      COL_BIGINT           COL_DATETIME           COL_DOUBLE           COL_REAL            
+------------ -------------------- ---------------------- -------------------- --------------------
+
+0 rows fetched.
+
+SQL> drop table TEST_STACK_T1;
+
+Succeed.
+
+SQL> 
+
+
