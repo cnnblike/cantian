@@ -2055,12 +2055,15 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
 
     wait_for_read_buf_finish_read(node_id);
     if(rcy_node->read_size[rcy_node->read_buf_read_index] == 0){
+        rcy_node->read_size[rcy_node->read_buf_read_index] = CT_INVALID_ID32;
+        rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
         check_node_read_end(node_id);
         return CT_SUCCESS;
     }
     batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, node_id, rcy_node->read_buf_read_index);
     left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
     if (left_size < sizeof(log_batch_t) || left_size < batch->space_size) {
+        rcy_node->read_size[rcy_node->read_buf_read_index] = CT_INVALID_ID32;
         rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
         rcy_node->read_buf_read_index = (rcy_node->read_buf_read_index + 1) % read_buf_size;
         CT_LOG_DEBUG_INF("[DTC RCY] dtc update batch left size < sizeof(log_batch_t)"
@@ -2219,10 +2222,6 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
         CT_RETURN_IFERR(dtc_update_batch(session, i));
         if (rcy_node->recover_done == CT_TRUE) {
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc node is done node_id = %u", i);
-            continue;
-        }
-        if (rcy_node->read_buf_ready[rcy_node->read_buf_read_index] == CT_FALSE){
-            CT_LOG_DEBUG_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
             continue;
         }
 
@@ -3309,7 +3308,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc start wait for read buf sleep node_id=%u read_buf_write_index=%u", node->node_id,node->read_buf_write_index);
             uint32 time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
             for (;;) {
-                if(SECUREC_UNLIKELY(node->read_buf_ready[node->read_buf_write_index])){
+                if(SECUREC_UNLIKELY(node->read_buf_ready[node->read_buf_write_index] || node->read_size[node->read_buf_write_index] != CT_INVALID_ID32)){
                     cm_sleep(CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME);
                     time_out -= CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME;
                     if(time_out <= 0){
@@ -3324,15 +3323,15 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc finish wait for read buf sleep time = %llu node_id=%u buf_size=%llu read_buf_write_index=%u",
                            sleep_time, node->node_id, node->read_buf[node->read_buf_write_index].buf_size,node->read_buf_write_index);
 
-            node->read_size[node->read_buf_write_index] = CT_INVALID_ID32;
             uint32 read_size = 0;
             if (dtc_read_node_log(dtc_rcy,session,i,&read_size) != CT_SUCCESS) {
                 CT_LOG_RUN_ERR("[DTC RCY] read node log proc failed to load redo log of crashed node=%u", node->node_id);
                 thread->closed = CT_TRUE;
                 break ;
             }
-            node->read_size[node->read_buf_write_index] = read_size;
+
             if (read_size == 0){
+                node->read_size[node->read_buf_write_index] = read_size;
                 last_nod_log_buffer_index[i] = node->read_buf_write_index;
                 continue;
             }
@@ -3342,6 +3341,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             try_to_read_no_log_node(thread,last_nod_log_buffer_index,i);
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc finish read node log node_id=%u read_buf_write_index=%u", node->node_id, node->read_buf_write_index);
             node->read_buf_ready[node->read_buf_write_index] = CT_TRUE;
+            node->read_size[node->read_buf_write_index] = read_size;
             node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
         }
     }
