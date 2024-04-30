@@ -2225,6 +2225,10 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc node is done node_id = %u", i);
             continue;
         }
+        if (rcy_node->read_buf_ready[rcy_node->read_buf_read_index] == CT_FALSE){
+            CT_LOG_DEBUG_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
+            continue;
+        }
 
         batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy,i, rcy_node->read_buf_read_index);
         CT_LOG_DEBUG_INF("[DTC RCY] fetch batch from instance %u point [%u-%u/%u/%llu],"
