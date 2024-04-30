@@ -2055,9 +2055,10 @@ status_t dtc_update_batch(knl_session_t *session, uint32 node_id)
 
     wait_for_read_buf_finish_read(node_id);
     if(rcy_node->read_size[rcy_node->read_buf_read_index] == 0){
+        check_node_read_end(node_id);
         rcy_node->read_size[rcy_node->read_buf_read_index] = CT_INVALID_ID32;
         rcy_node->read_buf_ready[rcy_node->read_buf_read_index] = CT_FALSE;
-        check_node_read_end(node_id);
+        CT_LOG_DEBUG_INF("dtc update batch rcy_node->read_size[rcy_node->read_buf_read_index] == 0 node_id=%u",node_id);
         return CT_SUCCESS;
     }
     batch = DTC_RCY_GET_CURR_BATCH(dtc_rcy, node_id, rcy_node->read_buf_read_index);
