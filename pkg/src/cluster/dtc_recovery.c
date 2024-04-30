@@ -2233,6 +2233,11 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
             rcy_log_point->rcy_point.block_id, (uint64)rcy_log_point->rcy_point.lfn, (uint64)batch->head.point.lfn,
             rcy_node->write_pos[rcy_node->read_buf_read_index], rcy_node->read_pos[rcy_node->read_buf_read_index], batch->space_size, rcy_log_point->rcy_point.lsn,
             rcy_log_point->rcy_point_saved.lsn);
+        uint32 left_size = rcy_node->write_pos[rcy_node->read_buf_read_index] - rcy_node->read_pos[rcy_node->read_buf_read_index];
+        if (left_size < sizeof(log_batch_t) || batch == NULL || left_size < batch->space_size) {
+            CT_LOG_DEBUG_INF("[DTC RCY] find max lsn and move point left_size < sizeof(log_batch_t) || left_size < tmp_batch->space_size");
+            continue;
+        }
         if (!dtc_rcy_validate_batch(batch)) {
             if (!(DB_IS_MAXFIX(session) && cm_dbs_is_enable_dbs())) {
                 // Batch is invalid
