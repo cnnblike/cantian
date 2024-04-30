@@ -1848,7 +1848,7 @@ status_t dtc_rcy_read_node_log(knl_session_t *session, uint32 idx, uint32 *size_
     rcy_node->read_pos[rcy_node->read_buf_write_index] = 0;
     rcy_node->write_pos[rcy_node->read_buf_write_index] = 0;
 
-    if (rcy_node->recover_done) {
+    if (DB_IS_PRIMARY(&session->kernel->db) && rcy_node->recover_done) {
         // current instance has nothing to recover.
         return CT_SUCCESS;
     }
@@ -1886,9 +1886,6 @@ status_t dtc_rcy_read_node_log(knl_session_t *session, uint32 idx, uint32 *size_
     }
 
     rcy_node->write_pos[rcy_node->read_buf_write_index] += *size_read;
-    if(*size_read != 0){
-        rcy_node->recover_done = CT_FALSE;
-    }
 
     if (dtc_rcy->rcy_stat.last_rcy_set_num <= 0) {
         dtc_rcy->rcy_stat.last_rcy_log_size += *size_read;
@@ -2148,9 +2145,8 @@ status_t dtc_read_node_log(dtc_rcy_context_t *dtc_rcy, knl_session_t *session, u
     if (*read_size == 0) {
         // try to advance log point to next file
         bool32 not_finished = CT_TRUE;
-        if (cm_dbs_is_enable_dbs() == CT_FALSE) {
-            dtc_rcy_next_file(session, node_id, &not_finished);
-        }
+        dtc_rcy_next_file(session, node_id, &not_finished);
+
         if (not_finished) {
             // read log again after advancing the log point
             if (dtc_rcy_read_node_log(session, node_id, read_size) != CT_SUCCESS) {
@@ -2227,10 +2223,6 @@ status_t dtc_rcy_fetch_log_batch(knl_session_t *session, log_batch_t **batch_out
         CT_RETURN_IFERR(dtc_update_batch(session, i));
         if (rcy_node->recover_done == CT_TRUE) {
             CT_LOG_DEBUG_INF("[DTC RCY] read node log proc node is done node_id = %u", i);
-            continue;
-        }
-        if (rcy_node->read_buf_ready[rcy_node->read_buf_read_index] == CT_FALSE){
-            CT_LOG_DEBUG_INF("[DTC RCY] read node log proc node buf not ready node_id = %u", i);
             continue;
         }
 
