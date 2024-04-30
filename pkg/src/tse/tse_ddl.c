@@ -241,8 +241,9 @@ static status_t tse_ddl_reentrant_lock_user(session_t *session, dc_user_t *user,
 
     if (max_wait_time != CT_INVALID_ID32) {
         if (!dls_latch_timed_x(knl_session, &user->user_latch, 0, 1, NULL, max_wait_time)) {
+            CT_THROW_ERROR(ERR_LOCK_TIMEOUT,"Getting user lock timed out");
             CT_LOG_RUN_ERR("[TSE LOCK]: user %s is locked by reentrant lock fail", user->desc.name);
-            return CT_ERROR;
+            return ERR_LOCK_TIMEOUT;
         }
     } else {
         dls_latch_x(knl_session, &user->user_latch, knl_session->id, NULL);
