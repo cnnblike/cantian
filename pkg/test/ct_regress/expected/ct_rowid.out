@@ -1,0 +1,1007 @@
+
+
+SQL> drop table if exists rid_heap_tbl;
+
+Succeed.
+
+SQL> 
+SQL> create table rid_heap_tbl(id int,c_int int not null,c_vchar1 varchar(100) not null,c_vchar2 varchar(100) not null,c_clob clob not null,c_blob blob not null,c_date date);
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_heap_tbl select rownum, rownum, 'abc123','defadsfa', lpad('123abc',50,'abc'), lpad('11100011',50,'1100'), to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss') from dual connect by rownum <= 10;
+
+10 rows affected.
+
+SQL> create view rid_tmp_view1 as select * from rid_heap_tbl where id>3;
+
+Succeed.
+
+SQL> create view rid_tmp_view2 as select * from rid_tmp_view1;
+
+Succeed.
+
+SQL> create view rid_tmp_view3 as select * from rid_tmp_view2;
+
+Succeed.
+
+SQL> create view rid_tmp_view4 as select * from rid_tmp_view3;
+
+Succeed.
+
+SQL> create view rid_tmp_view5 as select * from rid_tmp_view4;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists rid_heap_TBL2;
+
+Succeed.
+
+SQL> create table rid_heap_TBL2(id int, c_int int not null, c_vchar1 varchar(100) not null);
+
+Succeed.
+
+SQL> insert into rid_heap_TBL2 select rownum, sin(rownum) * 100, 'WaHaHa' from dual connect by rownum <= 10;
+
+10 rows affected.
+
+SQL> 
+SQL> create view rid_join_view1 as select T.id TID, R.id RID from rid_heap_tbl T join rid_heap_TBL2 R on T.id < R.id;
+
+Succeed.
+
+SQL> 
+SQL> select rowid from rid_join_view1;
+
+CT-01349, [1:8]Querying views containing DISTINCT, GROUP BY, or ROWNUM for ROWID was not allowed.
+SQL> select T.rowid from rid_join_view1;
+
+CT-00601, [1:8]Sql syntax error: invalid table alias 'T'
+SQL> 
+SQL> drop table if exists rid_test_tbl;
+
+Succeed.
+
+SQL> create global temporary table rid_test_tbl(id int, rid varchar(100), rid2 varchar(100));
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, NULL from rid_heap_tbl;
+
+10 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   55                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, null from rid_tmp_view1;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, null from rid_tmp_view2;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> insert into rid_test_tbl select id, rowid, null from rid_tmp_view3;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, null from rid_tmp_view4;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, rowid from rid_tmp_view4 group by rowid, id;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, null from rid_tmp_view5;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, rowid from rid_tmp_view5 group by rowid, id;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, NULL from (select * from (select sysdate + 1, id from rid_heap_tbl));
+
+10 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   55                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, NULL from (select *, rowid from (select sysdate + 1, id from rid_heap_tbl));
+
+10 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   55                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select id, rowid, NULL from (select *, rowid from (select sysdate + 1, id from rid_tmp_view5));
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select rownum, rowid, id from (select *, rowid from (select sysdate + 1, id from rid_heap_tbl));
+
+10 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   55                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select rownum, rowid, id from (select *, rowid from (select sysdate + 1, id from rid_tmp_view3));
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   28                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select T.id, T.rowid, R.rowid from rid_heap_tbl T join rid_heap_tbl R on T.id + R.id = 10;
+
+9 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   45                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select T.id, T.rowid, R.rowid from rid_heap_tbl T join rid_tmp_view3 R on T.id + R.id = 10;
+
+6 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   21                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select T.id, T.rowid, R.rowid from rid_tmp_view2 T join rid_heap_tbl R on T.id + R.id = 10;
+
+6 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   39                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select T.id, T.rowid, R.rowid from rid_tmp_view2 T join rid_tmp_view5 R on T.id + R.id = 10 where T.id = 4;
+
+1 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   4                   
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select * from (select T.id, T.rowid, R.rowid from rid_tmp_view2 T join rid_tmp_view5 R on T.id + R.id = 10 where T.id = 4);
+
+1 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   4                   
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select T.id, NULL, R.rowid from rid_tmp_view2 T join rid_tmp_view5 R on T.id + R.id = 10 where T.id <8 order by T.rowid;
+
+3 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+                                          15                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select t1.id, t1.rowid, t2.rowid from rid_tmp_view2 t1 inner join rid_tmp_view5 t2 on t1.rowid=t2.rowid;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), min(length(rid2)), max(length(rid2)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     MIN(LENGTH(RID2))    MAX(LENGTH(RID2))    SUM(ID)             
+-------------------- -------------------- -------------------- -------------------- --------------------
+18                   18                   18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select NULL, t1.rowid, t2.rowid from rid_tmp_view2 t1 inner join rid_tmp_view5 t2 on t1.rowid=t2.rowid;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), min(length(rid2)), max(length(rid2)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     MIN(LENGTH(RID2))    MAX(LENGTH(RID2))    SUM(ID)             
+-------------------- -------------------- -------------------- -------------------- --------------------
+18                   18                   18                   18                                       
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select t1.id, t1.rowid, t2.rowid from rid_heap_tbl t1 inner join rid_tmp_view5 t2 on t1.rowid=t2.rowid;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), min(length(rid2)), max(length(rid2)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     MIN(LENGTH(RID2))    MAX(LENGTH(RID2))    SUM(ID)             
+-------------------- -------------------- -------------------- -------------------- --------------------
+18                   18                   18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select t1.id, t1.rowid, t2.rowid from rid_tmp_view5 t1 inner join rid_heap_tbl t2 on t1.rowid=t2.rowid;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), min(length(rid2)), max(length(rid2)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     MIN(LENGTH(RID2))    MAX(LENGTH(RID2))    SUM(ID)             
+-------------------- -------------------- -------------------- -------------------- --------------------
+18                   18                   18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select t1.id, t1.rowid, t2.rowid from rid_tmp_view5 t1 inner join rid_tmp_view5 t2 on t1.rowid=t2.rowid;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), min(length(rid2)), max(length(rid2)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     MIN(LENGTH(RID2))    MAX(LENGTH(RID2))    SUM(ID)             
+-------------------- -------------------- -------------------- -------------------- --------------------
+18                   18                   18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select t1.id, t1.rowid, t2.rowid from rid_tmp_view1 t1 inner join rid_heap_tbl t2 on t1.rowid=t2.rowid;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), min(length(rid2)), max(length(rid2)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     MIN(LENGTH(RID2))    MAX(LENGTH(RID2))    SUM(ID)             
+-------------------- -------------------- -------------------- -------------------- --------------------
+18                   18                   18                   18                   49                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 1, NULL, NULL from rid_tmp_view1 t1 inner join rid_heap_tbl t2 on t1.rowid=t2.rowid;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+                                          7                   
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select t2.id, replace(t1.c_vchar1,'abc',t1.rowid || t2.rowid), t1.c_vchar2 from rid_heap_tbl t1 right join rid_tmp_view5 t2 on t1.c_int<=t2.c_int order by 1,2;
+
+49 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+39                   39                   371                 
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create view rid_view_003X as select c_int "ROWID", id, c_vchar1  from rid_tmp_view2 where rowid in (select rowid from rid_tmp_view5);
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select rownum, rowid, c_vchar1 from rid_view_003X;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   28                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select rownum, "ROWID", c_vchar1 from rid_view_003X;
+
+7 rows affected.
+
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+18                   18                   28                  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select rownum, "rowid", c_vchar1 from rid_view_003X;
+
+CT-00601, [1:41]Sql syntax error: invalid column name 'rowid'
+SQL> select min(length(rid)), max(length(rid)), sum(id) from rid_test_tbl;
+
+MIN(LENGTH(RID))     MAX(LENGTH(RID))     SUM(ID)             
+-------------------- -------------------- --------------------
+                                                              
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 0, sum(rowid), 0 from rid_heap_tbl;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 1, sum(rowid), 1 from rid_tmp_view1;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 2, sum(rowid), 2 from rid_tmp_view2;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 3, sum(rowid), 3 from rid_tmp_view3;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 4, sum(rowid), 4 from rid_tmp_view4;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 5, sum(rowid), 5 from rid_tmp_view5;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 6, sum(rowid), 6 from rid_view_003X;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 5, max(rowid), 5 from rid_tmp_view5;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 6, max(rowid), 6 from rid_view_003X;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create view rid_view_004X as select t1.c_int "ROWID",t1.id,t1.c_vchar1  from  rid_tmp_view4 t1 join rid_heap_tbl t2 on t1.c_int=t2.c_int;
+
+Succeed.
+
+SQL> select rowid from rid_view_004X;
+
+CT-01349, [1:8]Querying views containing DISTINCT, GROUP BY, or ROWNUM for ROWID was not allowed.
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE mulit_nested_query_for_rowid(lvl in int) AS
+  2   v_sql       varchar(32000);
+  3   rid_max_len number;
+  4   rid_min_len number;
+  5 BEGIN
+  6     v_sql := 'select sysdate, * from rid_tmp_view5';
+  7     for i in 1..lvl loop
+  8         begin
+  9             v_sql := 'select sysdate+'|| i || ',123,''WHF''from ('|| v_sql ||')';
+ 10             -- dbe_output.print_line(v_sql);
+ 11         end;
+ 12     end loop;
+ 13     v_sql := 'insert into rid_test_tbl select rownum, rowid, NULL from (' || v_sql || ')';
+ 14     dbe_output.print_line(v_sql);
+ 15     execute immediate v_sql;
+ 16     select min(length(rid)), max(length(rid)) into rid_min_len, rid_max_len from rid_test_tbl;
+ 17     dbe_output.print_line('max rowid length = ' || rid_max_len);
+ 18     dbe_output.print_line('min rowid length = ' || rid_min_len);
+ 19     commit;
+ 20 END;
+ 21 /
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> call mulit_nested_query_for_rowid(10);
+
+insert into rid_test_tbl select rownum, rowid, NULL from (select sysdate+10,123,'WHF'from (select sysdate+9,123,'WHF'from (select sysdate+8,123,'WHF'from (select sysdate+7,123,'WHF'from (select sysdate+6,123,'WHF'from (select sysdate+5,123,'WHF'from (select sysdate+4,123,'WHF'from (select sysdate+3,123,'WHF'from (select sysdate+2,123,'WHF'from (select sysdate+1,123,'WHF'from (select sysdate, * from rid_tmp_view5)))))))))))
+max rowid length = 18
+min rowid length = 18
+
+PL/SQL procedure successfully completed.
+
+SQL> call mulit_nested_query_for_rowid(30);
+
+insert into rid_test_tbl select rownum, rowid, NULL from (select sysdate+30,123,'WHF'from (select sysdate+29,123,'WHF'from (select sysdate+28,123,'WHF'from (select sysdate+27,123,'WHF'from (select sysdate+26,123,'WHF'from (select sysdate+25,123,'WHF'from (select sysdate+24,123,'WHF'from (select sysdate+23,123,'WHF'from (select sysdate+22,123,'WHF'from (select sysdate+21,123,'WHF'from (select sysdate+20,123,'WHF'from (select sysdate+19,123,'WHF'from (select sysdate+18,123,'WHF'from (select sysdate+17,123,'WHF'from (select sysdate+16,123,'WHF'from (select sysdate+15,123,'WHF'from (select sysdate+14,123,'WHF'from (select sysdate+13,123,'WHF'from (select sysdate+12,123,'WHF'from (select sysdate+11,123,'WHF'from (select sysdate+10,123,'WHF'from (select sysdate+9,123,'WHF'from (select sysdate+8,123,'WHF'from (select sysdate+7,123,'WHF'from (select sysdate+6,123,'WHF'from (select sysdate+5,123,'WHF'from (select sysdate+4,123,'WHF'from (select sysdate+3,123,'WHF'from (select sysdate+2,123,'WHF'from (select sysdate+1,123,'WHF'from (select sysdate, * from rid_tmp_view5)))))))))))))))))))))))))))))))
+max rowid length = 18
+min rowid length = 18
+
+PL/SQL procedure successfully completed.
+
+SQL> call mulit_nested_query_for_rowid(50);
+
+insert into rid_test_tbl select rownum, rowid, NULL from (select sysdate+50,123,'WHF'from (select sysdate+49,123,'WHF'from (select sysdate+48,123,'WHF'from (select sysdate+47,123,'WHF'from (select sysdate+46,123,'WHF'from (select sysdate+45,123,'WHF'from (select sysdate+44,123,'WHF'from (select sysdate+43,123,'WHF'from (select sysdate+42,123,'WHF'from (select sysdate+41,123,'WHF'from (select sysdate+40,123,'WHF'from (select sysdate+39,123,'WHF'from (select sysdate+38,123,'WHF'from (select sysdate+37,123,'WHF'from (select sysdate+36,123,'WHF'from (select sysdate+35,123,'WHF'from (select sysdate+34,123,'WHF'from (select sysdate+33,123,'WHF'from (select sysdate+32,123,'WHF'from (select sysdate+31,123,'WHF'from (select sysdate+30,123,'WHF'from (select sysdate+29,123,'WHF'from (select sysdate+28,123,'WHF'from (select sysdate+27,123,'WHF'from (select sysdate+26,123,'WHF'from (select sysdate+25,123,'WHF'from (select sysdate+24,123,'WHF'from (select sysdate+23,123,'WHF'from (select sysdate+22,123,'WHF'from (select sysdate+21,123,'WHF'from (select sysdate+20,123,'WHF'from (select sysdate+19,123,'WHF'from (select sysdate+18,123,'WHF'from (select sysdate+17,123,'WHF'from (select sysdate+16,123,'WHF'from (select sysdate+15,123,'WHF'from (select sysdate+14,123,'WHF'from (select sysdate+13,123,'WHF'from (select sysdate+12,123,'WHF'from (select sysdate+11,123,'WHF'from (select sysdate+10,123,'WHF'from (select sysdate+9,123,'WHF'from (select sysdate+8,123,'WHF'from (select sysdate+7,123,'WHF'from (select sysdate+6,123,'WHF'from (select sysdate+5,123,'WHF'from (select sysdate+4,123,'WHF'from (select sysdate+3,123,'WHF'from (select sysdate+2,123,'WHF'from (select sysdate+1,123,'WHF'from (select sysdate, * from rid_tmp_view5)))))))))))))))))))))))))))))))))))))))))))))))))))
+max rowid length = 18
+min rowid length = 18
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select id, rowid, NULL from (select *, rowid, rownum from (select sysdate + 1, id from rid_tmp_view5));
+
+CT-01349, [1:12]Querying views containing DISTINCT, GROUP BY, or ROWNUM for ROWID was not allowed.
+SQL> 
+SQL> select id, rowid, NULL from (select *, rowid, rownum "rowid" from (select sysdate + 1, id from rid_tmp_view5));
+
+CT-01349, [1:12]Querying views containing DISTINCT, GROUP BY, or ROWNUM for ROWID was not allowed.
+SQL> 
+SQL> select rowid from dba_segments;
+
+CT-01349, [1:8]Querying views containing DISTINCT, GROUP BY, or ROWNUM for ROWID was not allowed.
+SQL> select rowid from all_tables;
+
+CT-01349, [1:8]Querying views containing DISTINCT, GROUP BY, or ROWNUM for ROWID was not allowed.
+SQL> select avg(length(rowid)) from v$parameter;
+
+AVG(LENGTH(ROWID))                      
+----------------------------------------
+18                                      
+
+1 rows fetched.
+
+SQL> select avg(length(rowid)) from (select * from v$parameter);
+
+AVG(LENGTH(ROWID))                      
+----------------------------------------
+18                                      
+
+1 rows fetched.
+
+SQL> 
+SQL> select "rowid" from (select * from dual);
+
+CT-00601, [1:8]Sql syntax error: invalid column name 'rowid'
+SQL> select avg(length("ROWID")) from (select * from rid_heap_tbl);
+
+AVG(LENGTH("ROWID"))                    
+----------------------------------------
+18                                      
+
+1 rows fetched.
+
+SQL> 
+SQL> select avg(length("ROWID")) from (select * from rid_tmp_view4);
+
+AVG(LENGTH("ROWID"))                    
+----------------------------------------
+18                                      
+
+1 rows fetched.
+
+SQL> 
+SQL> -- DTS2019010305694
+SQL> drop table if exists t_join_base_001;
+
+Succeed.
+
+SQL> create table t_join_base_001(id int,c_int int not null,c_vchar1 varchar(100) not null,c_vchar2 varchar(100) not null,c_clob clob not null,c_blob blob not null,c_date date); 
+
+Succeed.
+
+SQL> 
+SQL> insert into t_join_base_001 values(1,1000,'abc123','defadsfa',lpad('123abc',50,'abc'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE or replace procedure proc_insert(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5   sqlst := 'insert into ' || tname ||' select id+'||i||',c_int+'||i||',c_vchar1||'||i||',c_vchar2||'||i||',c_clob||'||i||',c_blob'||',c_date from '||tname|| ' where id=1';
+  6         execute immediate sqlst;
+  7   END LOOP;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> exec proc_insert('t_join_base_001',1,9);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create view ChangHong_view_001 as select * from t_join_base_001 t1 where rowid in(select rowid from t_join_base_001 t2 where  t2.c_int>=t1.c_int);
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 0, sum(rowid), 0 from ChangHong_view_001;
+
+1 rows affected.
+
+SQL> select 'YES' from rid_test_tbl where rid > 0;
+
+'YES'
+-----
+YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 0, sum(rowid), rowid from ChangHong_view_001 group by rowid;
+
+10 rows affected.
+
+SQL> select avg(length(rid2)) from rid_test_tbl where rid > 0;
+
+AVG(LENGTH(RID2))                       
+----------------------------------------
+18                                      
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create view ChangHong_view_002 as select * from  ChangHong_view_001 where rowid in(select rowid from t_join_base_001);
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 0, sum(rowid), 0 from ChangHong_view_002;
+
+1 rows affected.
+
+SQL> select count(*), 'YES' from rid_test_tbl where rid > 0;
+
+COUNT(*)             'YES'
+-------------------- -----
+1                    YES  
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> insert into rid_test_tbl select 0, sum(rowid), rowid from ChangHong_view_002 group by rowid;
+
+10 rows affected.
+
+SQL> select count(*), avg(length(rid2)) from rid_test_tbl where rid > 0;
+
+COUNT(*)             AVG(LENGTH(RID2))                       
+-------------------- ----------------------------------------
+10                   18                                      
+
+1 rows fetched.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists t_join_base_001;
+
+Succeed.
+
+SQL> create table t_join_base_001(id int,c_int int not null,c_vchar1 varchar(100) not null,c_vchar2 varchar(100) not null,c_clob clob not null,c_blob blob not null,c_date date) crmode page; 
+
+Succeed.
+
+SQL> insert into t_join_base_001 values(1,1000,'abc123','defadsfa',lpad('123abc',50,'abc'),lpad('11100011',50,'1100'),to_timestamp(to_char('1800-01-01 10:51:47'),'yyyy-mm-dd hh24:mi:ss'));
+
+1 rows affected.
+
+SQL> CREATE or replace procedure proc_insert(tname varchar,startall int,endall int) as
+  2 sqlst varchar(500);
+  3 BEGIN
+  4   FOR i IN startall..endall LOOP
+  5   sqlst := 'insert into ' || tname ||' select id+'||i||',c_int+'||i||',c_vchar1||'||i||',c_vchar2||'||i||',c_clob||'||i||',c_blob'||',c_date from '||tname|| ' where id=1';
+  6         execute immediate sqlst;
+  7   END LOOP;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> exec proc_insert('t_join_base_001',1,9);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> drop table if exists t_join_base_002;
+
+Succeed.
+
+SQL> create table t_join_base_002 crmode page as select rowid as c_number,id,c_int,c_vchar1,c_date from t_join_base_001;
+
+Succeed.
+
+
+
+

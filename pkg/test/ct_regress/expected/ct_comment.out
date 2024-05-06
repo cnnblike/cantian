@@ -1,0 +1,242 @@
+
+
+SQL> --TEST SYNONYM
+SQL> create table t1 (fd1 int, fd2 varchar(20));
+
+Succeed.
+
+SQL> create user user_123 identified by 'a2345678#$_';
+
+Succeed.
+
+SQL> create view user_123.v1 as select * from t1;
+
+CT-01001, Permissions were insufficient
+SQL> create public synonym s_t1 for t1;
+
+Succeed.
+
+SQL> 
+SQL> comment on table user_123.t1 is 'this is table user_123.t1 comment';
+
+CT-00843, The table or view USER_123.T1 does not exist.
+SQL> comment on table t3 is 'this is table t3 comment';
+
+CT-00843, The table or view SYS.T3 does not exist.
+SQL> 
+SQL> comment on table t1 is 'this is table t1 comment';
+
+Succeed.
+
+SQL> comment on table user_123.v1 is 'this is view user_123.v1 comment';
+
+CT-00843, The table or view USER_123.V1 does not exist.
+
+
+SQL> alter table t1 rename to t1_new;
+
+Succeed.
+
+SQL> comment on table t1_new is '';
+
+Succeed.
+
+SQL> drop table t1_new;
+
+Succeed.
+
+SQL> drop view user_123.v1;
+
+CT-00843, The table or view USER_123.V1 does not exist.
+
+SQL> 
+SQL> create table user_123.t2 (fd1 int, fd2 varchar(20));
+
+Succeed.
+
+SQL> create view  v2 as select * from user_123.t2;
+
+Succeed.
+
+SQL> comment on COLUMN user_123.t4.fd1 is 'this is column user_123.t4.fd1 comment';
+
+CT-00843, The table or view USER_123.T4 does not exist.
+SQL> comment on COLUMN user_123.t2.fd3 is 'this is column user_123.t2.fd3 comment';
+
+CT-00601, Sql syntax error: FD3: invalid identifier
+SQL> 
+SQL> comment on COLUMN user_123.t2.fd1 is 'this is column user_123.t2.fd1 comment';
+
+Succeed.
+
+SQL> comment on COLUMN user_123.t2.fd2 is 'this is column user_123.t2.fd2 comment';
+
+Succeed.
+
+SQL> comment on COLUMN v2.fd1 is 'this is column v2.fd1 comment';
+
+Succeed.
+
+SQL> comment on COLUMN v2.fd2 is 'this is column v2.fd2 comment';
+
+Succeed.
+
+SQL> alter table user_123.t2 rename column fd1 to fd3;
+
+Succeed.
+
+
+SQL> alter table user_123.t2 add fd1 int;
+
+Succeed.
+
+SQL> 
+SQL> alter table user_123.t2 drop column fd3;
+
+Succeed.
+
+SQL> 
+SQL> drop table user_123.t2;
+
+Succeed.
+
+SQL> drop view v2;
+
+Succeed.
+
+SQL> 
+SQL> drop public SYNONYM if exists s_t1 FORCE;
+
+Succeed.
+
+SQL> drop user user_123 CASCADE;
+
+Succeed.
+
+SQL> 
+SQL> drop user user_1 CASCADE;
+
+CT-00781, The user USER_1 does not exist.
+SQL> create user user_1 identified by 'a2345678#$_';
+
+Succeed.
+
+SQL> create table user_1.t1 (fd1 int, fd2 varchar(20));
+
+Succeed.
+
+SQL> create view user_1.v1 as select * from user_1.t1;
+
+Succeed.
+
+SQL> create public synonym s_t1 for user_1.t1;
+
+Succeed.
+
+SQL> comment on table user_1.t1 is 'this is table t1 comment';
+
+Succeed.
+
+SQL> comment on table user_1.v1 is 'this is table v1 comment';
+
+Succeed.
+
+SQL> comment on COLUMN user_1.t1.fd1 is 'this is column t1.fd1 comment';
+
+Succeed.
+
+SQL> comment on COLUMN user_1.v1.fd2 is 'this is column v1.fd2 comment';
+
+Succeed.
+
+SQL> select * from DBA_SYNONYMS WHERE OWNER = 'PUBLIC' AND SYNONYM_NAME = 'S_T1';
+
+OWNER                                                            SYNONYM_NAME                                                     TABLE_OWNER                                                      TABLE_NAME
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+PUBLIC                                                           S_T1                                                             USER_1                                                           T1
+
+1 rows fetched.
+
+SQL> drop user user_1 CASCADE;
+
+Succeed.
+
+SQL> drop public SYNONYM if exists s_t1 FORCE;
+
+Succeed.
+
+SQL> select * from DBA_SYNONYMS WHERE OWNER = 'PUBLIC' AND SYNONYM_NAME = 'S_T1';
+
+OWNER                                                            SYNONYM_NAME                                                     TABLE_OWNER                                                      TABLE_NAME                                                      
+---------------------------------------------------------------- ---------------------------------------------------------------- ---------------------------------------------------------------- ----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> 
+SQL> @@comment.txt
+SQL> /*
+  2 cdgfdg;
+  3 */
+SQL> select 1 from dual;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> /*
+  2 cdgfdg
+  3 */
+SQL> select 2 from dual;
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> 
+SQL> /*/
+  2 cdgfdg;
+  3 */
+SQL> select 3 from dual;
+
+3           
+------------
+3           
+
+1 rows fetched.
+
+SQL> 
+SQL> /*/
+  2 cdgfdg
+  3 */
+SQL> select 4 from dual;
+
+4           
+------------
+4           
+
+1 rows fetched.
+
+SQL> 
+SQL> /*/*
+  2 cdgfdg;
+  3 */
+SQL> /*////////****
+  2 ****/
+SQL> select 5 from dual;
+
+5           
+------------
+5           
+
+1 rows fetched.
+
+SQL> 
+
+
+
+

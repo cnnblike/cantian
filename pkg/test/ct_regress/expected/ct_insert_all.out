@@ -1,0 +1,257 @@
+SQL> --insert all
+SQL> drop table if exists insall_dual;
+
+Succeed.
+
+SQL> create table insall_dual(a int);
+
+Succeed.
+
+SQL> insert into insall_dual values(1);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists insall_std;
+
+Succeed.
+
+SQL> create table insall_std(a int, b int, c clob);
+
+Succeed.
+
+SQL> insert into insall_std values(0,0,'a');
+
+1 rows affected.
+
+SQL> insert into insall_std values(18,18,'b');
+
+1 rows affected.
+
+SQL> insert into insall_std values(5,5,'c');
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists insall_t1;
+
+Succeed.
+
+SQL> create table insall_t1(a int, b int, c clob);
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists "insall_t1";
+
+Succeed.
+
+SQL> create table "insall_t1"(a int, "a" int, b int, c clob);
+
+Succeed.
+
+SQL> 
+SQL> insert all
+  2 into insall_t1 as int1(a,b,c) values(1,1,'a')
+  3 into insall_t1  int1(a,b,c) values(5,5,'b')
+  4 into insall_t1 as int1(a,b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+3 rows affected.
+
+SQL> 
+SQL> insert all
+  2 into insall_t1 int1(a,b,c) values(1,1,'a')
+  3 into insall_t1 as int1(a,b,c) values(5,5,'b')
+  4 into insall_t1 int1(a,b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+3 rows affected.
+
+SQL> 
+SQL> insert all
+  2 into insall_t1 int1 (a,b,c) values(1,1,'a')
+  3 into insall_t1 int1 (a,"B",c) values(5,5,'b')
+  4 into insall_t1 int1 (a,b,"C") values(3,3,'c')
+  5 select 1 from insall_dual;
+
+3 rows affected.
+
+SQL> 
+SQL> insert all
+  2 into insall_t1 (a,b,c) values(1,1,'a')
+  3 into insall_std (a,b,c) values(5,5,'b')
+  4 into insall_t1 (a,b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+CT-00601, Sql syntax error: Inconsistent user, table, column or value groups
+SQL> 
+SQL> insert all
+  2 into insall_t1 (a,b,c) values(1,1,'a')
+  3 into insall_t1 (a,b,c) values(5,5,'b')
+  4 into insall_std (a,b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+CT-00601, Sql syntax error: Inconsistent user, table, column or value groups
+SQL> 
+SQL> insert all
+  2 into "insall_t1" (a,b,c) values(1,1,'a')
+  3 into insall_t1 (a,b,c) values(5,5,'b')
+  4 into "insall_t1" (a,b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+CT-00601, Sql syntax error: Inconsistent user, table, column or value groups
+SQL> 
+SQL> insert all
+  2 into insall_t1 (a,b,c) values(1,1,'a')
+  3 into insall_t1 (a,b,c) values(5,5,'b')
+  4 into "insall_t1" (a,b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+CT-00601, Sql syntax error: Inconsistent user, table, column or value groups
+SQL> 
+SQL> insert all
+  2 into "insall_t1" (a,b,c) values(1,1,'a')
+  3 into "insall_t1" (a,b,c) values(5,5,'b')
+  4 into insall_t1 (a,b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+CT-00601, Sql syntax error: Inconsistent user, table, column or value groups
+SQL> 
+SQL> insert all
+  2 into insall_t1 (a,b,c) values(1,1,'a')
+  3 into insall_t1  values(5,5,'b')
+  4 into insall_t1  values(3,3,'c')
+  5 select 1 from insall_dual;
+
+CT-00601, Sql syntax error: Inconsistent user, table, column or value groups
+SQL> 
+SQL> insert all
+  2 into insall_t1  values(1,1,'a')
+  3 into insall_t1 (a,b,c) values(5,5,'b')
+  4 into insall_t1 (a,b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+CT-00601, Sql syntax error: Inconsistent user, table, column or value groups
+SQL> 
+SQL> insert all
+  2 into "insall_t1" (a,b,c) values(1,1,'a')
+  3 into "insall_t1" (a,b,c) values(5,5,'b')
+  4 into "insall_t1" ("a",b,c) values(3,3,'c')
+  5 select 1 from insall_dual;
+
+CT-00601, Sql syntax error: Inconsistent user, table, column or value groups
+
+SQL>
+SQL> drop table if exists insall_part;
+
+Succeed.
+
+SQL> create table insall_part (a int, b number, c varchar(5))
+  2 partition by range (a)
+  3 (
+  4 partition p1 values less than (5),
+  5 partition p2 values less than (10),
+  6 partition p3 values less than (15),
+  7 partition p4 values less than(MAXVALUE)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> insert all
+  2 into insall_part values(1,1.2,'aa')
+  3 into insall_part values(7,0.2,'ab')
+  4 into insall_part values(100,1.00,'da')
+  5 into insall_part values(13,3.1,'ca')
+  6 select 1 from  insall_dual;
+
+4 rows affected.
+
+SQL> 
+SQL> DECLARE 
+  2 num INT;
+  3 BEGIN  
+  4 INSERT all INTO insall_t1(a) VALUES(1) select 1 from insall_dual returning a into num;  
+  5 COMMIT;
+  6 END;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:86] PLC-00954 insert values or select clause expected but EOF or ';' found
+
+SQL> 
+SQL> DECLARE 
+  2 num INT;
+  3 BEGIN  
+  4 INSERT all INTO insall_t1(a) VALUES(1) returning a into num ;  
+  5 COMMIT;
+  6 END;
+  7 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:61] PLC-00954 insert values or select clause expected but EOF or ';' found
+
+SQL> 
+SQL> DECLARE
+  2 num INT;
+  3 BEGIN
+  4 INSERT ALL 
+  5 	INTO insall_t1(a) VALUES(1)
+  6 	INTO insall_t1(a) VALUES(2)
+  7 	INTO insall_t1(a) VALUES(3)
+  8 	INTO insall_t1(a) VALUES(4)
+  9 	INTO insall_t1(a) VALUES(5)
+ 10 SELECT a FROM insall_t1 return a into num;
+ 11 COMMIT;
+ 12 END;
+ 13 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[10:42] PLC-00954 insert values or select clause expected but EOF or ';' found
+
+SQL> 
+SQL> DECLARE
+  2 num INT;
+  3 BEGIN
+  4 INSERT ALL 
+  5 	INTO insall_t1(a) VALUES(1)
+  6 	INTO insall_t1(a) VALUES(2)
+  7 	INTO insall_t1(a) VALUES(3)
+  8 	INTO insall_t1(a) VALUES(4)
+  9 	INTO insall_t1(a) VALUES(5)
+ 10 SELECT a FROM insall_t1 returning a into num;
+ 11 COMMIT;
+ 12 END;
+ 13 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[10:45] PLC-00954 insert values or select clause expected but EOF or ';' found
+
+SQL> 
+SQL> drop table insall_dual;
+
+Succeed.
+
+SQL> drop table insall_std;
+
+Succeed.
+
+SQL> drop table insall_t1;
+
+Succeed.
+
+SQL> drop table insall_part;
+Succeed.
+
+
+
+

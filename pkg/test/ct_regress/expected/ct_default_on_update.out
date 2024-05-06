@@ -1,0 +1,412 @@
+
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> DROP TABLE IF EXISTS INTELLIGENT_TASK CASCADE  CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP SEQUENCE IF EXISTS INTELLIGENT_TASK_ID_SEQ;
+
+Succeed.
+
+SQL> drop user IF EXISTS vcm cascade;
+
+Succeed.
+
+SQL> CREATE USER vcm IDENTIFIED by Cantian_234;
+
+Succeed.
+
+SQL> GRANT CREATE SESSION,CREATE TABLE,CREATE SEQUENCE,CREATE VIEW,CREATE PROCEDURE,CREATE TRIGGER to vcm;
+
+Succeed.
+
+SQL> conn vcm/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS INTELLIGENT_TASK CASCADE  CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP SEQUENCE IF EXISTS INTELLIGENT_TASK_ID_SEQ;
+
+Succeed.
+
+SQL> CREATE SEQUENCE INTELLIGENT_TASK_ID_SEQ
+  2     START WITH 1
+  3     INCREMENT BY 1
+  4     MINVALUE 1
+  5     MAXVALUE 9223372036854775807
+  6     CYCLE  NOCACHE;
+
+Succeed.
+
+SQL> CREATE TABLE INTELLIGENT_TASK (
+  2     ID BIGINT NOT NULL DEFAULT INTELLIGENT_TASK_ID_SEQ.NEXTVAL,
+  3     DELETE_FLAG BOOLEAN NOT NULL DEFAULT FALSE,
+  4     DIRTY_FLAG BOOLEAN NOT NULL
+  5 );
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> insert into vcm.INTELLIGENT_TASK (DELETE_FLAG,DIRTY_FLAG) values(true,true);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> conn vcm/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> insert into vcm.INTELLIGENT_TASK (DELETE_FLAG,DIRTY_FLAG) values(true,true);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select DELETE_FLAG, DIRTY_FLAG from vcm.INTELLIGENT_TASK;
+
+DELETE_FLAG DIRTY_FLAG
+----------- ----------
+TRUE        TRUE
+TRUE        TRUE
+
+2 rows fetched.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> DROP TABLE IF EXISTS INTELLIGENT_TASK CASCADE  CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP SEQUENCE IF EXISTS INTELLIGENT_TASK_ID_SEQ;
+
+Succeed.
+
+SQL> drop user vcm cascade;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> DROP TABLE IF EXISTS INTELLIGENT_TASK CASCADE  CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP SEQUENCE IF EXISTS INTELLIGENT_TASK_ID_SEQ;
+
+Succeed.
+
+SQL> drop user IF EXISTS vcm cascade;
+
+Succeed.
+
+SQL> CREATE USER vcm IDENTIFIED by Cantian_234;
+
+Succeed.
+
+SQL> GRANT CREATE SESSION,CREATE TABLE,CREATE SEQUENCE,CREATE VIEW,CREATE PROCEDURE,CREATE TRIGGER to vcm;
+
+Succeed.
+
+SQL> conn vcm/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS INTELLIGENT_TASK CASCADE  CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP SEQUENCE IF EXISTS INTELLIGENT_TASK_ID_SEQ;
+
+Succeed.
+
+SQL> CREATE SEQUENCE INTELLIGENT_TASK_ID_SEQ
+  2     START WITH 1
+  3     INCREMENT BY 1
+  4     MINVALUE 1
+  5     MAXVALUE 9223372036854775807
+  6     CYCLE  NOCACHE;
+
+Succeed.
+
+SQL> CREATE TABLE INTELLIGENT_TASK (
+  2     ID BIGINT NOT NULL DEFAULT INTELLIGENT_TASK_ID_SEQ.NEXTVAL,
+  3     DELETE_FLAG BOOLEAN NOT NULL DEFAULT FALSE,
+  4     DIRTY_FLAG BOOLEAN NOT NULL
+  5 );
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> insert into vcm.INTELLIGENT_TASK (DELETE_FLAG,DIRTY_FLAG) values(true,true);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> conn vcm/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> insert into vcm.INTELLIGENT_TASK (DELETE_FLAG,DIRTY_FLAG) values(true,true);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> select DELETE_FLAG, DIRTY_FLAG from vcm.INTELLIGENT_TASK;
+
+DELETE_FLAG DIRTY_FLAG
+----------- ----------
+TRUE        TRUE
+TRUE        TRUE
+
+2 rows fetched.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> DROP TABLE IF EXISTS INTELLIGENT_TASK CASCADE  CONSTRAINTS;
+
+Succeed.
+
+SQL> DROP SEQUENCE IF EXISTS INTELLIGENT_TASK_ID_SEQ;
+
+Succeed.
+
+SQL> drop user vcm cascade;
+
+Succeed.
+
+SQL> drop table if exists TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> create table TRANS_RECORD_LOG
+  2 (
+  3    REF_NO               varchar(32) not null comment 'Sharding Key',
+  4    TR_TIME              timestamp(3) not null default to_timestamp('2018-01-27','yyyy-mm-dd') comment 'Partitioning Key (Per Day)',  
+  5    TR_API_ID            varchar(32) not null,
+  6    CREATE_TIME          timestamp(3) not null default to_timestamp('2018-01-27','yyyy-mm-dd'),
+  7    UPDATE_TIME          timestamp(3) default to_timestamp('2018-01-27','yyyy-mm-dd') ON UPDATE to_timestamp('2018-01-28','yyyy-mm-dd'), 
+  8    primary key (REF_NO, TR_TIME)
+  9 );
+
+Succeed.
+
+SQL>
+SQL> 
+SQL> alter table TRANS_RECORD_LOG  add COMMENT_FD INT comment 'ADD COMMENT FOR COMMENT_FD FILED';
+
+Succeed.
+
+SQL> alter table TRANS_RECORD_LOG  MODIFY COMMENT_FD INT comment 'MODIFY COMMENT FOR COMMENT_FD FILED';
+
+Succeed.
+
+SQL> alter table TRANS_RECORD_LOG  DROP COLUMN COMMENT_FD;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> create table TRANS_RECORD_LOG
+  2 (
+  3    REF_NO               varchar(32) not null comment 'Sharding Key',
+  4    TR_TIME              timestamp(3) not null default to_timestamp('2018-01-27','yyyy-mm-dd') comment 'Partitioning Key (Per Day)',  
+  5    TR_API_ID            varchar(32) not null,
+  6    CREATE_TIME          timestamp(4) not null default CURRENT_TIMESTAMP(3),
+  7    UPDATE_TIME          timestamp(3) default to_timestamp('2018-01-27','yyyy-mm-dd') ON UPDATE to_timestamp('2018-01-28','yyyy-mm-dd'), 
+  8    primary key (REF_NO, TR_TIME)
+  9 );
+
+Succeed.
+
+SQL> 
+SQL> create table TRANS_RECORD_LOG
+  2 (
+  3    REF_NO               varchar(32) not null comment 'Sharding Key',
+  4    TR_TIME              timestamp(3) not null default to_timestamp('2018-01-27','yyyy-mm-dd') comment 'Partitioning Key (Per Day)',  
+  5    TR_API_ID            varchar(32) not null,
+  6    CREATE_TIME          timestamp(3) not null default CURRENT_TIMESTAMP(3),
+  7    UPDATE_TIME          timestamp(3) default to_timestamp('2018-01-27','yyyy-mm-dd') ON UPDATE to_timestamp('2018-01-28','yyyy-mm-dd'), 
+  8    primary key (REF_NO, TR_TIME)
+  9 );
+
+CT-01301, SYS.TRANS_RECORD_LOG already exists
+SQL> 
+SQL> insert into TRANS_RECORD_LOG (REF_NO, TR_TIME, TR_API_ID) values('1', default, 'API1');
+
+1 rows affected.
+
+SQL> insert into TRANS_RECORD_LOG values('2', default, 'API2',default, default);
+
+1 rows affected.
+
+SQL> select REF_NO, TR_TIME, TR_API_ID, UPDATE_TIME  from TRANS_RECORD_LOG;
+
+REF_NO                           TR_TIME                          TR_API_ID                        UPDATE_TIME                     
+-------------------------------- -------------------------------- -------------------------------- --------------------------------
+1                                2018-01-27 00:00:00.000          API1                             2018-01-27 00:00:00.000         
+2                                2018-01-27 00:00:00.000          API2                             2018-01-27 00:00:00.000         
+
+2 rows fetched.
+
+SQL> 
+SQL> update TRANS_RECORD_LOG set TR_API_ID = 'API1_1' where REF_NO = '1';
+
+1 rows affected.
+
+SQL> select REF_NO, TR_TIME, TR_API_ID, UPDATE_TIME from TRANS_RECORD_LOG;
+
+REF_NO                           TR_TIME                          TR_API_ID                        UPDATE_TIME                     
+-------------------------------- -------------------------------- -------------------------------- --------------------------------
+1                                2018-01-27 00:00:00.000          API1_1                           2018-01-28 00:00:00.000         
+2                                2018-01-27 00:00:00.000          API2                             2018-01-27 00:00:00.000         
+
+2 rows fetched.
+
+SQL> 
+SQL> merge into TRANS_RECORD_LOG new using TRANS_RECORD_LOG old on (old.REF_NO = '2') 
+  2 when matched then update set new.TR_API_ID = 'API1_2' where new.REF_NO = '2'; 
+
+1 rows affected.
+
+SQL> select REF_NO, TR_TIME, TR_API_ID, UPDATE_TIME from TRANS_RECORD_LOG;
+
+REF_NO                           TR_TIME                          TR_API_ID                        UPDATE_TIME                     
+-------------------------------- -------------------------------- -------------------------------- --------------------------------
+1                                2018-01-27 00:00:00.000          API1_1                           2018-01-28 00:00:00.000         
+2                                2018-01-27 00:00:00.000          API1_2                           2018-01-28 00:00:00.000         
+
+2 rows fetched.
+
+SQL> 
+SQL> update TRANS_RECORD_LOG set TR_API_ID = 'API1_1_1' where TR_TIME = '2018-01-27 00:00:00.000000';
+
+2 rows affected.
+
+SQL> select REF_NO, TR_TIME, TR_API_ID, UPDATE_TIME from TRANS_RECORD_LOG;
+
+REF_NO                           TR_TIME                          TR_API_ID                        UPDATE_TIME                     
+-------------------------------- -------------------------------- -------------------------------- --------------------------------
+1                                2018-01-27 00:00:00.000          API1_1_1                         2018-01-28 00:00:00.000         
+2                                2018-01-27 00:00:00.000          API1_1_1                         2018-01-28 00:00:00.000         
+
+2 rows fetched.
+
+SQL> 
+SQL> drop table TRANS_RECORD_LOG;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists table_default_stack;
+
+Succeed.
+
+SQL> create table table_default_stack(fd varchar(100) default 111111111111111111111111111);
+
+Succeed.
+
+SQL> insert into table_default_stack values(default);
+
+1 rows affected.
+
+SQL> select *  from table_default_stack;
+
+FD                                                              
+----------------------------------------------------------------
+111111111111111111111111111                                     
+
+1 rows fetched.
+
+SQL> drop table table_default_stack;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists cr_tab_00029;
+
+Succeed.
+
+SQL> create table if not exists cr_tab_00029
+  2 (
+  3 c1 INT  not  null comment 'product_id', 
+  4 c2 INTEGER default (1+1) ,
+  5 c3 BINARY_INTEGER,
+  6 c4 BINARY_UINT32,
+  7 c5 INTEGER UNSIGNED,
+  8 c6 BINARY_BIGINT,
+  9 c7 BIGINT,
+ 10 c8 BINARY_DOUBLE,
+ 11 c9 DOUBLE,
+ 12 c10 FLOAT,
+ 13 c11 REAL,
+ 14 c12 DECIMAL,
+ 15 c13 NUMBER,
+ 16 c14 CHAR(5) COLLATE UTF8_BIN,
+ 17 c15 NCHAR(5) COLLATE UTF8_GENERAL_CI,
+ 18 c16 CLOB COLLATE GBK_BIN ,
+ 19 c17 VARCHAR(4096) default 'a' on update 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+ 20 c19 NVARCHAR(20),
+ 21 c20 NVARCHAR2(20),
+ 22 c21 BINARY(20),
+ 23 c22 VARBINARY(20),
+ 24 c23 IMAGE,
+ 25 c24 BLOB,
+ 26 c25 RAW(20),
+ 27 c26 DATETIME  ,
+ 28 c27 DATE default last_day(sysdate),
+ 29 c28 TIMESTAMP,
+ 30 c29 TIMESTAMP WITH TIME ZONE,
+ 31 c30 TIMESTAMP WITH LOCAL TIME ZONE,
+ 32 c31 INTERVAL YEAR TO MONTH,
+ 33 c32 INTERVAL DAY TO SECOND,
+ 34 c33 BOOl,
+ 35 c34 boolean default lnnvl(1>0),
+ 36 constraint pk_030 UNIQUE(c1) using index local( PARTITION training1 PCTFREE 8,PARTITION training2 PCTFREE 8,PARTITION training3 PCTFREE 80,PARTITION training4 PCTFREE 80) 
+ 37 )
+ 38 PARTITION BY RANGE(c1)
+ 39 (
+ 40 PARTITION training1 VALUES LESS than(100),
+ 41 PARTITION training2 VALUES LESS than(200),
+ 42 PARTITION training3 VALUES LESS than(300),
+ 43 PARTITION training4 VALUES LESS than(MAXVALUE)
+ 44 );
+
+CT-00601, [19:27]Sql syntax error: default value string is too long, exceed 1024
+SQL> 
+SQL> 
+
+

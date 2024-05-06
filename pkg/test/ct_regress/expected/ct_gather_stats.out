@@ -1,0 +1,632 @@
+
+
+SQL> --
+SQL> -- gs_gather_stats
+SQL> -- testing system procedure
+SQL> --
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> --test case 1: test GATHER_DB_STATS()
+SQL> drop table if exists SYS_STATS_T1;
+
+Succeed.
+
+SQL> CREATE TABLE sys_stats_t1 (F_INT1 INT, F_INT2 INT, F_INT3 INT, F_INT4 INT,F_CHAR VARCHAR(16));
+
+Succeed.
+
+SQL> INSERT INTO sys_stats_t1 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO sys_stats_t1 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists SYS_STATS_T2;        
+
+Succeed.
+
+SQL> CREATE TABLE sys_stats_t2 (F_INT1 INT, F_INT2 INT, F_INT3 INT, F_INT4 INT,F_CHAR VARCHAR(16));    
+
+Succeed.
+
+SQL> INSERT INTO sys_stats_t2 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO sys_stats_t2 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists SYS_STATS_T_PART1; 
+
+Succeed.
+
+SQL> create table SYS_STATS_T_PART1(id int,ware_name varchar2(50))
+  2 partition by range(id)
+  3 (
+  4 partition par_01 values less than(10),
+  5 partition par_02 values less than(20),
+  6 partition par_03 values less than(30),
+  7 partition par_04 values less than(40)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO SYS_STATS_T_PART1 VALUES(1,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T_PART1 VALUES(2,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T_PART1 VALUES(3,'ABCFDD');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> exec GATHER_DB_STATS(estimate_percent=>10, force=>TRUE);
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --EXPECT 3
+SQL> SELECT COUNT(*) FROM ADM_TABLES WHERE TABLE_NAME in ('SYS_STATS_T1','SYS_STATS_T2','SYS_STATS_T_PART1') AND LAST_ANALYZED is NOT NULL;
+
+COUNT(*)            
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists SYS_STATS_T4;        
+
+Succeed.
+
+SQL> CREATE TABLE SYS_STATS_T4 (F_INT1 INT, F_INT2 INT, F_INT3 INT, F_INT4 INT,F_CHAR VARCHAR(16));    
+
+Succeed.
+
+SQL> INSERT INTO SYS_STATS_T4 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T4 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists SYS_STATS_T5;        
+
+Succeed.
+
+SQL> CREATE TABLE SYS_STATS_T5 (F_INT1 INT, F_INT2 INT, F_INT3 INT, F_INT4 INT,F_CHAR VARCHAR(16));   
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists SYS_STATS_T_PART2; 
+
+Succeed.
+
+SQL> create table SYS_STATS_T_PART2(id int,ware_name varchar2(50))
+  2 partition by range(id)
+  3 (
+  4 partition par_01 values less than(10),
+  5 partition par_02 values less than(20),
+  6 partition par_03 values less than(30),
+  7 partition par_04 values less than(40)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists SYS_STATS_T_PART3; 
+
+Succeed.
+
+SQL> create table SYS_STATS_T_PART3(id int,ware_name varchar2(50))
+  2 partition by range(id)
+  3 (
+  4 partition par_01 values less than(10),
+  5 partition par_02 values less than(20),
+  6 partition par_03 values less than(30),
+  7 partition par_04 values less than(40)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO SYS_STATS_T_PART3 VALUES(1,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T_PART3 VALUES(2,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T_PART3 VALUES(3,'ABCFDD');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists SYS_STATS_T_PART4; 
+
+Succeed.
+
+SQL> create table SYS_STATS_T_PART4(id int,ware_name varchar2(50))
+  2 partition by range(id)
+  3 (
+  4 partition par_01 values less than(10),
+  5 partition par_02 values less than(20),
+  6 partition par_03 values less than(30),
+  7 partition par_04 values less than(40)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2 start_time   DATE;
+  3 tab_count    number;
+  4 begin
+  5 start_time := SYSDATE;
+  6 sleep(1);
+  7 GATHER_DB_STATS(estimate_percent=>10, force=>TRUE);
+  8 SELECT COUNT(*) into tab_count FROM ADM_TABLES WHERE TABLE_NAME like 'SYS_STATS_T%' AND LAST_ANALYZED > start_time;
+  9 
+ 10 --expect 8
+ 11 dbe_output.print_line('table count:'||tab_count);
+ 12 end;
+ 13 /
+
+table count:8
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test case 2: test GATHER_CHANGE_STATS()
+SQL> ALTER TABLE SYS_STATS_T_PART3 add partition p5 values less than(50);
+
+Succeed.
+
+SQL> ALTER TABLE SYS_STATS_T_PART4 add partition p5 values less than(50);
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO sys_stats_t1 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T_PART1 VALUES(1,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T_PART1 VALUES(30,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO sys_stats_t5 VALUES(1,2,3,4,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T_PART2 VALUES(1,'ABCFDD');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_STATS_T_PART4 VALUES(1,'ABCFDD');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists SYS_STATS_T7;        
+
+Succeed.
+
+SQL> CREATE TABLE SYS_STATS_T7 (F_INT1 INT, F_INT2 INT, F_INT3 INT, F_INT4 INT,F_CHAR VARCHAR(16));   
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists SYS_STATS_T_PART5; 
+
+Succeed.
+
+SQL> create table SYS_STATS_T_PART5(id int,ware_name varchar2(50))
+  2 partition by range(id)
+  3 (
+  4 partition par_01 values less than(10),
+  5 partition par_02 values less than(20),
+  6 partition par_03 values less than(30),
+  7 partition par_04 values less than(40)
+  8 );
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 start_time   DATE;
+  3 tab_count    number;
+  4 begin
+  5 sleep(1);
+  6 start_time := SYSDATE;
+  7 sleep(1);
+  8 GATHER_CHANGE_STATS(estimate_percent=>10, change_percent=>10, force=>TRUE);
+  9 SELECT COUNT(*) into tab_count FROM ADM_TABLES WHERE TABLE_NAME like 'SYS_STATS_T_PART%' AND LAST_ANALYZED > start_time;
+ 10 
+ 11 --expect 4
+ 12 dbe_output.print_line('table count:'||tab_count);
+ 13 end;
+ 14 /
+
+table count:5
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> declare 
+  2 sql varchar2(256);
+  3 begin
+  4   for item in (SELECT TABLE_NAME FROM ADM_TABLES WHERE TABLE_NAME like 'SYS_STATS_T%')
+  5   loop
+  6 	sql := 'drop table if exists '||item.table_name;
+  7 	execute immediate sql;
+  8 	end loop;
+  9 end;
+ 10 /	
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> set serveroutput off;
+
+OFF
+SQL> 
+SQL> drop table if exists hzy_high_ndv1;
+
+Succeed.
+
+SQL> drop table if exists hzy_ndv1;
+
+Succeed.
+
+SQL> create table hzy_ndv1(a int);
+
+Succeed.
+
+SQL> insert into hzy_ndv1 values(0);
+
+1 rows affected.
+
+SQL> create table hzy_high_ndv1(a int)
+  2 partition by range(A)
+  3 (
+  4    partition p_ndv1 values less than (101),
+  5    partition p_ndv2 values less than (201),
+  6    partition p_ndv3 values less than (301)
+  7 );
+
+Succeed.
+
+SQL> 
+SQL> CREATE or replace procedure storage_proc_000(startnum int,endall int) is
+  2 i INT :=1;
+  3 j varchar(10);
+  4 BEGIN
+  5   FOR i IN startnum..endall LOOP
+  6     insert into hzy_high_ndv1 select a+i from hzy_ndv1;
+  7   END LOOP;
+  8 END;
+  9 /
+
+Succeed.
+
+SQL> call storage_proc_000(1,100);
+
+PL/SQL procedure successfully completed.
+
+SQL> call storage_proc_000(101,200);
+
+PL/SQL procedure successfully completed.
+
+SQL> call storage_proc_000(201,300);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> exec DBE_STATS.COLLECT_TABLE_STATS('SYS', 'hzy_high_ndv1', 'p_ndv1');
+
+PL/SQL procedure successfully completed.
+
+SQL> select BUCKET_NUM,ROW_NUM,NULL_NUM,MINVALUE,MAXVALUE,DIST_NUM,DENSITY,SPARE1 from SYS_HISTGRAM_ABSTR where tab# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1') ORDER BY SPARE1;
+
+BUCKET_NUM   ROW_NUM      NULL_NUM     MINVALUE                                                         MAXVALUE                                                         DIST_NUM     DENSITY              SPARE1              
+------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------------- --------------------
+100          100          0            1                                                                100                                                              100          0.01                 10                  
+254          300          0            1                                                                300                                                              300          0.00333333333333333  4294967295          
+
+2 rows fetched.
+
+SQL> select part#,rowcnt,blkcnt,empcnt,samplesize from SYS_TABLE_PARTS where table# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1') order by part#;
+
+PART#        ROWCNT       BLKCNT       EMPCNT       SAMPLESIZE  
+------------ ------------ ------------ ------------ ------------
+10           100          1            0            100         
+20           100          1            0            100         
+30           100          1            0            100         
+
+3 rows fetched.
+
+SQL> select NUM_ROWS,BLOCKS,EMPTY_BLOCKS,SAMPLESIZE FROM SYS_TABLES WHERE NAME = 'HZY_HIGH_NDV1';
+
+NUM_ROWS     BLOCKS       EMPTY_BLOCKS SAMPLESIZE  
+------------ ------------ ------------ ------------
+300          3            0            300         
+
+1 rows fetched.
+
+SQL> 
+SQL> exec DBE_STATS.COLLECT_TABLE_STATS('SYS', 'hzy_high_ndv1', 'p_ndv3');
+
+PL/SQL procedure successfully completed.
+
+SQL> select BUCKET_NUM,ROW_NUM,NULL_NUM,MINVALUE,MAXVALUE,DIST_NUM,DENSITY,SPARE1 from SYS_HISTGRAM_ABSTR where tab# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1') ORDER BY SPARE1;
+
+BUCKET_NUM   ROW_NUM      NULL_NUM     MINVALUE                                                         MAXVALUE                                                         DIST_NUM     DENSITY              SPARE1              
+------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------------- --------------------
+100          100          0            1                                                                100                                                              100          0.01                 10                  
+100          100          0            201                                                              300                                                              100          0.01                 30                  
+254          300          0            1                                                                300                                                              300          0.00333333333333333  4294967295          
+
+3 rows fetched.
+
+SQL> select part#,rowcnt,blkcnt,empcnt,samplesize from SYS_TABLE_PARTS where table# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1') order by part#;
+
+PART#        ROWCNT       BLKCNT       EMPCNT       SAMPLESIZE  
+------------ ------------ ------------ ------------ ------------
+10           100          1            0            100         
+20           100          1            0            100         
+30           100          1            0            100         
+
+3 rows fetched.
+
+SQL> select NUM_ROWS,BLOCKS,EMPTY_BLOCKS,SAMPLESIZE FROM SYS_TABLES WHERE NAME = 'HZY_HIGH_NDV1';
+
+NUM_ROWS     BLOCKS       EMPTY_BLOCKS SAMPLESIZE  
+------------ ------------ ------------ ------------
+300          3            0            300         
+
+1 rows fetched.
+
+SQL> 
+SQL> exec DBE_STATS.COLLECT_TABLE_STATS('SYS', 'hzy_high_ndv1', 'p_ndv2');
+
+PL/SQL procedure successfully completed.
+
+SQL> select BUCKET_NUM,ROW_NUM,NULL_NUM,MINVALUE,MAXVALUE,DIST_NUM,DENSITY,SPARE1 from SYS_HISTGRAM_ABSTR where tab# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1') ORDER BY SPARE1;
+
+BUCKET_NUM   ROW_NUM      NULL_NUM     MINVALUE                                                         MAXVALUE                                                         DIST_NUM     DENSITY              SPARE1              
+------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------------- --------------------
+100          100          0            1                                                                100                                                              100          0.01                 10                  
+100          100          0            101                                                              200                                                              100          0.01                 20                  
+100          100          0            201                                                              300                                                              100          0.01                 30                  
+254          300          0            1                                                                300                                                              300          0.00333333333333333  4294967295          
+
+4 rows fetched.
+
+SQL> select part#,rowcnt,blkcnt,empcnt,samplesize from SYS_TABLE_PARTS where table# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1') order by part#;
+
+PART#        ROWCNT       BLKCNT       EMPCNT       SAMPLESIZE  
+------------ ------------ ------------ ------------ ------------
+10           100          1            0            100         
+20           100          1            0            100         
+30           100          1            0            100         
+
+3 rows fetched.
+
+SQL> select NUM_ROWS,BLOCKS,EMPTY_BLOCKS,SAMPLESIZE FROM SYS_TABLES WHERE NAME = 'HZY_HIGH_NDV1';
+
+NUM_ROWS     BLOCKS       EMPTY_BLOCKS SAMPLESIZE  
+------------ ------------ ------------ ------------
+300          3            0            300         
+
+1 rows fetched.
+
+SQL> 
+SQL> alter table HZY_HIGH_NDV1 drop partition p_ndv3;
+
+Succeed.
+
+SQL> select NUM_ROWS,BLOCKS,EMPTY_BLOCKS,SAMPLESIZE FROM SYS_TABLES WHERE NAME = 'HZY_HIGH_NDV1';
+
+NUM_ROWS     BLOCKS       EMPTY_BLOCKS SAMPLESIZE  
+------------ ------------ ------------ ------------
+200          2            0            200         
+
+1 rows fetched.
+
+SQL> select part#,rowcnt,blkcnt,empcnt,samplesize from SYS_TABLE_PARTS where table# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1') order by part#;
+
+PART#        ROWCNT       BLKCNT       EMPCNT       SAMPLESIZE  
+------------ ------------ ------------ ------------ ------------
+10           100          1            0            100         
+20           100          1            0            100         
+
+2 rows fetched.
+
+SQL> 
+SQL> alter table HZY_HIGH_NDV1 add partition p_ndv4 values less than(401);
+
+Succeed.
+
+SQL> call storage_proc_000(301,400);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> exec DBE_STATS.COLLECT_TABLE_STATS('SYS', 'hzy_high_ndv1', 'p_ndv4');
+
+PL/SQL procedure successfully completed.
+
+SQL> select BUCKET_NUM,ROW_NUM,NULL_NUM,MINVALUE,MAXVALUE,DIST_NUM,DENSITY,SPARE1 from SYS_HISTGRAM_ABSTR where tab# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1')
+  2 ORDER BY SPARE1;
+
+BUCKET_NUM   ROW_NUM      NULL_NUM     MINVALUE                                                         MAXVALUE                                                         DIST_NUM     DENSITY              SPARE1              
+------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------------- --------------------
+100          100          0            1                                                                100                                                              100          0.01                 10                  
+100          100          0            101                                                              200                                                              100          0.01                 20                  
+100          100          0            301                                                              400                                                              100          0.01                 30                  
+254          300          0            1                                                                400                                                              300          0.00333333333333333  4294967295          
+
+4 rows fetched.
+
+SQL> select NUM_ROWS,BLOCKS,EMPTY_BLOCKS,SAMPLESIZE FROM SYS_TABLES WHERE NAME = 'HZY_HIGH_NDV1';
+
+NUM_ROWS     BLOCKS       EMPTY_BLOCKS SAMPLESIZE  
+------------ ------------ ------------ ------------
+300          3            0            300         
+
+1 rows fetched.
+
+SQL> 
+SQL> alter table HZY_HIGH_NDV1 drop partition p_ndv2;
+
+Succeed.
+
+SQL> select NUM_ROWS,BLOCKS,EMPTY_BLOCKS,SAMPLESIZE FROM SYS_TABLES WHERE NAME = 'HZY_HIGH_NDV1';
+
+NUM_ROWS     BLOCKS       EMPTY_BLOCKS SAMPLESIZE  
+------------ ------------ ------------ ------------
+200          2            0            200         
+
+1 rows fetched.
+
+SQL> 
+SQL> alter table HZY_HIGH_NDV1 add partition p_ndv5 values less than(501);
+
+Succeed.
+
+SQL> call storage_proc_000(401,500);
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> exec DBE_STATS.COLLECT_TABLE_STATS('SYS', 'hzy_high_ndv1', 'p_ndv5');
+
+PL/SQL procedure successfully completed.
+
+SQL> select BUCKET_NUM,ROW_NUM,NULL_NUM,MINVALUE,MAXVALUE,DIST_NUM,DENSITY,SPARE1 from SYS_HISTGRAM_ABSTR where tab# = (select id from SYS_TABLES where name = 'HZY_HIGH_NDV1')
+  2 ORDER BY SPARE1;
+
+BUCKET_NUM   ROW_NUM      NULL_NUM     MINVALUE                                                         MAXVALUE                                                         DIST_NUM     DENSITY              SPARE1              
+------------ ------------ ------------ ---------------------------------------------------------------- ---------------------------------------------------------------- ------------ -------------------- --------------------
+100          100          0            1                                                                100                                                              100          0.01                 10                  
+100          100          0            301                                                              400                                                              100          0.01                 30                  
+100          100          0            401                                                              500                                                              100          0.01                 40                  
+254          300          0            1                                                                500                                                              300          0.00333333333333333  4294967295          
+
+4 rows fetched.
+
+SQL> select NUM_ROWS,BLOCKS,EMPTY_BLOCKS,SAMPLESIZE FROM SYS_TABLES WHERE NAME = 'HZY_HIGH_NDV1';
+
+NUM_ROWS     BLOCKS       EMPTY_BLOCKS SAMPLESIZE  
+------------ ------------ ------------ ------------
+300          3            0            300         
+
+1 rows fetched.
+
+SQL> drop table if exists hzy_high_ndv1;
+
+Succeed.
+
+SQL> drop table if exists hzy_ndv1;
+Succeed.
+
+SQL> 
+SQL> drop table  if exists TB_A_TEST_MDY_COLOUM;
+
+Succeed.
+
+SQL> create table TB_A_TEST_MDY_COLOUM(TB_A_TEST_MDY_COLOUM int);
+
+Succeed.
+
+SQL> insert into TB_A_TEST_MDY_COLOUM values(1);
+
+1 rows affected.
+
+SQL> insert into TB_A_TEST_MDY_COLOUM values(2);
+
+1 rows affected.
+
+SQL> insert into TB_A_TEST_MDY_COLOUM values(3);
+
+1 rows affected.
+
+SQL> analyze table TB_A_TEST_MDY_COLOUM compute statistics;
+
+Succeed.
+
+SQL> 
+SQL> select col#,spare1,BUCKET_NUM,DIST_NUM,DENSITY from sys. SYS_HISTGRAM_ABSTR where tab# = (select id from sys.SYS_TABLES where name = 'TB_A_TEST_MDY_COLOUM')  order by col#,spare1;
+
+COL#         SPARE1               BUCKET_NUM   DIST_NUM     DENSITY             
+------------ -------------------- ------------ ------------ --------------------
+0                                 3            3            0.333333333333333   
+
+1 rows fetched.
+
+SQL> drop table  if exists TB_A_TEST_MDY_COLOUM;
+Succeed.
+
+
+
+

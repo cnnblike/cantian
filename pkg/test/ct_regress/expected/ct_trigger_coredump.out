@@ -1,0 +1,292 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_trigger_coredump cascade;
+
+Succeed.
+
+SQL> create user gs_trigger_coredump identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to gs_trigger_coredump;
+
+Succeed.
+
+SQL> grant execute on DBE_AC_ROW to gs_trigger_coredump;
+
+Succeed.
+
+SQL> conn gs_trigger_coredump/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> set serveroutput on;
+
+ON
+SQL> 
+SQL> drop table if exists trig_tab1;
+
+Succeed.
+
+SQL> create table trig_tab1(f1 int);
+
+Succeed.
+
+SQL> 
+SQL> insert into trig_tab1 values(5);
+
+1 rows affected.
+
+SQL> insert into trig_tab1 values(10);
+
+1 rows affected.
+
+SQL> insert into trig_tab1 values(15);
+
+1 rows affected.
+
+SQL> insert into trig_tab1 values(20);
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists trig_tab2;  
+
+Succeed.
+
+SQL> 
+SQL> create table trig_tab2(f1 varchar(100), f2 int);
+
+Succeed.
+
+SQL> 
+SQL> insert into trig_tab2 values('a',5);
+
+1 rows affected.
+
+SQL> insert into trig_tab2 values('b',10);
+
+1 rows affected.
+
+SQL> insert into trig_tab2 values('c',15);
+
+1 rows affected.
+
+SQL> insert into trig_tab2 values('d',20);
+
+1 rows affected.
+
+SQL> 
+SQL> drop table if exists trig_tab3; 
+
+Succeed.
+
+SQL> 
+SQL> create table trig_tab3(f1 varchar(100), f2 int);
+
+Succeed.
+
+SQL> 
+SQL> insert into trig_tab3 values('a',5);
+
+1 rows affected.
+
+SQL> insert into trig_tab3 values('b',10);
+
+1 rows affected.
+
+SQL> insert into trig_tab3 values('c',15);
+
+1 rows affected.
+
+SQL> insert into trig_tab3 values('d',20);  
+
+1 rows affected.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER trig_1 BEFORE UPDATE ON trig_tab1
+  2 FOR EACH ROW
+  3 BEGIN
+  4   update trig_tab2 set f2=f2+1, f1 = f1||lpad('aaa',4,'bbb');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE TRIGGER trig_2 BEFORE UPDATE ON trig_tab2
+  2 FOR EACH ROW
+  3 BEGIN
+  4   update trig_tab3 set f2=f2+1, f1 = f1||lpad('aaa',4,'bbb');
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> update trig_tab1 set f1=f1+1;
+
+4 rows affected.
+
+SQL> 
+SQL> drop table if exists add_policy_table_001;
+
+Succeed.
+
+SQL> create table add_policy_table_001(id int);
+
+Succeed.
+
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION f_add_policy(P_Schema in varchar2,P_Object in varchar2) return varchar2
+  2 AS
+  3 BEGIN
+  4    RETURN 'ID<2';
+  5 END f_add_policy;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> drop trigger if exists add_policy_t001;
+
+Succeed.
+
+SQL> create or  replace trigger add_policy_t001 after insert on add_policy_table_001
+  2 begin
+  3   DBE_AC_ROW.add_policy(object_schema => user, object_name => 'add_policy_table_002',policy_name => 'DBMS_RLS_001',function_schema => user,policy_function => 'f_add_policy', types => 'select',enable => TRUE);
+  4 end;
+  5 /
+
+Succeed.
+
+SQL> insert into add_policy_table_001 values(1);
+
+CT-00932, [3:3] PL/SQL(GS_TRIGGER_COREDUMP.ADD_POLICY_T001) terminated with execute errors
+[3:3] PL/SQL(DBE_AC_ROW.ADD_POLICY) terminated with execute errors
+CT-00928, DDL or DCL is not allowed in a trigger
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> drop table if exists tt1;
+
+Succeed.
+
+SQL> create table tt1(a int not null,b int not null, c varchar(8000) default lpad('a',8000)) crmode row;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX idx1 on tt1(a);
+
+Succeed.
+
+SQL> begin
+  2 for i in 1..3 loop
+  3 insert into tt1(a,b) values(i,i*10); 
+  4 end loop;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> commit;
+
+Succeed.
+
+SQL> 
+SQL> create or replace procedure pro_auto()
+  2 is
+  3 PRAGMA AUTONOMOUS_TRANSACTION;
+  4 begin
+  5 execute immediate 'create table '||dbe_random.get_string('l',10)||'(a int)';
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace trigger trig_tt1 before insert on tt1
+  2 begin
+  3   pro_auto();
+  4   update tt1 set a=a+1; 
+  5 END;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> update tt1 set a=a+1;
+
+3 rows affected.
+
+SQL> replace into tt1 select a+1,b,c from tt1;
+
+5 rows affected.
+
+SQL> select a,b from tt1 order by 1,2;
+
+A            B           
+------------ ------------
+3            10          
+4            10          
+5            20          
+6            30          
+
+4 rows fetched.
+
+SQL> 
+SQL> drop table if exists test_replace_trigger_aa;
+
+Succeed.
+
+SQL> create table test_replace_trigger_aa(f int);
+
+Succeed.
+
+SQL> CREATE OR REPLACE TRIGGER "test_replace_AA_BEFORE_INSERT"
+  2 before insert on test_replace_trigger_aa 
+  3 for each row 
+  4 begin 
+  5 if :new.f is null then 
+  6 select 66 into :new.f from sys_dummy; 
+  7 end if; 
+  8 end; 
+  9 /
+
+Succeed.
+
+SQL> replace into test_replace_trigger_aa set f = null;
+
+1 rows affected.
+
+SQL> select * from test_replace_trigger_aa;
+
+F           
+------------
+66          
+
+1 rows fetched.
+
+SQL> drop table if exists test_replace_trigger_aa;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists gs_trigger_coredump cascade;
+Succeed.
+
+
+
+

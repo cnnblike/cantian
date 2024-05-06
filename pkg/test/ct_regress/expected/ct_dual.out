@@ -1,0 +1,433 @@
+
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> 
+SQL> select * from dual;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select 1 from dual;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select * from dual where 1 != 2;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from dual where 1 = 2;
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> select * from dual where dummy = 'x';
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> select * from dual where dummy = 'X';
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select 1 + 2 from dual;
+
+1 + 2               
+--------------------
+3                   
+
+1 rows fetched.
+
+SQL> select * from dual where rowid::decimal < 123E100;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select rowid from dual;
+
+ROWID             
+------------------
+000000000002440000
+
+1 rows fetched.
+
+SQL> select rowscn from dual;
+
+ROWSCN              
+--------------------
+0                   
+
+1 rows fetched.
+
+SQL> select * from dual where rowid = to_char('000000000002440000');
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> select * from dual where rowid=to_char('000000000002440001');
+
+DUMMY
+-----
+
+0 rows fetched.
+
+SQL> 
+SQL> drop user if exists test_dual cascade;
+
+Succeed.
+
+SQL> create user test_dual identified by Lh00420062;
+
+Succeed.
+
+SQL> grant dba to test_dual;
+
+Succeed.
+
+SQL> conn test_dual/Lh00420062@127.0.0.1:1611
+
+connected.
+
+SQL>
+SQL> select 1;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from dual;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> select 1 from sys.dual;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+
+SQL> select 1 from sys_dummy;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+
+SQL> select 1 from sys.sys_dummy;
+
+1
+------------
+1
+
+1 rows fetched.
+
+SQL>
+SQL> create table dual(a int, c char);
+
+Succeed.
+
+SQL> insert into dual values(1,'a');
+
+1 rows affected.
+
+
+SQL> select * from dual;
+
+A            C
+------------ -
+1            a
+
+1 rows fetched.
+
+SQL> select * from sys.dual;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+
+SQL> select * from sys_dummy;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+
+SQL> select * from sys.sys_dummy;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> drop table dual;
+
+Succeed.
+
+SQL> 
+SQL> create table sys_dummy(a int, c char);
+
+Succeed.
+
+SQL> insert into sys_dummy values(1,'a');
+
+1 rows affected.
+
+
+SQL> select * from dual;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+
+SQL> select * from sys.dual;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+
+SQL> select * from sys_dummy;
+
+A            C
+------------ -
+1            a
+
+1 rows fetched.
+
+
+SQL> select * from sys.sys_dummy;
+
+DUMMY
+-----
+X    
+
+1 rows fetched.
+
+SQL> drop table sys_dummy;
+
+Succeed.
+
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user test_dual cascade;
+
+Succeed.
+
+SQL> 
+SQL> conn err_user/sd2332@127.0.0.1:1611
+
+CT-00329, Incorrect user or password
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> select 10 / 
+  2 5 from dual;
+
+10 /
+5              
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> 
+SQL> select 10 / 
+  2 5 from dual
+  3 /
+
+10 /
+5              
+--------------------
+2                   
+
+1 rows fetched.
+
+SQL> 
+SQL> ddsfsf/
+  2 /
+
+CT-00601, [1:1]Sql syntax error: key word expected
+SQL> 
+SQL> select 1 
+  2 from dual
+  3 /
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+SQL> select 2 from dual
+  2    /   
+
+2           
+------------
+2           
+
+1 rows fetched.
+
+SQL> 
+SQL> select 3 from dual
+  2 /*sdfsfsdf*/
+  3 /
+
+3           
+------------
+3           
+
+1 rows fetched.
+
+SQL> 
+SQL> select 4 from dual
+  2 /*sdfsfsdf*// 
+  3 /
+
+CT-00601, [2:13]Sql syntax error: invalid word '/' found
+SQL> 
+SQL> select 5 from dual
+  2 //*sdfsfsdf*/
+  3 /
+
+CT-00601, [2:1]Sql syntax error: invalid word '/' found
+SQL> 
+SQL> declare
+  2 var int;
+  3 begin
+  4 var := var /*fdsaf*/;
+  5 end;
+  6 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> declare
+  2 var varchar(10);
+  3 begin
+  4 var := '
+  5 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[4:8] PLC-00601 Sql syntax error: text is not completed
+
+SQL> ';
+
+CT-00601, [1:1]Sql syntax error: text is not completed
+SQL> end;/*fds
+
+CT-00601, Sql syntax error: key word expected
+SQL> af*/
+SQL> /
+
+CT-00601, [1:1]Sql syntax error: key word expected
+SQL> 
+SQL> declare
+  2 var int;
+  3 begin
+  4 var := var/*fdsaf*/
+  5 /
+
+CT-00944, PL/SQL(SYS.ANONYMOUS BLOCK) terminated with compiling errors
+[5:1] PLC-00601 Sql syntax error: expression error
+
+SQL> /*fdsaf*/1;
+SQL> end;/*fds
+
+CT-00515, Multiple sql must use query mode to execute
+SQL> af*/
+SQL> /
+
+CT-00601, [1:1]Sql syntax error: key word expected
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE test_pro(param1 IN VARCHAR2,param2 IN VARCHAR2)
+  2 IS
+  3 BEGIN
+  4 dbe_output.print_line('Hello Zenith:'||param1||','||param2);
+  5 END test_pro;
+  6 /
+
+Succeed.
+
+SQL>
+SQL> --DTS202008070MW6TEP0K00
+SQL> @comment_at_first.sql;select 2 + 3;
+
+SQL> /*
+  2 'test
+  3 */
+SQL> select 1 from dual;
+
+1           
+------------
+1           
+
+1 rows fetched.
+
+SQL> 
+
+
+2 + 3               
+--------------------
+5                   
+
+1 rows fetched.
+
+SQL> 
+SQL> 
+
+

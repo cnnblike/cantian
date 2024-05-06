@@ -1,0 +1,1019 @@
+
+
+SQL> conn / as sysdba 
+
+connected.
+
+SQL> DROP TABLE  if exists training;
+
+Succeed.
+
+SQL> DROP TABLE  if exists education;
+
+Succeed.
+
+SQL> DROP TABLE  if exists trainings;
+
+Succeed.
+
+SQL> DROP TABLE  if exists educations;
+
+Succeed.
+
+SQL> CREATE TABLE education(staff_id INT primary key, first_name VARCHAR(20));
+
+Succeed.
+
+SQL> CREATE TABLE training(staff_id INT check(staff_id is not null), first_name VARCHAR(20));
+
+Succeed.
+
+SQL> alter table training add constraint trainingcon foreign key(staff_id) REFERENCES education(staff_id) on delete set null;
+
+Succeed.
+
+SQL> CREATE TABLE educations(staff_id INT primary key, first_name VARCHAR(20));
+
+Succeed.
+
+SQL> CREATE TABLE trainings(staff_id INT, first_name VARCHAR(20));
+
+Succeed.
+
+SQL> alter table trainings add constraint check_not_null check(staff_id is not null);
+
+Succeed.
+
+SQL> alter table trainings add constraint trainingcons foreign key(staff_id) REFERENCES educations(staff_id) on delete set null;
+
+Succeed.
+
+SQL> INSERT INTO education VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> INSERT INTO training VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> delete from education where staff_id=1;
+
+CT-01127, Check constraint violated
+SQL> select * from training;
+
+STAFF_ID     FIRST_NAME          
+------------ --------------------
+1            ALICE               
+
+1 rows fetched.
+
+SQL> select * from education;
+
+STAFF_ID     FIRST_NAME          
+------------ --------------------
+1            ALICE               
+
+1 rows fetched.
+
+SQL> INSERT INTO educations VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> INSERT INTO trainings VALUES(1, 'ALICE');
+
+1 rows affected.
+
+SQL> delete from educations where staff_id=1;
+
+CT-01127, Check constraint violated
+SQL> select * from trainings;
+
+STAFF_ID     FIRST_NAME          
+------------ --------------------
+1            ALICE               
+
+1 rows fetched.
+
+SQL> select * from educations;
+
+STAFF_ID     FIRST_NAME          
+------------ --------------------             
+1            ALICE               
+
+1 rows fetched.
+
+SQL> DROP TABLE  if exists training;
+
+Succeed.
+
+SQL> DROP TABLE  if exists education;
+
+Succeed.
+
+SQL> DROP TABLE  if exists trainings;
+
+Succeed.
+
+SQL> DROP TABLE  if exists educations;
+
+Succeed.
+
+SQL> drop table if exists base_008;
+
+Succeed.
+
+SQL> create table base_008 (id int,name char);
+
+Succeed.
+
+SQL> alter table base_008 add constraint basepk primary key (id);
+
+Succeed.
+
+SQL> alter table base_008 add constraint basepk2 unique (name);
+
+Succeed.
+
+SQL> select constraint_name, table_name from all_constraints where table_name ='BASE_008' order by constraint_name;
+
+CONSTRAINT_NAME                                                  TABLE_NAME                                                      
+---------------------------------------------------------------- ----------------------------------------------------------------
+BASEPK                                                           BASE_008                                                        
+BASEPK2                                                          BASE_008                                                        
+
+2 rows fetched.
+
+SQL> alter table base_008 rename constraint  basepk to basepk2;
+
+CT-00753, The object constraint BASEPK2 already exists.
+SQL> alter table base_008 rename constraint  basepk to basepk3;
+
+Succeed.
+
+SQL> select constraint_name, table_name from all_constraints where table_name ='BASE_008' order by constraint_name;
+
+CONSTRAINT_NAME                                                  TABLE_NAME                                                      
+---------------------------------------------------------------- ----------------------------------------------------------------
+BASEPK2                                                          BASE_008                                                        
+BASEPK3                                                          BASE_008                                                        
+
+2 rows fetched.
+
+SQL> drop table if exists base_008;
+
+Succeed.
+
+SQL> drop table if exists sf;
+
+Succeed.
+
+SQL> create table sf (a int);
+
+Succeed.
+
+SQL> alter table sf add constraint sf check(a <100);
+
+Succeed.
+
+SQL> insert into sf values(20);
+
+1 rows affected.
+
+SQL> alter table sf drop constraint sf;
+
+Succeed.
+
+SQL> alter table sf add constraint sf check(a <100 or a>200);
+
+Succeed.
+
+SQL> drop table sf;
+
+Succeed.
+
+SQL> drop table if exists `check table`;
+
+Succeed.
+
+SQL> create table `check table` (c1 int, c2 int);
+
+Succeed.
+
+SQL> alter table `check table` add constraint check_cons_1 CHECK(c2>1);
+
+Succeed.
+
+SQL> drop table `check table`;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS cons_table;
+
+Succeed.
+
+SQL> CREATE TABLE cons_table(c1 int, c2 varchar(32), c3 bigint);
+
+Succeed.
+
+SQL> INSERT INTO cons_table values(1, 'a1', 1000);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> --add constraint with a create index clause
+SQL> ALTER TABLE cons_table ADD CONSTRAINT pk_cons_table PRIMARY KEY(c1, c2) USING INDEX (CREATE INDEX pk_cons_table ON cons_table(c2) INITRANS 10 TABLESPACE users PCTFREE 10);
+
+CT-00679, The index cannot be used as a constraint
+SQL> ALTER TABLE cons_table ADD CONSTRAINT pk_cons_table PRIMARY KEY(c1, c2) USING INDEX (CREATE INDEX pk_cons_table ON cons_table(c1, c2) INITRANS 10 TABLESPACE users PCTFREE 10);
+
+Succeed.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_TABLE' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS       
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------
+CONS_TABLE                                                       1            PK_CONS_TABLE                                                    0            0            10           4            10           8           
+
+1 rows fetched.
+
+SQL> SELECT cons_name, cons_type FROM SYS_CONSTRAINT_DEFS WHERE cons_name = 'PK_CONS_TABLE';
+
+CONS_NAME                                                        CONS_TYPE   
+---------------------------------------------------------------- ------------
+PK_CONS_TABLE                                                    0           
+
+1 rows fetched.
+
+SQL> 
+SQL> --index is not dropped with constraint
+SQL> ALTER TABLE cons_table DROP CONSTRAINT pk_cons_table;
+
+Succeed.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_TABLE' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS       
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------
+CONS_TABLE                                                       1            PK_CONS_TABLE                                                    0            0            10           4            10           8           
+
+1 rows fetched.
+
+SQL> SELECT cons_name, cons_type FROM SYS_CONSTRAINT_DEFS WHERE cons_name = 'PK_CONS_TABLE';
+
+CONS_NAME                                                        CONS_TYPE   
+---------------------------------------------------------------- ------------
+
+0 rows fetched.
+
+SQL> DROP INDEX pk_cons_table ON cons_table;
+
+Succeed.
+
+SQL> ALTER TABLE cons_table ADD CONSTRAINT pk_cons_table PRIMARY KEY(c1, c2) USING INDEX (CREATE INDEX ix_cons_table ON cons_table(c1, c2) INITRANS 10 TABLESPACE users PCTFREE 10);
+
+Succeed.
+
+SQL> INSERT INTO cons_table values(2, null, 1000);
+
+CT-00620, Can't set NULL value for column 'C2'
+SQL> INSERT INTO cons_table values(1, 'a1', 1000);
+
+CT-00729, Unique constraint violated, index IX_CONS_TABLE, duplicate key 1-a1
+SQL> ALTER TABLE cons_table DROP CONSTRAINT pk_cons_table;
+
+Succeed.
+
+SQL> 
+SQL> --add constraint add specified using an existed index
+SQL> ALTER TABLE cons_table ADD CONSTRAINT uni_cons_table UNIQUE(c1) USING INDEX ix_cons_table;
+
+CT-00679, The index cannot be used as a constraint
+SQL> ALTER TABLE cons_table ADD CONSTRAINT uni_cons_table UNIQUE(c1, c2) USING INDEX ix_cons_table;
+
+Succeed.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_TABLE' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS       
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------
+CONS_TABLE                                                       1            IX_CONS_TABLE                                                    0            0            10           4            10           8           
+
+1 rows fetched.
+
+SQL> ALTER TABLE cons_table DROP CONSTRAINT uni_cons_table;
+
+Succeed.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_TABLE' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS       
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------
+CONS_TABLE                                                       1            IX_CONS_TABLE                                                    0            0            10           4            10           8           
+
+1 rows fetched.
+
+SQL> 
+SQL> --add constraint with index attributes specified.
+SQL> DROP INDEX ix_cons_table ON cons_table;
+
+Succeed.
+
+SQL> ALTER TABLE cons_table ADD CONSTRAINT uni_cons_table UNIQUE(c1, c2) USING INDEX ix_cons_table;
+
+CT-00830, Index SYS.IX_CONS_TABLE does not exist
+SQL> ALTER TABLE cons_table ADD CONSTRAINT uni_cons_table UNIQUE(c1, c2) USING INDEX INITRANS 10 PCTFREE 15;
+
+Succeed.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_TABLE' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS       
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------
+CONS_TABLE                                                       1            UNI_CONS_TABLE                                                   0            1            10           0            15           1           
+
+1 rows fetched.
+
+SQL> 
+SQL> DROP TABLE cons_table;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS cons_part;
+
+Succeed.
+
+SQL> CREATE TABLE cons_part(c1 int, c2 varchar(32), c3 bigint) PARTITION BY RANGE(c1) (PARTITION p1 VALUES LESS THAN (100), PARTITION p2 VALUES LESS THAN (200), PARTITION p3 VALUES LESS THAN (300), PARTITION p4 VALUES LESS THAN (maxvalue));
+
+Succeed.
+
+SQL> INSERT INTO cons_part VALUES(50, 'P1', 5000);
+
+1 rows affected.
+
+SQL> INSERT INTO cons_part VALUES(150, 'P2', 15000);
+
+1 rows affected.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 25000);
+
+1 rows affected.
+
+SQL> INSERT INTO cons_part VALUES(350, 'P4', 35000);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> --add primary key for partition table(default a global index will be created.
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1);
+
+Succeed.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 25000);
+
+CT-00729, Unique constraint violated, index PK_CONS_PART, duplicate key 250
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            PK_CONS_PART                                                     1            0            2            0            8            1            0           
+
+1 rows fetched.
+
+SQL> ALTER TABLE cons_part DROP CONSTRAINT pk_cons_part;
+
+Succeed.
+
+SQL> 
+SQL> --add primary key for partition table and specify index local
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1) USING INDEX LOCAL (PARTITION idx_p1 INITRANS 1 TABLESPACE users, PARTITION idx_p2 INITRANS 2 PCTFREE 12, PARTITION idx_p3 INITRANS 3 PCTFREE 13, PARTITION idx_p4 INITRANS 4 PCTFREE 14);
+
+Succeed.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 25000);
+
+CT-00729, Unique constraint violated, index PK_CONS_PART, duplicate key 250
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+CONS_PART                                                        IDX_P1                                                           1            4            8           
+CONS_PART                                                        IDX_P2                                                           2            0            12          
+CONS_PART                                                        IDX_P3                                                           3            0            13          
+CONS_PART                                                        IDX_P4                                                           4            0            14          
+
+4 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            PK_CONS_PART                                                     1            0            2            0            8            1            1           
+
+1 rows fetched.
+
+SQL> ALTER TABLE cons_part DROP CONSTRAINT pk_cons_part;
+
+Succeed.
+
+SQL> 
+SQL> --add primary key for partition table and specified property for each partition.
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1) USING INDEX LOCAL (PARTITION idx_p1 INITRANS 1, PARTITION idx_p2 INITRANS 2, PARTITION idx_p3 INITRANS 3);
+
+CT-01101, The number of index (sub)partitions was different from that of table partitions.
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1) USING INDEX LOCAL (PARTITION idx_p1 INITRANS 1, PARTITION idx_p2 INITRANS 2, PARTITION idx_p3 INITRANS 3, PARTITION idx_p4 INITRANS 4, PARTITION idx_p5 INITRANS 5);
+
+CT-01101, The number of index (sub)partitions was different from that of table partitions.
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1) USING INDEX LOCAL (PARTITION idx_p1 INITRANS 1 TABLESPACE users, PARTITION idx_p2 INITRANS 2, PARTITION idx_p3 INITRANS 3, PARTITION idx_p4 INITRANS 4 PCTFREE 14);
+
+Succeed.
+
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+CONS_PART                                                        IDX_P1                                                           1            4            8           
+CONS_PART                                                        IDX_P2                                                           2            0            8           
+CONS_PART                                                        IDX_P3                                                           3            0            8           
+CONS_PART                                                        IDX_P4                                                           4            0            14          
+
+4 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            PK_CONS_PART                                                     1            0            2            0            8            1            1           
+
+1 rows fetched.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 25000);
+
+CT-00729, Unique constraint violated, index PK_CONS_PART, duplicate key 250
+SQL> ALTER TABLE cons_part DROP CONSTRAINT pk_cons_part;
+
+Succeed.
+
+SQL> 
+SQL> --add primary key for partition table with a create index statement creating a global index
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1) USING INDEX (CREATE INDEX ix_cons_part_global ON cons_part(c1));
+
+Succeed.
+
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            IX_CONS_PART_GLOBAL                                              0            0            2            0            8            0            0           
+
+1 rows fetched.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 25000);
+
+CT-00729, Unique constraint violated, index IX_CONS_PART_GLOBAL, duplicate key 250
+SQL> ALTER TABLE cons_part DROP CONSTRAINT pk_cons_part;
+
+Succeed.
+
+SQL> DROP INDEX ix_cons_part_global ON cons_part;
+
+Succeed.
+
+SQL> 
+SQL> --add primary key for partition table with a create index statement creating a local index
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1) USING INDEX (CREATE INDEX ix_cons_part_local ON cons_part(c1) PCTFREE 9 LOCAL (PARTITION idx_p1 INITRANS 1 TABLESPACE users PCTFREE 11, PARTITION idx_p2 INITRANS 2, PARTITION idx_p3 INITRANS 3, PARTITION idx_p4 INITRANS 4));
+
+Succeed.
+
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+CONS_PART                                                        IDX_P1                                                           1            4            11          
+CONS_PART                                                        IDX_P2                                                           2            0            9           
+CONS_PART                                                        IDX_P3                                                           3            0            9           
+CONS_PART                                                        IDX_P4                                                           4            0            9           
+
+4 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            IX_CONS_PART_LOCAL                                               0            0            2            0            9            0            1           
+
+1 rows fetched.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 25000);
+
+CT-00729, Unique constraint violated, index IX_CONS_PART_LOCAL, duplicate key 250
+SQL> ALTER TABLE cons_part DROP CONSTRAINT pk_cons_part;
+
+Succeed.
+
+SQL> DROP INDEX ix_cons_part_local ON cons_part;
+
+Succeed.
+
+SQL> 
+SQL> --add primary key using an existing global index
+SQL> CREATE INDEX ix_cons_part_global ON cons_part(c1);
+
+Succeed.
+
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1) USING INDEX sys.ix_cons_part_global;
+
+Succeed.
+
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+
+0 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            IX_CONS_PART_GLOBAL                                              0            0            2            0            8            0            0           
+
+1 rows fetched.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 25000);
+
+CT-00729, Unique constraint violated, index IX_CONS_PART_GLOBAL, duplicate key 250
+SQL> ALTER TABLE cons_part DROP CONSTRAINT pk_cons_part;
+
+Succeed.
+
+SQL> DROP INDEX sys.ix_cons_part_global ON cons_part; 
+
+Succeed.
+
+SQL> 
+SQL> --add unique constraint using and existing local index
+SQL> CREATE INDEX ix_cons_part_local ON cons_part(c1) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1) USING INDEX sys.ix_cons_part_local;
+
+Succeed.
+
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+CONS_PART                                                        P1                                                               2            0            8           
+CONS_PART                                                        P2                                                               2            0            8           
+CONS_PART                                                        P3                                                               2            0            8           
+CONS_PART                                                        P4                                                               2            0            8           
+
+4 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            IX_CONS_PART_LOCAL                                               0            0            2            0            8            0            1           
+
+1 rows fetched.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 25000);
+
+CT-00729, Unique constraint violated, index IX_CONS_PART_LOCAL, duplicate key 250
+SQL> ALTER TABLE cons_part DROP CONSTRAINT pk_cons_part;
+
+Succeed.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            IX_CONS_PART_LOCAL                                               0            0            2            0            8            0            1           
+
+1 rows fetched.
+
+SQL> --rebuild index partition
+SQL> ALTER INDEX ix_cons_part_local ON cons_part REBUILD PARTITION p3;
+
+Succeed.
+
+SQL> ALTER INDEX ix_cons_part_local ON cons_part REBUILD PARTITION p3;
+
+Succeed.
+
+SQL> 
+SQL> --test if index properties keep the same before and after used by a constraint;
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 35000);
+
+1 rows affected.
+
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1);
+
+CT-00729, Unique constraint violated, index IX_CONS_PART_LOCAL, duplicate key 250
+SQL> DELETE FROM cons_part WHERE c3=35000;
+
+2 rows affected.
+
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c1);
+
+Succeed.
+
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+CONS_PART                                                        P1                                                               2            0            8           
+CONS_PART                                                        P2                                                               2            0            8           
+CONS_PART                                                        P3                                                               2            0            8           
+CONS_PART                                                        P4                                                               2            0            8           
+
+4 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            IX_CONS_PART_LOCAL                                               0            0            2            0            8            0            1           
+
+1 rows fetched.
+
+SQL> INSERT INTO cons_part VALUES(250, 'P3', 35000);
+
+CT-00729, Unique constraint violated, index IX_CONS_PART_LOCAL, duplicate key 250
+SQL> ALTER TABLE cons_part DROP CONSTRAINT pk_cons_part;
+
+Succeed.
+
+SQL> SELECT t.name, p.name, p.initrans, p.space#, p.pctfree FROM SYS_INDEX_PARTS p, SYS_TABLES t WHERE t.name = 'CONS_PART' AND p.user# = t.user# AND p.table# = t.id ORDER BY p.PART#;
+
+NAME                                                             NAME                                                             INITRANS     SPACE#       PCTFREE     
+---------------------------------------------------------------- ---------------------------------------------------------------- ------------ ------------ ------------
+CONS_PART                                                        P1                                                               2            0            8           
+CONS_PART                                                        P2                                                               2            0            8           
+CONS_PART                                                        P3                                                               2            0            8           
+CONS_PART                                                        P4                                                               2            0            8           
+
+4 rows fetched.
+
+SQL> SELECT t.name, t.indexes, i.name, i.is_primary, i.is_unique, i.initrans, i.space#, i.pctfree, i.flags, i.partitioned FROM SYS_TABLES t, SYS_INDEXES i WHERE t.name='CONS_PART' and t.USER# = i.USER# and t.id = i.TABLE#;
+
+NAME                                                             INDEXES      NAME                                                             IS_PRIMARY   IS_UNIQUE    INITRANS     SPACE#       PCTFREE      FLAGS        PARTITIONED 
+---------------------------------------------------------------- ------------ ---------------------------------------------------------------- ------------ ------------ ------------ ------------ ------------ ------------ ------------
+CONS_PART                                                        1            IX_CONS_PART_LOCAL                                               0            0            2            0            8            0            1           
+
+1 rows fetched.
+
+SQL> DROP INDEX sys.ix_cons_part_local ON cons_part; 
+
+Succeed.
+
+SQL> 
+SQL> --test constraint using local index with constraint columns does not include part key
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c2) USING INDEX LOCAL;
+
+CT-00816, Table partition key should be subsets of local primary or unique index
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c2) USING INDEX (CREATE INDEX ix_cons_part_c2 ON cons_part(c2) LOCAL);
+
+CT-00816, Table partition key should be subsets of local primary or unique index
+SQL> CREATE INDEX ix_cons_part_c2 ON cons_part(c2) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c2);
+
+CT-00816, Table partition key should be subsets of local primary or unique index
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c2) USING INDEX ix_cons_part_c2;
+
+CT-00816, Table partition key should be subsets of local primary or unique index
+SQL> 
+SQL> --test inline & outline constraint
+SQL> DROP TABLE IF EXISTS cons_test;
+
+Succeed.
+
+SQL> CREATE TABLE cons_test(c1 int, c2 int primary key, c3 int, unique(c1, c3), c4 int, c5 int, constraint u_c4_c5 unique(c5, c4), c6 int);
+
+Succeed.
+
+SQL> SELECT t.name, i.is_primary, i.is_unique, i.col_list FROM sys.SYS_TABLES t, sys.SYS_INDEXES i WHERE t.name='CONS_TEST' AND t.user# = i.user# AND t.id = i.table# ORDER BY i.col_list;
+
+NAME                                                             IS_PRIMARY   IS_UNIQUE    COL_LIST                                                        
+---------------------------------------------------------------- ------------ ------------ ----------------------------------------------------------------
+CONS_TEST                                                        0            1            0,2                                                             
+CONS_TEST                                                        1            0            1                                                               
+CONS_TEST                                                        0            1            4,3                                                             
+
+3 rows fetched.
+
+SQL> DROP TABLE cons_test;
+
+Succeed.
+
+SQL> --syntax error
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c2) USING INDEX (CREATE INDEX ix_cons_part_c2 ON cons_part2(c2) LOCAL);
+
+CT-00843, The table or view SYS.CONS_PART2 does not exist.
+SQL> ALTER TABLE cons_part ADD CONSTRAINT pk_cons_part PRIMARY KEY(c2) LOCAL;
+
+CT-00601, [1:67]Sql syntax error: unexpected text LOCAL
+SQL> 
+SQL> DROP TABLE cons_part;
+
+Succeed.
+
+SQL> 
+SQL> set serveroutput on
+
+ON
+SQL> DROP TABLE IF EXISTS t_rca_006;
+
+Succeed.
+
+SQL> DECLARE
+  2   V_SQL VARCHAR2(32767);
+  3   V_E   VARCHAR2(32767);
+  4 BEGIN
+  5   FOR I IN 1 .. 3 LOOP
+  6     V_E := V_E || 'i_' || I || ' varchar2(4000),
+  7     ';
+  8   END LOOP;
+  9   V_E   := V_E || '`Sex` varchar2(200)
+ 10   )';
+ 11   V_SQL := 'create table t_rca_006(`ID` int, ' || V_E;
+ 12   EXECUTE IMMEDIATE V_SQL;
+ 13   EXECUTE IMMEDIATE 'alter table t_rca_006 add constraint rca_Sex_ck check(`Sex` in(''1'',''0''))';
+ 14   EXECUTE IMMEDIATE 'alter table t_rca_006 add constraint t_rca_006_pk primary key(id)';
+ 15   EXECUTE IMMEDIATE 'create sequence seq_rca_003 increment by 1 start with 1000';
+ 16 END;
+ 17 /
+
+PL/SQL procedure successfully completed.
+
+SQL> -- 
+SQL> INSERT INTO t_rca_006 (`Sex`) VALUES (1);
+
+CT-00620, Can't set NULL value for column 'ID'
+SQL> DROP TABLE IF EXISTS t_rca_006;
+
+Succeed.
+
+SQL> DROP SEQUENCE IF EXISTS seq_rca_003;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_pk1;
+
+Succeed.
+
+SQL> create table test_pk1 (i int, id int, id3 int);
+
+Succeed.
+
+SQL> create index idx_pk_11 on test_pk1 (id);
+
+Succeed.
+
+SQL> create index idx_pk_22 on test_pk1 (id3);
+
+Succeed.
+
+SQL> create index idx_pk_33 on test_pk1 (i);
+
+Succeed.
+
+SQL> insert into test_pk1 values(1,1,1);
+
+1 rows affected.
+
+SQL> insert into test_pk1 values(1,1,1);
+
+1 rows affected.
+
+SQL> alter table test_pk1 add constraint nebula_com_cstr_001 primary key (i) using index idx_pk_33;
+
+CT-00729, Unique constraint violated, index IDX_PK_33, duplicate key 1
+SQL> drop table test_pk1;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_pk2;
+
+Succeed.
+
+SQL> create table test_pk2 (i int, id varchar(2), id3 int);
+
+Succeed.
+
+SQL> create unique index idx_pk_11 on test_pk2 (id);
+
+Succeed.
+
+SQL> insert into test_pk2 values(1, NULL, 1);
+
+1 rows affected.
+
+SQL> alter table test_pk2 add constraint nebula_com_cstr_002 primary key (id);
+
+CT-00620, Can't set NULL value for column 'ID'
+SQL> drop table test_pk2;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists test_pk3;
+
+Succeed.
+
+SQL> create table test_pk3 (i int, id varchar(2), id3 int);
+
+Succeed.
+
+SQL> create unique index idx_pk3_01 on test_pk3 (i);
+
+Succeed.
+
+SQL> create unique index idx_pk3_11 on test_pk3 (id);
+
+Succeed.
+
+SQL> alter table test_pk3 add constraint nebula_com_cstr_001 primary key (i);
+
+Succeed.
+
+SQL> alter table test_pk3 add constraint nebula_com_cstr_002 primary key (id);
+
+CT-00640, The table had more than one primary key
+SQL> drop table test_pk3;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2020031713061
+SQL> drop table if exists test_pk1;
+
+Succeed.
+
+SQL> create table test_pk1 (i int, id int, id3 int);
+
+Succeed.
+
+SQL> insert into test_pk1 values(1, 1, 1);
+
+1 rows affected.
+
+SQL> create unique index ix_test_pk1 on test_pk1(i);
+
+Succeed.
+
+SQL> select t.status from dv_transactions t, dv_me m where t.sid = m.sid;
+
+STATUS                                                          
+----------------------------------------------------------------
+
+0 rows fetched.
+
+SQL> drop table test_pk1 purge;
+
+Succeed.
+
+SQL> 
+SQL> 
+SQL> DROP TABLE IF EXISTS PARAL_IDX_R_TBL_005;
+
+Succeed.
+
+SQL> CREATE TABLE PARAL_IDX_R_TBL_005(NUM INT,C_ID INT,C_D_ID BIGINT NOT NULL,C_W_ID INT NOT NULL,C_UINT UINT NOT NULL,C_FIRST VARCHAR(16) NOT NULL,C_MIDDLE CHAR(2),C_LAST VARCHAR(16) NOT NULL,C_STREET_1 VARCHAR(20) NOT NULL,C_STREET_2 VARCHAR2(20),C_ZERO TIMESTAMP NOT NULL,C_START DATE NOT NULL,C_ZIP CHAR(9) NOT NULL,C_PHONE CHAR(16) NOT NULL,C_SINCE TIMESTAMP,C_CREDIT CHAR(2),C_CREDIT_LIM NUMERIC,C_DISCOUNT NUMERIC(5,2),C_BALANCE NUMERIC(12,2),C_YTD_PAYMENT REAL NOT NULL,C_PAYMENT_CNT NUMBER NOT NULL,C_DELIVERY_CNT BOOL NOT NULL,C_END DATE NOT NULL,C_DATA1 VARCHAR2(4000),C_DATA2 VARCHAR(4000),C_DATA3 VARCHAR(4000),C_DATA4 VARCHAR(4000),C_DATA5 VARCHAR(4000),C_DATA6 VARCHAR(4000),C_DATA7 VARCHAR(4000),C_VARBINARY VARBINARY(100),C_CLOB CLOB,C_BLOB BLOB,C_BINARY BINARY(100)) PARTITION BY RANGE(C_UINT)(PARTITION P1 VALUES LESS THAN (5) TABLESPACE SYSTEM,PARTITION P2 VALUES LESS THAN (11) TABLESPACE SYSTEM,PARTITION P3 VALUES LESS THAN (16) TABLESPACE SYSTEM,PARTITION P4 VALUES LESS THAN (MAXVALUE) TABLESPACE SYSTEM);
+
+Succeed.
+
+SQL> 
+SQL> CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_14 ON PARAL_IDX_R_TBL_005(C_SINCE,C_BINARY,C_PHONE);
+
+Succeed.
+
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_15 PRIMARY KEY(C_MIDDLE,C_VARBINARY);                                                  
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_16 ON PARAL_IDX_R_TBL_005(TO_CHAR(C_ID)) CRMODE ROW;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_17 ON PARAL_IDX_R_TBL_005(UPPER(C_STREET_2),TO_CHAR(C_UINT),TO_NUMBER(C_PHONE));
+
+Succeed.
+
+SQL> UPDATE PARAL_IDX_R_TBL_005 SET C_UINT=C_ID;
+
+0 rows affected.
+
+SQL> CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_18 ON PARAL_IDX_R_TBL_005(C_UINT) LOCAL;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_19 ON PARAL_IDX_R_TBL_005(C_DISCOUNT,C_START,C_LAST,C_UINT) LOCAL;
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_20 ON PARAL_IDX_R_TBL_005(C_START,C_D_ID,C_SINCE,C_UINT) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_21 UNIQUE(C_MIDDLE,C_STREET_2,C_UINT) USING INDEX (CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_21 ON PARAL_IDX_R_TBL_005(C_MIDDLE,C_STREET_2,C_UINT) LOCAL INITRANS 10 TABLESPACE SYSTEM PCTFREE 10);
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_22 ON PARAL_IDX_R_TBL_005(C_SINCE,C_BINARY,C_PHONE,C_UINT) LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_23 PRIMARY KEY(C_MIDDLE,C_VARBINARY,C_UINT) USING INDEX LOCAL (PARTITION P1 INITRANS 1 TABLESPACE SYSTEM,PARTITION P2 INITRANS 2 TABLESPACE SYSTEM,PARTITION P3 INITRANS 3 TABLESPACE SYSTEM,PARTITION P4 INITRANS 4 PCTFREE 14);
+
+CT-00640, The table had more than one primary key
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 DROP CONSTRAINT PARAL_IDX_R_TBL_005_CONST_15;
+
+Succeed.
+
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_23 PRIMARY KEY(C_MIDDLE,C_VARBINARY,C_UINT) USING INDEX LOCAL (PARTITION P1 INITRANS 1 TABLESPACE SYSTEM,PARTITION P2 INITRANS 2 TABLESPACE SYSTEM,PARTITION P3 INITRANS 3 TABLESPACE SYSTEM,PARTITION P4 INITRANS 4 PCTFREE 14);
+
+Succeed.
+
+SQL> CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_24 ON PARAL_IDX_R_TBL_005(TO_CHAR(C_W_ID),C_UINT) CRMODE ROW LOCAL;
+
+Succeed.
+
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_25 UNIQUE(C_UINT) USING INDEX PARAL_IDX_R_TBL_005_IDX_18;
+
+Succeed.
+
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_26 PRIMARY KEY(C_START,C_D_ID,C_SINCE,C_UINT);
+
+CT-00640, The table had more than one primary key
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_26 PRIMARY KEY(C_START,C_D_ID,C_SINCE,C_UINT) USING INDEX PARAL_IDX_R_TBL_005_IDX_20;
+
+CT-00640, The table had more than one primary key
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_27 PRIMARY KEY(C_SINCE,C_BINARY,C_PHONE);
+
+CT-00640, The table had more than one primary key
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_27 PRIMARY KEY(C_SINCE,C_BINARY,C_PHONE) USING INDEX PARAL_IDX_R_TBL_005_IDX_14;
+
+CT-00640, The table had more than one primary key
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_28 PRIMARY KEY(C_STREET_2,C_ID) USING INDEX (CREATE UNIQUE INDEX PARAL_IDX_R_TBL_005_IDX_28 ON PARAL_IDX_R_TBL_005(C_STREET_2,C_ID) INITRANS 10 TABLESPACE SYSTEM PCTFREE 10);
+
+CT-00640, The table had more than one primary key
+SQL> ALTER TABLE PARAL_IDX_R_TBL_005 ADD CONSTRAINT PARAL_IDX_R_TBL_005_CONST_29 PRIMARY KEY(C_UINT,C_ZERO) USING INDEX LOCAL (PARTITION P1 INITRANS 1 TABLESPACE SYSTEM,PARTITION P2 INITRANS 2 TABLESPACE SYSTEM,PARTITION P3 INITRANS 3 TABLESPACE SYSTEM,PARTITION P4 INITRANS 4 PCTFREE 14); 
+
+CT-00640, The table had more than one primary key
+SQL> 
+SQL> DROP TABLE IF EXISTS AUTO_INCREMENT_T1;
+
+Succeed.
+
+SQL> create table AUTO_INCREMENT_T1(id int auto_increment primary key,id2 int);
+
+Succeed.
+
+SQL> DECLARE
+  2  CONS_NAME VARCHAR(30);
+  3  SQLTEXT VARCHAR(200);
+  4 BEGIN
+  5  select CONSTRAINT_NAME INTO CONS_NAME from ADM_CONSTRAINTS where TABLE_NAME = 'AUTO_INCREMENT_T1';
+  6  SQLTEXT := 'alter table AUTO_INCREMENT_T1 DROP CONSTRAINT ' || CONS_NAME;
+  7  execute immediate SQLTEXT;
+  8 END;
+  9 /
+
+CT-00932, [7:2] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[7:2] CT-01300, There can be only one auto column and it must be defined as a key
+
+SQL> DROP TABLE IF EXISTS AUTO_INCREMENT_T1;
+Succeed.
+
+
+
+

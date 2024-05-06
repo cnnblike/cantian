@@ -1,0 +1,115 @@
+
+
+SQL> --DTS202007170FKPH8P1100
+SQL> --second session
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop procedure if exists lock_proc1;
+
+Succeed.
+
+SQL> 
+SQL> create or replace function is_target_proc(id out int) return boolean is
+  2 begin
+  3   execute immediate 'select OBJ# from sys_procs where name = ''LOCK_PROC1''' into id;
+  4   return true;
+  5 exception
+  6   when others then
+  7     return false;
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> create or replace function is_target_plsql(id out int) return boolean is
+  2 begin
+  3   execute immediate 'select count(*) from dv_plsql_shared_locks where OBJECT = ''LOCK_PROC1''' into id;
+  4   if id > 0 then
+  5     return true;
+  6   else
+  7     return false;
+  8   end if;
+  9 exception
+ 10   when others then
+ 11     return false;
+ 12 end;
+ 13 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 oid int default 0;
+  3 begin
+  4   for i in 1..100000 loop
+  5     if is_target_proc(oid) then
+  6       execute immediate 'delete from lock_test1 where rownum <= 5';
+  7       exit;
+  8     end if;
+  9   end loop;
+ 10 end;
+ 11 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 sid int default 0;
+  3 begin
+  4   for i in 1..100 loop
+  5     if is_target_plsql(sid) then
+  6       execute immediate '
+  7       create or replace procedure lock_proc1 is
+  8           pragma autonomous_transaction;
+  9           begin
+ 10               insert into lock_test2 select * from lock_test2 limit 10;
+ 11               update lock_test2 set id = 0 where rownum <= 10;
+ 12           commit;
+ 13           end;
+ 14       ';
+ 15       exit;
+ 16     end if;
+ 17   end loop;
+ 18 end;
+ 19 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> select sleep(1);
+
+SLEEP(1)
+--------
+        
+
+1 rows fetched.
+
+SQL> drop function if exists is_target_proc;
+
+Succeed.
+
+SQL> drop function if exists is_target_plsql;
+
+Succeed.
+
+SQL> drop function if exists is_target_object;
+
+Succeed.
+
+SQL> drop procedure if exists lock_proc1;
+
+Succeed.
+
+SQL> drop table if exists lock_test2;
+
+Succeed.
+
+SQL> drop table if exists lock_test1;
+Succeed.
+
+
+
+

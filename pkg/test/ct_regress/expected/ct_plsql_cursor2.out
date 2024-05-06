@@ -1,0 +1,670 @@
+
+
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists plsql_cursor2 cascade;
+
+Succeed.
+
+SQL> create user plsql_cursor2 identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to plsql_cursor2;
+
+Succeed.
+
+SQL> drop user if exists DBMS_SQL_TEST cascade;
+
+Succeed.
+
+SQL> create user DBMS_SQL_TEST identified by Cantian_234;
+
+Succeed.
+
+SQL> grant dba to DBMS_SQL_TEST;
+
+Succeed.
+
+SQL> conn plsql_cursor2/Cantian_234@127.0.0.1:1611
+
+connected.
+
+SQL> 
+SQL> set serveroutput on;
+
+ON
+SQL> drop table if exists myt;
+
+Succeed.
+
+SQL> create table myt(a int,b varchar(2000),c bigint default 1000000000000, d date default sysdate, e clob default 'abc', e2 blob default 'abcd',f number(20,10) default 1.1, g decimal default 111.111);
+
+Succeed.
+
+SQL> declare
+  2 sql1 clob;
+  3 begin
+  4 for i in 1..100 loop
+  5 insert into myt(a,b) values(i, i||'abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl');
+  6 end loop;
+  7 commit;
+  8 end;
+  9 /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test in out
+SQL> create or replace procedure p_test_inout(v1 in int, v2 out int, v3 in out int)
+  2 is
+  3 begin
+  4 dbe_output.print(v1);
+  5 dbe_output.print(v2);
+  6 dbe_output.print(v3);
+  7 v2 := 10;
+  8 v3 :=v2;
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 v1 int :=1;
+  3 v2 int;
+  4 v3 int;
+  5 begin
+  6 p_test_inout(v1,v2,v3);
+  7 dbe_output.print(v1);
+  8 dbe_output.print(v2);
+  9 dbe_output.print(v3);
+ 10 end;
+ 11 /
+
+1
+
+
+1
+10
+10
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --basic func
+SQL> create or replace procedure show_cur(v_cur in sys_refcursor)
+  2 is
+  3 a int;
+  4 b varchar(100);
+  5 begin
+  6 loop
+  7 fetch v_cur into a,b;
+  8 exit when v_cur%notfound;
+  9 dbe_output.print(a||' '||b);
+ 10 end loop;
+ 11 end;
+ 12 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> create or replace procedure p_cur2(v_cur in sys_refcursor)
+  2 is
+  3 a int;
+  4 b varchar(100);
+  5 begin
+  6 open v_cur for select a,b from myt;
+  7 end;
+  8 /
+
+Succeed.
+Warning:
+PL/SQL(PLSQL_CURSOR2.P_CUR2) terminated with compiling errors
+[6:6] PLC-00990 IN cursor V_CUR cannot be OPEN again
+
+
+SQL> 
+SQL> --test cursor assignment
+SQL> create or replace procedure p_cur2(v_cur in sys_refcursor)
+  2 is
+  3 cur sys_refcursor;
+  4 begin
+  5 cur := v_cur;
+  6 show_cur(cur);
+  7 end;
+  8 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 cursor cur1 is select a,b from myt where a=1;
+  3 begin
+  4 p_cur2(cur1);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with compiling errors
+[4:8] PLC-00601 Sql syntax error: unexpected cursor type
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 p_cur2(cur1);
+  5 end;
+  6 /
+
+CT-00932, [4:1] PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with execute errors
+[6:1] PL/SQL(PLSQL_CURSOR2.P_CUR2) terminated with execute errors
+[7:1] PL/SQL(PLSQL_CURSOR2.SHOW_CUR) terminated with execute errors
+[7:1] CT-00905, The cursor was invalid.
+
+SQL> 
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 open cur1 for select a,b from myt where a=1;
+  5 p_cur2(cur1);
+  6 end;
+  7 /
+
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test out direction
+SQL> create or replace procedure p_cur2(cur1 out sys_refcursor)
+  2 is
+  3 begin
+  4 dbe_output.print(cur1%isopen);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 open cur1 for select a,b from myt where a=1;
+  5 p_cur2(cur1); --expect not open
+  6 end;
+  7 /
+
+FALSE
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test out direction
+SQL> create or replace procedure p_cur2(cur1 out sys_refcursor)
+  2 is
+  3 begin
+  4 open cur1 for select a,b from myt where a=2;
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 open cur1 for select a,b from myt where a=1;
+  5 p_cur2(cur1);
+  6 show_cur(cur1);
+  7 end;
+  8 /
+
+2 2abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure p_cur2(v_cur in out sys_refcursor)
+  2 is
+  3 begin
+  4 show_cur(v_cur);
+  5 open v_cur for select a,b from myt where a=2;
+  6 show_cur(v_cur);
+  7 open v_cur for select a,b from myt where a=3;
+  8 show_cur(v_cur);
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 cursor cur1 is select a,b from myt where a=1;
+  3 begin
+  4 p_cur2(cur1);
+  5 end;
+  6 /
+
+CT-00944, PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with compiling errors
+[4:8] PLC-00601 Sql syntax error: unexpected cursor type
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 cursor cur1 is select a,b from myt where a=1;
+  3 begin
+  4 for item in cur1 loop
+  5 p_cur2(item);
+  6 end loop;
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with compiling errors
+[5:8] PLC-00949 The 1th argument of P_CUR2 not cursor bound to an OUT cursor position
+[8:1] PLC-00954 more text expected but EOF found
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 begin
+  3 for item in (select a,b from myt where a=1) loop
+  4 p_cur2(item);
+  5 end loop;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with compiling errors
+[4:8] PLC-00949 The 1th argument of P_CUR2 not cursor bound to an OUT cursor position
+[7:1] PLC-00954 more text expected but EOF found
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 begin
+  3 for item in (select a,b from myt where a=1) loop
+  4 p_cur2(item);
+  5 end loop;
+  6 end;
+  7 /
+
+CT-00944, PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with compiling errors
+[4:8] PLC-00949 The 1th argument of P_CUR2 not cursor bound to an OUT cursor position
+[7:1] PLC-00954 more text expected but EOF found
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 for item in cur1 loop
+  5 p_cur2(item);
+  6 end loop;
+  7 end;
+  8 /
+
+CT-00944, PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with compiling errors
+[4:18] PLC-00905 The cursor was invalid.
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 open cur1 for select a,b from myt where a=1;
+  5 close cur1;
+  6 p_cur2(cur1); --has closed
+  7 end;
+  8 /
+
+CT-00932, [6:1] PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with execute errors
+[4:1] PL/SQL(PLSQL_CURSOR2.P_CUR2) terminated with execute errors
+[7:1] PL/SQL(PLSQL_CURSOR2.SHOW_CUR) terminated with execute errors
+[7:1] CT-00905, The cursor was invalid.
+
+SQL> 
+SQL> --right
+SQL> declare
+  2 va int;
+  3 vb varchar(100);
+  4 cur1 sys_refcursor;
+  5 begin
+  6 open cur1 for select a,b from myt where a=1;
+  7 fetch cur1 into va,vb;
+  8 p_cur2(cur1);
+  9 end;
+ 10 /
+
+2 2abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+3 3abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure show_cur3(v_cur in sys_refcursor)
+  2 is
+  3 a int;
+  4 b int;
+  5 c int;
+  6 begin
+  7 fetch v_cur into a,b,c;
+  8 dbe_output.print(a||' '||b||' '||c);
+  9 end;
+ 10 /
+
+Succeed.
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 open cur1 for select a,a+1 from myt where a=1;
+  5 show_cur3(cur1);
+  6 end;
+  7 /
+
+CT-00932, [5:1] PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with execute errors
+[7:1] PL/SQL(PLSQL_CURSOR2.SHOW_CUR3) terminated with execute errors
+[7:1] CT-00926, PL/SQL: Return types of Result Set variables or query do not match
+
+SQL> 
+SQL> --expect error
+SQL> declare
+  2 va int;
+  3 vb varchar(100);
+  4 cur1 sys_refcursor;
+  5 begin
+  6 open cur1 for select a,b,c from myt where a=1;
+  7 show_cur3(cur1);
+  8 end;
+  9 /
+
+CT-00932, [7:1] PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with execute errors
+[7:1] PL/SQL(PLSQL_CURSOR2.SHOW_CUR3) terminated with execute errors
+[7:1] CT-00636, Invalid number -- unexpected character
+
+SQL> 
+SQL> --expect error
+SQL> create or replace procedure p_cur4(cur in sys_refcursor)
+  2 is
+  3 a cur%rowtype;
+  4 begin
+  5 null;
+  6 end;
+  7 /
+
+Succeed.
+Warning:
+PL/SQL(PLSQL_CURSOR2.P_CUR4) terminated with compiling errors
+[3:3] PLC-00916 PL/SQL:syntax error(the declaration of the type of this expression is incomplete or malformed)
+
+
+SQL> 
+SQL> create or replace procedure p_cur4(cur in sys_refcursor)
+  2 is
+  3 begin
+  4 dbe_output.print(cur%isopen);
+  5 dbe_output.print(cur%found);
+  6 dbe_output.print(cur%notfound);
+  7 dbe_output.print(cur%rowcount);
+  8 end;
+  9 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 va int;
+  3 vb varchar(100);
+  4 cur1 sys_refcursor;
+  5 begin
+  6 p_cur4(cur1);
+  7 end;
+  8 /
+
+FALSE
+CT-00932, [6:1] PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with execute errors
+[5:1] PL/SQL(PLSQL_CURSOR2.P_CUR4) terminated with execute errors
+[5:1] PL/SQL(DBE_OUTPUT.PRINT) terminated with execute errors
+CT-00905, The cursor was invalid.
+
+SQL> 
+SQL> declare
+  2 va int;
+  3 vb varchar(100);
+  4 cur1 sys_refcursor;
+  5 begin
+  6 open cur1 for select a,b from myt where a=1;
+  7 close cur1;
+  8 p_cur4(cur1);
+  9 end;
+ 10 /
+
+FALSE
+CT-00932, [8:1] PL/SQL(PLSQL_CURSOR2.ANONYMOUS BLOCK) terminated with execute errors
+[5:1] PL/SQL(PLSQL_CURSOR2.P_CUR4) terminated with execute errors
+[5:1] PL/SQL(DBE_OUTPUT.PRINT) terminated with execute errors
+CT-00905, The cursor was invalid.
+
+SQL> 
+SQL> declare
+  2 va int;
+  3 vb varchar(100);
+  4 cur1 sys_refcursor;
+  5 begin
+  6 open cur1 for select a,b from myt where a=1;
+  7 p_cur4(cur1);
+  8 fetch cur1 into va,vb;
+  9 p_cur4(cur1);
+ 10 fetch cur1 into va,vb;
+ 11 p_cur4(cur1);
+ 12 close cur1;
+ 13 end;
+ 14 /
+
+TRUE
+
+
+
+TRUE
+TRUE
+FALSE
+1
+TRUE
+FALSE
+TRUE
+1
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> create or replace procedure p_reopen(cur in out sys_refcursor)
+  2 is
+  3 begin
+  4 show_cur(cur);
+  5 open cur for select a,b from myt where a=2;
+  6 end;
+  7 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 va int;
+  3 vb varchar(100);
+  4 cur1 sys_refcursor;
+  5 begin
+  6 open cur1 for select a,b from myt where a=1;
+  7 p_reopen(cur1);
+  8 fetch cur1 into va,vb;
+  9 dbe_output.print(va||' '||vb);
+ 10 end;
+ 11 /
+
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+2 2abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> --test return result
+SQL> create or replace procedure DBMS_SQL_TEST.return_results(cur in sys_refcursor)
+  2 is
+  3 begin
+  4 dbe_sql.return_cursor(cur);
+  5 end;
+  6 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 open cur1 for select a,b,c from myt where a<3 order by a;
+  5 DBMS_SQL_TEST.return_results(cur1);
+  6 end;
+  7 /
+
+PL/SQL procedure successfully completed.
+
+ResultSet #1
+
+A            B                                                                C                   
+------------ ---------------------------------------------------------------- --------------------
+1            1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl 1000000000000       
+2            2abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl 1000000000000       
+
+2 rows fetched.
+
+
+SQL> 
+SQL> --test cur leak
+SQL> alter system set OPEN_CURSORS=20;
+
+Succeed.
+
+SQL> create or replace procedure p_recur(cur in out sys_refcursor,idx int)
+  2 is
+  3 begin
+  4 if(idx=1)then
+  5 open cur for select a,b from myt where a=1;
+  6 show_cur(cur);
+  7 else
+  8 p_recur(cur,idx-1);
+  9 end if;
+ 10 end;
+ 11 /
+
+Succeed.
+
+SQL> 
+SQL> declare
+  2 cur1 sys_refcursor;
+  3 begin
+  4 p_recur(cur1,30);
+  5 end;
+  6 /
+
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> begin
+  2 for i in 1..31 loop
+  3 execute immediate '
+  4 declare
+  5 cur1 sys_refcursor;
+  6 begin
+  7 p_recur(cur1,30);
+  8 end;';
+  9 end loop;
+ 10 end;
+ 11 /
+
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+1 1abcahsdfjalkdsfjkhasdhjlkasdfsadfasdfadsfadsffdsakljhfhkjldafsjjkl;dsj;kl
+
+PL/SQL procedure successfully completed.
+
+SQL> alter system set OPEN_CURSORS=2000;
+
+Succeed.
+
+SQL> 
+SQL> --test is open
+SQL> declare
+  2 cursor cur is select a from myt where a=1;
+  3 begin
+  4 dbe_output.print(cur%isopen);
+  5 end;
+  6 /
+
+FALSE
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> declare
+  2 cur sys_refcursor;
+  3 begin
+  4 dbe_output.print(cur%isopen);
+  5 end;
+  6 /
+
+FALSE
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> conn sys/Huawei@123@127.0.0.1:1611
+
+connected.
+
+SQL> drop user if exists plsql_cursor2 cascade;
+
+Succeed.
+
+SQL> drop user if exists DBMS_SQL_TEST cascade;
+Succeed.
+
+
+
+

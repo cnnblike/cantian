@@ -1,0 +1,108 @@
+DROP TABLE IF EXISTS T_JOIN_PLUS_1;
+DROP TABLE IF EXISTS T_JOIN_PLUS_2;
+DROP TABLE IF EXISTS T_JOIN_PLUS_3;
+DROP TABLE IF EXISTS T_JOIN_PLUS_4;
+DROP TABLE IF EXISTS T_JOIN_PLUS_5;
+DROP TABLE IF EXISTS T_JOIN_PLUS_6;
+CREATE TABLE T_JOIN_PLUS_1 (F_INT1 INT, F_INT2 INT);
+CREATE TABLE T_JOIN_PLUS_2 (F_INT1 INT, F_INT2 INT);
+CREATE TABLE T_JOIN_PLUS_3 (F_INT1 INT, F_INT2 INT);
+CREATE TABLE T_JOIN_PLUS_4 (F_INT1 INT, F_INT2 INT);
+CREATE TABLE T_JOIN_PLUS_5 (F_INT1 INT, F_INT2 INT);
+CREATE TABLE T_JOIN_PLUS_6 (F_INT1 INT, F_INT2 INT);
+
+--expect error,(+) not support  having cond
+SELECT T1.F_INT1,T2.F_INT1 FROM T_JOIN_PLUS_1 T1,T_JOIN_PLUS_2 T2 GROUP BY T1.F_INT1,T2.F_INT1 HAVING T1.F_INT1 = T2.F_INT1(+);
+
+INSERT INTO T_JOIN_PLUS_1(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_1(F_INT1,F_INT2) values(2, 22);
+INSERT INTO T_JOIN_PLUS_1(F_INT1,F_INT2) values(null, 22);
+INSERT INTO T_JOIN_PLUS_1(F_INT1,F_INT2) values(20, 22);
+INSERT INTO T_JOIN_PLUS_2(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_2(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_2(F_INT1,F_INT2) values(2, 11);
+INSERT INTO T_JOIN_PLUS_2(F_INT1,F_INT2) values(null, 22);
+INSERT INTO T_JOIN_PLUS_2(F_INT1,F_INT2) values(3, 33);
+INSERT INTO T_JOIN_PLUS_2(F_INT1,F_INT2) values(3, 33);
+INSERT INTO T_JOIN_PLUS_3(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_3(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_3(F_INT1,F_INT2) values(2, 11);
+INSERT INTO T_JOIN_PLUS_3(F_INT1,F_INT2) values(null, 22);
+INSERT INTO T_JOIN_PLUS_3(F_INT1,F_INT2) values(3, 33);
+INSERT INTO T_JOIN_PLUS_3(F_INT1,F_INT2) values(3, 33);
+INSERT INTO T_JOIN_PLUS_4(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_4(F_INT1,F_INT2) values(2, 22);
+INSERT INTO T_JOIN_PLUS_4(F_INT1,F_INT2) values(null, 22);
+INSERT INTO T_JOIN_PLUS_5(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_5(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_5(F_INT1,F_INT2) values(2, 11);
+INSERT INTO T_JOIN_PLUS_5(F_INT1,F_INT2) values(null, 22);
+INSERT INTO T_JOIN_PLUS_5(F_INT1,F_INT2) values(3, 33);
+INSERT INTO T_JOIN_PLUS_5(F_INT1,F_INT2) values(3, 33);
+INSERT INTO T_JOIN_PLUS_6(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_6(F_INT1,F_INT2) values(1, 11);
+INSERT INTO T_JOIN_PLUS_6(F_INT1,F_INT2) values(2, 11);
+INSERT INTO T_JOIN_PLUS_6(F_INT1,F_INT2) values(null, 22);
+INSERT INTO T_JOIN_PLUS_6(F_INT1,F_INT2) values(3, 33);
+INSERT INTO T_JOIN_PLUS_6(F_INT1,F_INT2) values(3, 33);
+COMMIT;
+
+-- (+) is not allowed when join exists, expect error
+SELECT * FROM T_JOIN_PLUS_1 A LEFT JOIN T_JOIN_PLUS_2 B ON A.F_INT1=B.F_INT1(+);
+
+SELECT T1.F_INT1,T2.F_INT1 FROM T_JOIN_PLUS_1 T1,T_JOIN_PLUS_2 T2 WHERE T1.F_INT1 = T2.F_INT1(+) AND T1.F_INT1(+) > 0 ORDER BY 1;
+
+--oracle 11g not support this scenario , oracle 12c support
+SELECT T_JOIN_PLUS_1.F_INT1,T_JOIN_PLUS_2.F_INT1,T_JOIN_PLUS_3.F_INT1,T_JOIN_PLUS_4.F_INT1,T_JOIN_PLUS_5.F_INT1,T_JOIN_PLUS_6.F_INT1 
+FROM T_JOIN_PLUS_1,T_JOIN_PLUS_2,T_JOIN_PLUS_3,T_JOIN_PLUS_4,T_JOIN_PLUS_5,T_JOIN_PLUS_6 
+WHERE T_JOIN_PLUS_1.F_INT1(+) = T_JOIN_PLUS_2.F_INT1 
+AND T_JOIN_PLUS_2.F_INT1 = T_JOIN_PLUS_3.F_INT1(+) 
+AND T_JOIN_PLUS_6.F_INT1(+) = T_JOIN_PLUS_2.F_INT1 
+AND T_JOIN_PLUS_6.F_INT1(+) = T_JOIN_PLUS_4.F_INT1 
+AND T_JOIN_PLUS_4.F_INT1(+) = T_JOIN_PLUS_5.F_INT1 ORDER BY 1,2,3,4,5,6;
+
+SELECT T_JOIN_PLUS_1.F_INT1,T_JOIN_PLUS_2.F_INT1,T_JOIN_PLUS_3.F_INT1,T_JOIN_PLUS_4.F_INT1,T_JOIN_PLUS_5.F_INT1,T_JOIN_PLUS_6.F_INT1 
+FROM T_JOIN_PLUS_2
+	LEFT  JOIN T_JOIN_PLUS_1 ON T_JOIN_PLUS_1.F_INT1 = T_JOIN_PLUS_2.F_INT1 
+	LEFT  JOIN T_JOIN_PLUS_3 ON T_JOIN_PLUS_2.F_INT1 = T_JOIN_PLUS_3.F_INT1
+	INNER JOIN T_JOIN_PLUS_5 ON 1=1
+	LEFT  JOIN T_JOIN_PLUS_4 ON T_JOIN_PLUS_4.F_INT1 = T_JOIN_PLUS_5.F_INT1
+	LEFT  JOIN T_JOIN_PLUS_6 ON T_JOIN_PLUS_4.F_INT1 = T_JOIN_PLUS_6.F_INT1 AND T_JOIN_PLUS_6.F_INT1 = T_JOIN_PLUS_2.F_INT1
+ORDER BY 1,2,3,4,5,6;
+
+-- 以下用例在oracle 11gr2下会报错, 在oracle 12c下会执行成功
+-- 当前zenith实现与 oracle 11gr2一致
+-- 从gsql_test移植过来
+
+drop table if exists gs_join_t1;
+drop table if exists gs_join_t2;
+drop table if exists gs_join_t3;
+
+create table gs_join_t1  
+(  
+	f_int1			integer default 0 not null,  
+	f_int2			integer,  
+	f_int3			integer
+);
+create table gs_join_t2 as select * from gs_join_t1;
+create table gs_join_t3 as select * from gs_join_t1;
+
+SELECT * FROM gs_join_t1 T1,gs_join_t2 T2 START WITH T1.F_INT3 = T2.F_INT3(+) CONNECT BY T1.F_INT3 = T2.F_INT3;
+SELECT * FROM gs_join_t1 T1,gs_join_t2 T2,gs_join_t3 T3 WHERE T2.F_INT3+T3.F_INT3 = T1.F_INT3(+);
+SELECT * FROM gs_join_t1 T1,gs_join_t2 T2,gs_join_t3 T3 WHERE T1.F_INT3(+) = T2.F_INT3+T3.F_INT3;
+SELECT * FROM gs_join_t1 T1,gs_join_t2 T2,gs_join_t3 T3 WHERE T1.F_INT3 = T2.F_INT3(+)+T3.F_INT3;
+SELECT * FROM gs_join_t1 T1,gs_join_t2 T2,gs_join_t3 T3 WHERE T1.F_INT3 = T2.F_INT3+T3.F_INT3(+);
+
+drop table if exists gs_join_t1;
+drop table if exists gs_join_t2;
+drop table if exists gs_join_t3;
+
+-- array(+)
+drop table if exists join_symbol_array_t1;
+drop table if exists join_symbol_array_t2;
+create table join_symbol_array_t1(id int);
+create table join_symbol_array_t2(id int[4]);
+
+select * from join_symbol_array_t1 t1, join_symbol_array_t2 t2 where t1.id = t2.id(+);
+drop table join_symbol_array_t1;
+drop table join_symbol_array_t2;

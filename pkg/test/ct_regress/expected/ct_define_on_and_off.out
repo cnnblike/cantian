@@ -1,0 +1,132 @@
+
+SQL> set define onn
+
+unknown set define_on option.
+Usage: SET DEFINE {ON|OFF|one char}.
+
+SQL> set define on
+
+ON
+SQL> select &a from dual;
+
+Enter value for a:
+old sql is : select &a from dual
+new sql is : select a from dual
+CT-00601, [1:8]Sql syntax error: invalid column name 'A'
+SQL> select * from dual&;
+
+sql is:select * from dual&
+ZS-00001: Invalid variable, Replace mark '&' cannot be at the end of every line
+CT-00601, [1:19]Sql syntax error: invalid word '&' found
+SQL> select &a from dua&l;
+
+Enter value for a:
+Enter value for l:
+old sql is : select &a from dua&l
+new sql is : select a from dual
+CT-00601, [1:8]Sql syntax error: invalid column name 'A'
+SQL> create table & abc (f1 int);
+
+Enter value for abc:
+old sql is : create table & abc (f1 int)
+new sql is : create table SYS_DUMMY (f1 int)
+CT-01301, SYS.SYS_DUMMY already exists
+SQL> insert into & &*) values(1);
+
+ZS-00001: Invalid variable, variable should be a~z, A~Z, 0~9 or _
+CT-00601, [1:13]Sql syntax error: table name expected but & found
+SQL> set define off
+
+OFF
+SQL> select &a from dual;
+
+CT-00601, [1:8]Sql syntax error: the word "&" is not correct
+SQL> set define ^
+
+ON
+SQL> select ^a from dual;
+
+Enter value for a:
+old sql is : select ^a from dual
+new sql is : select a from dual
+CT-00601, [1:8]Sql syntax error: invalid column name 'A'
+SQL> set define &
+
+ON
+SQL> select case when &exper=123 then 'a' else 'b' end from dual;
+
+Enter value for exper:
+old sql is : select case when &exper=123 then 'a' else 'b' end from dual
+new sql is : select case when 123=123 then 'a' else 'b' end from dual
+CASE WHEN 123=123 THEN 'A' ELSE 'B' END
+---------------------------------------
+a                                      
+
+1 rows fetched.
+
+SQL> select &exper,* from dual;
+
+Enter value for exper:
+old sql is : select &exper,* from dual
+new sql is : select *,* from dual
+DUMMY DUMMY
+----- -----
+X     X    
+
+1 rows fetched.
+
+SQL> select exp(&exper) from dual;
+
+Enter value for exper:
+old sql is : select exp(&exper) from dual
+new sql is : select exp(0) from dual
+EXP(0)                                  
+----------------------------------------
+1                                       
+
+1 rows fetched.
+
+SQL> select &exper& from dual;
+
+Enter value for exper:
+Enter value for from:
+old sql is : select &exper& from dual
+new sql is : select 123from dual
+CT-00636, [1:8]Invalid number -- unexpected character
+SQL> select &ex&per from dual;
+
+Enter value for ex:
+Enter value for per:
+old sql is : select &ex&per from dual
+new sql is : select 123456 from dual
+123456      
+------------
+123456      
+
+1 rows fetched.
+
+SQL> set define *
+
+ON
+SQL> select e*ert*rty from dual;
+
+Enter value for ert:
+Enter value for rty:
+old sql is : select e*ert*rty from dual
+new sql is : select e123456 from dual
+CT-00601, [1:8]Sql syntax error: invalid column name 'E123456'
+SQL> set define &
+
+ON
+SQL> show define
+
+replace fuction is ON and replace mark is &.
+
+SQL> set define off
+
+OFF
+SQL> show define
+
+replace function is OFF.
+
+SQL> spool off

@@ -1,0 +1,210 @@
+
+
+SQL> drop table if exists test_exclude_flags_1;
+
+Succeed.
+
+SQL> drop table if exists test_exclude_flags_2;
+
+Succeed.
+
+SQL> create table test_exclude_flags_1(f1 int, f2 int);
+
+Succeed.
+
+SQL> create table test_exclude_flags_2(f1 int, f2 int);
+
+Succeed.
+
+SQL> insert into test_exclude_flags_1(f1,f2) values(1,11);
+
+1 rows affected.
+
+SQL> insert into test_exclude_flags_2(f1,f2) values(1,11);
+
+1 rows affected.
+
+SQL> commit;
+
+Succeed.
+
+SQL> create sequence t_sequence;
+
+Succeed.
+
+SQL> 
+SQL> --- select
+SQL> select distinct rownum, rowid from test_exclude_flags_1 where f1=rownum group by rownum having rownum < 10 order by rownum;
+
+CT-00609, [1:25]Expression not in group list
+SQL> select distinct rownum, case rowid when null then 1 else 2 end from test_exclude_flags_1 where f1=rownum group by rownum, rowid having rownum < 10 order by rownum;
+
+ROWNUM       CASE ROWID WHEN NULL THEN 1 ELSE 2 END
+------------ --------------------------------------
+1            2                                     
+
+1 rows fetched.
+
+SQL> select distinct f1, max(f1) from test_exclude_flags_1 where f1=(select f1 from test_exclude_flags_2) group by f1 having f1 < 10;
+
+F1           MAX(F1)     
+------------ ------------
+1            1           
+
+1 rows fetched.
+
+SQL> -- where
+SQL> select f1 from test_exclude_flags_1 where f1=max(1);
+
+CT-01317, [1:46]Unexpected aggregation 'MAX'
+SQL> select f1 from test_exclude_flags_1 where max(1)=f1;
+
+CT-01317, [1:43]Unexpected aggregation 'MAX'
+SQL> select f1 from test_exclude_flags_1 where f1=*;
+
+CT-00601, [1:46]Sql syntax error: unexcpected '*'
+SQL> select f1 from test_exclude_flags_1 where *=*;
+
+CT-00601, [1:43]Sql syntax error: unexcpected '*'
+SQL> select f1 from test_exclude_flags_1 where f1=t_sequence.nextval;
+
+CT-00601, [1:46]Sql syntax error: unexpected sequence occurs
+SQL> -- group by
+SQL> select f1 from test_exclude_flags_1 group by *;
+
+CT-00601, [1:46]Sql syntax error: unexcpected '*'
+SQL> select f1 from test_exclude_flags_1 group by t_sequence.nextval;
+
+CT-00601, [1:46]Sql syntax error: unexpected sequence occurs
+SQL> select f1 from test_exclude_flags_1 group by (select 1 from dual);
+
+CT-01316, Unexpected SUBSELECT
+SQL> -- having
+SQL> select f1 from test_exclude_flags_1 group by f1 having f1=*;
+
+CT-00601, [1:59]Sql syntax error: unexcpected '*'
+SQL> select f1 from test_exclude_flags_1 group by f1 having f1=t_sequence.nextval;
+
+CT-00601, [1:59]Sql syntax error: unexpected sequence occurs
+SQL> select f1 from test_exclude_flags_1 group by f1 having f1=(select 1 from dual);
+
+F1          
+------------
+1           
+
+1 rows fetched.
+
+SQL> -- join cond
+SQL> select t1.f1 from test_exclude_flags_1 t1 join test_exclude_flags_2 t2 on t1.f1=max(1);
+
+CT-01317, [1:81]Unexpected aggregation 'MAX'
+SQL> select t1.f1 from test_exclude_flags_1 t1 join test_exclude_flags_2 t2 on t1.f1=*;
+
+CT-00601, [1:81]Sql syntax error: unexcpected '*'
+SQL> select t1.f1 from test_exclude_flags_1 t1 join test_exclude_flags_2 t2 on t1.f1=t_sequence.nextval;
+
+CT-00601, [1:81]Sql syntax error: unexpected sequence occurs
+SQL> -- order by
+SQL> select f1 from test_exclude_flags_1 order by *;
+
+CT-00601, [1:46]Sql syntax error: unexcpected '*'
+SQL> select f1 from test_exclude_flags_1 order by t_sequence.nextval;
+
+CT-00601, [1:46]Sql syntax error: unexpected sequence occurs
+SQL> --- insert
+SQL> insert into test_exclude_flags_1(f1, f2) values((select f1 from test_exclude_flags_2), (select f2 from test_exclude_flags_2));
+
+1 rows affected.
+
+SQL> insert into test_exclude_flags_1 select * from test_exclude_flags_2;
+
+1 rows affected.
+
+SQL> -- column=value
+SQL> insert into test_exclude_flags_1(*) values(1);
+
+CT-00601, [1:34]Sql syntax error: invalid variant/object name was found
+SQL> insert into test_exclude_flags_1(f1) values(avg(1));
+
+CT-01317, [1:45]Unexpected aggregation 'AVG'
+SQL> insert into test_exclude_flags_1(f1) values(f2);
+
+CT-00601, [1:45]Sql syntax error: invalid column name 'F2'
+SQL> insert into test_exclude_flags_1(f1) values(*);
+
+CT-00601, [1:45]Sql syntax error: unexcpected '*'
+SQL> insert into test_exclude_flags_1(f1) values(rownum);
+
+CT-00601, [1:45]Sql syntax error: unexpected rownum occurs
+SQL> insert into test_exclude_flags_1(f1) values(rowid);
+
+CT-00601, [1:45]Sql syntax error: unexpected rowid occurs
+SQL> 
+SQL> --- delete
+SQL> delete from test_exclude_flags_1 where f1=rownum and f2=rowid;
+
+0 rows affected.
+
+SQL> delete from test_exclude_flags_1 where f1=(select f1 from test_exclude_flags_2);
+
+3 rows affected.
+
+SQL> -- where
+SQL> delete from test_exclude_flags_1 where f1=max(1);
+
+CT-01317, [1:43]Unexpected aggregation 'MAX'
+SQL> delete from test_exclude_flags_1 where max(1)=f1;
+
+CT-01317, [1:40]Unexpected aggregation 'MAX'
+SQL> delete from test_exclude_flags_1 where f1=*;
+
+CT-00601, [1:43]Sql syntax error: unexcpected '*'
+SQL> delete from test_exclude_flags_1 where *=*;
+
+CT-00601, [1:40]Sql syntax error: unexcpected '*'
+SQL> delete from test_exclude_flags_1 where f1=t_sequence.nextval;
+
+CT-00601, [1:43]Sql syntax error: unexpected sequence occurs
+SQL> 
+SQL> --- update
+SQL> update test_exclude_flags_1 set f1=t_sequence.nextval, f2=(select f2 from test_exclude_flags_2) where f1=rownum;
+
+0 rows affected.
+
+SQL> update test_exclude_flags_1 set f1=rownum, f2=(select f2 from test_exclude_flags_2) where f1=(select f1 from test_exclude_flags_2);
+
+0 rows affected.
+
+SQL> -- set(column=value)
+SQL> update test_exclude_flags_1 set *=1;
+
+CT-00601, [1:33]Sql syntax error: unexcpected '*'
+SQL> update test_exclude_flags_1 set f1=avg(1);
+
+CT-01317, [1:36]Unexpected aggregation 'AVG'
+SQL> update test_exclude_flags_1 set f1=*;
+
+CT-00601, [1:36]Sql syntax error: unexcpected '*'
+SQL> update test_exclude_flags_1 set f1=rowid;
+
+CT-00601, [1:36]Sql syntax error: unexpected rowid occurs
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> drop table test_exclude_flags_1;
+
+Succeed.
+
+SQL> drop table test_exclude_flags_2;
+
+Succeed.
+
+SQL> drop sequence t_sequence;
+
+Succeed.
+
+SQL> 
+
+

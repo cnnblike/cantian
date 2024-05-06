@@ -1,0 +1,100 @@
+
+
+SQL> ALTER SYSTEM SET ENABLE_ERR_SUPERPOSED = TRUE;
+
+Succeed.
+
+SQL> 
+SQL> SELECT * FROM SYS1111.ALL_VIEW_COLUMNS;
+
+CT-00843, [1:15]The table or view SYS1111.ALL_VIEW_COLUMNS does not exist.
+SQL> SELECT LTRIM(TYPE_ID2NAME('A')) FROM DUAL;
+
+CT-00636, Invalid number -- unexpected character
+CT-01322, Calculate expression node failed.
+SQL> SELECT SLEEP(TYPE_ID2NAME('A')) FROM DUAL;
+
+CT-00636, Invalid number -- unexpected character
+CT-01322, Calculate expression node failed.
+SQL> SELECT FROM_UNIXTIME(9223372036854775807);
+
+CT-00695, TIMESTAMP out of range, it must be between 0001-01-01 00:00:00.000000 and 9999-12-31 23:59:59.999999
+SQL> SELECT FROM_UNIXTIME(-9223372036854775807);
+
+CT-00695, TIMESTAMP out of range, it must be between 0001-01-01 00:00:00.000000 and 9999-12-31 23:59:59.999999
+SQL> SELECT FROM_UNIXTIME(9223372036854775809);
+
+CT-00695, TIMESTAMP out of range, it must be between 0001-01-01 00:00:00.000000 and 9999-12-31 23:59:59.999999
+SQL> SELECT FROM_UNIXTIME(-9223372036854775809);
+
+CT-00695, TIMESTAMP out of range, it must be between 0001-01-01 00:00:00.000000 and 9999-12-31 23:59:59.999999
+SQL> ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH:MI:SS asx';
+
+CT-00105, Invalid format of datetime
+CT-00120, Unrecognized format code
+SQL> ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH:MI:SS.FF asx';
+
+CT-00105, Invalid format of datetime
+CT-00120, Unrecognized format code
+SQL> 
+SQL> CREATE TABLE T_FORUPDATE_1 (F_INT1 INT, F_INT2 INT, F_CHAR CHAR(16), F_DATE DATE);
+
+Succeed.
+
+SQL> SELECT F_INT1 FROM T_FORUPDATE_1 FOR UPDATE UNION ALL SELECT F_INT1 FROM T_FORUPDATE_1;
+
+CT-00601, [1:45]Sql syntax error: [wait] | [nowait] | [skip locked] expected
+SQL> SELECT F_INT1 FROM T_FORUPDATE_1 FOR UPDATE LIMIT 1;
+
+CT-00601, [1:45]Sql syntax error: [wait] | [nowait] | [skip locked] expected
+SQL> UPDATE T_FORUPDATE_1 SET *=1;
+
+CT-00601, [1:26]Sql syntax error: unexcpected '*'
+SQL> 
+SQL> DECLARE
+  2     A INT;
+  3     B CHAR(16);
+  4     C VARCHAR(16);
+  5 BEGIN
+  6     A := 10;
+  7     B := 'ABC';
+  8     C := 'EFC';
+  9     EXECUTE IMMEDIATE 'BEGIN dbe_output.print_line(:X||:Y||:Z);END;' USING A,B;
+ 10 END;
+ 11 /
+
+CT-00932, [9:5] PL/SQL(SYS.ANONYMOUS BLOCK) terminated with execute errors
+[9:5] CT-00908, PL/SQL internal program error(The param count of dynamic sql is not same as the param count of using clause).
+
+SQL> 
+SQL> CREATE OR REPLACE PROCEDURE PROC_GETDATABYPAGE(V_SQLSTR IN VARCHAR2,
+  2     V_PAGESIZE IN NUMBER,
+  3     V_CURRENTPAGE IN NUMBER) AS
+  4     V_REFCUR SYS_REFCURSOR;
+  5     V_REFCUR2 SYS_REFCURSOR;
+  6     V_FIRSTREC  NUMBER(10,0);
+  7     V_LASTREC  NUMBER(10,0);
+  8     V_DT  VARCHAR2(10);
+  9     SWV_SQLSTR VARCHAR2(8000);
+ 10 BEGIN
+ 11     BEGIN
+ 12     V_DT := SUBSTR(CAST(DBE_RANDOM.GET_STRING('U',3) AS VARCHAR2),3,10);
+ 13     dbe_output.print_line(V_DT);
+ 14     END;
+ 15 END;
+ 16 /
+
+Succeed.
+Warning:
+PL/SQL(SYS.PROC_GETDATABYPAGE) terminated with compiling errors
+[12:65] PLC-00601 Sql syntax error: the column size must be specified
+[16:1] PLC-00954 more text expected but EOF found
+
+
+SQL> 
+SQL> ALTER SYSTEM SET ENABLE_ERR_SUPERPOSED = FALSE;
+Succeed.
+
+
+
+

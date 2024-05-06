@@ -1,0 +1,225 @@
+
+
+SQL> --DTS2019041106854
+SQL> drop user if exists a cascade;
+
+Succeed.
+
+SQL> create user A identified by data_123;
+
+Succeed.
+
+SQL> grant dba to A;
+
+Succeed.
+
+SQL> conn a/data_123@127.0.0.1:1611
+
+connected.
+
+SQL> DROP TABLE IF EXISTS posts;
+
+Succeed.
+
+SQL> CREATE TABLE posts(post_id CHAR(2) NOT NULL, post_name CHAR(6) PRIMARY KEY, basic_wage INT,basic_bonus INT);
+
+Succeed.
+
+SQL> CREATE INDEX idx_posts ON posts(post_id ASC, post_name);
+
+Succeed.
+
+SQL> ALTER INDEX idx_posts ON posts rename to idx_posts_1#;
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS posts1;
+
+Succeed.
+
+SQL> CREATE TABLE posts1(post_id CHAR(2) NOT NULL, post_name CHAR(6) PRIMARY KEY, basic_wage INT,basic_bonus INT);
+
+Succeed.
+
+SQL> CREATE INDEX idx_posts ON posts1(post_id ASC, post_name);
+
+Succeed.
+
+SQL> ALTER INDEX idx_posts_1# ON posts rename to idx_posts;
+
+Succeed.
+
+SQL> conn / as sysdba
+
+connected.
+
+SQL> drop user a cascade;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2019041104120
+SQL> DROP TABLE IF EXISTS RENAME_IND_CON_17;
+
+Succeed.
+
+SQL> CREATE TABLE RENAME_IND_CON_17(c1 int, c2 varchar(32), c3 bigint);
+
+Succeed.
+
+SQL> INSERT INTO RENAME_IND_CON_17 VALUES(50, 'P1', 5000);
+
+1 rows affected.
+
+SQL> INSERT INTO RENAME_IND_CON_17 VALUES(150, 'P2', 15000);
+
+1 rows affected.
+
+SQL> INSERT INTO RENAME_IND_CON_17 VALUES(250, 'P3', 25000);
+
+1 rows affected.
+
+SQL> INSERT INTO RENAME_IND_CON_17 VALUES(350, 'P4', 35000);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE RENAME_IND_CON_17 ADD CONSTRAINT pk_RENAME_IND_CON_17_1 unique(c1);
+
+Succeed.
+
+SQL> ALTER TABLE RENAME_IND_CON_17 ADD CONSTRAINT pk_RENAME_IND_CON_17_2 check(c3>2500);
+
+Succeed.
+
+SQL> ALTER TABLE RENAME_IND_CON_17 ADD CONSTRAINT pk_RENAME_IND_CON_17_3 PRIMARY KEY(c2);
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE RENAME_IND_CON_17 rename constraint pk_RENAME_IND_CON_17_1 to pk_RENAME_IND_CON_17_4;
+
+Succeed.
+
+SQL> ALTER TABLE RENAME_IND_CON_17 rename constraint pk_RENAME_IND_CON_17_2 to pk_RENAME_IND_CON_17_5;
+
+Succeed.
+
+SQL> ALTER TABLE RENAME_IND_CON_17 rename constraint pk_RENAME_IND_CON_17_3 to pk_RENAME_IND_CON_17_6;
+
+Succeed.
+
+SQL> 
+SQL> ALTER TABLE RENAME_IND_CON_17 DROP CONSTRAINT pk_RENAME_IND_CON_17_4;
+
+Succeed.
+
+SQL> ALTER TABLE RENAME_IND_CON_17 DROP CONSTRAINT pk_RENAME_IND_CON_17_5;
+
+Succeed.
+
+SQL> ALTER TABLE RENAME_IND_CON_17 DROP CONSTRAINT pk_RENAME_IND_CON_17_6;
+
+Succeed.
+
+SQL> 
+SQL> INSERT INTO RENAME_IND_CON_17 VALUES(250, 'P5', 4500);
+
+1 rows affected.
+
+SQL> INSERT INTO RENAME_IND_CON_17 VALUES(450, 'P6', 500);
+
+1 rows affected.
+
+SQL> INSERT INTO RENAME_IND_CON_17 VALUES(550, 'P3', 5000);
+
+1 rows affected.
+
+SQL> 
+SQL> --DTS2019041001766
+SQL> DROP TABLE IF EXISTS RENAME_IND_CON_4;
+
+Succeed.
+
+SQL> CREATE TABLE RENAME_IND_CON_4(c1 INTEGER,c2 INTEGER);
+
+Succeed.
+
+SQL> CREATE INDEX ix_RENAME_IND_4_1 ON RENAME_IND_CON_4(c1) initrans 255;
+
+Succeed.
+
+SQL> alter table RENAME_IND_CON_4 add constraint RENAME_CON_1 check(c1>1);
+
+Succeed.
+
+SQL> DROP TABLE IF EXISTS RENAME_IND_CON_5;
+
+Succeed.
+
+SQL> CREATE TABLE RENAME_IND_CON_5(c1 INTEGER,c2 INTEGER);
+
+Succeed.
+
+SQL> CREATE INDEX ix_RENAME_IND_5_1 ON RENAME_IND_CON_5(c1) initrans 255;
+
+Succeed.
+
+SQL> alter table RENAME_IND_CON_5 add constraint RENAME_CON_2 check(c1>1);
+
+Succeed.
+
+SQL> alter table RENAME_IND_CON_5 add constraint RENAME_CON_3 unique (c1);
+
+Succeed.
+
+SQL> 
+SQL> alter  index ix_RENAME_IND_5_1 rename TO  ix_RENAME_IND_4_1;
+
+CT-00601, [1:14]Sql syntax error: invalid SQL syntax due to not 'on' expression before table name
+SQL> alter table RENAME_IND_CON_5 rename constraint  RENAME_CON_2 to RENAME_CON_1;
+
+Succeed.
+
+SQL> 
+SQL> select  t.name TB , i.name IDX  from SYS_TABLES t ,SYS_INDEXES i  where i.table#=t.id and t.name = 'RENAME_IND_CON_4';
+
+TB                                                               IDX                                                             
+---------------------------------------------------------------- ----------------------------------------------------------------
+RENAME_IND_CON_4                                                 IX_RENAME_IND_4_1                                               
+
+1 rows fetched.
+
+SQL> select  t.name TB , i.name IDX  from SYS_TABLES t ,SYS_INDEXES i  where i.table#=t.id and t.name = 'RENAME_IND_CON_5';
+
+TB                                                               IDX                                                             
+---------------------------------------------------------------- ----------------------------------------------------------------
+RENAME_IND_CON_5                                                 IX_RENAME_IND_5_1                                               
+
+1 rows fetched.
+
+SQL> 
+SQL> --DTS2019041106652
+SQL> DROP TABLE IF EXISTS posts;
+
+Succeed.
+
+SQL> CREATE TABLE posts(post_id CHAR(2) NOT NULL, post_name CHAR(6) PRIMARY KEY, basic_wage INT,basic_bonus INT);
+
+Succeed.
+
+SQL> CREATE INDEX idx_posts ON posts(post_id ASC, post_name);
+
+Succeed.
+
+SQL> CREATE INDEX idx_posts ON posts(basic_wage ASC, post_name); 
+
+CT-00753, The object index IDX_POSTS already exists.
+SQL> 
+SQL> 
+
+

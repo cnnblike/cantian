@@ -1,0 +1,1453 @@
+
+
+SQL> 
+SQL> --DTS2018101803228,hash join core
+SQL> --1 prepare table and data
+SQL> DROP TABLE IF EXISTS T__PREPARADEFAULTBTSBRD_A41;
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE T__PREPARADEFAULTBTSBRD_A41
+  2 (
+  3   VERSION VARCHAR(48 BYTE) NOT NULL,
+  4   BTSTYPE NUMBER(10) NOT NULL,
+  5   CABCLASS VARCHAR(48 BYTE) NOT NULL,
+  6   SHELFNAME VARCHAR(96 BYTE) NOT NULL,
+  7   CMEUID NUMBER(10) NOT NULL
+  8 )ON COMMIT DELETE ROWS;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_BSCBTS_BTSCABINETMODULEMAP;
+
+Succeed.
+
+SQL> CREATE TABLE T_BSCBTS_BTSCABINETMODULEMAP
+  2 (
+  3   VERSION VARCHAR(48 BYTE) NOT NULL,
+  4   BTSTYPE NUMBER(10) NOT NULL,
+  5   CABCLASS VARCHAR(48 BYTE) NOT NULL,
+  6   SHELFNAME VARCHAR(96 BYTE) NOT NULL,
+  7   CMEUID NUMBER(10) NOT NULL,
+  8   constraint   PK_T_BSCBTS_BTSCABINETMODULEMAP PRIMARY KEY(VERSION, CMEUID)
+  9 )
+ 10 INITRANS 2
+ 11 MAXTRANS 255
+ 12 PCTFREE 8;
+
+Succeed.
+
+SQL> INSERT INTO T_BSCBTS_BTSCABINETMODULEMAP (VERSION,BTSTYPE,CABCLASS,SHELFNAME,CMEUID) values('A8',9,'MainGrpMainCab','g_Site3002C_shf',20012);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_BTSCABINETMODULEMAP (VERSION,BTSTYPE,CABCLASS,SHELFNAME,CMEUID) values('A8',8,'SubGrpMainCab','g_Site3001CP_shf',20011);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_BTSCABINETMODULEMAP (VERSION,BTSTYPE,CABCLASS,SHELFNAME,CMEUID) values('A8',8,'SubCab','g_Site3001CP_shf',20010);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_BTSCABINETMODULEMAP (VERSION,BTSTYPE,CABCLASS,SHELFNAME,CMEUID) values('A8',8,'MainGrpMainCab','g_Site3001CP_shf',20009);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_BTSCABINETMODULEMAP (VERSION,BTSTYPE,CABCLASS,SHELFNAME,CMEUID) values('A8',7,'SubGrpMainCab','g_Site3001CP_shf',20008);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_BSCBTS_BTSCABINETMODULEMAP ON T_BSCBTS_BTSCABINETMODULEMAP(VERSION, BTSTYPE, CABCLASS, SHELFNAME)
+  2 INITRANS 2
+  3 PCTFREE 8;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T__PREPARADEFAULTBTSBRD_A44;
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE T__PREPARADEFAULTBTSBRD_A44
+  2 (
+  3   VERSION VARCHAR(48 BYTE) NOT NULL,
+  4   BTSTYPE NUMBER(10) NOT NULL,
+  5   CABNUMINGRP NUMBER(10),
+  6   CMEUID NUMBER(10) NOT NULL
+  7 )ON COMMIT DELETE ROWS;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_BSCBTS_CABNUMINGRPMAP;
+
+Succeed.
+
+SQL> CREATE TABLE T_BSCBTS_CABNUMINGRPMAP
+  2 (
+  3   VERSION VARCHAR(48 BYTE) NOT NULL,
+  4   BTSTYPE NUMBER(10) NOT NULL,
+  5   CABNUMINGRP NUMBER(10),
+  6   CMEUID NUMBER(10) NOT NULL,
+  7   constraint   PK_T_BSCBTS_CABNUMINGRPMAP PRIMARY KEY(VERSION, CMEUID)
+  8 )
+  9 INITRANS 2
+ 10 MAXTRANS 255
+ 11 PCTFREE 8;
+
+Succeed.
+
+SQL> INSERT INTO T_BSCBTS_CABNUMINGRPMAP (VERSION,BTSTYPE,CABNUMINGRP,CMEUID) values('A4',0,255,20000);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_CABNUMINGRPMAP (VERSION,BTSTYPE,CABNUMINGRP,CMEUID) values('A4',2,255,20001);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_CABNUMINGRPMAP (VERSION,BTSTYPE,CABNUMINGRP,CMEUID) values('A4',3,3,20002);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_CABNUMINGRPMAP (VERSION,BTSTYPE,CABNUMINGRP,CMEUID) values('A4',5,2,20003);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_CABNUMINGRPMAP (VERSION,BTSTYPE,CABNUMINGRP,CMEUID) values('A4',7,255,20004);
+
+1 rows affected.
+
+SQL> INSERT INTO T_BSCBTS_CABNUMINGRPMAP (VERSION,BTSTYPE,CABNUMINGRP,CMEUID) values('A4',8,255,20005);
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> CREATE INDEX IDX_BSCBTS_CABNUMINGRPMAP ON T_BSCBTS_CABNUMINGRPMAP(VERSION, BTSTYPE)
+  2 INITRANS 2
+  3 PCTFREE 8;
+
+Succeed.
+
+SQL> 
+SQL> --2 show explain
+SQL> delete from t__PreparaDefaultBTSBRD_A41;
+
+0 rows affected.
+
+SQL> insert into t__PreparaDefaultBTSBRD_A41 (VERSION,BTSTYPE,CabClass,ShelfName,CMEUID) 
+  2 select VERSION, BTSTYPE, CabClass, ShelfName, CMEUID from t_BSCBTS_BTSCabinetModuleMap where VERSION = 'A4';
+
+0 rows affected.
+
+SQL> 
+SQL> delete from t__PreparaDefaultBTSBRD_A44;
+
+0 rows affected.
+
+SQL> insert into t__PreparaDefaultBTSBRD_A44 (VERSION,BTSTYPE,CabNumInGrp,CMEUID) 
+  2 select VERSION, BTSTYPE, CabNumInGrp, CMEUID from t_BSCBTS_CabNumInGrpMap where VERSION = 'A4';
+
+6 rows affected.
+
+SQL> 
+SQL> --3 check if fixed	
+SQL> delete from t__PreparaDefaultBTSBRD_A41;
+
+0 rows affected.
+
+SQL> insert into t__PreparaDefaultBTSBRD_A41 (VERSION,BTSTYPE,CabClass,ShelfName,CMEUID) 
+  2 select VERSION, BTSTYPE, CabClass, ShelfName, CMEUID from t_BSCBTS_BTSCabinetModuleMap where VERSION = 'A4';
+
+0 rows affected.
+
+SQL> 
+SQL> delete from t__PreparaDefaultBTSBRD_A44;
+
+6 rows affected.
+
+SQL> insert into t__PreparaDefaultBTSBRD_A44 (VERSION,BTSTYPE,CabNumInGrp,CMEUID) 
+  2 select VERSION, BTSTYPE, CabNumInGrp, CMEUID from t_BSCBTS_CabNumInGrpMap where VERSION = 'A4';
+
+6 rows affected.
+
+SQL> 
+SQL> select  
+  2 		1
+  3 from             
+  4 		t__PreparaDefaultBTSBRD_A41 c, 
+  5 		t__PreparaDefaultBTSBRD_A44 f 
+  6 where
+  7     f.VERSION = c.VERSION	 and 
+  8 	c.CabClass = (case when mod(0, f.CabNumInGrp) <> 0 then 'SubCab' end);
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> 
+SQL> --DTS2018101803264,nested loop join core
+SQL> --1 prepare table and data
+SQL> DROP TABLE IF EXISTS T_NCELLEXPRESS_GCELLKEYINFO;
+
+Succeed.
+
+SQL> CREATE TABLE T_NCELLEXPRESS_GCELLKEYINFO
+  2 (
+  3   PLANID NUMBER(10) NOT NULL,
+  4   CMENEID NUMBER(10) NOT NULL,
+  5   CELLID NUMBER(10) NOT NULL,
+  6   CELLNAME VARCHAR(96 BYTE),
+  7   ISNCELL NUMBER(10),
+  8   MCC VARCHAR(5 BYTE) NOT NULL,
+  9   MNC VARCHAR(5 BYTE) NOT NULL,
+ 10   LAC NUMBER(10) NOT NULL,
+ 11   CI NUMBER(10) NOT NULL,
+ 12   NCC NUMBER(5),
+ 13   BCC NUMBER(5),
+ 14   RA NUMBER(5),
+ 15   BCCHNO NUMBER(10),
+ 16   NCMENEID NUMBER(10),
+ 17   constraint PK_T_NCELLEXPRESS_GCELLKEYINFO PRIMARY KEY(PLANID, CMENEID, CELLID, MCC, MNC, LAC, CI)
+ 18 )
+ 19 INITRANS 2
+ 20 MAXTRANS 255
+ 21 PCTFREE 8;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS T_TMP_LOADG2GNCELL;
+
+Succeed.
+
+SQL> CREATE TABLE T_TMP_LOADG2GNCELL
+  2 (
+  3   PLANID NUMBER(10) NOT NULL,
+  4   ROWINDEX NUMBER(10) NOT NULL,
+  5   BSCNAME VARCHAR(383 BYTE),
+  6   ISNCELL NUMBER(10),
+  7   CELLID NUMBER(10),
+  8   CELLNAME VARCHAR(96 BYTE),
+  9   MCC VARCHAR(5 BYTE),
+ 10   MNC VARCHAR(5 BYTE),
+ 11   LAC NUMBER(10),
+ 12   CI NUMBER(10),
+ 13   BCC NUMBER(10),
+ 14   NCC NUMBER(10),
+ 15   BCCH NUMBER(10),
+ 16   constraint PK_T_TMP_LOADG2GNCELL PRIMARY KEY(PLANID, ROWINDEX)
+ 17 )
+ 18 INITRANS 2
+ 19 MAXTRANS 255
+ 20 PCTFREE 8;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS SYS_NEINFO_BSC;
+
+Succeed.
+
+SQL> CREATE TABLE SYS_NEINFO_BSC
+  2 (
+  3   PLANID NUMBER(10) NOT NULL,
+  4   CMENEID NUMBER(10) NOT NULL,
+  5   PHYNEID NUMBER(10) NOT NULL DEFAULT 0,
+  6   TYPE NUMBER(10) NOT NULL,
+  7   NAME VARCHAR(383 BYTE) NOT NULL,
+  8   FDN VARCHAR(96 BYTE) NOT NULL,
+  9   VERSION VARCHAR(24 BYTE) NOT NULL,
+ 10   COMPVERSION VARCHAR(96 BYTE),
+ 11   NEVERSION VARCHAR(450 BYTE),
+ 12   NEFAMILYVERSION VARCHAR(450 BYTE),
+ 13   DSPVERSION VARCHAR(450 BYTE),
+ 14   ITFVERSION VARCHAR(96 BYTE),
+ 15   BASICID NUMBER(10) DEFAULT 0,
+ 16   TYPEDSPNAME VARCHAR(96 BYTE),
+ 17   OMIP VARCHAR(48 BYTE),
+ 18   OMIP2 VARCHAR(48 BYTE),
+ 19   SYNCHSTATUS NUMBER(10) DEFAULT 0,
+ 20   LASTSYNCTIME NUMBER(10) DEFAULT 0,
+ 21   STATUS NUMBER(10) DEFAULT 0,
+ 22   RNCPOOLTYPE NUMBER(10) DEFAULT 77,
+ 23   CLASSIFY NUMBER(10) DEFAULT 0,
+ 24   REMARK VARCHAR(383 BYTE),
+ 25   DBAREA VARCHAR(48 BYTE),
+ 26   constraint PK_SYS_NEINFO_BSC PRIMARY KEY(PLANID, CMENEID)
+ 27 )
+ 28 INITRANS 2
+ 29 MAXTRANS 255
+ 30 PCTFREE 8;
+
+Succeed.
+
+SQL> INSERT INTO SYS_NEINFO_BSC (PLANID,CMENEID,PHYNEID,TYPE,NAME,FDN,VERSION,COMPVERSION,NEVERSION,NEFAMILYVERSION,DSPVERSION,ITFVERSION,BASICID,TYPEDSPNAME,OMIP,OMIP2,SYNCHSTATUS,LASTSYNCTIME,STATUS,RNCPOOLTYPE,CLASSIFY,REMARK,DBAREA) values(37,126,126,173,'Auto_919C10SPC500_Reparent_Destination','GU_20180925110359_607110_001','A4','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900-GUV9R19C10ID0500',-1,'BSC6900GUNE',null,null,0,1537844664,32,100,3,null,'cmedb');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_NEINFO_BSC (PLANID,CMENEID,PHYNEID,TYPE,NAME,FDN,VERSION,COMPVERSION,NEVERSION,NEFAMILYVERSION,DSPVERSION,ITFVERSION,BASICID,TYPEDSPNAME,OMIP,OMIP2,SYNCHSTATUS,LASTSYNCTIME,STATUS,RNCPOOLTYPE,CLASSIFY,REMARK,DBAREA) values(41,146,146,173,'Auto_919C10SPC500_Reparent_Destination','GU_20180926112606_019604_001','A4','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900-GUV9R19C10ID0500',-1,'BSC6900GUNE',null,null,0,1537932405,32,100,3,null,'cmedb');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_NEINFO_BSC (PLANID,CMENEID,PHYNEID,TYPE,NAME,FDN,VERSION,COMPVERSION,NEVERSION,NEFAMILYVERSION,DSPVERSION,ITFVERSION,BASICID,TYPEDSPNAME,OMIP,OMIP2,SYNCHSTATUS,LASTSYNCTIME,STATUS,RNCPOOLTYPE,CLASSIFY,REMARK,DBAREA) values(45,166,166,173,'Auto_919C10SPC500_Reparent_Destination','GU_20180927085503_942653_002','A4','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900-GUV9R19C10ID0500',934,'BSC6900GUNE',null,null,0,1538009732,32,100,3,null,'cmedb');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_NEINFO_BSC (PLANID,CMENEID,PHYNEID,TYPE,NAME,FDN,VERSION,COMPVERSION,NEVERSION,NEFAMILYVERSION,DSPVERSION,ITFVERSION,BASICID,TYPEDSPNAME,OMIP,OMIP2,SYNCHSTATUS,LASTSYNCTIME,STATUS,RNCPOOLTYPE,CLASSIFY,REMARK,DBAREA) values(53,265,265,173,'Auto_919C10SPC500_Reparent_Destination - 19','GU_20180927180040_528010_033','A4','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900-GUV9R19C10ID0500',-1,'BSC6900GUNE',null,null,0,1538043115,32,100,3,null,'cmedb');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_NEINFO_BSC (PLANID,CMENEID,PHYNEID,TYPE,NAME,FDN,VERSION,COMPVERSION,NEVERSION,NEFAMILYVERSION,DSPVERSION,ITFVERSION,BASICID,TYPEDSPNAME,OMIP,OMIP2,SYNCHSTATUS,LASTSYNCTIME,STATUS,RNCPOOLTYPE,CLASSIFY,REMARK,DBAREA) values(53,274,274,173,'Auto_919C10SPC500_Reparent_Destination - 9','GU_20180927180040_533954_042','A4','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900-GUV9R19C10ID0500',-1,'BSC6900GUNE',null,null,0,1538043115,32,100,3,null,'cmedb');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_NEINFO_BSC (PLANID,CMENEID,PHYNEID,TYPE,NAME,FDN,VERSION,COMPVERSION,NEVERSION,NEFAMILYVERSION,DSPVERSION,ITFVERSION,BASICID,TYPEDSPNAME,OMIP,OMIP2,SYNCHSTATUS,LASTSYNCTIME,STATUS,RNCPOOLTYPE,CLASSIFY,REMARK,DBAREA) values(53,273,273,173,'Auto_919C10SPC500_Reparent_Destination - 8','GU_20180927180040_533930_041','A4','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900-GUV9R19C10ID0500',-1,'BSC6900GUNE',null,null,0,1538043115,32,100,3,null,'cmedb');
+
+1 rows affected.
+
+SQL> INSERT INTO SYS_NEINFO_BSC (PLANID,CMENEID,PHYNEID,TYPE,NAME,FDN,VERSION,COMPVERSION,NEVERSION,NEFAMILYVERSION,DSPVERSION,ITFVERSION,BASICID,TYPEDSPNAME,OMIP,OMIP2,SYNCHSTATUS,LASTSYNCTIME,STATUS,RNCPOOLTYPE,CLASSIFY,REMARK,DBAREA) values(53,272,272,173,'Auto_919C10SPC500_Reparent_Destination - 7','GU_20180927180040_533899_040','A4','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900V900R019C10SPC500','BSC6900-GUV9R19C10ID0500',-1,'BSC6900GUNE',null,null,0,1538043115,32,100,3,null,'cmedb');
+
+1 rows affected.
+
+SQL> COMMIT;
+
+Succeed.
+
+SQL> 
+SQL> --3 check if fixed
+SQL> select  1 
+  2 from t_NCELLEXPRESS_GCELLKeyInfo a
+  3  join 
+  4 t_tmp_LoadG2GNCELL b on a.PlanID = b.PlanID
+  5  join 
+  6 (select 
+  7 	aa.PlanID as PlanID, 
+  8 	aa.CMENEID as CMENEID, 
+  9 	aa.Type as NEType, 
+ 10 	aa.PhyNEID as PhyNEID, 
+ 11 	aa.Name as BSCName, 
+ 12 	aa.Version as BSCVersion,
+ 13 	aa.DspVersion as BSCDspVersion, 
+ 14 	aa.FDN as BSCFDN, 
+ 15 	aa.BasicId as neRawID, 
+ 16 	aa.ItfVersion as InternalID, 
+ 17 	aa.Remark as Remark, 
+ 18 	aa.Classify as DataSource 
+ 19  from 
+ 20 	Sys_NEInfo_BSC aa 
+ 21  where 
+ 22 	aa.PlanID <> 0 and aa.CMENEID = aa.PhyNEID) c on a.PlanID = c.PlanID and a.CMENEID = c.CMENEID 
+ 23 where 
+ 24 c.BSCName = (case when b.BSCName is not null then b.BSCName else c.BSCName end);
+
+1           
+------------
+
+0 rows fetched.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "TMP_PREERRLOG_SITE";
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE "TMP_PREERRLOG_SITE"
+  2 (
+  3   "OBJECTGROUPID" NUMBER(10) NOT NULL,
+  4   "CMENEID" NUMBER(10) NOT NULL,
+  5   "ENTITYMOOPID" NUMBER(10),
+  6   "OBJECTID" NUMBER(10),
+  7   "MOCNAME" VARCHAR(75 BYTE) NOT NULL,
+  8   "MOID" VARCHAR(3000 BYTE) NOT NULL,
+  9   "ERRCODE" NUMBER(10) NOT NULL
+ 10 )ON COMMIT DELETE ROWS;
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "TMP_CELLLTEFLEXBW_A12K";
+
+Succeed.
+
+SQL> CREATE TABLE "TMP_CELLLTEFLEXBW_A12K"
+  2 (
+  3   "PLANID" NUMBER(10) NOT NULL,
+  4   "PHYID" NUMBER(10) NOT NULL,
+  5   "CMENEID" NUMBER(10) NOT NULL,
+  6   "ENTITYMOOPID" NUMBER(10),
+  7   "OBJECTID" NUMBER(10) NOT NULL,
+  8   "DLCUSTENDPRBINDEX" NUMBER(10),
+  9   "DLCUSTSTARTPRBINDEX" NUMBER(10),
+ 10   "LOCALCELLID" NUMBER(10) NOT NULL,
+ 11   "LTEFLEXBWSWITCH" NUMBER(10),
+ 12   "ULCUSTENDPRBINDEX" NUMBER(10),
+ 13   "ULCUSTSTARTPRBINDEX" NUMBER(10)
+ 14 )
+ 15 INITRANS 2
+ 16 MAXTRANS 255
+ 17 PCTFREE 8;
+
+Succeed.
+
+SQL> CREATE INDEX "IDX2#_M_235_0_A12K" ON TMP_CELLLTEFLEXBW_A12K("PLANID", "PHYID", "LOCALCELLID")
+  2 INITRANS 2
+  3 PCTFREE 8;
+
+Succeed.
+
+SQL> ALTER TABLE "TMP_CELLLTEFLEXBW_A12K" ADD CONSTRAINT "PK#_M_235_A12K" PRIMARY KEY("PLANID", "OBJECTID");
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "RULECHECK_OBJGROUP";
+
+Succeed.
+
+SQL> CREATE TABLE "RULECHECK_OBJGROUP"
+  2 (
+  3   "GROUPID" NUMBER(10) NOT NULL,
+  4   "OBJECTID" NUMBER(10) NOT NULL,
+  5   "MOOPID" NUMBER(10) NOT NULL
+  6 )
+  7 INITRANS 2
+  8 MAXTRANS 255
+  9 PCTFREE 8;
+
+Succeed.
+
+SQL> ALTER TABLE "RULECHECK_OBJGROUP" ADD CONSTRAINT "PK_RULECHECK_OBJGROUP" PRIMARY KEY("GROUPID", "OBJECTID", "MOOPID");
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "TMP_CELLLTEFLEXBWITFCFG_A12K";
+
+Succeed.
+
+SQL> CREATE TABLE "TMP_CELLLTEFLEXBWITFCFG_A12K"
+  2 (
+  3   "PLANID" NUMBER(10) NOT NULL,
+  4   "PHYID" NUMBER(10) NOT NULL,
+  5   "CMENEID" NUMBER(10) NOT NULL,
+  6   "ENTITYMOOPID" NUMBER(10),
+  7   "OBJECTID" NUMBER(10) NOT NULL,
+  8   "GSMCARRIERFREQ" NUMBER(10) NOT NULL,
+  9   "HIGHITFGSMARFCN" NUMBER(10) NOT NULL,
+ 10   "LOCALCELLID" NUMBER(10) NOT NULL
+ 11 )
+ 12 INITRANS 2
+ 13 MAXTRANS 255
+ 14 PCTFREE 8;
+
+Succeed.
+
+SQL> CREATE INDEX "IDX2#_M_236_012_A12K" ON TMP_CELLLTEFLEXBWITFCFG_A12K("PLANID", "PHYID", "LOCALCELLID", "HIGHITFGSMARFCN", "GSMCARRIERFREQ")
+  2 INITRANS 2
+  3 PCTFREE 8;
+
+Succeed.
+
+SQL> ALTER TABLE "TMP_CELLLTEFLEXBWITFCFG_A12K" ADD CONSTRAINT "PK#_M_236_A12K" PRIMARY KEY("PLANID", "OBJECTID");
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "TMP_CELL_A12K";
+
+Succeed.
+
+SQL> CREATE TABLE "TMP_CELL_A12K"
+  2 (
+  3   "PLANID" NUMBER(10) NOT NULL,
+  4   "PHYID" NUMBER(10) NOT NULL,
+  5   "CMENEID" NUMBER(10) NOT NULL,
+  6   "ENTITYMOOPID" NUMBER(10),
+  7   "OBJECTID" NUMBER(10) NOT NULL,
+  8   "AIRCELLFLAG" NUMBER(10),
+  9   "CELLACTIVESTATE" NUMBER(10),
+ 10   "CELLID" NUMBER(10),
+ 11   "CELLRADIUS" NUMBER(10),
+ 12   "CELLRADIUSSTARTLOCATION" NUMBER(10),
+ 13   "CNOPSHARINGGROUPID" NUMBER(10),
+ 14   "COMPACTBWCTRLINTRFMODE" NUMBER(10),
+ 15   "COVERAGELEVELTYPE" NUMBER(10),
+ 16   "CPRICOMPRESSION" NUMBER(10),
+ 17   "CPRIETHCOMPRESSIONRATIO" NUMBER(10),
+ 18   "CRSPORTMAP" NUMBER(10),
+ 19   "CRSPORTNUM" NUMBER(10),
+ 20   "CSGIND" NUMBER(10),
+ 21   "CUSTOMIZEDBANDWIDTHCFGIND" NUMBER(10),
+ 22   "CUSTOMIZEDDLBANDWIDTH" NUMBER(10),
+ 23   "CUSTOMIZEDULBANDWIDTH" NUMBER(10),
+ 24   "DLBANDWIDTH" NUMBER(10),
+ 25   "DLCYCLICPREFIX" NUMBER(10),
+ 26   "DLEARFCN" NUMBER(10),
+ 27   "DLPUNCTUREDRBNUM" NUMBER(10),
+ 28   "EMERGENCYAREAID" NUMBER(10),
+ 29   "EMERGENCYAREAIDCFGIND" NUMBER(10),
+ 30   "EUCELLSTANDBYMODE" NUMBER(10),
+ 31   "FDDTDDIND" NUMBER(10),
+ 32   "FREQBAND" NUMBER(10),
+ 33   "HIGHSPEEDFLAG" NUMBER(10),
+ 34   "HSCELLROOTSEQUENCEINDEX" NUMBER(10),
+ 35   "INTRAFREQANRIND" NUMBER(10),
+ 36   "LOCALCELLID" NUMBER(10) NOT NULL,
+ 37   "MULTICELLSHAREMODE" NUMBER(10),
+ 38   "MULTIRRUCELLFLAG" NUMBER(10),
+ 39   "MULTIRRUCELLMODE" NUMBER(10),
+ 40   "NBCELLFLAG" NUMBER(10),
+ 41   "PHYCELLID" NUMBER(10),
+ 42   "PREAMBLEFMT" NUMBER(10),
+ 43   "ROOTSEQUENCEIDX" NUMBER(10),
+ 44   "SECTOREQMNUM" NUMBER(10),
+ 45   "SPECIALSUBFRAMEPATTERNS" NUMBER(10),
+ 46   "SPECIFIEDCELLFLAG" NUMBER(10),
+ 47   "SUBFRAMEASSIGNMENT" NUMBER(10),
+ 48   "TXRXMODE" NUMBER(10),
+ 49   "UEPOWERMAX" NUMBER(10),
+ 50   "UEPOWERMAXCFGIND" NUMBER(10),
+ 51   "ULBANDWIDTH" NUMBER(10),
+ 52   "ULCYCLICPREFIX" NUMBER(10),
+ 53   "ULEARFCN" NUMBER(10),
+ 54   "ULEARFCNCFGIND" NUMBER(10),
+ 55   "ULPUNCTUREDRBNUMOFFSET" NUMBER(10),
+ 56   "WORKMODE" NUMBER(10)
+ 57 )
+ 58 INITRANS 2
+ 59 MAXTRANS 255
+ 60 PCTFREE 8;
+
+Succeed.
+
+SQL> CREATE INDEX "IDX2#_M_13_0_A12K" ON TMP_CELL_A12K("PLANID", "PHYID", "LOCALCELLID")
+  2 INITRANS 2
+  3 PCTFREE 8;
+
+Succeed.
+
+SQL> ALTER TABLE "TMP_CELL_A12K" ADD CONSTRAINT "PK#_M_13_A12K" PRIMARY KEY("PLANID", "OBJECTID");
+
+Succeed.
+
+SQL> 
+SQL> DROP TABLE IF EXISTS "T_LLLTE_CELLM_MO_1615_A12Q1";
+
+Succeed.
+
+SQL> CREATE GLOBAL TEMPORARY TABLE "T_LLLTE_CELLM_MO_1615_A12Q1"
+  2 (
+  3   "PLANID" NUMBER(10) NOT NULL,
+  4   "PHYID" NUMBER(10) NOT NULL,
+  5   "V_DLCENTRALFREQ" NUMBER,
+  6   "V_LOCALCELLID" NUMBER(10) NOT NULL
+  7 )ON COMMIT DELETE ROWS;
+
+Succeed.
+
+SQL> 
+SQL> insert into Tmp_PreErrLog_Site
+  2   select distinct 1,
+  3                   o_self.CMENEID,
+  4                   o_self.entityMoOpId,
+  5                   o_self.objectId,
+  6                   'CELLLTEFLEXBW',
+  7                   ltrim(' ') || '[PARA]CellLteFlexBw::LocalCellId[/PARA]:' ||
+  8                   to_char(o_self.LOCALCELLID) as MoID,
+  9                   21326 as ErrCode
+ 10     from tMP_CELLLTEFLEXBW_A12K o_self
+ 11     join RuleCheck_ObjGroup ObjGroup on o_self.CMENEID = ObjGroup.objectId
+ 12     join tMP_CELLLTEFLEXBWITFCFG_A12K o_aa on (o_aa.PlanID = o_self.PlanID and
+ 13                                               o_aa.PHYID = o_self.PHYID)
+ 14                                           and (o_self.LOCALCELLID =
+ 15                                               o_aa.LOCALCELLID)
+ 16     join tMP_CELL_A12K o_dd on (o_dd.PlanID = o_self.PlanID and
+ 17                                o_dd.PHYID = o_self.PHYID)
+ 18     join t_LLLTE_CELLM_MO_1615_A12Q1 o_ee on (o_ee.PlanID = o_self.PlanID and
+ 19                                              o_ee.PHYID = o_self.PHYID)
+ 20                                          and (o_self.LOCALCELLID =
+ 21                                              o_ee.v_LocalCellId)
+ 22    where o_self.PlanID = 1
+ 23      and ObjGroup.groupId = 2
+ 24      and (((o_self.DLCUSTSTARTPRBINDEX <> 255) and
+ 25          (o_self.DLCUSTENDPRBINDEX <> 255) and
+ 26          ((bitand((bitand(to_number(to_number(o_self.LTEFLEXBWSWITCH)),
+ 27                             15)),
+ 28                     1)) <> 0)) and
+ 29          (((o_self.LOCALCELLID = o_dd.LOCALCELLID) and
+ 30          (o_dd.NBCELLFLAG = 0)) and
+ 31          (((o_self.DLCUSTSTARTPRBINDEX < o_self.DLCUSTENDPRBINDEX) and
+ 32          (((case when(o_aa.GSMCARRIERFREQ = 1) then(935000)
+ 33           when((o_aa.GSMCARRIERFREQ <> 1) and
+ 34                      (o_aa.GSMCARRIERFREQ = 2)) then(1805200)
+ 35           when((o_aa.GSMCARRIERFREQ <> 1) and
+ 36                      (o_aa.GSMCARRIERFREQ <> 2) and
+ 37                      (o_aa.GSMCARRIERFREQ = 3)) then(1930200)
+ 38           when((o_aa.GSMCARRIERFREQ <> 1) and
+ 39                      (o_aa.GSMCARRIERFREQ <> 2) and
+ 40                      (o_aa.GSMCARRIERFREQ <> 3)) then(869200) end) +
+ 41          200 *
+ 42          (o_aa.HIGHITFGSMARFCN -
+ 43          (case when((o_aa.GSMCARRIERFREQ = 1) and
+ 44                            (o_aa.HIGHITFGSMARFCN <= 124)) then(0)
+ 45           when(((o_aa.GSMCARRIERFREQ <> 1) or
+ 46                       (o_aa.HIGHITFGSMARFCN > 124)) and
+ 47                       ((o_aa.GSMCARRIERFREQ = 1) and
+ 48                       (o_aa.HIGHITFGSMARFCN >= 975) and
+ 49                       (o_aa.HIGHITFGSMARFCN <= 1023))) then(1024)
+ 50           when(((o_aa.GSMCARRIERFREQ <> 1) or
+ 51                       (o_aa.HIGHITFGSMARFCN > 124)) and
+ 52                       ((o_aa.GSMCARRIERFREQ <> 1) or
+ 53                       (o_aa.HIGHITFGSMARFCN < 975) or
+ 54                       (o_aa.HIGHITFGSMARFCN > 1023)) and
+ 55                       ((o_aa.GSMCARRIERFREQ = 2) or
+ 56                       (o_aa.GSMCARRIERFREQ = 3))) then(512)
+ 57           when(((o_aa.GSMCARRIERFREQ <> 1) or
+ 58                       (o_aa.HIGHITFGSMARFCN > 124)) and
+ 59                       ((o_aa.GSMCARRIERFREQ <> 1) or
+ 60                       (o_aa.HIGHITFGSMARFCN < 975) or
+ 61                       (o_aa.HIGHITFGSMARFCN > 1023)) and
+ 62                       ((o_aa.GSMCARRIERFREQ <> 2) and
+ 63                       (o_aa.GSMCARRIERFREQ <> 3))) then(128) end)) + 100 >
+ 64          ((o_ee.v_DlCentralFreq * 100 -
+ 65          90 *
+ 66          (case when(o_dd.DLBANDWIDTH = 2) then(25)
+ 67           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH = 3))
+ 68           then(50)
+ 69           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+ 70                        (o_dd.DLBANDWIDTH = 4)) then(75)
+ 71           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+ 72                        (o_dd.DLBANDWIDTH <> 4)) then(100) end)) +
+ 73          o_self.DLCUSTSTARTPRBINDEX * 180)) and
+ 74          ((case when(o_aa.GSMCARRIERFREQ = 1) then(935000)
+ 75           when((o_aa.GSMCARRIERFREQ <> 1) and
+ 76                      (o_aa.GSMCARRIERFREQ = 2)) then(1805200)
+ 77           when((o_aa.GSMCARRIERFREQ <> 1) and
+ 78                      (o_aa.GSMCARRIERFREQ <> 2) and
+ 79                      (o_aa.GSMCARRIERFREQ = 3)) then(1930200)
+ 80           when((o_aa.GSMCARRIERFREQ <> 1) and
+ 81                      (o_aa.GSMCARRIERFREQ <> 2) and
+ 82                      (o_aa.GSMCARRIERFREQ <> 3)) then(869200) end) +
+ 83          200 *
+ 84          (o_aa.HIGHITFGSMARFCN -
+ 85          (case when((o_aa.GSMCARRIERFREQ = 1) and
+ 86                            (o_aa.HIGHITFGSMARFCN <= 124)) then(0)
+ 87           when(((o_aa.GSMCARRIERFREQ <> 1) or
+ 88                       (o_aa.HIGHITFGSMARFCN > 124)) and
+ 89                       ((o_aa.GSMCARRIERFREQ = 1) and
+ 90                       (o_aa.HIGHITFGSMARFCN >= 975) and
+ 91                       (o_aa.HIGHITFGSMARFCN <= 1023))) then(1024)
+ 92           when(((o_aa.GSMCARRIERFREQ <> 1) or
+ 93                       (o_aa.HIGHITFGSMARFCN > 124)) and
+ 94                       ((o_aa.GSMCARRIERFREQ <> 1) or
+ 95                       (o_aa.HIGHITFGSMARFCN < 975) or
+ 96                       (o_aa.HIGHITFGSMARFCN > 1023)) and
+ 97                       ((o_aa.GSMCARRIERFREQ = 2) or
+ 98                       (o_aa.GSMCARRIERFREQ = 3))) then(512)
+ 99           when(((o_aa.GSMCARRIERFREQ <> 1) or
+100                       (o_aa.HIGHITFGSMARFCN > 124)) and
+101                       ((o_aa.GSMCARRIERFREQ <> 1) or
+102                       (o_aa.HIGHITFGSMARFCN < 975) or
+103                       (o_aa.HIGHITFGSMARFCN > 1023)) and
+104                       ((o_aa.GSMCARRIERFREQ <> 2) and
+105                       (o_aa.GSMCARRIERFREQ <> 3))) then(128) end)) - 100 <
+106          ((o_ee.v_DlCentralFreq * 100 -
+107          90 *
+108          (case when(o_dd.DLBANDWIDTH = 2) then(25)
+109           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH = 3))
+110           then(50)
+111           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+112                        (o_dd.DLBANDWIDTH = 4)) then(75)
+113           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+114                        (o_dd.DLBANDWIDTH <> 4)) then(100) end)) +
+115          (o_self.DLCUSTENDPRBINDEX + 1) * 180)))) or
+116          ((o_self.DLCUSTSTARTPRBINDEX >= o_self.DLCUSTENDPRBINDEX) and
+117          ((((case when(o_aa.GSMCARRIERFREQ = 1) then(935000)
+118           when((o_aa.GSMCARRIERFREQ <> 1) and
+119                       (o_aa.GSMCARRIERFREQ = 2)) then(1805200)
+120           when((o_aa.GSMCARRIERFREQ <> 1) and
+121                       (o_aa.GSMCARRIERFREQ <> 2) and
+122                       (o_aa.GSMCARRIERFREQ = 3)) then(1930200)
+123           when((o_aa.GSMCARRIERFREQ <> 1) and
+124                       (o_aa.GSMCARRIERFREQ <> 2) and
+125                       (o_aa.GSMCARRIERFREQ <> 3)) then(869200) end) +
+126          200 *
+127          (o_aa.HIGHITFGSMARFCN -
+128          (case when((o_aa.GSMCARRIERFREQ = 1) and
+129                             (o_aa.HIGHITFGSMARFCN <= 124)) then(0)
+130           when(((o_aa.GSMCARRIERFREQ <> 1) or
+131                        (o_aa.HIGHITFGSMARFCN > 124)) and
+132                        ((o_aa.GSMCARRIERFREQ = 1) and
+133                        (o_aa.HIGHITFGSMARFCN >= 975) and
+134                        (o_aa.HIGHITFGSMARFCN <= 1023))) then(1024)
+135           when(((o_aa.GSMCARRIERFREQ <> 1) or
+136                        (o_aa.HIGHITFGSMARFCN > 124)) and
+137                        ((o_aa.GSMCARRIERFREQ <> 1) or
+138                        (o_aa.HIGHITFGSMARFCN < 975) or
+139                        (o_aa.HIGHITFGSMARFCN > 1023)) and
+140                        ((o_aa.GSMCARRIERFREQ = 2) or
+141                        (o_aa.GSMCARRIERFREQ = 3))) then(512)
+142           when(((o_aa.GSMCARRIERFREQ <> 1) or
+143                        (o_aa.HIGHITFGSMARFCN > 124)) and
+144                        ((o_aa.GSMCARRIERFREQ <> 1) or
+145                        (o_aa.HIGHITFGSMARFCN < 975) or
+146                        (o_aa.HIGHITFGSMARFCN > 1023)) and
+147                        ((o_aa.GSMCARRIERFREQ <> 2) and
+148                        (o_aa.GSMCARRIERFREQ <> 3))) then(128) end)) - 100 <
+149          ((o_ee.v_DlCentralFreq * 100 -
+150          90 *
+151          (case when(o_dd.DLBANDWIDTH = 2) then(25)
+152           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH = 3))
+153           then(50)
+154           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+155                         (o_dd.DLBANDWIDTH = 4)) then(75)
+156           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+157                         (o_dd.DLBANDWIDTH <> 4)) then(100) end)) +
+158          (o_self.DLCUSTENDPRBINDEX + 1) * 180)) or
+159          ((case when(o_aa.GSMCARRIERFREQ = 1) then(935000)
+160           when((o_aa.GSMCARRIERFREQ <> 1) and
+161                       (o_aa.GSMCARRIERFREQ = 2)) then(1805200)
+162           when((o_aa.GSMCARRIERFREQ <> 1) and
+163                       (o_aa.GSMCARRIERFREQ <> 2) and
+164                       (o_aa.GSMCARRIERFREQ = 3)) then(1930200)
+165           when((o_aa.GSMCARRIERFREQ <> 1) and
+166                       (o_aa.GSMCARRIERFREQ <> 2) and
+167                       (o_aa.GSMCARRIERFREQ <> 3)) then(869200) end) +
+168          200 *
+169          (o_aa.HIGHITFGSMARFCN -
+170          (case when((o_aa.GSMCARRIERFREQ = 1) and
+171                             (o_aa.HIGHITFGSMARFCN <= 124)) then(0)
+172           when(((o_aa.GSMCARRIERFREQ <> 1) or
+173                        (o_aa.HIGHITFGSMARFCN > 124)) and
+174                        ((o_aa.GSMCARRIERFREQ = 1) and
+175                        (o_aa.HIGHITFGSMARFCN >= 975) and
+176                        (o_aa.HIGHITFGSMARFCN <= 1023))) then(1024)
+177           when(((o_aa.GSMCARRIERFREQ <> 1) or
+178                        (o_aa.HIGHITFGSMARFCN > 124)) and
+179                        ((o_aa.GSMCARRIERFREQ <> 1) or
+180                        (o_aa.HIGHITFGSMARFCN < 975) or
+181                        (o_aa.HIGHITFGSMARFCN > 1023)) and
+182                        ((o_aa.GSMCARRIERFREQ = 2) or
+183                        (o_aa.GSMCARRIERFREQ = 3))) then(512)
+184           when(((o_aa.GSMCARRIERFREQ <> 1) or
+185                        (o_aa.HIGHITFGSMARFCN > 124)) and
+186                        ((o_aa.GSMCARRIERFREQ <> 1) or
+187                        (o_aa.HIGHITFGSMARFCN < 975) or
+188                        (o_aa.HIGHITFGSMARFCN > 1023)) and
+189                        ((o_aa.GSMCARRIERFREQ <> 2) and
+190                        (o_aa.GSMCARRIERFREQ <> 3))) then(128) end)) + 100 >
+191          ((o_ee.v_DlCentralFreq * 100 -
+192          90 *
+193          (case when(o_dd.DLBANDWIDTH = 2) then(25)
+194           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH = 3))
+195           then(50)
+196           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+197                         (o_dd.DLBANDWIDTH = 4)) then(75)
+198           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+199                         (o_dd.DLBANDWIDTH <> 4)) then(100) end)) +
+200          o_self.DLCUSTSTARTPRBINDEX * 180))) and
+201          ((case when(o_aa.GSMCARRIERFREQ = 1) then(935000)
+202           when((o_aa.GSMCARRIERFREQ <> 1) and
+203                      (o_aa.GSMCARRIERFREQ = 2)) then(1805200)
+204           when((o_aa.GSMCARRIERFREQ <> 1) and
+205                      (o_aa.GSMCARRIERFREQ <> 2) and
+206                      (o_aa.GSMCARRIERFREQ = 3)) then(1930200)
+207           when((o_aa.GSMCARRIERFREQ <> 1) and
+208                      (o_aa.GSMCARRIERFREQ <> 2) and
+209                      (o_aa.GSMCARRIERFREQ <> 3)) then(869200) end) +
+210          200 *
+211          (o_aa.HIGHITFGSMARFCN -
+212          (case when((o_aa.GSMCARRIERFREQ = 1) and
+213                            (o_aa.HIGHITFGSMARFCN <= 124)) then(0)
+214           when(((o_aa.GSMCARRIERFREQ <> 1) or
+215                       (o_aa.HIGHITFGSMARFCN > 124)) and
+216                       ((o_aa.GSMCARRIERFREQ = 1) and
+217                       (o_aa.HIGHITFGSMARFCN >= 975) and
+218                       (o_aa.HIGHITFGSMARFCN <= 1023))) then(1024)
+219           when(((o_aa.GSMCARRIERFREQ <> 1) or
+220                       (o_aa.HIGHITFGSMARFCN > 124)) and
+221                       ((o_aa.GSMCARRIERFREQ <> 1) or
+222                       (o_aa.HIGHITFGSMARFCN < 975) or
+223                       (o_aa.HIGHITFGSMARFCN > 1023)) and
+224                       ((o_aa.GSMCARRIERFREQ = 2) or
+225                       (o_aa.GSMCARRIERFREQ = 3))) then(512)
+226           when(((o_aa.GSMCARRIERFREQ <> 1) or
+227                       (o_aa.HIGHITFGSMARFCN > 124)) and
+228                       ((o_aa.GSMCARRIERFREQ <> 1) or
+229                       (o_aa.HIGHITFGSMARFCN < 975) or
+230                       (o_aa.HIGHITFGSMARFCN > 1023)) and
+231                       ((o_aa.GSMCARRIERFREQ <> 2) and
+232                       (o_aa.GSMCARRIERFREQ <> 3))) then(128) end)) + 100 >
+233          (o_ee.v_DlCentralFreq * 100 -
+234          90 *
+235          (case when(o_dd.DLBANDWIDTH = 2) then(25)
+236           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH = 3))
+237           then(50)
+238           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+239                       (o_dd.DLBANDWIDTH = 4)) then(75)
+240           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+241                       (o_dd.DLBANDWIDTH <> 4)) then(100) end))) and
+242          ((case when(o_aa.GSMCARRIERFREQ = 1) then(935000)
+243           when((o_aa.GSMCARRIERFREQ <> 1) and
+244                      (o_aa.GSMCARRIERFREQ = 2)) then(1805200)
+245           when((o_aa.GSMCARRIERFREQ <> 1) and
+246                      (o_aa.GSMCARRIERFREQ <> 2) and
+247                      (o_aa.GSMCARRIERFREQ = 3)) then(1930200)
+248           when((o_aa.GSMCARRIERFREQ <> 1) and
+249                      (o_aa.GSMCARRIERFREQ <> 2) and
+250                      (o_aa.GSMCARRIERFREQ <> 3)) then(869200) end) +
+251          200 *
+252          (o_aa.HIGHITFGSMARFCN -
+253          (case when((o_aa.GSMCARRIERFREQ = 1) and
+254                            (o_aa.HIGHITFGSMARFCN <= 124)) then(0)
+255           when(((o_aa.GSMCARRIERFREQ <> 1) or
+256                       (o_aa.HIGHITFGSMARFCN > 124)) and
+257                       ((o_aa.GSMCARRIERFREQ = 1) and
+258                       (o_aa.HIGHITFGSMARFCN >= 975) and
+259                       (o_aa.HIGHITFGSMARFCN <= 1023))) then(1024)
+260           when(((o_aa.GSMCARRIERFREQ <> 1) or
+261                       (o_aa.HIGHITFGSMARFCN > 124)) and
+262                       ((o_aa.GSMCARRIERFREQ <> 1) or
+263                       (o_aa.HIGHITFGSMARFCN < 975) or
+264                       (o_aa.HIGHITFGSMARFCN > 1023)) and
+265                       ((o_aa.GSMCARRIERFREQ = 2) or
+266                       (o_aa.GSMCARRIERFREQ = 3))) then(512)
+267           when(((o_aa.GSMCARRIERFREQ <> 1) or
+268                       (o_aa.HIGHITFGSMARFCN > 124)) and
+269                       ((o_aa.GSMCARRIERFREQ <> 1) or
+270                       (o_aa.HIGHITFGSMARFCN < 975) or
+271                       (o_aa.HIGHITFGSMARFCN > 1023)) and
+272                       ((o_aa.GSMCARRIERFREQ <> 2) and
+273                       (o_aa.GSMCARRIERFREQ <> 3))) then(128) end)) - 100 <
+274          (o_ee.v_DlCentralFreq * 100 + 90 *
+275          (case when(o_dd.DLBANDWIDTH = 2) then(25)
+276           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH = 3))
+277           then(50)
+278           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+279                       (o_dd.DLBANDWIDTH = 4)) then(75)
+280           when((o_dd.DLBANDWIDTH <> 2) and (o_dd.DLBANDWIDTH <> 3) and
+281                       (o_dd.DLBANDWIDTH <> 4)) then(100) end))))))));
+
+0 rows affected.
+
+SQL> 
+SQL> drop table TMP_PREERRLOG_SITE purge;
+
+Succeed.
+
+SQL> drop table TMP_CELLLTEFLEXBW_A12K purge;
+
+Succeed.
+
+SQL> drop table RULECHECK_OBJGROUP purge;
+
+Succeed.
+
+SQL> drop table TMP_CELLLTEFLEXBWITFCFG_A12K purge;
+
+Succeed.
+
+SQL> drop table TMP_CELL_A12K;
+
+Succeed.
+
+SQL> drop table T_LLLTE_CELLM_MO_1615_A12Q1;
+
+Succeed.
+
+SQL> 
+SQL> --DTS2018121201057
+SQL> drop table if exists Z_SHARDING_LEFT_JOIN_002;
+
+Succeed.
+
+SQL> CREATE TABLE Z_SHARDING_LEFT_JOIN_002(C_INT INT ,C_INTEGER INTEGER  ,C_BIGINT BIGINT,C_NUMBER NUMBER DEFAULT 0.2332,C_NUMBER1 NUMBER(12,2),C_NUMBER2 NUMBER(12,6),C_DOUBLE DOUBLE,C_DECIMAL DECIMAL,C_DECIMAL1 DECIMAL(8,2),C_DECIMAL2 DECIMAL(8,4),C_REAL REAL,C_CHAR CHAR(2000),C_VARCHAR VARCHAR(400),C_VARCHAR2 VARCHAR2(400),C_NUMERIC NUMERIC,C_DATETIME DATETIME not null, C_DATE DATE,C_TIMESTAMP TIMESTAMP,C_TIMESTAMP1 TIMESTAMP(4),C_CLOB  varchar2(8000),C_BOOL BOOL);
+
+Succeed.
+
+SQL> create index DTS2018121201057_ind_001 on Z_SHARDING_LEFT_JOIN_002(c_datetime);
+
+Succeed.
+
+SQL> create index ind_002 on Z_SHARDING_LEFT_JOIN_002(c_datetime,c_varchar);
+
+Succeed.
+
+SQL> create index ind_003 on Z_SHARDING_LEFT_JOIN_002(c_double,c_number,c_varchar);
+
+Succeed.
+
+SQL> @@z_sharding_insert_002.sql
+
+SQL> truncate table Z_SHARDING_LEFT_JOIN_002;
+
+Succeed.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(0,0,0,34.6,'','',6.78,'',3.45,3.45,'','yxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdiv','','nyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqyt','','1990-08-08 08:08:08','1990-08-08 08:08:08','2010-08-08 08:08:08','1990-08-08 08:08:08','oznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkoufbcznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnb','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(1,1,1,'',2.56,45.6788,3457.57678,67.45,3.54,45.67,'','oznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihg','','',12.54,'2018-11-10 08:08:08','2012-08-08 08:08:08','1880-08-08 08:08:08','2018-08-08 08:08:08','lfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouflfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrbnggfvnxxkouffoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiaw','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(2,2,2,456464.324,23.34,3457.57678,3457.57678,'',45.67,45.67,45.32234,'lfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqb','ilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapkt','',234.45646,'2010-08-08 08:08:08','2018-08-08 08:08:08','1880-08-08 08:08:08','2018-08-08 08:08:08','','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(3,3,3,234.45646,12.4,23.56,34.45,3.45,45.67,'',23.56,'xilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckz','','gxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgpp',456464.324,'2010-08-08 08:08:08','1885-08-08 08:08:08','1885-08-08 08:08:08','2018-08-08 08:08:08','','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(4,4,4,12.54,'',45.32234,45.6788,89.5,67.45,2.34,234.45646,'mgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckd','pmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnngh','epmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqx',12.54,'1990-08-08 08:08:08','2012-08-08 08:08:08','1885-08-08 08:08:08','2012-08-08 08:08:08','','false');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(5,5,5,0.454,'',23.56,3457.57678,2.34,3.45,2.34,34.56,'','','tepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgv',234.45646,'2011-08-08 08:08:08','1995-08-08 08:08:08','1885-08-08 08:08:08','2018-11-10 08:08:08','','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(6,6,6,0.454,45.8,'',456464.324,89.5,45.67,3.54,'','stepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxe','','ostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccf',456464.324,'2010-08-08 08:08:08','2011-08-08 08:08:08','2012-08-08 08:08:08','2018-08-08 08:08:08','','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(7,7,7,234.45646,45.8,45.32234,'',67.45,3.54,'',0.56,'uostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveamb','','',456464.324,'2018-08-08 08:08:08','2012-08-08 08:08:08','2012-08-08 08:08:08','1995-08-08 08:08:08','','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(8,8,8,12.54,23.34,34.56,234.45646,67.45,45.67,3.54,12.4,'buostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwyt','','',456464.324,'1885-08-08 08:08:08','2018-11-10 08:08:08','2018-11-10 08:08:08','1885-08-08 08:08:08','mgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuhdvrgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluuf','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(9,9,9,12.54,6.78,2.123456,2.56,'',67.45,2.34,2.56,'mgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzyt','hmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzde','hhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwf',67.7,'2010-08-08 08:08:08','2010-08-08 08:08:08','2011-08-08 08:08:08','2018-08-08 08:08:08','yvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvqfuvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvao','true');
+
+1 rows affected.
+
+SQL> insert into Z_SHARDING_LEFT_JOIN_002 (C_INT ,C_INTEGER ,C_BIGINT ,C_NUMBER ,C_NUMBER1,C_NUMBER2,C_DOUBLE,C_DECIMAL,C_DECIMAL1,C_DECIMAL2,C_REAL,C_CHAR,C_VARCHAR,C_VARCHAR2,C_NUMERIC,C_DATETIME,C_DATE,C_TIMESTAMP,C_TIMESTAMP1,C_CLOB,C_BOOL) values(10,10,10,67.7,23.34,23.56,45.8,3.544667,3.54,3.45,67.7,'yvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxx','oyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxq','',234.45646,'1995-08-08 08:08:08','2012-08-08 08:08:08','1995-08-08 08:08:08','1880-08-08 08:08:08','jioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvjioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvjioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvjioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljslhdnjmdetcftzsrkjzmhimfmsbhnsgriqkaejakxzbldvftdcaugaahtcwtnujxmwqvkfepcswvrvqhibmuutnuhmvcnctfzmswcmtsrpmyedqxpoluufzbhwbrmcdiwytofotjitmaijfpfbpdwickgvibccphunilmnxvdsykirhgxvyehxyhixejfktoptnpveambxrovrpulkkjqccekfbfamsuiwhofodwrlsvwmxtvaoazfufeehwftkaugjsnebabzsscqhnafqodwrvohesokjrzhnkjhqowroirjsmofgfvfuomwlcdytimiwybmtuheejeitapnjnestutftmutidlvdubbjdznrxsrrmahxsxurpkqkedeznqccfidiazhmmasxemcshyvhqcxvmhqqvzowtbnjpxxwmabsoaiqscbnfwvhwdjgrhlfusfplamodraqbpgtdgviqngjtlykclmdokwpttsicssvbxdmzmtlixkajeqetkqelwspdivcjbubqvioyvhhmgbuostepmgxilfoznyxowgqqxermmjkovqnoqhpubzfjxwqacdiwyekwemegyaluzytnccflbvqnqnmfvvlhitckzgppyilihmleccmmxqxcilxqvfikqseftdkgtlqzbwpucapktdeqxndcqytizhxaaiyashfuwbyynvenjcsmasklnxxtbzrqxmoupppjcctptgoksleizxkrbednzzwgvlnnghjvvtlpajyalhsygtjrhjxreywihgnxlevtsvfzsztftgvgzkqhwpnbztbcpoqdmhgjffokjvoaejwgqpnhemopbmrkfnkwngdjiawsiarcbkgoudqpkecymujxlwfzdeqnrumctcfmndgknecfzkndoohlpkgksukysorfgkvvkreijhlyhznczsxfdezymeqjpdeydhvhrxolrlxmxxdmajqwizwmyvustnzbrbopxmspxnazyxzmuysgonfckdeurqnroljsl','true');
+
+1 rows affected.
+
+SQL> 
+SQL> commit;
+
+Succeed.
+
+SQL> 
+
+SQL> select count(case when c_timestamp-c_datetime<cast('+0000000 00:00:00.000000' as INTERVAL DAY TO SECOND) or c_timestamp-c_datetime>cast('+0000000 00:00:00.000000' as INTERVAL DAY TO SECOND) then c_timestamp-c_datetime else cast('+0000456 00:00:00.000000' as INTERVAL DAY TO SECOND) end) as aa from Z_SHARDING_LEFT_JOIN_002;
+
+AA                  
+--------------------
+11                  
+
+1 rows fetched.
+
+SQL> drop table Z_SHARDING_LEFT_JOIN_002 purge;
+
+Succeed.
+
+SQL> 
+SQL> -- case when datatype
+SQL> drop table if exists case_when_datatype_t;
+
+Succeed.
+
+SQL> create table case_when_datatype_t(c1 int, c2 number(8,3), c3 varchar(10), c4 char(5));
+
+Succeed.
+
+SQL> insert into case_when_datatype_t values(1,12.222,'test1','char1');
+
+1 rows affected.
+
+SQL> insert into case_when_datatype_t values(2,22.222,'test2','char2');
+
+1 rows affected.
+
+SQL> 
+SQL> desc -q select case when 1!=1 then 1 else null end from sys_dummy;
+
+Name                                   Null?    Type                                
+-------------------------------------- -------- ------------------------------------
+CASE WHEN 1!=1 THEN 1 ELSE NULL END             BINARY_INTEGER                      
+
+SQL> desc -q select case when c1 > 1 then c1 else cast(123 as binary_uint32) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_BIGINT                       
+
+SQL> desc -q select case when c1 > 1 then cast(123 as binary_uint32) else c1 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_BIGINT                       
+
+SQL> desc -q select case when c1 > 1 then -1 else cast(1000000000000 as bigint) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_BIGINT                       
+
+SQL> desc -q select case when c1 > 1 then cast(1000000000000 as bigint) else 1 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_BIGINT                       
+
+SQL> desc -q select case when c1 > 1 then 1 else cast(1 as boolean) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_INTEGER                      
+
+SQL> desc -q select case when c1 > 1 then cast(0 as boolean) else 1 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_INTEGER                      
+
+SQL> desc -q select case when c1 > 1 then c1 else cast(12.34 as real) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_DOUBLE                       
+
+SQL> desc -q select case when c1 > 1 then cast(12.34 as real) else c1 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_DOUBLE                       
+
+SQL> desc -q select case when c1 > 1 then c1 else cast(12.34 as float) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_DOUBLE                       
+
+SQL> desc -q select case when c1 > 1 then cast(12.34 as float) else c1 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_DOUBLE                       
+
+SQL> desc -q select case when c1 > 1 then c2 else '1' end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           VARCHAR(8 BYTE)                     
+
+SQL> desc -q select case when c1 > 1 then '1' else c2 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           VARCHAR(8 BYTE)                     
+
+SQL> desc -q select case when c1 > 1 then c3 else c4 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           VARCHAR(10 BYTE)                    
+
+SQL> desc -q select case when c1 > 1 then c4 else c3 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           VARCHAR(10 BYTE)                    
+
+SQL> desc -q select case when c1 > 1 then cast('0100' as binary(10)) else cast('0111' as varbinary(5)) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           VARBINARY(10)                       
+
+SQL> desc -q select case when c1 > 1 then cast('0111' as varbinary(5)) else cast('0100' as binary(10)) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           VARBINARY(10)                       
+
+SQL> desc -q select case when c1 > 1 then cast('0100' as binary(5)) else cast('0111' as varbinary(10)) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           VARBINARY(5)                        
+
+SQL> desc -q select case when c1 > 1 then c3 else to_date('1999-09-27 00:00:00', 'YYYY-MM-DD HH24:MI:SS') end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           DATE                                
+
+SQL> desc -q select case when c1 > 1 then to_date('1999-09-27 00:00:00', 'YYYY-MM-DD HH24:MI:SS') else c3 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           DATE                                
+
+SQL> desc -q select case when c1 > 1 then c3 else cast(1 as boolean) end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BOOLEAN                             
+
+SQL> desc -q select case when c1 > 1 then cast(0 as boolean) else c3 end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BOOLEAN                             
+
+SQL> desc -q select case when c1 > 1 then ? else ? end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           UNKNOWN_TYPE                        
+
+SQL> desc -q select case when c1 > 1 then ? else NULL end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           UNKNOWN_TYPE                        
+
+SQL> desc -q select case when c1 > 1 then 2 else ? end as c1 from case_when_datatype_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+C1                                           BINARY_INTEGER                      
+
+SQL> drop table case_when_datatype_t;
+
+Succeed.
+
+SQL> 
+SQL> select case when 2>3 then  FROM_UNIXTIME(321421) else '454' end from sys_dummy;
+CASE WHEN 2>3 THEN  FROM_UNIXTIME(321421) ELSE '454' END
+--------------------------------------------------------
+0454-01-01 00:00:00.000000                              
+
+1 rows fetched.
+
+SQL> 
+SQL> drop table if exists case_when_lob_t;
+
+Succeed.
+
+SQL> create table case_when_lob_t(c1 int, c2 varchar(255), c3 clob, c4 clob, c5 blob, c6 blob, c7 image, c8 image);
+
+Succeed.
+
+SQL> insert into case_when_lob_t values(1, 'c2_test1', 'c3_clob_1', 'c4_clob_1', '0011', '1100', '0101', '1010');
+
+1 rows affected.
+
+SQL> insert into case_when_lob_t values(2, 'c2_test2', 'c3_clob_2', 'c4_clob_2', '0011', '1100', '0101', '1010');
+
+1 rows affected.
+
+SQL> 
+SQL> select case when c1 = 1 then c3 else c4 end col1 from case_when_lob_t;
+
+COL1                                                            
+----------------------------------------------------------------
+c3_clob_1                                                       
+c4_clob_2                                                       
+
+2 rows fetched.
+
+SQL> select case when c1 = 1 then c5 else c6 end col1 from case_when_lob_t;
+
+COL1                                                            
+----------------------------------------------------------------
+0011                                                            
+1100                                                            
+
+2 rows fetched.
+
+SQL> select case when c1 = 1 then c7 else c8 end col1 from case_when_lob_t;
+
+COL1                                                            
+----------------------------------------------------------------
+0101                                                            
+1010                                                            
+
+2 rows fetched.
+
+SQL> select case when c1 = 1 then c2 else c3 end col1 from case_when_lob_t;
+
+COL1                                                            
+----------------------------------------------------------------
+c2_test1                                                        
+c3_clob_2                                                       
+
+2 rows fetched.
+
+SQL> select case when c1 = 1 then c2 else c7 end col1 from case_when_lob_t;
+
+COL1                                                            
+----------------------------------------------------------------
+c2_test1                                                        
+0101                                                            
+
+2 rows fetched.
+
+SQL> select case when c1 = 1 then cast('0111' as raw(5)) else c5 end col1 from case_when_lob_t;
+
+COL1                                                            
+----------------------------------------------------------------
+0111                                                            
+0011                                                            
+
+2 rows fetched.
+
+SQL> select case c1 when 1 then c5 else cast('0111' as raw(5)) end col1 from case_when_lob_t;
+
+COL1                                                            
+----------------------------------------------------------------
+0011                                                            
+0111                                                            
+
+2 rows fetched.
+
+SQL> select case when c1 = 1 then cast('0111' as binary(5)) else c5 end col1 from case_when_lob_t;
+
+COL1                                                            
+----------------------------------------------------------------
+0111                                                            
+                                                                
+
+2 rows fetched.
+
+SQL> drop table case_when_lob_t;
+
+Succeed.
+
+SQL> 
+SQL> drop table if exists case_when_array_t;
+
+Succeed.
+
+SQL> create table case_when_array_t(c1 int, c2 int[], c3 char(20)[], c4 varchar(20)[]);
+
+Succeed.
+
+SQL> insert into case_when_array_t values(1, array[1,2,3],array['apple','banana'], array['{C}','{C++}']);
+
+1 rows affected.
+
+SQL> insert into case_when_array_t values(2, array[4,5,6],array['dog','cat'], array['{Python}','{Go}']);
+
+1 rows affected.
+
+SQL> 
+SQL> select case when c1 = 2 then c2 else c3 end col1 from case_when_array_t;
+
+COL1                                                            
+----------------------------------------------------------------
+{apple               ,banana              }                     
+{4,5,6}                                                         
+
+2 rows fetched.
+
+SQL> select case when c1 = 2 then c3 else c4 end col1 from case_when_array_t;
+
+COL1                                                            
+----------------------------------------------------------------
+{{C},{C++}}                                                     
+{dog                 ,cat                 }                     
+
+2 rows fetched.
+
+SQL> select case when c1 = 2 then c4 else c4[1] end col1 from case_when_array_t;
+
+COL1                                                            
+----------------------------------------------------------------
+{C}                                                             
+{{Python},{Go}}                                                 
+
+2 rows fetched.
+
+SQL> select case when c1 = 2 then c4[1] else c4 end col1 from case_when_array_t;
+
+COL1                                                            
+----------------------------------------------------------------
+{{C},{C++}}                                                     
+{Python}                                                        
+
+2 rows fetched.
+
+SQL> select case when c1 = 2 then c2[1] else c2[2] end col1 from case_when_array_t;
+
+COL1        
+------------
+2           
+4           
+
+2 rows fetched.
+
+SQL> 
+SQL> delete from case_when_array_t;
+
+2 rows affected.
+
+SQL> insert into case_when_array_t values(1, null,array['apple','banana'], array['{C}','{C++}']);
+
+1 rows affected.
+
+SQL> insert into case_when_array_t values(2, null,array['dog','cat'], array['{Python}','{Go}']);
+
+1 rows affected.
+
+SQL> 
+SQL> select
+  2     case when  ref_0.c1 > ref_0.c1 then ref_1.c2 else ref_1.c2 end as c2
+  3 from((case_when_array_t as ref_0) right join
+  4      (case_when_array_t as ref_1) on true)
+  5     full outer join(case_when_array_t as ref_2)     
+  6     on(ref_0.c1 = ref_2.c1);
+
+C2                                                              
+----------------------------------------------------------------
+                                                                
+                                                                
+                                                                
+                                                                
+
+4 rows fetched.
+
+SQL> drop table case_when_array_t;
+Succeed.
+
+SQL> 
+SQL> -- _strict_case_datatype
+SQL> drop table if exists case_str_num_t;
+
+Succeed.
+
+SQL> create table case_str_num_t(id int, c_num number(8,3), c_str varchar(20), c_char char(10), c_binary binary(10), c_varbinary varbinary(10));
+
+Succeed.
+
+SQL> insert into case_str_num_t values(1, 1.2, '127.0.0.1', '1111', '0110', '0220');
+
+1 rows affected.
+
+SQL> insert into case_str_num_t values(2, 2.3,  '0.0.0.0', 'aaaa', '0111', '0222');
+
+1 rows affected.
+
+SQL> 
+SQL> -- number & string => string
+SQL> desc -q select case when id = 1 then c_str else c_num end col_1 from case_str_num_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL_1                                        VARCHAR(20 BYTE)                    
+
+SQL> select case when id = 1 then c_str else c_num end col_1 from case_str_num_t;
+
+COL_1               
+--------------------
+127.0.0.1           
+2.3                 
+
+2 rows fetched.
+
+SQL> -- number & char => string
+SQL> desc -q select case when id = 1 then c_num else c_char end col_1 from case_str_num_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL_1                                        VARCHAR(10 BYTE)                    
+
+SQL> select case when id = 1 then c_num else c_char end col_1 from case_str_num_t;
+
+COL_1     
+----------
+1.2       
+aaaa      
+
+2 rows fetched.
+
+SQL> -- number & varbinary => varbinary
+SQL> desc -q select case when id = 1 then c_varbinary else c_num end col_1 from case_str_num_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL_1                                        VARBINARY(10)                       
+
+SQL> select case when id = 1 then c_varbinary else c_num end col_1 from case_str_num_t;
+
+COL_1                                                           
+----------------------------------------------------------------
+0220                                                            
+2.3                                                             
+
+2 rows fetched.
+
+SQL> -- number & binary => varbinary
+SQL> desc -q select case when id = 1 then c_binary else c_num end col_1 from case_str_num_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL_1                                        VARBINARY(10)                       
+
+SQL> select case when id = 1 then c_binary else c_num end col_1 from case_str_num_t;
+
+COL_1                                                           
+----------------------------------------------------------------
+0110                                                            
+2.3                                                             
+
+2 rows fetched.
+
+SQL> 
+SQL> alter system set _STRICT_CASE_DATATYPE=true;
+
+Succeed.
+
+SQL> -- number & string => number
+SQL> desc -q select case when id = 1 then c_str else c_num end col_1  from case_str_num_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL_1                                        NUMBER                              
+
+SQL> select case when id = 1 then c_str else c_num end col_1  from case_str_num_t;
+
+CT-00636, Invalid number -- existing multiple decimal points
+SQL> -- number & varbinary => number
+SQL> desc -q select case when id = 1 then c_varbinary else c_num end col_1  from case_str_num_t;
+
+Name                                Null?    Type                                
+----------------------------------- -------- ------------------------------------
+COL_1                                        NUMBER                              
+
+SQL> select case when id = 1 then c_varbinary else c_num end col_1  from case_str_num_t;
+
+COL_1                                   
+----------------------------------------
+220                                     
+2.3                                     
+
+2 rows fetched.
+
+SQL> 
+SQL> alter system set _STRICT_CASE_DATATYPE=false;
+
+Succeed.
+
+SQL> drop table case_str_num_t;
+Succeed.
+
+
+
+
