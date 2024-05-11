@@ -39,7 +39,6 @@
 #include "rc_reform.h"
 #include "dtc_backup.h"
 #include "repl_log_replay.h"
-
 status_t init_dtc_rc(void)
 {
     knl_session_t *session;
@@ -416,7 +415,7 @@ status_t rc_follower_reform(reform_mode_t mode, reform_detail_t *detail)
     if (rc_archive_log(arch_proc_ctx) != CT_SUCCESS) {
         rc_end_archive_log(arch_proc_ctx);
         CT_LOG_RUN_WAR("[RC][partial restart] arch in reform failed");
-        return CT_SUCCESS;
+        return CT_ERROR;
     }
     if (rc_wait_archive_log_finish(arch_proc_ctx) != CT_SUCCESS) {
         CT_LOG_RUN_WAR("[RC][partial restart] wait arch finish in reform failed");
@@ -581,31 +580,6 @@ status_t rc_reform_build_channel(reform_detail_t *detail)
     rc_release_abort_channel(&g_rc_ctx->info);
     CT_LOG_RUN_INF("[RC] release channel successfully, g_rc_ctx->status=%u", g_rc_ctx->status);
     RC_STEP_END(detail->build_channel_elapsed, RC_STEP_FINISH);
-    return CT_SUCCESS;
-}
-
-status_t rc_arch_handle_tmp_file(arch_proc_context_t *proc_ctx, uint32 node_id)
-{
-    knl_session_t *session = proc_ctx->session;
-    device_type_t arch_file_type = cm_device_type(proc_ctx->arch_dest);
-    log_file_t *logfile = &proc_ctx->logfile;
-    arch_set_tmp_filename(proc_ctx->tmp_file_name, proc_ctx, node_id);
-    CT_LOG_RUN_INF("[RC_ARCH] rc handle tmp arch file %s", proc_ctx->tmp_file_name);
-    if (arch_clear_tmp_file(arch_file_type, proc_ctx->tmp_file_name) != CT_SUCCESS) {
-        return CT_ERROR;
-    }
-    if (cm_create_device_retry_when_eexist(proc_ctx->tmp_file_name, arch_file_type,
-                                           knl_io_flag(session), &proc_ctx->tmp_file_handle) != CT_SUCCESS) {
-        CT_LOG_RUN_ERR("[RC_ARCH] failed to create temp archive log file %s", proc_ctx->tmp_file_name);
-        return CT_ERROR;
-    }
-
-    if (cm_dbs_is_enable_dbs() == true) {
-        if (arch_tmp_flush_head(arch_file_type, proc_ctx->tmp_file_name,
-                                proc_ctx, logfile, proc_ctx->tmp_file_handle) != CT_SUCCESS) {
-            return CT_ERROR;
-        }
-    }
     return CT_SUCCESS;
 }
 
@@ -829,43 +803,9 @@ status_t rc_arch_init_proc_ctx(arch_proc_context_t *proc_ctx, uint32 node_id)
     return CT_SUCCESS;
 }
 
-status_t rc_arch_update_node_ctrl(uint32 node_id)
-{
-    CT_LOG_RUN_INF("[RC_ARCH] update offline node %u arch ctrl from device", node_id);
-    knl_session_t *session = (knl_session_t *)g_rc_ctx->session;
-    database_t *db = &session->kernel->db;
-    uint32 count = CTRL_MAX_BUF_SIZE / sizeof(arch_ctrl_t);
-    uint32 pages_per_inst = (CT_MAX_ARCH_NUM - 1) / count + 1;
-    ctrl_page_t *pages = &db->ctrl.pages[db->ctrl.arch_segment + pages_per_inst * node_id];
-    bool32 loaded = CT_FALSE;
-    for (int i = 0; i < db->ctrlfiles.count; i++) {
-        ctrlfile_t *ctrlfile = &db->ctrlfiles.items[i];
-        int64 offset = (db->ctrl.arch_segment + pages_per_inst * node_id) * ctrlfile->block_size;
-        if (cm_open_device(ctrlfile->name, ctrlfile->type, knl_io_flag(session), &ctrlfile->handle) != CT_SUCCESS) {
-            CT_LOG_RUN_ERR("[RC_ARCH] failed to open ctrlfile[%d], filename[%s], instid[%u]",
-                           i, ctrlfile->name, node_id);
-            continue;
-        }
-        if (cm_read_device(ctrlfile->type, ctrlfile->handle, offset,
-                           pages, pages_per_inst * ctrlfile->block_size) != CT_SUCCESS) {
-            cm_close_device(ctrlfile->type, &ctrlfile->handle);
-            CT_LOG_RUN_ERR("[RC_ARCH] fail to read offline node arch ctrl from ctrlfile[%d], instid[%u]", i, node_id);
-            continue;
-        }
-        CT_LOG_RUN_INF("[RC_ARCH] succ to get offline node arch ctrl, ctrlfile[%d], instid[%u]", i, node_id);
-        loaded = CT_TRUE;
-        break;
-    }
-    if (!loaded) {
-        CT_THROW_ERROR(ERR_LOAD_CONTROL_FILE, "no usable control file");
-        return CT_ERROR;
-    }
-    return CT_SUCCESS;
-}
-
 status_t rc_archive_log_offline_node(arch_proc_context_t *proc_ctx, uint32 node_id)
 {
-    if (rc_arch_update_node_ctrl(node_id) != CT_SUCCESS) {
+    if (arch_update_arch_ctrl(node_id) != CT_SUCCESS) {
         return CT_ERROR;
     }
     if (rc_arch_init_proc_ctx(proc_ctx, node_id) != CT_SUCCESS) {
@@ -884,7 +824,7 @@ status_t rc_archive_log_offline_node(arch_proc_context_t *proc_ctx, uint32 node_
 
     proc_ctx->arch_execute = CT_TRUE;
     if (cm_dbs_is_enable_dbs() == true) {
-        if (rc_arch_handle_tmp_file(proc_ctx, node_id) != CT_SUCCESS) {
+        if (arch_handle_tmp_file(proc_ctx, node_id) != CT_SUCCESS) {
             return CT_ERROR;
         }
         if (cm_create_thread(rc_arch_dbstor_read_proc, 0, proc_ctx, &proc_ctx->read_thread) != CT_SUCCESS) {
@@ -1069,6 +1009,11 @@ status_t rc_start_new_reform(reform_mode_t mode)
             CT_LOG_RUN_ERR("[RC][partial restart] follower reform failed");
             return CT_ERROR;
         }
+    }
+    if (arch_init_proc_standby() != CT_SUCCESS) {
+        arch_deinit_proc_standby();
+        CT_LOG_RUN_ERR("[RC] init standby master node arch proc failed");
+        return CT_ERROR;
     }
     CT_LOG_RUN_INF("[RC] finish reform, g_rc_ctx->status=%u", g_rc_ctx->status);
     CT_LOG_RUN_INF("[RC] there are (%d) flying page request", page_req_count);

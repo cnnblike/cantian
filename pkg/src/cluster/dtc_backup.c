@@ -1286,6 +1286,10 @@ status_t dtc_bak_force_arch_local_file(knl_session_t *session)
 
 status_t dtc_bak_force_arch_local(knl_session_t *session, uint64 lsn)
 {
+    if (!DB_IS_PRIMARY(&session->kernel->db) && !rc_is_master()) {
+        CT_LOG_RUN_INF("[BACKUP] standby but not master node %u, skip archive", session->kernel->id);
+        return CT_SUCCESS;         
+    }
     if (arch_force_archive_trigger(session, lsn, CT_TRUE) != CT_SUCCESS) {
         CT_THROW_ERROR(ERR_FORCE_ARCH_FAILED, "in backup");
         CT_LOG_RUN_ERR("[BACKUP] failed to switch archfile");
@@ -1361,7 +1365,9 @@ status_t dtc_bak_handle_cluster_arch(knl_session_t *session)
 status_t dtc_bak_handle_log_switch(knl_session_t *session)
 {
     status_t status;
+    cluster_view_t view;
     for (uint32 i = 0; i < g_dtc->profile.node_count; i++) {
+        rc_get_cluster_view(&view, CT_FALSE);
         if (i == g_dtc->profile.inst_id) {
             if (cm_dbs_is_enable_dbs() == CT_TRUE) {
                 status = dtc_bak_force_arch_local(session, CT_INVALID_ID64);
@@ -1373,6 +1379,10 @@ status_t dtc_bak_handle_log_switch(knl_session_t *session)
                 return status;
             }
         } else {
+            if (!rc_bitmap64_exist(&view.bitmap, i)) {
+                CT_LOG_RUN_WAR("[ARCH] offline node logs cannot be force archived.");
+                continue;
+            }
             if (cm_dbs_is_enable_dbs() == CT_TRUE) {
                 status = dtc_bak_force_arch_by_instid(session, CT_INVALID_ID64, i);
             } else {
@@ -1612,7 +1622,7 @@ status_t dtc_rst_arch_record_archinfo(knl_session_t *session, uint32 dest_pos, c
 
     id = archived_end;
     arch_ctrl = db_get_arch_ctrl(session, id, inst_id);
-    arch_ctrl_record_info_t arch_ctrl_record_info = {0, dest_id, 0, recid, arch_ctrl, file_name, log_head};
+    arch_ctrl_record_info_t arch_ctrl_record_info = {0, dest_id, 0, recid, arch_ctrl, file_name, log_head, NULL};
     arch_init_arch_ctrl(session, &arch_ctrl_record_info);
 
     if (arch_ctx->inst_id == inst_id) {

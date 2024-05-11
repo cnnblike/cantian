@@ -1453,16 +1453,7 @@ void log_recycle_file(knl_session_t *session, log_point_t *point)
     CT_LOG_DEBUG_INF("try to recycle log file with last_arch_log [%u-%u] active[%d] file [%u-%u]",
                      last_arch_log.rst_id, last_arch_log.asn, ctx->active_file, file->head.rst_id, file->head.asn);
     if (cm_dbs_is_enable_dbs() == CT_TRUE) {
-        if (!DB_IS_PRIMARY(&session->kernel->db) && rc_is_master() == CT_FALSE) {
-            if (dtc_read_node_ctrl(session, session->kernel->id) != CT_SUCCESS) {
-                return;
-            }
-            dtc_node_ctrl_t *ctrl = dtc_get_ctrl(session, session->kernel->id);
-            *point = ctrl->rcy_point;
-            recycle_point = log_recycle_get_arch_point(session, &ctrl->rcy_point);
-        } else {
-            recycle_point = log_recycle_get_arch_point(session, point);
-        }
+        recycle_point = log_recycle_get_arch_point(session, point);
         log_recycle_ulog_space(session, &recycle_point);
         return;
     }
