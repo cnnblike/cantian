@@ -237,12 +237,41 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_parameters`(
 ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
 -- -- 查询系统的基础统计，包括sql执行情况，读写盘时延等: DV_SYS_STATS
--- CREATE TABLE IF NOT EXISTS `cantian`.`dv_sys_stats`(
---   `STATISTIC#` INTEGER,
---   `NAME` VARCHAR(64),
---   `CLASS` INTEGER,
---   `VALUE` BIGINT
--- ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
+ CREATE TABLE IF NOT EXISTS `cantian`.`dv_sys_stats`(
+   `STATISTIC#` INTEGER,
+   `NAME` VARCHAR(64),
+   `CLASS` INTEGER,
+   `VALUE` BIGINT
+ ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
+
+-- -- 查询会话级等待事件的统计信息：DV_SESSION_EVENTS
+CREATE TABLE IF NOT EXISTS `cantian`.`dv_session_events`(
+  `SID` INTEGER,
+  `EVENT#` INTEGER,
+  `EVENT` VARCHAR(64),
+  `P1` VARCHAR(64),
+  `WAIT_CLASS` VARCHAR(64),
+  `TOTAL_WAITS` BIGINT,
+  `TIME_WAITED` BIGINT,
+  `TIME_WAITED_MIRCO` BIGINT,
+  `AVERAGE_WAIT` DOUBLE,
+  `AVERAGE_WAIT_MIRCO` BIGINT,
+  `TENANT_ID` INTEGER
+) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
+
+-- -- 查询系统级等待事件的统计信息：DV_SYS_EVENTS
+CREATE TABLE IF NOT EXISTS `cantian`.`dv_sys_events`(
+  `EVENT#` INTEGER,
+  `EVENT` VARCHAR(64),
+  `P1` VARCHAR(64),
+  `WAIT_CLASS` VARCHAR(64),
+  `TOTAL_WAITS` BIGINT,
+  `TIME_WAITED` BIGINT,
+  `TIME_WAITED_MIRCO` BIGINT,
+  `AVERAGE_WAIT` DOUBLE,
+  `AVERAGE_WAIT_MIRCO` BIGINT
+) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
+
 
 -- -- 查询当前资源使用率: DV_DRC_RES_RATIO
 -- CREATE TABLE IF NOT EXISTS `cantian`.`dv_drc_res_ratio`(
@@ -342,24 +371,24 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_page_stats`(
 
 -- -- DV_BUFFER_RECYCLE_STATS
 -- -- 查看BUFFER淘汰状态信息
--- CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_recycle_stats`(
---   `SID` INTEGER,
---   `TOTAL` INTEGER,
---   `WAITS` INTEGER,
---   `AVG_STEP` REAL,
---   `SPINS` INTEGER,
---   `SLEEPS` INTEGER,
---   `FAILS` INTEGER
--- ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
+ CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_recycle_stats`(
+   `SID` INTEGER,
+   `TOTAL` INTEGER,
+   `WAITS` INTEGER,
+   `AVG_STEP` REAL,
+   `SPINS` INTEGER,
+   `SLEEPS` INTEGER,
+   `FAILS` INTEGER
+ ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
 -- -- DV_BUFFER_ACCESS_STATS
 -- -- 查看BUFFER cache命中率状态信息
--- CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_access_stats`(
---   `SID` INTEGER,
---   `TOTAL_ACCESS` INTEGER,
---   `MISS_COUNT` INTEGER,
---   `HIT_RATIO` REAL
--- ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
+ CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_access_stats`(
+   `SID` INTEGER,
+   `TOTAL_ACCESS` INTEGER,
+   `MISS_COUNT` INTEGER,
+   `HIT_RATIO` REAL
+ ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
 -- -- DV_DLSLOCKS
 -- -- 查看某个锁资源在master上的资源信息
@@ -460,75 +489,75 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_page_stats`(
 
 -- -- DV_SESSIONS
 -- -- 查询当前各个会话执行的sql语句
--- CREATE TABLE IF NOT EXISTS `cantian`.`dv_sessions`(
---   `SID` INTEGER,
---   `SPID` VARCHAR(11),
---   `SERIAL#` INTEGER,
---   `USER#` INTEGER,
---   `USERNAME` VARCHAR(64),
---   `CURR_SCHEMA` VARCHAR(64),
---   `PIPE_TYPE` VARCHAR(20),
---   `CLIENT_IP` VARCHAR(64),
---   `CLIENT_PORT` VARCHAR(10),
---   `CLIENT_UDS_PATH` VARCHAR(108),
---   `SERVER_IP` VARCHAR(64),
---   `SERVER_PORT`  VARCHAR(10),
---   `SERVER_UDS_PATH` VARCHAR(108),
---   `SERVER_MODE` VARCHAR(10),
---   `OSUSER` VARCHAR(64),
---   `MACHINE` VARCHAR(64),
---   `PROGRAM` VARCHAR(256),
---   `AUTO_COMMIT` BOOLEAN,
---   `CLIENT_VERSION`INTEGER,
---   `TYPE` VARCHAR(10),
---   `LOGON_TIME` DATETIME,
---   `STATUS` VARCHAR(10),
---   `LOCK_WAIT` VARCHAR(4),
---   `WAIT_SID` INTEGER,
---   `EXECUTIONS` BIGINT,
---   `SIMPLE_QUERIES` BIGINT,
---   `DISK_READS` BIGINT,
---   `BUFFER_GETS` BIGINT,
---   `CR_GETS` BIGINT,
---   `CURRENT_SQL` VARCHAR(1024),
---   `SQL_EXEC_START` DATETIME,
---   `SQL_ID` VARCHAR(11),
---   `ATOMIC_OPERS` BIGINT,
---   `REDO_BYTES` BIGINT,
---   `COMMITS` BIGINT,
---   `NOWAIT_COMMITS` BIGINT,
---   `XA_COMMITS` BIGINT,
---   `ROLLBACKS` BIGINT,
---   `XA_ROLLBACKS` BIGINT,
---   `LOCAL_TXN_TIMES` BIGINT,
---   `XA_TXN_TIMES` BIGINT,
---   `PARSES` BIGINT,
---   `HARD_PARSES`BIGINT,
---   `EVENT#` INTEGER,
---   `EVENT` VARCHAR(64),
---   `SORTS` BIGINT,
---   `PROCESSED_ROWS` BIGINT,
---   `IO_WAIT_TIME` BIGINT,
---   `CON_WAIT_TIME` BIGINT,
---   `CPU_TIME` BIGINT,
---   `ELAPSED_TIME` BIGINT,
---   `ISOLEVEL` BIGINT,
---   `MODULE` VARCHAR(64),
---   `VMP_PAGES` BIGINT,
---   `LARGE_VMP_PAGES` BIGINT,
---   `RES_CONTROL_GROUP` VARCHAR(64),
---   `RES_IO_WAIT_TIME` BIGINT,
---   `RES_QUEUE_TIME` BIGINT,
---   `PRIV_FLAG` INTEGER,
---   `QUERY_SCN` BIGINT,
---   `STMT_COUNT` INTEGER,
---   `MIN_SCN` BIGINT,
---   `PREV_SQL_ID` VARCHAR(10),
---   `DCS_BUFFER_GETS` BIGINT,
---   `DCS_BUFFER_SENDS` BIGINT,
---   `DCS_CR_GETS` BIGINT,
---   `DCS_CR_SENDS` BIGINT
--- ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
+ CREATE TABLE IF NOT EXISTS `cantian`.`dv_sessions`(
+   `SID` INTEGER,
+   `SPID` VARCHAR(11),
+   `SERIAL#` INTEGER,
+   `USER#` INTEGER,
+   `USERNAME` VARCHAR(64),
+   `CURR_SCHEMA` VARCHAR(64),
+   `PIPE_TYPE` VARCHAR(20),
+   `CLIENT_IP` VARCHAR(64),
+   `CLIENT_PORT` VARCHAR(10),
+   `CLIENT_UDS_PATH` VARCHAR(108),
+   `SERVER_IP` VARCHAR(64),
+   `SERVER_PORT`  VARCHAR(10),
+   `SERVER_UDS_PATH` VARCHAR(108),
+   `SERVER_MODE` VARCHAR(10),
+   `OSUSER` VARCHAR(64),
+   `MACHINE` VARCHAR(64),
+   `PROGRAM` VARCHAR(256),
+   `AUTO_COMMIT` BOOLEAN,
+   `CLIENT_VERSION`INTEGER,
+   `TYPE` VARCHAR(10),
+   `LOGON_TIME` DATETIME,
+   `STATUS` VARCHAR(10),
+   `LOCK_WAIT` VARCHAR(4),
+   `WAIT_SID` INTEGER,
+   `EXECUTIONS` BIGINT,
+   `SIMPLE_QUERIES` BIGINT,
+   `DISK_READS` BIGINT,
+   `BUFFER_GETS` BIGINT,
+   `CR_GETS` BIGINT,
+   `CURRENT_SQL` VARCHAR(1024),
+   `SQL_EXEC_START` DATETIME,
+   `SQL_ID` VARCHAR(11),
+   `ATOMIC_OPERS` BIGINT,
+   `REDO_BYTES` BIGINT,
+   `COMMITS` BIGINT,
+   `NOWAIT_COMMITS` BIGINT,
+   `XA_COMMITS` BIGINT,
+   `ROLLBACKS` BIGINT,
+   `XA_ROLLBACKS` BIGINT,
+   `LOCAL_TXN_TIMES` BIGINT,
+   `XA_TXN_TIMES` BIGINT,
+   `PARSES` BIGINT,
+   `HARD_PARSES`BIGINT,
+   `EVENT#` INTEGER,
+   `EVENT` VARCHAR(64),
+   `SORTS` BIGINT,
+   `PROCESSED_ROWS` BIGINT,
+   `IO_WAIT_TIME` BIGINT,
+   `CON_WAIT_TIME` BIGINT,
+   `CPU_TIME` BIGINT,
+   `ELAPSED_TIME` BIGINT,
+   `ISOLEVEL` BIGINT,
+   `MODULE` VARCHAR(64),
+   `VMP_PAGES` BIGINT,
+   `LARGE_VMP_PAGES` BIGINT,
+   `RES_CONTROL_GROUP` VARCHAR(64),
+   `RES_IO_WAIT_TIME` BIGINT,
+   `RES_QUEUE_TIME` BIGINT,
+   `PRIV_FLAG` INTEGER,
+   `QUERY_SCN` BIGINT,
+   `STMT_COUNT` INTEGER,
+   `MIN_SCN` BIGINT,
+   `PREV_SQL_ID` VARCHAR(10),
+   `DCS_BUFFER_GETS` BIGINT,
+   `DCS_BUFFER_SENDS` BIGINT,
+   `DCS_CR_GETS` BIGINT,
+   `DCS_CR_SENDS` BIGINT
+ ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
 -- -- MES_ELAPSED
 -- CREATE TABLE IF NOT EXISTS `cantian`.`mes_elapsed`(
@@ -807,6 +836,17 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_transactions`(
 --   `SPARE4` BIGINT
 -- ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
+-- 获取锁的事务信息：DV_LOCKS
+CREATE TABLE IF NOT EXISTS `cantian`.`dv_locks`(
+  `SID` INTEGER,
+  `TYPE` VARCHAR(20),
+  `ID1` BIGINT,
+  `ID2` BIGINT,
+  `LMODE` VARCHAR(20),
+  `BLOCK` INTEGER,
+  `RMID` INTEGER
+) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
+
 -- end
 UNLOCK INSTANCE;
 set @ctc_ddl_local_enabled = NULL;
@@ -842,3 +882,64 @@ set @ctc_ddl_local_enabled = NULL;
 --   D.STATUS
 --   FROM cantian.dv_data_files D, cantian.dv_tablespaces T, cantian.dv_parameters P
 --   WHERE D.TABLESPACE_ID = T.ID AND P.NAME = 'PAGE_SIZE';
+
+-- 获取锁的事务信息：DATA_LOCKS
+CREATE OR REPLACE VIEW cantian_locks
+AS SELECT SID, TYPE, ID1, ID2, LMODE, BLOCK, RMID FROM `cantian`.`dv_locks`;
+
+-- 锁等待事务信息监控：DATA_LOCKS_WAITS
+CREATE OR REPLACE VIEW cantian_lock_waits
+AS SELECT `cantian`.`dv_locks`.TYPE, `cantian`.`dv_locks`.ID1, `cantian`.`dv_locks`.ID2, `cantian`.`dv_locks`.LMODE, `cantian`.`dv_locks`.BLOCK, `cantian`.`dv_locks`.RMID AS locks_RMID, `cantian`.`dv_transactions`.* FROM `cantian`.`dv_locks`
+JOIN `cantian`.`dv_transactions`
+ON `cantian`.`dv_locks`.SID = `cantian`.`dv_transactions`.SID
+JOIN `cantian`.`dv_sessions`
+ON `cantian`.`dv_transactions`.SID = `cantian`.`dv_sessions`.SID
+WHERE `cantian`.`dv_sessions`.LOCK_WAIT = 'Y';
+
+-- 超过10s/60s/180s/600s的事务个数：DV_TRANSACTIONS
+CREATE OR REPLACE VIEW cantian_transactions
+AS SELECT * FROM `cantian`.`dv_transactions`;
+CREATE OR REPLACE VIEW cantian_transactions_cnt_over10s
+AS SELECT COUNT(*) FROM `cantian`.`dv_transactions`
+WHERE EXEC_TIME > (10 * 1000000);
+CREATE OR REPLACE VIEW cantian_transactions_cnt_over60s
+AS SELECT COUNT(*) FROM `cantian`.`dv_transactions`
+WHERE EXEC_TIME > (60 * 1000000);
+CREATE OR REPLACE VIEW cantian_transactions_cnt_over180s
+AS SELECT COUNT(*) FROM `cantian`.`dv_transactions`
+WHERE EXEC_TIME > (180 * 1000000);
+CREATE OR REPLACE VIEW cantian_transactions_cnt_over600s
+AS SELECT COUNT(*) FROM `cantian`.`dv_transactions`
+WHERE EXEC_TIME > (600 * 1000000);
+
+-- DV_BUFFER_RECYCLE_STATS
+CREATE OR REPLACE VIEW cantian_buffer_pool_wait_free
+AS SELECT * FROM `cantian`.`dv_buffer_recycle_stats`;
+
+-- buffer pool命中率：DV_BUFFER_ACCESS_STATS
+CREATE OR REPLACE VIEW cantian_buffer_pool_hit
+AS SELECT HIT_RATIO FROM `cantian`.`dv_buffer_access_stats`;
+
+-- fsync data当前等待数频率：DV_SYS_STATS
+CREATE OR REPLACE VIEW cantian_data_pending_fsyncs
+AS SELECT VALUE FROM `cantian`.`dv_sys_stats`
+WHERE NAME = 'DBWR disk writes';
+
+-- fsync log当前等待数频率：DV_SYS_STATS
+CREATE OR REPLACE VIEW cantian_os_log_pending_fsyncs
+AS SELECT VALUE FROM `cantian`.`dv_sys_stats`
+WHERE NAME = 'redo wirtes';
+
+-- Redo Log Pending Writes会话级 & 系统级日志写操作被挂起的次数：DV_SESSION_EVENTS & DV_SYS_EVENTS
+CREATE OR REPLACE VIEW cantian_redo_log_pending_writes_session
+AS SELECT AVERAGE_WAIT FROM `cantian`.`dv_session_events`
+WHERE EVENT = 'log file sync';
+CREATE OR REPLACE VIEW cantian_redo_log_pending_writes_sys
+AS SELECT AVERAGE_WAIT FROM `cantian`.`dv_sys_events`
+WHERE EVENT = 'log file sync';
+
+-- Semaphores会话级 & 系统级等待事件的统计信息：DV_SESSION_EVENTS & DV_SYS_EVENTS
+CREATE OR REPLACE VIEW cantian_semaphores_session
+AS SELECT * FROM `cantian`.`dv_session_events`;
+CREATE OR REPLACE VIEW cantian_semaphores_sys
+AS SELECT * FROM `cantian`.`dv_sys_events`;
