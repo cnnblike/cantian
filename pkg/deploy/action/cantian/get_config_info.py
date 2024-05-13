@@ -11,6 +11,7 @@ CONFIG_PARAMS_FILE = os.path.join(PKG_DIR, "config", "deploy_param.json")
 CANTIAN_CONFIG_PARAMS_FILE = os.path.join(PKG_DIR, "action", "cantian", "cantian_config.json")
 CANTIAN_CONFIG_PARAMS_FILE_BACKUP = "/opt/cantian/backup/files/cantian/cantian_config.json"
 CANTIAN_START_STATUS_FILE = os.path.join("/opt/cantian/cantian", "cfg", "start_status.json")
+CANTIAN_START_CONFIG_FILE = os.path.join(PKG_DIR, "config", "container_conf", "init_conf", "start_config.json")
 ENV_FILE = os.path.join(PKG_DIR, "action", "env.sh")
 info = {}
 
@@ -27,6 +28,11 @@ if os.path.exists(CANTIAN_START_STATUS_FILE):
     with open(CANTIAN_START_STATUS_FILE, encoding="utf-8") as f:
         _tmp_cantian = f.read()
         info_cantian_start = json.loads(_tmp_cantian)
+
+if os.path.exists(CANTIAN_START_CONFIG_FILE):
+    with open(CANTIAN_START_CONFIG_FILE, encoding="utf-8") as f:
+        _tmp_cantian = f.read()
+        info_cantian_config = json.loads(_tmp_cantian)
 
 with open(ENV_FILE, "r", encoding="utf-8") as f:
     env_config = f.readlines()
@@ -55,6 +61,28 @@ def get_value(param):
         return info_cantian_start.get('db_create_status', "")
     if param == 'CANTIAN_EVER_START':
         return info_cantian_start.get('ever_started', "")
+    if param == 'SHM_CPU_GROUP_INFO':
+        return info_cantian_config.get('SHM_CPU_GROUP_INFO', "")
+    if param == 'LARGE_POOL_SIZE':
+        return info_cantian_config.get('LARGE_POOL_SIZE', "")
+    if param == 'CR_POOL_COUNT':
+        return info_cantian_config.get('CR_POOL_COUNT', "")
+    if param == 'CR_POOL_SIZE':
+        return info_cantian_config.get('CR_POOL_SIZE', "")
+    if param == 'TEMP_POOL_NUM':
+        return info_cantian_config.get('TEMP_POOL_NUM', "")
+    if param == 'BUF_POOL_NUM':
+        return info_cantian_config.get('BUF_POOL_NUM', "")
+    if param == 'LOG_BUFFER_SIZE':
+        return info_cantian_config.get('LOG_BUFFER_SIZE', "")
+    if param == 'LOG_BUFFER_COUNT':
+        return info_cantian_config.get('LOG_BUFFER_COUNT', "")
+    if param == 'SHARED_POOL_SIZE':
+        return info_cantian_config.get('SHARED_POOL_SIZE', "")
+    if param == 'DATA_BUFFER_SIZE':
+        return info_cantian_config.get('DATA_BUFFER_SIZE', "")
+    if param == 'TEMP_BUFFER_SIZE':
+        return info_cantian_config.get('TEMP_BUFFER_SIZE', "")
 
     return info.get(param)
 
