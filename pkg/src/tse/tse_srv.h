@@ -87,6 +87,8 @@ extern "C" {
 #define CTC_AUTOINC_NEW_STYLE_LOCKING 1
 #define CTC_AUTOINC_NO_LOCKING 2
 
+typedef int64 date_t;
+
 typedef struct {
     uint32_t inst_id; // instance id, thd_id alone is not sufficient to uniquely identify a tse session
     uint32_t thd_id;
@@ -126,6 +128,7 @@ typedef struct cache_st_variant {
         long long v_bigint;
         unsigned long long v_ubigint;
         double v_real;
+        date_t v_date;
     };
 } cache_variant_t;
 
@@ -142,7 +145,6 @@ typedef struct {
 typedef struct {
     uint32_t total_rows;
     uint32_t num_buckets;
-    uint32_t num_distinct;
     uint32_t num_null;
     double density;
     tse_cbo_hist_type_t hist_type;
@@ -159,7 +161,6 @@ typedef struct {
 typedef struct {
     uint32_t estimate_rows;
     tse_cbo_stats_column_t *columns;
-    uint32_t *ndv_keys;
 } tse_cbo_stats_table_t;
 
 /*
@@ -171,8 +172,9 @@ typedef struct {
     uint32_t msg_len;
     uint32_t key_len;
     bool is_updated;
-    tse_cbo_stats_table_t tse_cbo_stats_table;
-    tse_cbo_stats_table_t *tse_cbo_stats_part_table;
+    uint32_t records;
+    uint32_t *ndv_keys;
+    tse_cbo_stats_table_t *tse_cbo_stats_table;
 } tianchi_cbo_stats_t;
 #pragma pack()
 
