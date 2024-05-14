@@ -336,7 +336,7 @@ void cm_release_thread(thread_t *thread)
 
 uint32 cm_get_current_thread_id(void)
 {
-    if (g_cm_thread_id.has_get) {
+    if (g_cm_thread_id.has_get && g_cm_thread_id.thread_id != 0) {
         return g_cm_thread_id.thread_id;
     }
 #ifdef WIN32
