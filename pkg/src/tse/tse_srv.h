@@ -63,9 +63,9 @@ extern "C" {
 #define MAX_DDL_ERROR_MSG_LEN 1024
 #define PART_CURSOR_NUM 8192
 #define MAX_SUBPART_NUM 4096    // 参天限制每个一级分区下子分区不超过4096
-#define TSE_BUF_LEN (64 * 1024)
+#define TSE_BUF_LEN (70 * 1024)
 #define BIG_RECORD_SIZE TSE_BUF_LEN  // 采用最大长度
-#define MAX_RECORD_SIZE (3 * TSE_BUF_LEN)  // 查询时按照3条数据合并返回预估最大长度, 取8字节对齐
+#define MAX_RECORD_SIZE (1 * TSE_BUF_LEN)
 #define TSE_MAX_KEY_NAME_LENGTH 64
 #define TSE_SQL_START_INTERNAL_SAVEPOINT "TSE4CANTIAN_SYS_SV"
 #define IS_TSE_PART(part_id) ((part_id) < (PART_CURSOR_NUM))
@@ -86,6 +86,8 @@ extern "C" {
 #define CTC_AUTOINC_OLD_STYLE_LOCKING 0
 #define CTC_AUTOINC_NEW_STYLE_LOCKING 1
 #define CTC_AUTOINC_NO_LOCKING 2
+
+typedef int64 date_t;
 
 typedef struct {
     uint32_t inst_id; // instance id, thd_id alone is not sufficient to uniquely identify a tse session
@@ -116,8 +118,30 @@ typedef struct {
     int32_t sql_type;
     int32_t mdl_namespace;
 } tse_lock_table_info;
-
 #pragma pack(4)
+typedef struct my_st_text {
+    char str[64];
+    uint32_t len;
+} my_text_t;
+#pragma pack()
+typedef uint16_t my_c4typ_t;
+typedef uint32_t my_cc4typ_t;
+#define MY_DEC4_CELL_SIZE (uint8_t)18
+typedef my_c4typ_t my_cell4_t[MY_DEC4_CELL_SIZE];
+#pragma pack(2)
+typedef struct my_st_dec4 {
+  union {
+    struct {
+      uint8_t sign : 1;   /* 0: for positive integer; 1: for negative integer */
+      uint8_t ncells : 7; /* number of cells, 0: for unspecified precision */
+      int8_t expn;        /* the exponent of the number */
+    };
+    my_c4typ_t head;
+  };
+  my_cell4_t cells;
+  my_text_t num_text;  // only for bind param
+} my_dec4_t;
+#pragma pack()
 typedef struct cache_st_variant {
     union {
         int v_int;
@@ -126,6 +150,9 @@ typedef struct cache_st_variant {
         long long v_bigint;
         unsigned long long v_ubigint;
         double v_real;
+        date_t v_date;
+        my_text_t v_text;
+        my_dec4_t v_dec;
     };
 } cache_variant_t;
 
@@ -142,7 +169,6 @@ typedef struct {
 typedef struct {
     uint32_t total_rows;
     uint32_t num_buckets;
-    uint32_t num_distinct;
     uint32_t num_null;
     double density;
     tse_cbo_hist_type_t hist_type;
@@ -159,7 +185,6 @@ typedef struct {
 typedef struct {
     uint32_t estimate_rows;
     tse_cbo_stats_column_t *columns;
-    uint32_t *ndv_keys;
 } tse_cbo_stats_table_t;
 
 /*
@@ -167,14 +192,13 @@ typedef struct {
  * expand this struct if need more cbo stats
  */
 typedef struct {
-    uint16_t first_partid;
-    uint16_t num_part_fetch;
     uint32_t part_cnt;
     uint32_t msg_len;
     uint32_t key_len;
     bool is_updated;
-    tse_cbo_stats_table_t tse_cbo_stats_table;
-    tse_cbo_stats_table_t *tse_cbo_stats_part_table;
+    uint32_t records;
+    uint32_t *ndv_keys;
+    tse_cbo_stats_table_t *tse_cbo_stats_table;
 } tianchi_cbo_stats_t;
 #pragma pack()
 
@@ -570,7 +594,7 @@ int tse_srv_release_savepoint(tianchi_handler_t *tch, const char *name);
 
 /* Optimizer Related Interface */
 int tse_analyze_table(tianchi_handler_t *tch, const char *db_name, const char *table_name, double sampling_ratio);
-int tse_get_cbo_stats(tianchi_handler_t *tch, tianchi_cbo_stats_t *stats);
+int tse_get_cbo_stats(tianchi_handler_t *tch, tianchi_cbo_stats_t *stats, tse_cbo_stats_table_t *tse_cbo_stats_table, uint32_t first_partid, uint32_t num_part_fetch);
 int tse_get_index_name(tianchi_handler_t *tch, char *index_name);
 
 /* Datatype Related Interface */

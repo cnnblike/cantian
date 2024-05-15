@@ -699,6 +699,10 @@ typedef enum en_cs_distribute_type {
 #define CT_MAX_ARCH_CLEAN_PERCENT (uint32)100
 #define CT_MIN_ARCH_CLEAN_UL_PERCENT (uint32)1
 #define CT_MIN_ARCH_CLEAN_LL_PERCENT (uint32)0
+#define CT_DTC_RCY_NODE_READ_BUF_TIMEOUT (uint32)(90*1000)
+#define CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME (uint32)1
+#define CT_DTC_RCY_NODE_READ_TRY_TO_READ_LAST_FAILED_NODE_TIMES (uint32)100
+
 
 /* JSON */
 #define CT_JSON_MIN_DYN_BUF_SIZE (uint64)SIZE_M(1)
@@ -1523,6 +1527,9 @@ static inline uint64 cm_get_prev_2power(uint64 size)
 
 #define BUDDY_INIT_BLOCK_SIZE SIZE_M(32)
 #define BUDDY_MEM_POOL_INIT_SIZE SIZE_G(2)
+
+#define BUDDY_MAX_ARCH_FILE_SIZE SIZE_G((uint64)10)
+#define BUDDY_MIN_ARCH_FILE_SIZE SIZE_M((uint64)512)
 
 static inline bool32 cm_is_even(int32 val)
 {

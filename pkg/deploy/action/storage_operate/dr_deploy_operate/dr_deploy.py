@@ -43,6 +43,7 @@ UNLOCK_TABLE = "unlock tables;"
 INSTALL_TIMEOUT = 900
 START_TIMEOUT = 3600
 FS_CREAT_TIMEOUT = 300
+FLUSH_TABLE_WITH_READ_LOCK_TIMEOUT = 300
 
 
 ACTIVE_RECORD_DICT = {
@@ -251,14 +252,20 @@ class DRDeploy(object):
                                            FLUSH_TABLE)
         cmd += ";echo last_cmd=$?"
         self.record_deploy_process("do_flush_table_with_read_lock", "start")
-        _, output, stderr = exec_popen(cmd)
-        if "last_cmd=0" not in output:
-            err_msg = "Failed to do flush table with read lock, " \
-                      "output:%s, stderr:%s" % (output, stderr)
+        wait_time = 0
+        while wait_time < FLUSH_TABLE_WITH_READ_LOCK_TIMEOUT:
+            _, output, stderr = exec_popen(cmd)
+            if "last_cmd=0" in output:
+                LOG.info("Success to do flush table with read lock.")
+                break
+            else:
+                err_msg = "Failed to do flush table with read lock"
+                LOG.error(err_msg)
+                time.sleep(20)
+                wait_time += 20
+        else:
             self.record_deploy_process("do_flush_table_with_read_lock", "failed", code=-1, description=err_msg)
-            LOG.error(err_msg)
             raise Exception(err_msg)
-        LOG.info("Success to do flush table with read lock.")
         LOG.info("Start to do unlock table with read lock.")
         cmd = "%s -u'%s' -p'%s' -e \"%s;\"" % (self.mysql_cmd,
                                            self.mysql_user,
@@ -688,34 +695,6 @@ class DRDeploy(object):
         LOG.info("Check cantian replay success.")
         self.record_deploy_process("cantian_disaster_recovery_status", "success")
 
-    def wait_remote_node_exec(self, node_id, exec_step, timeout):
-        """
-        等待远端节点执行结束
-        :param node_id: 远端节点id
-        :param exec_step: 当前执行步骤（install/start）
-        :param timeout: 超时时间
-        :return:
-        """
-        share_fs_name = self.dr_deploy_info.get("storage_share_fs")
-        install_record_file = f"/mnt/dbdata/remote/share_{share_fs_name}/node{node_id}_install_record.json"
-        wait_time = 0
-        while timeout:
-            time.sleep(10)
-            wait_time += 10
-            timeout -= 10
-            LOG.info("wait node%s %s success, waited[%s]s", node_id, exec_step, wait_time)
-            if not os.path.exists(install_record_file):
-                continue
-            with open(install_record_file, "r") as fp:
-                status_info = json.loads(fp.read())
-                status = status_info.get(exec_step)
-            if status == "success":
-                break
-            if status == "failed":
-                err_msg = "Failed to %s the remote node." % exec_step
-                LOG.error(err_msg)
-                raise Exception(err_msg)
-
     def do_start(self, node_id):
         """
         本端节点启动
@@ -976,11 +955,7 @@ class DRDeploy(object):
     def standby_do_start(self):
         LOG.info("Start to start cantian engine.")
         node_id = self.dr_deploy_info.get("node_id")
-        if node_id == "1":
-            self.wait_remote_node_exec("0", "start", START_TIMEOUT)
-            self.do_start(node_id)
-        else:
-            self.do_start(node_id)
+        self.do_start(node_id)
         LOG.info("Start cantian engine success.")
 
     def active_dr_deploy_and_sync(self):

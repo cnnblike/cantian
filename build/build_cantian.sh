@@ -9,7 +9,7 @@ CTDB_CODE_PATH="${CURRENT_PATH}"/..
 MYSQL_SERVER_PATH="${CTDB_CODE_PATH}"/../cantian-connector-mysql
 BUILD_TARGET_NAME="cantian_connector"
 SYMBOL_TARGET_NAME="Cantian_connector_symbol"
-BUILD_PACK_NAME="Cantian_24.03"
+BUILD_PACK_NAME="Cantian_24.06"
 ENV_TYPE=$(uname -p)
 TMP_PKG_PATH=/tmp/cantian_output
 CTDB_TARGET_PATH=${CANTIANDB_BIN}/${BUILD_TARGET_NAME}/CantianKernel
@@ -164,7 +164,7 @@ function prepare() {
   cp -arf "${CANTIANDB_BIN}"/cantian-connector-mysql "${CANTIANDB_BIN}"/"${BUILD_TARGET_NAME}"
 }
 
-BUILD_TYPE=$1
+BUILD_TYPE=${1,,}
 if [[ ${BUILD_TYPE} != "debug" ]] && [[ ${BUILD_TYPE} != "release" ]]; then
   echo "Usage: ${0##*/} {debug|release}."
   exit 0

@@ -592,8 +592,10 @@ func_clean()
     cd ${CANTIANDB_BUILD}
     make clean
 
-    cd ${CT_TEST_BUILD_DIR}
-    make clean
+    if [[ -d "${CT_TEST_BUILD_DIR}" ]];then
+        cd ${CT_TEST_BUILD_DIR}
+        make clean
+    fi
 
     if [[ -d "${CANTIANDB_BIN}" ]];then
         echo ${CANTIANDB_BIN}
@@ -797,25 +799,10 @@ func_prepare_LLT_dependency()
         mkdir -p ${MYSQL_BINARY_CODE_PATH}
     fi
 
-    echo ${LCRP_HOME}
-    mkdir -p /root/.ArtGet/conf
-    cp -f ${CANTIANDB_CI_PATH}/CMC/Setting.xml /root/.ArtGet/conf
-    OS_Version=`sh ${CANTIANDB_CI_PATH}/CMC/get_OS_Version.sh`
-
     #下载三方库并编译
-    if [[ "${WORKSPACE}" == *"regress"* ]]; then
-        DOWNLOAD_PATH=$DFT_WORKSPACE"/CantianKernel"
-    else
-        DOWNLOAD_PATH=${WORKSPACE}"/cantian"
-    fi
+    func_download_3rdparty
 
-    echo "start download 3rdparty : ${DOWNLOAD_PATH}"
-    python ${CANTIANDB_CI_PATH}/CMC/manifest_opensource_download.py manifest_opensource.xml ${DOWNLOAD_PATH}
     sh download_opensource_cmc.sh
-    echo "start download 3rdparty lib: "
-    artget pull -d ${CANTIANDB_CI_PATH}/CMC/CantianKernel_opensource_dependency.xml -p "{'OS_Version':'${OS_Version}'}"  -user ${cmc_username} -pwd ${cmc_password}
-
-    artget pull -d ${CANTIANDB_CI_PATH}/CMC/CantianKernel_dependency_new.xml -p "{'OS_Version':'${OS_Version}'}"  -user ${cmc_username} -pwd ${cmc_password}
     if [[ $? -ne 0 ]]; then
         echo "dependency download failed"
         exit 1
