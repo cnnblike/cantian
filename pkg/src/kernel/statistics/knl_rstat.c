@@ -466,10 +466,14 @@ static status_t stats_values_convert_str(knl_column_t *column, text_t *res_value
             break;
 
         case CT_TYPE_DATE:
+            if (cm_date2text(*(date_t *)res_value->str, NULL, value, STATS_MAX_BUCKET_SIZE) != CT_SUCCESS) {
+                return CT_ERROR;
+            }
+            break;
         case CT_TYPE_TIMESTAMP:
         case CT_TYPE_TIMESTAMP_TZ_FAKE:
         case CT_TYPE_TIMESTAMP_LTZ:
-            if (cm_date2text(*(date_t *)res_value->str, NULL, value, STATS_MAX_BUCKET_SIZE) != CT_SUCCESS) {
+            if (cm_timestamp2text(*(date_t *)res_value->str, NULL, value, STATS_MAX_BUCKET_SIZE) != CT_SUCCESS) {
                 return CT_ERROR;
             }
             break;
@@ -2020,10 +2024,14 @@ status_t stats_put_result_value(row_assist_t *ra, text_t *res_value, ct_type_t t
             break;
 
         case CT_TYPE_DATE:
+            if (cm_date2text(*(date_t *)res_value->str, NULL, &value, STATS_MAX_BUCKET_SIZE) != CT_SUCCESS) {
+                return CT_ERROR;
+            }
+            break;
         case CT_TYPE_TIMESTAMP:
         case CT_TYPE_TIMESTAMP_TZ_FAKE:
         case CT_TYPE_TIMESTAMP_LTZ:
-            if (cm_date2text(*(date_t *)res_value->str, NULL, &value, STATS_MAX_BUCKET_SIZE) != CT_SUCCESS) {
+            if (cm_timestamp2text(*(timestamp_t *)res_value->str, NULL, &value, STATS_MAX_BUCKET_SIZE) != CT_SUCCESS) {
                 return CT_ERROR;
             }
             break;
@@ -3681,6 +3689,10 @@ static void stats_gather_pcrb_key(index_t *idx, stats_index_t *stats_idx, pcrb_k
     pcrb_key_t     *key = (pcrb_key_t *)cursor->sort.row;
     errno_t         ret;
 
+    dc_entity_t *entity = idx->entity;
+    cbo_stats_table_t *cbo_stats = entity->cbo_table_stats;
+    cbo_stats_index_t *cbo_index = cbo_stats->indexs[idx->desc.id];
+
     if (stats_idx->info.keys == 0) {
         stats_idx->clus_factor++;
     } else {
@@ -3691,6 +3703,18 @@ static void stats_gather_pcrb_key(index_t *idx, stats_index_t *stats_idx, pcrb_k
         } else {
             if (!IS_SAME_TEMP_PAGEID(prev_key->rowid, key->rowid)) {
                 stats_idx->clus_factor++;
+            }
+        }
+    }
+
+    // clear for next analyze
+    if (stats_idx->info.distinct_keys == 0) {
+        if (table_stats->part_stats.part_no == CT_INVALID_ID32 ||
+            (!table_stats->part_stats.is_subpart && table_stats->part_stats.part_no == 0) ||
+            (table_stats->part_stats.is_subpart && table_stats->part_stats.part_no == 0 &&
+             table_stats->part_stats.sub_stats->part_no == 0)) {
+            for (uint32_t i = 0; i < MAX_KEY_COLUMNS; i++) {
+                cbo_index->distinct_keys_arr[i] = 0;
             }
         }
     }
