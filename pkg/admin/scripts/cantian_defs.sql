@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_parameters`(
   `EFFECTIVE` VARCHAR(20)
 ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
--- -- 查询系统的基础统计，包括sql执行情况，读写盘时延等: DV_SYS_STATS
+-- 查询系统的基础统计，包括sql执行情况，读写盘时延等: DV_SYS_STATS
  CREATE TABLE IF NOT EXISTS `cantian`.`dv_sys_stats`(
    `STATISTIC#` INTEGER,
    `NAME` VARCHAR(64),
@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_parameters`(
    `VALUE` BIGINT
  ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
--- -- 查询会话级等待事件的统计信息：DV_SESSION_EVENTS
+-- 查询会话级等待事件的统计信息：DV_SESSION_EVENTS
 CREATE TABLE IF NOT EXISTS `cantian`.`dv_session_events`(
   `SID` INTEGER,
   `EVENT#` INTEGER,
@@ -259,7 +259,7 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_session_events`(
   `TENANT_ID` INTEGER
 ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
--- -- 查询系统级等待事件的统计信息：DV_SYS_EVENTS
+-- 查询系统级等待事件的统计信息：DV_SYS_EVENTS
 CREATE TABLE IF NOT EXISTS `cantian`.`dv_sys_events`(
   `EVENT#` INTEGER,
   `EVENT` VARCHAR(64),
@@ -369,8 +369,8 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_page_stats`(
 --   `AVG_BAD_US` BIGINT
 -- ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
--- -- DV_BUFFER_RECYCLE_STATS
--- -- 查看BUFFER淘汰状态信息
+-- DV_BUFFER_RECYCLE_STATS
+-- 查看BUFFER淘汰状态信息
  CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_recycle_stats`(
    `SID` INTEGER,
    `TOTAL` INTEGER,
@@ -381,8 +381,8 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_page_stats`(
    `FAILS` INTEGER
  ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
--- -- DV_BUFFER_ACCESS_STATS
--- -- 查看BUFFER cache命中率状态信息
+-- DV_BUFFER_ACCESS_STATS
+-- 查看BUFFER cache命中率状态信息
  CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_access_stats`(
    `SID` INTEGER,
    `TOTAL_ACCESS` INTEGER,
@@ -487,8 +487,8 @@ CREATE TABLE IF NOT EXISTS `cantian`.`dv_buffer_page_stats`(
 --   `BUF_BUSY_WAITS` BIGINT
 -- ) ENGINE = CTC DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin;
 
--- -- DV_SESSIONS
--- -- 查询当前各个会话执行的sql语句
+-- DV_SESSIONS
+-- 查询当前各个会话执行的sql语句
  CREATE TABLE IF NOT EXISTS `cantian`.`dv_sessions`(
    `SID` INTEGER,
    `SPID` VARCHAR(11),
