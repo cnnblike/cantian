@@ -160,8 +160,23 @@ static inline void reset_read_buffer(){
 }
 
 static status_t close_read_log_proc(thread_t *read_log_thread){
-    CT_LOG_RUN_INF("[DTC RCY] close read log proc");
+    CT_LOG_RUN_INF("[DTC RCY] start close read log proc");
+    read_log_thread->result = CT_FALSE;
     read_log_thread->closed = CT_TRUE;
+    uint32 time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
+    for (;;) {
+        if (read_log_thread->result == CT_FALSE) {
+            cm_sleep(CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME);
+            time_out -= CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME;
+            if(time_out <= 0){
+                return CT_TIMEDOUT;
+            }
+        } else {
+            break;
+        }
+    }
+    reset_read_buffer();
+    CT_LOG_RUN_INF("[DTC RCY] finish close read log proc");
     return CT_SUCCESS;
 }
 
@@ -1605,14 +1620,14 @@ static status_t dtc_rcy_load_archfile(knl_session_t *session, uint32 idx, arch_f
     }
 
     /* size <= buf_size, (uint32)size cannot overflow */
-    if (cm_read_device(cm_device_type(file->name), file->handle, 0, rcy_node->read_buf->aligned_buf,
+    if (cm_read_device(cm_device_type(file->name), file->handle, 0, rcy_node->read_buf[rcy_node->read_buf_write_index].aligned_buf,
                        CM_CALC_ALIGN((uint32)sizeof(log_file_head_t), 512)) != CT_SUCCESS) {
         CT_LOG_RUN_ERR("[DTC RCY] failed to read %s, offset 0 handle %d", file->name, file->handle);
         return CT_ERROR;
     }
 
     errno_t errcode;
-    errcode = memcpy_s(&file->head, (int32)sizeof(log_file_head_t), rcy_node->read_buf->aligned_buf,
+    errcode = memcpy_s(&file->head, (int32)sizeof(log_file_head_t), rcy_node->read_buf[rcy_node->read_buf_write_index].aligned_buf,
                        (int32)sizeof(log_file_head_t));
     knl_securec_check(errcode);
 
@@ -3359,7 +3374,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
         }
     }
-    reset_read_buffer();
+    thread->result = CT_TRUE;
     CT_LOG_RUN_INF("[DTC RCY] rcy read node log thread is closed");
 }
 
