@@ -48,6 +48,8 @@ else
     node_domain=`echo ${cms_ip} | awk '{split($1,arr,";");print arr[2]}'`
 fi
 
+touch /opt/cantian/healthy
+
 function change_mtu() {
     ifconfig net1 mtu 5500
     ifconfig net2 mtu 5500
@@ -161,14 +163,14 @@ function init_start() {
     # Cantian启动前先执行升级流程
     sh ${CURRENT_PATH}/container_upgrade.sh
     if [ $? -ne 0 ]; then
-        rm -rf /etc/healthy
+        rm -rf /opt/cantian/healthy
         exit 1
     fi
 
     # Cantian启动前执行init流程，更新各个模块配置文件，初始化cms
     sh ${SCRIPT_PATH}/appctl.sh init_container
     if [ $? -ne 0 ]; then
-        rm -rf /etc/healthy
+        rm -rf /opt/cantian/healthy
         exit 1
     fi
 
@@ -184,7 +186,7 @@ function init_start() {
     # Cantian启动
     sh ${SCRIPT_PATH}/appctl.sh start
     if [ $? -ne 0 ]; then
-        rm -rf /etc/healthy
+        rm -rf /opt/cantian/healthy
         exit 1
     fi
 
@@ -196,7 +198,7 @@ function init_start() {
             -U ${deploy_user}:${deploy_group} -l /home/${deploy_user}/logs/install.log \
             -M mysqld -m /opt/cantian/image/cantian_connector/cantian-connector-mysql/scripts/my.cnf -g withoutroot"
         if [ $? -ne 0 ]; then
-            rm -rf /etc/healthy
+            rm -rf /opt/cantian/healthy
             logAndEchoError "start mysqld failed. [Line:${LINENO}, File:${SCRIPT_NAME}]"
             exit 1
         fi
@@ -221,3 +223,5 @@ function main() {
 }
 
 main
+
+touch /opt/cantian/readiness
