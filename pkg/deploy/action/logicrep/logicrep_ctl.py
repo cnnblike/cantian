@@ -133,6 +133,7 @@ class Logicrep:
         self.key2_file = os.path.join(self.home, "conf", "sec", "standby_keystore.ks")
         self.node_id = ""
         self.cmsip = []
+        self.sysip = "127.0.0.1"
         self.lsnr_port = "1611"
         self.passwd = ""
         self.mode = mode
@@ -233,7 +234,7 @@ class Logicrep:
         for i in range(RETRY_TIMES):
             cmd = "source ~/.bashrc && echo -e '%s' | ctsql sys@%s:%s -q -c \"%s\"" % (
                 self.passwd,
-                self.cmsip[int(self.node_id)].split(",")[0],
+                self.sysip,
                 self.lsnr_port,
                 sql)
 
