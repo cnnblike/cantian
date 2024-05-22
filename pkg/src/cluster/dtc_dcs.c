@@ -2950,8 +2950,7 @@ static status_t dcs_process_heap_pcr_construct(knl_session_t *session, msg_pcr_r
                             (void *)page, DEFAULT_PAGE_SIZE(session));
     knl_securec_check(ret);
 
-    if (g_dtc->profile.remote_access_limit != 0 &&
-        (uint32)session->curr_page_ctrl->remote_access >= g_dtc->profile.remote_access_limit) {
+    if ((uint32)session->curr_page_ctrl->remote_access >= g_dtc->profile.remote_access_limit) {
         new_req->force_cvt = 1;
     }
 
