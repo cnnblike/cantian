@@ -107,7 +107,7 @@ config_item_t g_parameters[] = {
     { "BUFFER_LRU_SEARCH_THRE", CT_TRUE, ATTR_NONE, "60", NULL, NULL, "-", "[1,100]", "CT_TYPE_INTEGER", NULL,
       PARAM_BUFFER_LRU_SEARCH_THRE, EFFECT_IMMEDIATELY, CFG_INS, sql_verify_als_lru_search_threshold,
       sql_notify_als_lru_search_threshold, NULL, NULL },
-    { "BUFFER_PAGE_CLEAN_RATIO", CT_TRUE, ATTR_NONE, "0.4", NULL, NULL, "-", "[0.0001,1]", "CT_TYPE_REAL", NULL,
+    { "BUFFER_PAGE_CLEAN_RATIO", CT_TRUE, ATTR_NONE, "0.4", NULL, NULL, "-", "[0.1,1]", "CT_TYPE_REAL", NULL,
       PARAM_BUFFER_PAGE_CLEAN_RATIO, EFFECT_IMMEDIATELY, CFG_INS, sql_verify_als_page_clean_ratio,
       sql_notify_als_page_clean_ratio, NULL, NULL },
     { "_BUFFER_PAGE_CLEAN_WAIT_TIMEOUT", CT_TRUE, ATTR_NONE, "0", NULL, NULL, "-", "[0,4294967295]", "CT_TYPE_INTEGER",
@@ -712,7 +712,7 @@ config_item_t g_parameters[] = {
     { "ENABLE_IDX_KEY_LEN_CHECK", CT_TRUE, ATTR_NONE, "TRUE", NULL, NULL, "-", "FALSE,TRUE", "CT_TYPE_BOOLEAN", NULL,
       PARAM_ENABLE_IDX_KEY_LEN_CHECK, EFFECT_IMMEDIATELY, CFG_INS, sql_verify_als_bool, sql_notify_idx_key_len_check,
       sql_notify_als_bool, NULL },
-    { "CBO", CT_TRUE, ATTR_NONE, "ON", NULL, NULL, "-", "OFF,ON", "CT_TYPE_VARCHAR", NULL, PARAM_CBO,
+    { "CBO", CT_TRUE, ATTR_NONE, "OFF", NULL, NULL, "-", "OFF,ON", "CT_TYPE_VARCHAR", NULL, PARAM_CBO,
       EFFECT_IMMEDIATELY, CFG_INS, sql_verify_als_onoff, sql_notify_als_cbo, sql_notify_als_onoff, NULL },
     { "MAX_COLUMN_COUNT", CT_TRUE, ATTR_NONE, "1024", NULL, NULL, "-", "1024,2048,3072,4096", "CT_TYPE_INTEGER", NULL,
       PARAM_MAX_COLUMN_COUNT, EFFECT_REBOOT, CFG_DB, sql_verify_als_max_column_count, NULL, NULL, NULL },
@@ -1133,9 +1133,6 @@ config_item_t g_parameters[] = {
     { "ENABLE_SYS_CRC_CHECK", CT_TRUE, ATTR_NONE, "FALSE", NULL, NULL, "-", "FALSE,TRUE", "GS_TYPE_BOOLEAN", NULL,
       PARAM_ENABLE_CHECK_SECURITY_LOG, EFFECT_REBOOT, CFG_INS, sql_verify_als_bool,
       sql_notify_enable_crc_check, sql_notify_als_bool, NULL },
-    { "RCY_NODE_READ_BUF_SIZE", CT_TRUE, ATTR_NONE, "4", NULL, NULL, "-", "NULL", "CT_TYPE_INTEGER", NULL,
-      PARAM_RCY_NODE_READ_BUF_SIZE, EFFECT_IMMEDIATELY, CFG_INS, sql_verify_als_uint32, NULL,
-      NULL, NULL },
 };
 
 void srv_get_config_info(config_item_t **params, uint32 *count)
