@@ -168,15 +168,13 @@ function init_start() {
     # Cantian启动前先执行升级流程
     sh ${CURRENT_PATH}/container_upgrade.sh
     if [ $? -ne 0 ]; then
-        rm -rf ${HEALTHY_FILE}
-        exit 1
+        exit_with_log
     fi
 
     # Cantian启动前执行init流程，更新各个模块配置文件，初始化cms
     sh ${SCRIPT_PATH}/appctl.sh init_container
     if [ $? -ne 0 ]; then
-        rm -rf ${HEALTHY_FILE}
-        exit 1
+        exit_with_log
     fi
 
     # Cantian启动前参数预检查
@@ -184,16 +182,14 @@ function init_start() {
     python3 ${PRE_INSTALL_PY_PATH} 'override' ${INIT_CONFIG_PATH}/${CONFIG_NAME}
     if [ $? -ne 0 ]; then
         logAndEchoError "parameters pre-check failed."
-        rm -rf ${HEALTHY_FILE}
-        exit 1
+        exit_with_log
     fi
     logAndEchoInfo "pre-check the parameters success."
 
     # Cantian启动
     sh ${SCRIPT_PATH}/appctl.sh start
     if [ $? -ne 0 ]; then
-        rm -rf ${HEALTHY_FILE}
-        exit 1
+        exit_with_log
     fi
 
     # 拉起MySQL
@@ -204,9 +200,8 @@ function init_start() {
             -U ${deploy_user}:${deploy_group} -l /home/${deploy_user}/logs/install.log \
             -M mysqld -m /opt/cantian/image/cantian_connector/cantian-connector-mysql/scripts/my.cnf -g withoutroot"
         if [ $? -ne 0 ]; then
-            rm -rf ${HEALTHY_FILE}
             logAndEchoError "start mysqld failed. [Line:${LINENO}, File:${SCRIPT_NAME}]"
-            exit 1
+            exit_with_log
         fi
         logAndEchoInfo "start mysqld success. [Line:${LINENO}, File:${SCRIPT_NAME}]"
     fi
@@ -220,6 +215,45 @@ function init_start() {
     touch ${READINESS_FILE}
 
     logAndEchoInfo "cantian container init success. [Line:${LINENO}, File:${SCRIPT_NAME}]"
+}
+
+function exit_with_log() {
+    # 失败后保存日志并删除存活探针
+    DATE=`date +"%Y-%m-%d-%H-%M-%S"`
+    mkdir -p /home/mfdb_core/${DATE}-node${node_id}
+    cd /home/mfdb_core/${DATE}-node${node_id}
+    mkdir cantian cms dbstor core_symbol mysql logicrep
+    mkdir cantian/opt cantian/mnt
+    mkdir dbstor/opt dbstor/mnt dbstor/ftds
+    check_path_and_copy /mnt/dbdata/local/cantian/tmp/data/log cantian/mnt
+    check_path_and_copy /mnt/dbdata/local/cantian/tmp/data/cfg cantian/mnt
+    check_path_and_copy /opt/cantian/cantian/log cantian/opt
+    check_path_and_copy /opt/cantian/deploy cantian/opt
+    check_path_and_copy /opt/cantian/cantian_exporter cantian/opt
+    check_path_and_copy /opt/cantian/common/config cantian/opt
+    check_path_and_copy /opt/cantian/cms/log cms/
+    check_path_and_copy /mnt/dbdata/local/cantian/tmp/data/dbstor/data/logs dbstor/mnt
+    check_path_and_copy /opt/cantian/cms/dbstor/data/logs dbstor/opt
+    check_path_and_copy /mnt/dbdata/local/cantian/tmp/data/dbstor/data/ftds/ftds/data/stat dbstor/ftds
+    check_path_and_copy /opt/cantian/cantian/server/bin core_symbol/
+    check_path_and_copy /home/${deploy_user}/cantiandinstall.log mysql/
+    check_path_and_copy /mnt/dbdata/remote/metadata_${storage_metadata_fs}/node${node_id}/mysql.log mysql/
+    check_path_and_copy /opt/software/tools/logicrep/log logicrep/
+    check_path_and_copy /opt/software/tools/logicrep/logicrep/run logicrep/
+    check_path_and_copy /opt/software/tools/logicrep/logicrep/perf logicrep/
+    check_path_and_copy /opt/cantian/logicrep/log/logicrep_deploy.log logicrep/
+    rm -rf ${HEALTHY_FILE}
+    exit 1
+}
+
+function check_path_and_copy() {
+    #获取参数
+    src_path="$1"
+    dst_path="$2"
+    #检查是否存在
+    if [ -e "${src_path}" ];then
+        cp -rf ${src_path} ${dst_path}
+    fi
 }
 
 function main() {
