@@ -1329,12 +1329,16 @@ status_t pcrh_insert(knl_session_t *session, knl_cursor_t *cursor)
     row_head_t *row = cursor->row;
     uint16 column_count = ROW_COLUMN_COUNT(row);
     dc_entity_t *entity = (dc_entity_t *)cursor->dc_entity;
+    io_record_stat_t io_stat = IO_STAT_SUCCESS;
+    timeval_t tv_begin;
+    cantian_record_io_stat_begin(IO_RECORD_EVENT_KNL_PCRH_INSERT, &tv_begin);
     uint32 max_row_len = heap_table_max_row_len(cursor->table, CT_MAX_ROW_SIZE, cursor->part_loc);
-
+    
     SYNC_POINT(session, "SP_B4_HEAP_INSERT");
 
     if (row->size > max_row_len) {
         if (heap_convert_insert(session, cursor, max_row_len) != CT_SUCCESS) {
+            cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_INSERT, &tv_begin, IO_STAT_FAILED);
             return CT_ERROR;
         }
     }
@@ -1348,6 +1352,7 @@ status_t pcrh_insert(knl_session_t *session, knl_cursor_t *cursor)
     }
 
     if (lock_table_shared(session, cursor->dc_entity, LOCK_INF_WAIT) != CT_SUCCESS) {
+        cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_INSERT, &tv_begin, IO_STAT_FAILED);
         return CT_ERROR;
     }
 
@@ -1359,12 +1364,14 @@ status_t pcrh_insert(knl_session_t *session, knl_cursor_t *cursor)
         if (!heap->loaded) {
             if (dc_load_table_part_segment(session, cursor->dc_entity,
                 (table_part_t *)cursor->table_part) != CT_SUCCESS) {
+                cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_INSERT, &tv_begin, IO_STAT_FAILED);
                 return CT_ERROR;
             }
         }
 
         if (heap->segment == NULL) {
             if (heap_create_part_entry(session, (table_part_t *)cursor->table_part, cursor->part_loc) != CT_SUCCESS) {
+                cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_INSERT, &tv_begin, IO_STAT_FAILED);
                 return CT_ERROR;
             }
         }
@@ -1372,6 +1379,7 @@ status_t pcrh_insert(knl_session_t *session, knl_cursor_t *cursor)
         cursor->part_loc.part_no = CT_INVALID_ID32;
         if (heap->segment == NULL) {
             if (heap_create_entry(session, heap) != CT_SUCCESS) {
+                cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_INSERT, &tv_begin, IO_STAT_FAILED);
                 return CT_ERROR;
             }
         }
@@ -1401,7 +1409,8 @@ status_t pcrh_insert(knl_session_t *session, knl_cursor_t *cursor)
     }
 
     SYNC_POINT(session, "SP_AFTER_HEAP_INSERT");
-
+    io_stat = (status == CT_SUCCESS ? IO_STAT_SUCCESS : IO_STAT_FAILED);
+    cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_INSERT, &tv_begin, io_stat);
     return status;
 }
 
