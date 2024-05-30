@@ -14,6 +14,7 @@ ENV_TYPE=$(uname -p)
 TMP_PKG_PATH=/tmp/cantian_output
 CTDB_TARGET_PATH=${CANTIANDB_BIN}/${BUILD_TARGET_NAME}/CantianKernel
 MYSQL_CODE_PATH=${MYSQL_SERVER_PATH}/mysql-source
+MYSQL_BIN_NAME="Cantian_connector_mysql"
 
 function packageTarget() {
   echo "Start packageTarget..."
@@ -65,6 +66,11 @@ function newPackageTarget() {
   local pkg_dir_name="${BUILD_TARGET_NAME}"
   local build_type_upper=$(echo "${BUILD_TYPE}" | tr [:lower:] [:upper:])
   local pkg_name="${BUILD_PACK_NAME}_${ENV_TYPE}_${build_type_upper}.tgz"
+  local mysql_pkg_name="${MYSQL_BIN_NAME}_${ENV_TYPE}_${build_type_upper}.tgz"
+  if [[ ${BUILD_MODE} == "single" ]]; then
+    pkg_name="${BUILD_PACK_NAME}_${BUILD_MODE}_${ENV_TYPE}_${build_type_upper}.tgz"
+    mysql_pkg_name="${MYSQL_BIN_NAME}_${BUILD_MODE}_${ENV_TYPE}_${build_type_upper}.tgz"
+  fi
   local pkg_real_path=${TMP_PKG_PATH}/${pkg_dir_name}
   rm -rf ${TMP_PKG_PATH}/*
 
@@ -85,7 +91,14 @@ function newPackageTarget() {
   echo "Start pkg ${pkg_dir_name}.tgz..."
   cd ${TMP_PKG_PATH}
   tar -zcf "${pkg_name}" ${pkg_dir_name}
-  rm -rf ${TMP_PKG_PATH}/${pkg_dir_name}
+  mkdir -p ${MYSQL_BIN_NAME}
+  cp -arf /usr/local/mysql ${MYSQL_BIN_NAME}
+  if [[ ${BUILD_MODE} == "multiple" ]] || [[ -z ${BUILD_MODE} ]]; then
+    echo "Start pkg ${mysql_pkg_name}..."
+    tar -zcf "${mysql_pkg_name}" ${MYSQL_BIN_NAME}
+  fi
+  rm -rf ${MYSQL_BIN_NAME}
+  rm -rf ${pkg_dir_name}
   echo "Packing ${pkg_name} success"
 }
 
