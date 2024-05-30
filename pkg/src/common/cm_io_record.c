@@ -62,14 +62,15 @@ io_record_event_desc_t g_io_record_event_desc[IO_RECORD_EVENT_COUNT] = {
     { "pcrb fetch", ""},
     { "pcrh fetch", ""},
     { "knl fetch by rowid", ""},
-    { "recovery read online log", ""},
-    { "ns batch read ulog", ""},
 
     {"pcrh insert", ""},
     {"pcrb insert", ""},
     {"pcrh update", ""},
     {"pcrh delete", ""},
     {"pcrb delete", ""},
+
+    { "recovery read online log", ""},
+    { "ns batch read ulog", ""},
 
     { "ns create page pool", ""},
     { "ns open page pool", ""},
