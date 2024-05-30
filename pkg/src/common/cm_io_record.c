@@ -65,14 +65,11 @@ io_record_event_desc_t g_io_record_event_desc[IO_RECORD_EVENT_COUNT] = {
     { "recovery read online log", ""},
     { "ns batch read ulog", ""},
 
-    // 新增打点
-    {"pcrh insert"},
-    {"pcrb insert"},
-    {"pcrh update"},
-    {"pcrb update"},
-    {"pcrh delete"},
-    {"pcrb delete"},
-    // -------
+    {"pcrh insert", ""},
+    {"pcrb insert", ""},
+    {"pcrh update", ""},
+    {"pcrh delete", ""},
+    {"pcrb delete", ""},
 
     { "ns create page pool", ""},
     { "ns open page pool", ""},

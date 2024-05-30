@@ -29,6 +29,7 @@
 #include "pcr_pool.h"
 #include "dc_part.h"
 #include "pcr_heap_scan.h"
+#include "cm_io_record.h"
 
 #define MAX_ITL_UNDO_SIZE             sizeof(pcrh_undo_itl_t)  // sizeof(pcrh_poly_undo_itl_t)
 #define PCRH_INSERT_UNDO_COUNT        2 // itl undo and insert undo
@@ -2618,6 +2619,10 @@ status_t pcrh_update(knl_session_t *session, knl_cursor_t *cursor)
     rd_logic_rep_head logic_head;
     status_t status;
     uint32 max_row_len = heap_table_max_row_len(cursor->table, CT_MAX_ROW_SIZE, cursor->part_loc);
+    io_record_stat_t io_stat = IO_STAT_SUCCESS;
+    timeval_t tv_begin;
+
+    cantian_record_io_stat_begin(IO_RECORD_EVENT_KNL_PCRH_UPDATE, &tv_begin);
 
     SYNC_POINT(session, "SP_B4_HEAP_UPDATE");
     knl_panic_log(cursor->is_valid, "current cursor is invalid, panic info: page %u-%u type %u table %s",
@@ -2657,6 +2662,9 @@ status_t pcrh_update(knl_session_t *session, knl_cursor_t *cursor)
     }
 
     SYNC_POINT(session, "SP_AFTER_HEAP_UPDATE");
+
+    io_stat = (status == CT_SUCCESS ? IO_STAT_SUCCESS : IO_STAT_FAILED);
+    cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_UPDATE, &tv_begin, io_stat);
 
     return status;
 }
@@ -2742,6 +2750,9 @@ static status_t pcrh_delete_link_row(knl_session_t *session, knl_cursor_t *curso
 status_t pcrh_delete(knl_session_t *session, knl_cursor_t *cursor)
 {
     dc_entity_t *entity = NULL;
+    
+    timeval_t tv_begin;
+    cantian_record_io_stat_begin(IO_RECORD_EVENT_KNL_PCRH_DELETE, &tv_begin);
 
     SYNC_POINT(session, "SP_B4_HEAP_DELETE");
     knl_panic_log(cursor->is_valid, "current cursor is invalid, panic info: page %u-%u type %u table %s",
@@ -2762,22 +2773,26 @@ status_t pcrh_delete(knl_session_t *session, knl_cursor_t *cursor)
 
     if (entity->contain_lob) {
         if (lob_delete(session, cursor) != CT_SUCCESS) {
+            cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_DELETE, &tv_begin, IO_STAT_FAILED);
             return CT_ERROR;
         }
     }
 
     if (IS_INVALID_ROWID(cursor->link_rid)) {
         if (pcrh_simple_delete(session, cursor, cursor->rowid, cursor->row->size, CT_TRUE) != CT_SUCCESS) {
+            cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_DELETE, &tv_begin, IO_STAT_FAILED);
             return CT_ERROR;
         }
     } else {
         if (pcrh_delete_link_row(session, cursor) != CT_SUCCESS) {
+            cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_DELETE, &tv_begin, IO_STAT_FAILED);
             return CT_ERROR;
         }
     }
 
     SYNC_POINT(session, "SP_AFTER_HEAP_DELETE");
 
+    cantian_record_io_stat_end(IO_RECORD_EVENT_KNL_PCRH_DELETE, &tv_begin, IO_STAT_SUCCESS);
     return CT_SUCCESS;
 }
 
