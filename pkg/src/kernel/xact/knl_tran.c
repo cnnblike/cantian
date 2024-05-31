@@ -228,6 +228,7 @@ static inline undo_t *tx_bind_undo(knl_session_t *session, knl_rm_t *rm)
 {
     undo_context_t *ctx = &session->kernel->undo_ctx;
     uint64 global_segid;
+    uint32 node_count = g_dtc->profile.node_count;
 
     rm->undo_page_info.undo_rid = g_invalid_undo_rowid;
     rm->undo_page_info.undo_fs = 0;
@@ -239,7 +240,7 @@ static inline undo_t *tx_bind_undo(knl_session_t *session, knl_rm_t *rm)
     rm->noredo_undo_page_info.encrypt_enable = CT_FALSE;
     rm->noredo_undo_page_info.undo_log_encrypt = CT_FALSE;
 
-    global_segid = (uint64)cm_atomic_inc(&session->kernel->undo_segid);
+    global_segid = (uint64)cm_atomic_add(&session->kernel->undo_segid, node_count);
 
     if (rm->prev == CT_INVALID_ID16) {
         tx_bind_segid(session, rm, global_segid);
