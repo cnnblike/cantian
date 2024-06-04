@@ -433,6 +433,7 @@ typedef enum en_param_global {
     PARAM_MES_SSL_KEY_PWD,
     PARAM_ENABLE_CHECK_SECURITY_LOG,
     PARAM_MYSQL_DEPLOY_GROUP_ID,
+    PARAM_DRC_MASTER_INST,
     PARAM_CEIL,
 } param_global_t;
 
