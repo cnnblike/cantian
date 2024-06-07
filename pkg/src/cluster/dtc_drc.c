@@ -3413,41 +3413,45 @@ void drc_local_txn_awake(xid_t *xid)
     return;
 }
 
+static void drc_scaleout_remaster_redistribute_taskset(drc_part_mngr_t *part_mngr, drc_inst_part_t *inst_part_entry, uint32 instance_index)
+{
+    if (inst_part_entry[instance_index].count > inst_part_entry[instance_index].expected_num) {
+        uint16 current = inst_part_entry[instance_index].first;
+        uint32 mgrt_num = inst_part_entry[instance_index].count - inst_part_entry[instance_index].expected_num;
+        uint32 loop;
+
+        for(loop = 0; loop < mgrt_num; loop++){
+            part_mngr->remaster_mngr.remaster_task_set[part_mngr->remaster_mngr.task_num].part_id = current;
+            part_mngr->remaster_mngr.remaster_task_set[part_mngr->remaster_mngr.task_num].export_inst = instance_index;
+            current = part_mngr->remaster_mngr.target_part_map[current].next;
+            part_mngr->remaster_mngr.task_num++;
+        }
+
+        inst_part_entry[instance_index].first = current;
+        inst_part_entry[instance_index].count = inst_part_entry[instance_index].expected_num;
+    }
+}
+
 static void drc_set_remaster_taskset_one_node(knl_session_t *session, drc_inst_part_t *inst_part_entry, drc_part_mngr_t *part_mngr)
 {
-    uint32 loop = 0;
     uint32 i = 0;
 
     for(i = 0; i < CT_MAX_INSTANCES; i++) {
-        if (GS_TRUE == inst_part_entry[i].is_used) {
+        if (CT_TRUE == inst_part_entry[i].is_used) {
             if (session -> kernel -> attr.drc_master_inst == i) {
                 inst_part_entry[i].expected_num = DRC_MAX_PART_NUM;
             } else {
                 inst_part_entry[i].expected_num = 0;
             }
 
-            if (inst_part_entry[i].count > inst_part_entry[i].expected_num) {
-                uint16 current = inst_part_entry[i].first;
-                uint32 mgrt_num = inst_part_entry[i].count - inst_part_entry[i].expected_num;
-
-                for(loop = 0; loop < mgrt_num; loop++){
-                    part_mngr->remaster_mngr.remaster_task_set[part_mngr->remaster_mngr.task_num].part_id = current;
-                    part_mngr->remaster_mngr.remaster_task_set[part_mngr->remaster_mngr.task_num].export_inst = i;
-                    current = part_mngr->remaster_mngr.target_part_map[current].next;
-                    part_mngr->remaster_mngr.task_num++;
-                }
-
-                inst_part_entry[i].first = current;
-                inst_part_entry[i].count = inst_part_entry[i].expected_num;
-
-            }
+            drc_scaleout_remaster_redistribute_taskset(part_mngr, inst_part_entry, i);
+            
         }
     }
 }
 
 static void drc_set_remaster_taskset(drc_inst_part_t *inst_part_entry, drc_part_mngr_t *part_mngr, uint32 inst_num) 
 {
-    uint32 loop = 0;
     uint32 i = 0;
     uint32 inst_loop_seq = 0;
     uint32 avg_part_num = 0;
@@ -3457,7 +3461,7 @@ static void drc_set_remaster_taskset(drc_inst_part_t *inst_part_entry, drc_part_
     remain_part = DRC_MAX_PART_NUM % inst_num;
 
     for(i = 0; i < CT_MAX_INSTANCES; i++) {
-        if (GS_TRUE == inst_part_entry[i].is_used) {
+        if (CT_TRUE == inst_part_entry[i].is_used) {
             if (inst_loop_seq < remain_part) {
                 inst_part_entry[i].expected_num = avg_part_num + 1;
             } else {
@@ -3465,20 +3469,7 @@ static void drc_set_remaster_taskset(drc_inst_part_t *inst_part_entry, drc_part_
             }
             inst_loop_seq++;
 
-            if (inst_part_entry[i].count > inst_part_entry[i].expected_num) {
-                uint16 current = inst_part_entry[i].first;
-                uint32 mgrt_num = inst_part_entry[i].count - inst_part_entry[i].expected_num;
-
-                for(loop = 0; loop < mgrt_num; loop++){
-                    part_mngr->remaster_mngr.remaster_task_set[part_mngr->remaster_mngr.task_num].part_id = current;
-                    part_mngr->remaster_mngr.remaster_task_set[part_mngr->remaster_mngr.task_num].export_inst = i;
-                    current = part_mngr->remaster_mngr.target_part_map[current].next;
-                    part_mngr->remaster_mngr.task_num++;
-                }
-
-                inst_part_entry[i].first = current;
-                inst_part_entry[i].count = inst_part_entry[i].expected_num;
-            }
+            drc_scaleout_remaster_redistribute_taskset(part_mngr, inst_part_entry, i);
         }
     }
     
@@ -3508,7 +3499,7 @@ status_t drc_scaleout_remaster(knl_session_t *session, uint8* new_id_array, uint
         inst_part_entry[new_id_array[i]].is_used = CT_TRUE;
         inst_part_entry[new_id_array[i]].count = 0;
     }
-
+    CT_LOG_RUN_INF("--------------------%u---------------------------------------------", session->kernel->attr.drc_master_inst );
     if (session->kernel->attr.drc_master_inst == 2) {
         drc_set_remaster_taskset(inst_part_entry, part_mngr, inst_num);
     } else {
@@ -3516,7 +3507,7 @@ status_t drc_scaleout_remaster(knl_session_t *session, uint8* new_id_array, uint
     }
 
 
-    loop = 0;
+    uint32 loop = 0;
     uint16 part_id = 0;
     for (i = 0; i < part_mngr->remaster_mngr.task_num; i++) {
         if (inst_part_entry[new_id_array[loop]].count >= inst_part_entry[new_id_array[loop]].expected_num) {

@@ -1065,6 +1065,8 @@ config_item_t g_parameters[] = {
       PARAM_DTC_CLEAN_EDP_TASK_RATIO, EFFECT_REBOOT, CFG_INS, sql_verify_als_mes_task_ratio, NULL, NULL, NULL },
     { "DTC_TXN_INFO_TASK_RATIO", CT_TRUE, ATTR_NONE, "0.25", NULL, NULL, "-", "[0.001,0.999]", "CT_TYPE_REAL", NULL,
       PARAM_DTC_TXN_INFO_TASK_RATIO, EFFECT_REBOOT, CFG_INS, sql_verify_als_mes_task_ratio, NULL, NULL, NULL },
+    { "DRC_MASTER_INST", CT_TRUE, ATTR_NONE, "0", NULL, NULL, "-", "[0,2]", "CT_TYPE_INTEGER", NULL,
+      PARAM_DRC_MASTER_INST, EFFECT_REBOOT, CFG_INS, sql_verify_als_uint32, NULL, NULL, NULL},
     /* SHM MQ */
     { "SHM_MQ_MSG_RECV_THD_NUM",    CT_TRUE, ATTR_NONE,     "200",     NULL, NULL, "-", "[1, 1024]",          "CT_TYPE_INTEGER", NULL, PARAM_SHM_MQ_MSG_RECV_THD_NUM,     EFFECT_REBOOT,      CFG_INS, sql_verify_als_mq_thd_num,    NULL, NULL, NULL },
     { "SHM_MQ_MSG_QUEUE_NUM",       CT_TRUE, ATTR_NONE,     "8",      NULL, NULL, "-", "[1, 64]",            "CT_TYPE_INTEGER", NULL, PARAM_SHM_MQ_MSG_QUEUE_NUM,        EFFECT_REBOOT,      CFG_INS, sql_verify_als_mq_queue_num,  NULL, NULL, NULL },
@@ -1133,8 +1135,6 @@ config_item_t g_parameters[] = {
     { "ENABLE_SYS_CRC_CHECK", CT_TRUE, ATTR_NONE, "FALSE", NULL, NULL, "-", "FALSE,TRUE", "GS_TYPE_BOOLEAN", NULL,
       PARAM_ENABLE_CHECK_SECURITY_LOG, EFFECT_REBOOT, CFG_INS, sql_verify_als_bool,
       sql_notify_enable_crc_check, sql_notify_als_bool, NULL },
-    { "DRC_MASTER_INST", CT_TRUE, ATTR_NONE, "0", NULL, NULL, "-", "[0,2]", "CT_TYPE_INTEGER", NULL,
-      PARAM_DRC_MASTER_INST, EFFECT_REBOOT, CFG_INS, sql_verify_als_uint32, NULL, NULL, NULL}
 };
 
 void srv_get_config_info(config_item_t **params, uint32 *count)
