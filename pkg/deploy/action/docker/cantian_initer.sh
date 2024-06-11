@@ -43,6 +43,7 @@ deploy_user=`python3 ${CURRENT_PATH}/../get_config_info.py "deploy_user"`
 deploy_group=`python3 ${CURRENT_PATH}/../get_config_info.py "deploy_group"`
 mes_ssl_switch=`python3 ${CURRENT_PATH}/get_config_info.py "mes_ssl_switch"`
 cantian_in_container=`python3 ${CURRENT_PATH}/get_config_info.py "cantian_in_container"`
+mysql_metadata_in_cantian=`python3 ${CURRENT_PATH}/get_config_info.py "mysql_metadata_in_cantian"`
 primary_keystore="/opt/cantian/common/config/primary_keystore_bak.ks"
 standby_keystore="/opt/cantian/common/config/standby_keystore_bak.ks"
 VERSION_PATH="/mnt/dbdata/remote/metadata_${storage_metadata_fs}"
@@ -181,6 +182,58 @@ function set_version_file() {
     cp -rf ${PKG_PATH}/${VERSION_FILE} ${VERSION_PATH}/${VERSION_FILE}
 }
 
+function install_metadata_mysql() {
+    cd /opt/cantian/image/cantian_connector/cantian-connector-mysql/mysql_bin/ # && \
+    tar -zxf /ctdb/cantian_install/Cantian_connector_mysql_aarch64_RELEASE.tgz # && \
+    cp -arf mysql/lib/plugin/meta/ha_ctc.so Cantian_connector_mysql/mysql/lib/plugin/ # && \
+    rm -rf mysql && mv Cantian_connector_mysql/mysql . # && \
+    cp -arf mysql /opt/cantian/mysql/install/ # && \
+    chown 5000:5000 /opt/cantian/mysql/install/mysql -R # && \
+    cp -pf /opt/cantian/mysql/install/mysql/bin/mysql /usr/bin/ # && \
+    cp -prf /opt/cantian/mysql/install/mysql /usr/local/ # && \
+    rm -rf /ctdb/cantian_install/Cantian_connector_mysql_aarch64_RELEASE.tgz
+}
+
+function install_mysql_release_x86() {
+    if [[ ! -f /ctdb/cantian_install/mysql_pkg/mysql_release_8.0.26_miniest_el8_x86_64_centos8.tar.gz ]];then
+        echo "can not find correct mysql package in /ctdb/cantian_install/mysql_pkg"
+    fi
+    cd /opt/cantian/image/cantian_connector/cantian-connector-mysql/mysql_bin
+    tar -zxf /ctdb/cantian_install/mysql_pkg/mysql_release_8.0.26_miniest_el8_x86_64_centos8.tar.gz
+    tar -zxf /ctdb/cantian_install/mysql_pkg/mysql_release_8.0.26_miniest_el8_x86_64_centos8.tar.gz -C /opt/cantian/mysql/install
+    # cp -arf mysql /opt/cantian/mysql/install/ # && \
+    chown 5000:5000 /opt/cantian/mysql/install/mysql -R # && \
+    cp -pf /opt/cantian/mysql/install/mysql/bin/mysql /usr/bin/ # && \
+    cp -prf /opt/cantian/mysql/install/mysql /usr/local/ # && \
+}
+
+function install_mysql_debug_x86() {
+    if [[ ! -f /ctdb/cantian_install/mysql_pkg/mysql_debug_8.0.26_with_tse_test_x86_64.tar.gz ]];then
+        echo "can not find correct mysql package in /ctdb/cantian_install/mysql_pkg"
+    fi
+    cd /opt/cantian/image/cantian_connector/cantian-connector-mysql/mysql_bin
+    tar -zxf /ctdb/cantian_install/mysql_pkg/mysql_debug_8.0.26_with_tse_test_x86_64.tar.gz
+}
+
+function install_mysql_release_aarch64() {
+    MYSQLD_RELEASE_PKG_AARCH=/ctdb/cantian_install/mysql_pkg/mysql_release_8.0.26_aarch64.tar.gz
+    OS_ARCH=$(uname -r)
+    if [[ ${OS_ARCH} =~ ky10 ]];then
+        MYSQLD_RELEASE_PKG_AARCH=/ctdb/cantian_install/mysql_pkg/mysql_release_8.0.26_aarch64_kylin.tar.gz
+    fi
+
+    if [[ ! -f ${MYSQLD_RELEASE_PKG_AARCH} ]];then
+        echo "can not find mysql package in /ctdb/cantian_install/mysql_pkg"
+    fi
+    cd /opt/cantian/image/cantian_connector/cantian-connector-mysql/mysql_bin
+    tar -zxf ${MYSQLD_RELEASE_PKG_AARCH}
+    tar -zxf ${MYSQLD_RELEASE_PKG_AARCH} -C /opt/cantian/mysql/install
+    # cp -arf mysql /opt/cantian/mysql/install/ # && \
+    chown 5000:5000 /opt/cantian/mysql/install/mysql -R # && \
+    cp -pf /opt/cantian/mysql/install/mysql/bin/mysql /usr/bin/ # && \
+    cp -prf /opt/cantian/mysql/install/mysql /usr/local/ # && \
+}
+
 function init_start() {
     # Cantian启动前先执行升级流程
     sh ${CURRENT_PATH}/container_upgrade.sh
@@ -208,6 +261,26 @@ function init_start() {
     if [ $? -ne 0 ]; then
         exit_with_log
     fi
+
+    # 安装MySQL
+    PROJECT_TYPE=`cat /opt/cantian/image/cantian_connector/for_mysql_official/patch.sh | grep PROJECT_TYPE= | grep -oP "\".*\""`
+    if [ "${mysql_metadata_in_cantian,,}" == "true" ];then
+        # 归一 
+        install_metadata_mysql
+    elif [ "${PROJECT_TYPE,,}"=="\"debug x86_64\"" ];then
+        #非归一四种
+        install_mysql_debug_x86
+    elif [ "${PROJECT_TYPE}"=="\"release x86_64\"" ];then
+        install_mysql_release_x86
+    elif [ "${PROJECT_TYPE}"=="\"asan x86_64\"" ];then
+        install_mysql_release_x86
+    elif [ "${PROJECT_TYPE}"=="\"release aarch64\"" ];then
+        install_mysql_release_aarch64
+    else
+        echo "project type invalid"
+        exit 1
+    fi    
+
 
     # 拉起MySQL
     if [[ "${cantian_in_container}" == "1" ]]; then
