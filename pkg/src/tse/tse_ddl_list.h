@@ -33,6 +33,9 @@
 extern "C" {
 #endif
 
+#define MYSQL_TMP_TABLE_PREFIX "#sql"
+#define MYSQL_TMP_TABLE_PREFIX_LEN 4
+
 typedef enum ddl_def_mode {
     CREATE_DEF = 0,
     ALTER_DEF,
@@ -53,6 +56,7 @@ typedef struct tse_ddl_dc_array {
     knl_dictionary_t dc;
     void *ddl_def;
     ddl_def_mode_t def_mode;
+    bool8 is_dropped;
 } tse_ddl_dc_array_t;
 
 void tse_init_ddl_def_list(sql_stmt_t *stmt);

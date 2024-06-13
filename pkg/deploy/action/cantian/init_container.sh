@@ -8,9 +8,10 @@ SYS_PASS="sysPass"
 CERT_PASS="certPass"
 CANTIAN_INSTALL_LOG_FILE="/opt/cantian/cantian/log/cantian_deploy.log"
 CANTIAN_CONFIG_NAME="cantiand.ini"
+CLUSTER_CONFIG_NAME="cluster.ini"
 CTSQL_CONFIG_NAME="ctsql.ini"
 CANTIAN_PARAM=("SHM_CPU_GROUP_INFO" "LARGE_POOL_SIZE" "CR_POOL_COUNT" "CR_POOL_SIZE" "TEMP_POOL_NUM" "BUF_POOL_NUM" \
-                "LOG_BUFFER_SIZE" "LOG_BUFFER_COUNT" "SHARED_POOL_SIZE" "DATA_BUFFER_SIZE" "TEMP_BUFFER_SIZE")
+                "LOG_BUFFER_SIZE" "LOG_BUFFER_COUNT" "SHARED_POOL_SIZE" "DATA_BUFFER_SIZE" "TEMP_BUFFER_SIZE" "SESSIONS")
 
 node_id=`python3 ${CURRENT_PATH}/get_config_info.py "node_id"`
 cantian_user=`python3 ${CURRENT_PATH}/get_config_info.py "deploy_user"`
@@ -28,9 +29,26 @@ function set_ctsql_config() {
     sed -i -r "s:(SYS_PASSWORD = ).*:\1${sys_password}:g" ${CONFIG_PATH}/${CTSQL_CONFIG_NAME}
 }
 
+# 清除信号量
+function clear_sem_id() {
+    signal_num="0x20161227"
+    sem_id=$(lsipc -s -c | grep ${signal_num} | grep -v grep | awk '{print $2}')
+    if [ -n "${sem_id}" ]; then
+        ipcrm -s ${sem_id}
+        if [ $? -ne 0 ]; then
+            logAndEchoError "clear sem_id failed"
+            exit 1
+        fi
+        logAndEchoInfo "clear sem_id success"
+    fi
+}
+
 function set_cantian_config() {
+    tmp_path=${LD_LIBRARY_PATH}
     export LD_LIBRARY_PATH=/opt/cantian/dbstor/lib:${LD_LIBRARY_PATH}
     password_tmp=`python3 -B "${CURRENT_PATH}"/../docker/resolve_pwd.py "kmc_to_ctencrypt_pwd" "${sys_password}"`
+    export LD_LIBRARY_PATH=${tmp_path}
+    clear_sem_id
     # 去除多余空格
     password=`eval echo ${password_tmp}`
     if [ -z "${password}" ]; then
@@ -48,6 +66,7 @@ function set_cantian_config() {
     sed -i -r "s:(INTERCONNECT_ADDR = ).*:\1${node_domain_0};${node_domain_1}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
     sed -i -r "s:(DBSTOR_NAMESPACE = ).*:\1${cluster_name}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
     sed -i -r "s:(INSTANCE_ID = ).*:\1${node_id}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
+    sed -i -r "s:(NODE_ID = ).*:\1${node_id}:g" ${CONFIG_PATH}/${CLUSTER_CONFIG_NAME}
     sed -i -r "s:(MAX_ARCH_FILES_SIZE = ).*:\1${max_arch_files_size}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
     sed -i -r "s:(CLUSTER_ID = ).*:\1${cluster_id}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
     sed -i -r "s:(_SYS_PASSWORD = ).*:\1${password}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}

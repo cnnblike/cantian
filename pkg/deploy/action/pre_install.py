@@ -140,7 +140,7 @@ class ConfigChecker:
 
     @staticmethod
     def mes_type(value):
-        if value not in ["UC", "TCP"]:
+        if value not in ["UC", "TCP", "UC_RDMA"]:
             return False
         return True
     
@@ -197,7 +197,7 @@ class ConfigChecker:
 
     @staticmethod
     def mes_type(value):
-        mes_type_enum = {"TCP", "UC"}
+        mes_type_enum = {"TCP", "UC", "UC_RDMA"}
         if value not in mes_type_enum:
             return False
 
@@ -543,7 +543,10 @@ class CheckInstallConfig(CheckBase):
             self.config_key.update(self.file_config_key)
 
         if install_config_params['cantian_in_container'] != '0':
+            ip_check_element.remove('cms_ip')
             ping_check_element.remove("cms_ip")
+            ip_check_element.remove("cantian_vlan_ip")
+            ping_check_element.remove("cantian_vlan_ip")
 
         if install_config_params['archive_logic_ip'] == "" \
                 and install_config_params['share_logic_ip'] == "" \
@@ -583,10 +586,6 @@ class CheckInstallConfig(CheckBase):
     def install_config_params_init(self, install_config_params):
         if 'link_type' not in install_config_params.keys():
             install_config_params['link_type'] = '1'
-        if 'cantian_in_container' not in install_config_params.keys():
-            install_config_params['cantian_in_container'] = "0"
-        if 'mysql_in_container' not in install_config_params.keys():
-            install_config_params['mysql_in_container'] = '1'
         if 'storage_archive_fs' not in install_config_params.keys():
             install_config_params['storage_archive_fs'] = ''
         if 'archive_logic_ip' not in install_config_params.keys():
@@ -599,7 +598,7 @@ class CheckInstallConfig(CheckBase):
             install_config_params['deploy_mode'] = "dbstore"
         if 'dbstore_fs_vstore_id' not in install_config_params.keys():
             install_config_params['dbstore_fs_vstore_id'] = "0"
-        if install_config_params.get("mes_ssl_switch") == True:
+        if install_config_params.get("mes_ssl_switch") == True and install_config_params.get("cantian_in_container", "-1") == "0":
             self.config_key.update(self.mes_type_key)
         if 'db_type' not in install_config_params.keys():
             install_config_params['db_type'] = '0'

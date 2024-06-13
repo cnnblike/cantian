@@ -81,6 +81,7 @@
 #include "dtc_database.h"
 #include "dtc_backup.h"
 #include "dtc_dcs.h"
+#include "tse_ddl_list.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -7760,8 +7761,10 @@ status_t knl_internal_drop_table_handle_ref(knl_handle_t session, knl_drop_def_t
     return CT_ERROR;
 }
 
-void knl_drop_table_after_commit4mysql(knl_handle_t session, knl_dictionary_t *dc, knl_drop_def_t *def)
+void knl_drop_table_after_commit4mysql(knl_handle_t session, void *node, knl_drop_def_t *def)
 {
+    tse_ddl_dc_array_t *dc_node = (tse_ddl_dc_array_t *)node;
+    knl_dictionary_t *dc = &(dc_node->dc);
     knl_session_t *se = (knl_session_t *)session;
     core_ctrl_t *core = &se->kernel->db.ctrl.core;
     table_t *table = DC_TABLE(dc);
@@ -7771,10 +7774,20 @@ void knl_drop_table_after_commit4mysql(knl_handle_t session, knl_dictionary_t *d
     }
     bool32 is_drop = (dc->type != DICT_TYPE_TABLE || table->desc.space_id == SYS_SPACE_ID ||
                table->desc.space_id == core->sysaux_space || def->purge || !se->kernel->attr.recyclebin);
+    dc_node->is_dropped = is_drop;
+}
+
+void knl_free_entry_after_commit4mysql(knl_handle_t session, void *node)
+{
+    tse_ddl_dc_array_t *dc_node = (tse_ddl_dc_array_t *)node;
+    knl_dictionary_t *dc = &(dc_node->dc);
+    knl_session_t *se = (knl_session_t *)session;
+
     unlock_tables_directly(session);
-    if (is_drop) {
+    if (dc_node->is_dropped) {
         dc_free_entry(se, DC_ENTRY(dc));
     }
+    knl_close_dc(dc);
 }
 
 status_t knl_internal_drop_table(knl_handle_t session, knl_handle_t stmt, knl_drop_def_t *def, bool32 commit)
@@ -8955,11 +8968,6 @@ status_t knl_switch_log(knl_handle_t session)
     knl_session_t *se = (knl_session_t *)session;
     database_t *db = &se->kernel->db;
 
-    if (DB_IS_READONLY(se)) {
-        CT_THROW_ERROR(ERR_CAPABILITY_NOT_SUPPORT, "operation on read only mode");
-        return CT_ERROR;
-    }
-
     if (db->status == DB_STATUS_NOMOUNT && cm_dbs_is_enable_dbs()) {
         return knl_do_force_archive(session);
     }
@@ -9485,6 +9493,11 @@ status_t knl_backup(knl_handle_t session, knl_backup_t *param)
 {
     CM_POINTER(session);
     knl_session_t *se = (knl_session_t *)session;
+    if (!DB_IS_PRIMARY(&se->kernel->db)) {
+        CT_THROW_ERROR(ERR_BACKUP_IN_STANDBY);
+        return CT_ERROR;
+    }
+
     uint32 retry_times = 0;
     status_t status = CT_SUCCESS;
     CT_LOG_RUN_INF("[BACKUP] backup task start!");
@@ -10028,6 +10041,7 @@ status_t knl_put_temp_cache(knl_handle_t session, knl_handle_t dc_entity)
     temp_table_ptr->table_id = table->desc.id;
     temp_table_ptr->table_segid = CT_INVALID_ID32;
     temp_table_ptr->index_segid = CT_INVALID_ID32;
+    temp_table_ptr->lob_segid = CT_INVALID_ID32;
     temp_table_ptr->rows = 0;
     temp_table_ptr->serial = 0;
     temp_table_ptr->cbo_stats = NULL;
@@ -10063,6 +10077,11 @@ void knl_free_temp_vm(knl_handle_t session, knl_handle_t temp_table)
     if (cache->index_segid != CT_INVALID_ID32) {
         temp_drop_segment(se->temp_mtrl, cache->index_segid);
         cache->index_segid = CT_INVALID_ID32;
+    }
+
+    if (cache->lob_segid != CT_INVALID_ID32) {
+        temp_drop_segment(se->temp_mtrl, cache->lob_segid);
+        cache->lob_segid = CT_INVALID_ID32;
     }
 
     cache->table_id = CT_INVALID_ID32;
@@ -10954,6 +10973,12 @@ status_t knl_analyze_table(knl_handle_t session, knl_analyze_tab_def_t *def)
 
     if (knl_ddl_enabled(session, CT_FALSE) != CT_SUCCESS) {
         return CT_ERROR;
+    }
+
+    // do not analyze inner temp table for mysql alter copy
+    if (def->name.len >= MYSQL_TMP_TABLE_PREFIX_LEN &&
+        strncmp(def->name.str, MYSQL_TMP_TABLE_PREFIX, MYSQL_TMP_TABLE_PREFIX_LEN) == 0) {
+        return CT_SUCCESS;
     }
 
     if (def->part_name.len > 0 ||

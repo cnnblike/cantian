@@ -18,6 +18,7 @@ CANTIAN_DISASTER_RECOVERY_STATUS_CHECK = 'echo -e "select DATABASE_ROLE from DV_
                                          'su -s /bin/bash - cantian -c \'source ~/.bashrc && '\
                                          'export LD_LIBRARY_PATH=/opt/cantian/dbstor/lib:${LD_LIBRARY_PATH} && '\
                                          'python3 -B %s\'' % EXEC_SQL
+DBSTORE_CHECK_VERSION_FILE = "/opt/cantian/dbstor/tools/cs_baseline.sh"
 
 
 class SwitchOver(object):
@@ -30,6 +31,7 @@ class SwitchOver(object):
         self.ulog_fs_pair_id = self.dr_deploy_info.get("ulog_fs_pair_id")
         self.vstore_pair_id = self.dr_deploy_info.get("vstore_pair_id")
         self.node_id = self.dr_deploy_info.get("node_id")
+        self.cluster_name = self.dr_deploy_info.get("cluster_name")
         self.metadata_in_cantian = self.dr_deploy_info.get("mysql_metadata_in_cantian")
 
     @staticmethod
@@ -233,23 +235,28 @@ class DRRecover(SwitchOver):
     def __init__(self):
         super(DRRecover, self).__init__()
         self.repl_success_flag = False
+        self.single_write = None
 
     def execute_replication_steps(self, running_status, pair_id):
-        if running_status != ReplicationRunningStatus.Synchronizing:
-            self.dr_deploy_opt.sync_remote_replication_filesystem_pair(pair_id=pair_id,
-                                                                       vstore_id="0",
-                                                                       is_full_copy=False)
-            time.sleep(10)
-        pair_info = self.dr_deploy_opt.query_remote_replication_pair_info_by_pair_id(
-            pair_id)
-        running_status = pair_info.get("RUNNINGSTATUS")
-        while running_status == ReplicationRunningStatus.Synchronizing:
+        LOG.info("Execute replication steps. Singel_write: %s" % self.single_write)
+        if self.single_write == "0":
+            LOG.info("Single write is disabled, no need to execute replication steps.")
+        else:
+            if running_status != ReplicationRunningStatus.Synchronizing:
+                self.dr_deploy_opt.sync_remote_replication_filesystem_pair(pair_id=pair_id,
+                                                                        vstore_id="0",
+                                                                        is_full_copy=False)
+                time.sleep(10)
             pair_info = self.dr_deploy_opt.query_remote_replication_pair_info_by_pair_id(
-               pair_id)
+                pair_id)
             running_status = pair_info.get("RUNNINGSTATUS")
-            replication_progress = pair_info.get("REPLICATIONPROGRESS")
-            LOG.info(f"Page fs rep pair is synchronizing, current progress: {replication_progress}%, please wait...")
-            time.sleep(10)
+            while running_status == ReplicationRunningStatus.Synchronizing:
+                pair_info = self.dr_deploy_opt.query_remote_replication_pair_info_by_pair_id(
+                pair_id)
+                running_status = pair_info.get("RUNNINGSTATUS")
+                replication_progress = pair_info.get("REPLICATIONPROGRESS")
+                LOG.info(f"Page fs rep pair is synchronizing, current progress: {replication_progress}%, please wait...")
+                time.sleep(10)
         self.repl_success_flag = True
         self.dr_deploy_opt.split_remote_replication_filesystem_pair(pair_id)
         self.dr_deploy_opt.remote_replication_filesystem_pair_cancel_secondary_write_lock(pair_id)
@@ -262,7 +269,16 @@ class DRRecover(SwitchOver):
         if return_code:
             err_msg = "Execute command[ctbackup --purge-logs] failed."
             LOG.error(err_msg)
+            return
         LOG.info("Standby purge backup by cms command success.")
+
+    def do_dbstore_baseline(self):
+        cmd = "sh %s getbase %s" % (DBSTORE_CHECK_VERSION_FILE, self.cluster_name)
+        return_code, output, stderr = exec_popen(cmd, timeout=600)
+        if return_code:
+            err_msg = "Execute command[%s] failed." % cmd
+            LOG.error(err_msg)
+        return output
 
     def rep_pair_recover(self, pair_id: str) -> None:
         pair_info = self.dr_deploy_opt.query_remote_replication_pair_info_by_pair_id(
@@ -302,6 +318,42 @@ class DRRecover(SwitchOver):
                       get_status(running_status, MetroDomainRunningStatus)
             LOG.error(err_msg)
             raise Exception(err_msg)
+        
+    def wait_res_stop(self):
+        cmd = "su -s /bin/bash - cantian -c \"cms stat | " \
+              "grep -v STAT | awk '{print \$1, \$3}'\""
+        while True:
+            return_code, output, stderr = exec_popen(cmd, timeout=10)
+            if return_code:
+                err_msg = "Execute cmd[%s] failed, details:%s" % (cmd, stderr)
+                LOG.error(err_msg)
+                raise Exception(err_msg)
+            cms_stat = output.split("\n")
+            if len(cms_stat) < 2:
+                err_msg = "Current cluster status is abnormal, output:%s, stderr:%s" % (output, stderr)
+                LOG.error(err_msg)
+                raise Exception(err_msg)
+            online_flag = False
+            unknown_flag = False
+            for node_stat in cms_stat:
+                node_id, stat = node_stat.split(" ")
+                if (stat == "ONLINE"):
+                    online_flag = True
+                    continue
+                if (stat == "UNKNOWN"):
+                    unknown_flag = True
+            if online_flag:
+                time.sleep(2)
+                LOG.info("waiting for cantian stop")
+                continue
+            elif unknown_flag:
+                LOG.info("waiting for io fence")
+                time.sleep(2)
+                LOG.info("cms offline success")
+                return
+            else:
+                LOG.info("cms offline success")
+                return
 
     def execute(self):
         """
@@ -343,6 +395,7 @@ class DRRecover(SwitchOver):
                 self.dr_deploy_opt.swap_role_fs_hyper_metro_domain(self.hyper_domain_id)
             try:
                 self.standby_cms_res_stop()
+                self.wait_res_stop()
             except Exception as _er:
                 try:
                     self.check_cluster_status(log_type="info", check_time=5)
@@ -352,12 +405,15 @@ class DRRecover(SwitchOver):
                     err_msg = "standby cms res stop cantian error."
                     LOG.error(err_msg)
                     raise Exception(err_msg)
+            self.single_write = self.do_dbstore_baseline()
             self.dr_deploy_opt.change_fs_hyper_metro_domain_second_access(
                 self.hyper_domain_id, DomainAccess.ReadOnly)
             try:
                 self.dr_deploy_opt.join_fs_hyper_metro_domain(self.hyper_domain_id)
             except Exception as _er:
                 LOG.info("Fail to recover hyper metro domain, details: %s", str(_er))
+        else:
+            self.standby_cms_res_stop()
         self.query_sync_status()
         self.rep_pair_recover(self.page_fs_pair_id)
         if not self.metadata_in_cantian:
@@ -395,18 +451,17 @@ class FailOver(SwitchOver):
             err_msg = "Fail over operation is not allowed in primary node."
             LOG.error(err_msg)
             raise Exception(err_msg)
+        self.check_cluster_status(target_node=self.node_id)
         running_status = domain_info.get("RUNNINGSTATUS")
         if running_status == MetroDomainRunningStatus.Normal:
             self.dr_deploy_opt.split_filesystem_hyper_metro_domain(self.hyper_domain_id)
         self.dr_deploy_opt.change_fs_hyper_metro_domain_second_access(
             self.hyper_domain_id, DomainAccess.ReadAndWrite)
-        while True:
-            try:
-                self.check_cluster_status(target_node=self.node_id, log_type="info")
-                break
-            except Exception as _er:
-                err_msg = "Check cluster status failed, error: {}".format(_er)
-                LOG.error(err_msg)
-                time.sleep(30)
+        try:
+            self.check_cluster_status(target_node=self.node_id, log_type="info")
+        except Exception as _er:
+            err_msg = "Check cluster status failed, error: {}".format(_er)
+            LOG.error(err_msg)
+            raise Exception(err_msg)
         self.query_database_role()
         LOG.info("Cancel secondary resource protection success.")

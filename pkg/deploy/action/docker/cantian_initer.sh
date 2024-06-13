@@ -15,14 +15,19 @@ START_STATUS_NAME="start_status.json"
 MOUNT_FILE="mount.sh"
 VERSION_FILE="versions.yml"
 PRE_INSTALL_PY_PATH=${CURRENT_PATH}/../pre_install.py
-WAIT_TIMES=100
+WAIT_TIMES=120
 LOGICREP_HOME='/opt/software/tools/logicrep'
 USER_FILE="${LOGICREP_HOME}/create_user.json"
+HEALTHY_FILE="/opt/cantian/healthy"
+READINESS_FILE="/opt/cantian/readiness"
 
 source ${CURRENT_PATH}/../log4sh.sh
 
-cp -rf ${INIT_CONFIG_PATH}/${CONFIG_NAME} ${CONFIG_PATH}/${CONFIG_NAME}
-cp -rf ${INIT_CONFIG_PATH}/${CONFIG_NAME} ${OPT_CONFIG_PATH}/${CONFIG_NAME}
+# 创建存活探针
+touch ${HEALTHY_FILE}
+
+cat ${INIT_CONFIG_PATH}/${CONFIG_NAME} > ${CONFIG_PATH}/${CONFIG_NAME}
+cat ${INIT_CONFIG_PATH}/${CONFIG_NAME} > ${OPT_CONFIG_PATH}/${CONFIG_NAME}
 
 ulimit -c unlimited
 ulimit -l unlimited
@@ -55,7 +60,7 @@ function change_mtu() {
 
 function wait_config_done() {
     # 等待pod网络配置完成
-    logAndEchoInfo "Begin to wait network done. if block here, please check it."
+    logAndEchoInfo "Begin to wait network done. cms_ip: ${node_domain}"
     resolve_times=1
     ping ${node_domain} -c 1 -w 1
     while [ $? -ne 0 ]
@@ -64,8 +69,9 @@ function wait_config_done() {
         sleep 5
         if [ ${resolve_times} -eq ${WAIT_TIMES} ]; then
             logAndEchoError "timeout for resolving cms domain name!"
-            exit 1
+            exit_with_log
         fi
+        logAndEchoInfo "wait cms_ip: ${node_domain} ready, it has been ping ${resolve_times} times."
         ping ${node_domain} -c 1 -w 1
     done
 }
@@ -74,13 +80,13 @@ function mount_fs() {
     logAndEchoInfo "Begin to mount file system. [Line:${LINENO}, File:${SCRIPT_NAME}]"
     if [ ! -f ${CURRENT_PATH}/${MOUNT_FILE} ]; then
         logAndEchoError "${MOUNT_FILE} is not exist. [Line:${LINENO}, File:${SCRIPT_NAME}]"
-        exit 1
+        exit_with_log
     fi
 
     sh ${CURRENT_PATH}/${MOUNT_FILE}
     if [ $? -ne 0 ]; then
         logAndEchoError "mount file system failed. [Line:${LINENO}, File:${SCRIPT_NAME}]"
-        exit 1
+        exit_with_log
     fi
     logAndEchoInfo "mount file system success. [Line:${LINENO}, File:${SCRIPT_NAME}]"
 }
@@ -91,6 +97,7 @@ function check_init_status() {
         sleep 60
         logAndEchoInfo "The cluster has been initialized, no need create database. [Line:${LINENO}, File:${SCRIPT_NAME}]"
         sed -i "s/\"db_create_status\": \"default\"/\"db_create_status\": \"done\"/g" /opt/cantian/cantian/cfg/${START_STATUS_NAME}
+        sed -i "s/\"ever_started\": false/\"ever_started\": true/g" /opt/cantian/cantian/cfg/${START_STATUS_NAME}
         rm -rf ${USER_FILE}
     fi
 
@@ -101,9 +108,10 @@ function check_init_status() {
         logAndEchoInfo "wait for node 0 pod startup..."
         if [ ${resolve_times} -eq ${WAIT_TIMES} ]; then
             logAndEchoError "timeout for wait node 0 startup!"
-            exit 1
+            exit_with_log
         fi
         let resolve_times++
+        sleep 5
     done
     # TODO
     if [ -f ${VERSION_PATH}/${VERSION_FILE} ] || [ ${node_id} -ne 0 ]; then
@@ -119,6 +127,20 @@ function prepare_kmc_conf() {
     cp -arf ${KMC_CONFIG_PATH}/standby_keystore.ks /opt/cantian/common/config/standby_keystore_bak.ks
     cp -arf ${KMC_CONFIG_PATH}/primary_keystore.ks /opt/cantian/common/config/primary_keystore_bak.ks
     chown -R ${cantian_user}:${cantian_group} /opt/cantian/common/config/*
+}
+
+# 清除信号量
+function clear_sem_id() {
+    signal_num="0x20161227"
+    sem_id=$(lsipc -s -c | grep ${signal_num} | grep -v grep | awk '{print $2}')
+    if [ -n "${sem_id}" ]; then
+        ipcrm -s ${sem_id}
+        if [ $? -ne 0 ]; then
+            logAndEchoError "clear sem_id failed"
+            exit 1
+        fi
+        logAndEchoInfo "clear sem_id success"
+    fi
 }
 
 function prepare_certificate() {
@@ -141,35 +163,33 @@ function prepare_certificate() {
     su -s /bin/bash - "${cantian_user}" -c "chmod 600 ${certificate_dir}/*"
 
     cert_password=`cat ${CERT_CONFIG_PATH}/${CERT_PASS}`
+    tmp_path=${LD_LIBRARY_PATH}
     export LD_LIBRARY_PATH=/opt/cantian/dbstor/lib:${LD_LIBRARY_PATH}
     python3 -B "${CURRENT_PATH}"/resolve_pwd.py "resolve_check_cert_pwd" "${cert_password}"
     if [ $? -ne 0 ]; then
         logAndEchoError "Cert file or passwd check failed."
-        exit 1
+        exit_with_log
     fi
+    export LD_LIBRARY_PATH=${tmp_path}
+    clear_sem_id
 }
 
 function set_version_file() {
     if [ ! -f ${PKG_PATH}/${VERSION_FILE} ]; then
         logAndEchoError "${VERSION_FILE} is not exist!"
-        exit 1
+        exit_with_log
     fi
-    cp -rf ${PKG_PATH}/${VERSION_FILE} ${VERSION_PATH}/${VERSION_FILE}
+
+    if [ ! -f ${VERSION_PATH}/${VERSION_FILE} ]; then
+        cp -rf ${PKG_PATH}/${VERSION_FILE} ${VERSION_PATH}/${VERSION_FILE}
+    fi
 }
 
 function init_start() {
-    # Cantian启动前先执行升级流程
-    sh ${CURRENT_PATH}/container_upgrade.sh
-    if [ $? -ne 0 ]; then
-        rm -rf /etc/healthy
-        exit 1
-    fi
-
     # Cantian启动前执行init流程，更新各个模块配置文件，初始化cms
     sh ${SCRIPT_PATH}/appctl.sh init_container
     if [ $? -ne 0 ]; then
-        rm -rf /etc/healthy
-        exit 1
+        exit_with_log
     fi
 
     # Cantian启动前参数预检查
@@ -177,16 +197,24 @@ function init_start() {
     python3 ${PRE_INSTALL_PY_PATH} 'override' ${INIT_CONFIG_PATH}/${CONFIG_NAME}
     if [ $? -ne 0 ]; then
         logAndEchoError "parameters pre-check failed."
-        exit 1
+        exit_with_log
     fi
     logAndEchoInfo "pre-check the parameters success."
+
+    # Cantian启动前先执行升级流程
+    sh ${CURRENT_PATH}/container_upgrade.sh
+    if [ $? -ne 0 ]; then
+        rm -rf ${HEALTHY_FILE}
+        exit_with_log
+    fi
 
     # Cantian启动
     sh ${SCRIPT_PATH}/appctl.sh start
     if [ $? -ne 0 ]; then
-        rm -rf /etc/healthy
-        exit 1
+        exit_with_log
     fi
+
+    set_version_file
 
     # 拉起MySQL
     if [[ "${cantian_in_container}" == "1" ]]; then
@@ -196,18 +224,55 @@ function init_start() {
             -U ${deploy_user}:${deploy_group} -l /home/${deploy_user}/logs/install.log \
             -M mysqld -m /opt/cantian/image/cantian_connector/cantian-connector-mysql/scripts/my.cnf -g withoutroot"
         if [ $? -ne 0 ]; then
-            rm -rf /etc/healthy
             logAndEchoError "start mysqld failed. [Line:${LINENO}, File:${SCRIPT_NAME}]"
-            exit 1
+            exit_with_log
         fi
         logAndEchoInfo "start mysqld success. [Line:${LINENO}, File:${SCRIPT_NAME}]"
     fi
-    
 
-    if [ ! -f ${VERSION_PATH}/${VERSION_FILE} ]; then
-        set_version_file
-    fi
+    # 创建就绪探针
+    touch ${READINESS_FILE}
+
     logAndEchoInfo "cantian container init success. [Line:${LINENO}, File:${SCRIPT_NAME}]"
+}
+
+function exit_with_log() {
+    # 失败后保存日志并删除存活探针
+    DATE=`date +"%Y-%m-%d-%H-%M-%S"`
+    mkdir -p /home/mfdb_core/${DATE}-node${node_id}
+    cd /home/mfdb_core/${DATE}-node${node_id}
+    mkdir cantian cms dbstor core_symbol mysql logicrep
+    mkdir cantian/opt cantian/mnt
+    mkdir dbstor/opt dbstor/mnt dbstor/ftds
+    check_path_and_copy /mnt/dbdata/local/cantian/tmp/data/log cantian/mnt
+    check_path_and_copy /mnt/dbdata/local/cantian/tmp/data/cfg cantian/mnt
+    check_path_and_copy /opt/cantian/cantian/log cantian/opt
+    check_path_and_copy /opt/cantian/deploy cantian/opt
+    check_path_and_copy /opt/cantian/cantian_exporter cantian/opt
+    check_path_and_copy /opt/cantian/common/config cantian/opt
+    check_path_and_copy /opt/cantian/cms/log cms/
+    check_path_and_copy /mnt/dbdata/local/cantian/tmp/data/dbstor/data/logs dbstor/mnt
+    check_path_and_copy /opt/cantian/cms/dbstor/data/logs dbstor/opt
+    check_path_and_copy /mnt/dbdata/local/cantian/tmp/data/dbstor/data/ftds/ftds/data/stat dbstor/ftds
+    check_path_and_copy /opt/cantian/cantian/server/bin core_symbol/
+    check_path_and_copy /home/${deploy_user}/cantiandinstall.log mysql/
+    check_path_and_copy /mnt/dbdata/remote/metadata_${storage_metadata_fs}/node${node_id}/mysql.log mysql/
+    check_path_and_copy /opt/software/tools/logicrep/log logicrep/
+    check_path_and_copy /opt/software/tools/logicrep/logicrep/run logicrep/
+    check_path_and_copy /opt/software/tools/logicrep/logicrep/perf logicrep/
+    check_path_and_copy /opt/cantian/logicrep/log/logicrep_deploy.log logicrep/
+    rm -rf ${HEALTHY_FILE}
+    exit 1
+}
+
+function check_path_and_copy() {
+    #获取参数
+    src_path="$1"
+    dst_path="$2"
+    #检查是否存在
+    if [ -e "${src_path}" ];then
+        cp -rf ${src_path} ${dst_path}
+    fi
 }
 
 function main() {

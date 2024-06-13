@@ -159,9 +159,26 @@ static inline void reset_read_buffer(){
     }
 }
 
-static status_t close_read_log_proc(thread_t *read_log_thread){
-    CT_LOG_RUN_INF("[DTC RCY] close read log proc");
+static status_t close_read_log_proc(thread_t *read_log_thread, knl_session_t *session){
+    CT_LOG_RUN_INF("[DTC RCY] start close read log proc");
+    read_log_thread->result = CT_FALSE;
     read_log_thread->closed = CT_TRUE;
+    uint32 time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
+    for (;;) {
+        if (read_log_thread->result == CT_FALSE) {
+            cm_sleep(CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME);
+            time_out -= CT_DTC_RCY_NODE_READ_BUF_SLEEP_TIME;
+            if(time_out <= 0){
+                CT_LOG_RUN_WAR("[DTC RCY] dtc rcy close read log proc time out");
+                time_out = CT_DTC_RCY_NODE_READ_BUF_TIMEOUT;
+            }
+        } else {
+            break;
+        }
+    }
+    reset_read_buffer();
+    g_knl_callback.release_knl_session(session);
+    CT_LOG_RUN_INF("[DTC RCY] finish close read log proc");
     return CT_SUCCESS;
 }
 
@@ -1605,14 +1622,14 @@ static status_t dtc_rcy_load_archfile(knl_session_t *session, uint32 idx, arch_f
     }
 
     /* size <= buf_size, (uint32)size cannot overflow */
-    if (cm_read_device(cm_device_type(file->name), file->handle, 0, rcy_node->read_buf->aligned_buf,
+    if (cm_read_device(cm_device_type(file->name), file->handle, 0, rcy_node->read_buf[rcy_node->read_buf_write_index].aligned_buf,
                        CM_CALC_ALIGN((uint32)sizeof(log_file_head_t), 512)) != CT_SUCCESS) {
         CT_LOG_RUN_ERR("[DTC RCY] failed to read %s, offset 0 handle %d", file->name, file->handle);
         return CT_ERROR;
     }
 
     errno_t errcode;
-    errcode = memcpy_s(&file->head, (int32)sizeof(log_file_head_t), rcy_node->read_buf->aligned_buf,
+    errcode = memcpy_s(&file->head, (int32)sizeof(log_file_head_t), rcy_node->read_buf[rcy_node->read_buf_write_index].aligned_buf,
                        (int32)sizeof(log_file_head_t));
     knl_securec_check(errcode);
 
@@ -1761,8 +1778,11 @@ status_t dtc_recover_check_assign_nodeid(knl_session_t *session, uint32_t node_i
     CT_LOG_RUN_INF("[DTC RCY] node:%u, current lfn: %llu, rcy point lfn: %llu, lrp point lfn: %llu",
                    rcy_log_point->node_id, (uint64)rcy_log_point->rcy_point.lfn, (uint64)ctrl->rcy_point.lfn,
                    (uint64)(uint64)ctrl->lrp_point.lfn);
+    CT_LOG_RUN_INF("[DTC RCY] node:%u, recovery real end with file: %u, read node log proc point: %u, lfn: %llu", rcy_log_point->node_id,
+                   rcy_log_point->rcy_write_point.asn, rcy_log_point->rcy_write_point.block_id,
+                   (uint64)rcy_log_point->rcy_write_point.lfn);
 
-    if (rcy_log_point->rcy_point.lfn >= ctrl->lrp_point.lfn) {
+    if (rcy_log_point->rcy_write_point.lfn >= ctrl->lrp_point.lfn) {
         return CT_SUCCESS;
     }
 
@@ -2093,6 +2113,7 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
         return;
     }
     reform_rcy_node_t *rcy_log_point = &dtc_rcy->rcy_log_points[idx];
+    uint32 old_read_pos = rcy_node->read_pos[rcy_node->read_buf_write_index];
     for (;;) {
         left_size = size_read - rcy_node->read_pos[rcy_node->read_buf_write_index];
         if (left_size < sizeof(log_batch_t) || tmp_batch == NULL || left_size < tmp_batch->space_size) {
@@ -2118,7 +2139,7 @@ static void find_max_lsn_and_move_point(uint32 idx, uint32 size_read){
     if (batch == NULL) {
         return;
     }
-    rcy_node->read_pos[rcy_node->read_buf_write_index] = 0;
+    rcy_node->read_pos[rcy_node->read_buf_write_index] = old_read_pos;
     rcy_log_point->rcy_write_point.lsn = batch->lsn;
     rcy_log_point->rcy_write_point.lfn = batch->head.point.lfn;
     if (cm_dbs_is_enable_dbs() == CT_TRUE) {
@@ -2146,6 +2167,7 @@ status_t dtc_read_node_log(dtc_rcy_context_t *dtc_rcy, knl_session_t *session, u
             // read log again after advancing the log point
             if (dtc_rcy_read_node_log(session, node_id, read_size) != CT_SUCCESS) {
                 CT_LOG_RUN_ERR("[DTC RCY] failed to load redo log of instance=%u", rcy_node->node_id);
+                CM_ABORT(0, "ABORT INFO:dtc read node log failed");
                 return CT_ERROR;
             }
         }
@@ -2616,7 +2638,12 @@ status_t dtc_rcy_process_batches(knl_session_t *session)
     ELAPSED_END(elapsed_begin, used_time);
     CT_LOG_RUN_INF("[DTC RCY] dtc_read_all_logs used %llu", used_time);
 
-    if (CT_SUCCESS != cm_create_thread(dtc_rcy_read_node_log_proc, 0, session, &dtc_rcy->read_log_thread)) {
+    knl_session_t *ss = NULL;
+    if (g_knl_callback.alloc_knl_session(CT_TRUE, (knl_handle_t *)&ss) != CT_SUCCESS) {
+        CT_LOG_RUN_ERR("[DTC RCY] dtc rcy proc init failed as alloc session failed");
+        return CT_ERROR;
+    }
+    if (CT_SUCCESS != cm_create_thread(dtc_rcy_read_node_log_proc, 0, ss, &dtc_rcy->read_log_thread)) {
         CT_LOG_RUN_ERR("[DTC RCY] failed to create thread read node log proc");
         return CT_ERROR;
     }
@@ -2677,7 +2704,7 @@ status_t dtc_rcy_process_batches(knl_session_t *session)
         ELAPSED_END(elapsed_begin, used_time);
         fetch_log_time += used_time;
     }
-    if(close_read_log_proc(&dtc_rcy->read_log_thread) != CT_SUCCESS){
+    if(close_read_log_proc(&dtc_rcy->read_log_thread, ss) != CT_SUCCESS){
         CT_LOG_RUN_ERR("[DTC RCY] close read log proc time out");
         return CT_ERROR;
     }
@@ -2964,7 +2991,12 @@ static status_t dtc_rcy_analyze_batches_paral(knl_session_t *session)
         return CT_ERROR;
     }
 
-    if (CT_SUCCESS != cm_create_thread(dtc_rcy_read_node_log_proc, 0, session, &dtc_rcy->read_log_thread)) {
+    knl_session_t *ss = NULL;
+    if (g_knl_callback.alloc_knl_session(CT_TRUE, (knl_handle_t *)&ss) != CT_SUCCESS) {
+        CT_LOG_RUN_ERR("[DTC RCY] dtc rcy proc init failed as alloc session failed");
+        return CT_ERROR;
+    }
+    if (CT_SUCCESS != cm_create_thread(dtc_rcy_read_node_log_proc, 0, ss, &dtc_rcy->read_log_thread)) {
         CT_LOG_RUN_ERR("[DTC RCY] failed to create thread read node log proc");
         return CT_ERROR;
     }
@@ -3035,7 +3067,7 @@ static status_t dtc_rcy_analyze_batches_paral(knl_session_t *session)
             break;
         }
     }
-    if(close_read_log_proc(&dtc_rcy->read_log_thread) != CT_SUCCESS){
+    if(close_read_log_proc(&dtc_rcy->read_log_thread, ss) != CT_SUCCESS){
         CT_LOG_RUN_ERR("[DTC RCY] close read log proc time out");
         return CT_ERROR;
     }
@@ -3181,7 +3213,12 @@ static status_t dtc_rcy_replay_batches_paral(knl_session_t *session)
     ELAPSED_END(elapsed_begin, used_time);
     CT_LOG_RUN_INF("[DTC RCY] read redo logs in paral replay used=%llu", used_time);
 
-    if (CT_SUCCESS != cm_create_thread(dtc_rcy_read_node_log_proc, 0, session, &dtc_rcy->read_log_thread)) {
+    knl_session_t *ss = NULL;
+    if (g_knl_callback.alloc_knl_session(CT_TRUE, (knl_handle_t *)&ss) != CT_SUCCESS) {
+        CT_LOG_RUN_ERR("[DTC RCY] dtc rcy proc init failed as alloc session failed");
+        return CT_ERROR;
+    }
+    if (CT_SUCCESS != cm_create_thread(dtc_rcy_read_node_log_proc, 0, ss, &dtc_rcy->read_log_thread)) {
         CT_LOG_RUN_ERR("[DTC RCY] failed to create thread read node log proc");
         return CT_ERROR;
     }
@@ -3258,7 +3295,7 @@ static status_t dtc_rcy_replay_batches_paral(knl_session_t *session)
         ELAPSED_END(elapsed_begin, used_time);
         fetch_log_time += used_time;
     }
-    if(close_read_log_proc(&dtc_rcy->read_log_thread) != CT_SUCCESS){
+    if(close_read_log_proc(&dtc_rcy->read_log_thread, ss) != CT_SUCCESS){
         CT_LOG_RUN_ERR("[DTC RCY] close read log proc time out");
         return CT_ERROR;
     }
@@ -3359,7 +3396,7 @@ void dtc_rcy_read_node_log_proc(thread_t *thread)
             node->read_buf_write_index = (node->read_buf_write_index + 1) % read_buf_size;
         }
     }
-    reset_read_buffer();
+    thread->result = CT_TRUE;
     CT_LOG_RUN_INF("[DTC RCY] rcy read node log thread is closed");
 }
 

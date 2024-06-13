@@ -936,11 +936,11 @@ class Installer:
         """
         # 获取默认值
         if g_opts.running_mode in [CANTIAND, CANTIAND_WITH_MYSQL, CANTIAND_WITH_MYSQL_ST]:
-            self.cantiand_configs = SingleNodeConfig.get_config(g_opts.cantian_in_container)
+            self.cantiand_configs = SingleNodeConfig.get_config(False)
         if g_opts.running_mode in [CANTIAND_IN_CLUSTER, CANTIAND_WITH_MYSQL_IN_CLUSTER] and g_opts.node_id == 0:
-            self.cantiand_configs = ClusterNode0Config.get_config(g_opts.cantian_in_container)
+            self.cantiand_configs = ClusterNode0Config.get_config(False)
         if g_opts.running_mode in [CANTIAND_IN_CLUSTER, CANTIAND_WITH_MYSQL_IN_CLUSTER] and g_opts.node_id == 1:
-            self.cantiand_configs = ClusterNode1Config.get_config(g_opts.cantian_in_container)
+            self.cantiand_configs = ClusterNode1Config.get_config(False)
 
     def check_parameter(self):
         """
@@ -1317,15 +1317,16 @@ class Installer:
         output: NA
         """
         log("check the node IP address.")
-        try:
-            socket.inet_aton(node_ip)
-            self.ipv_type = "ipv4"
-        except socket.error:
+        if get_value("cantian_in_container") == '0':
             try:
-                socket.inet_pton(socket.AF_INET6, node_ip)
-                self.ipv_type = "ipv6"
+                socket.inet_aton(node_ip)
+                self.ipv_type = "ipv4"
             except socket.error:
-                log_exit("The invalid IP address : %s is not ipv4 or ipv6 format." % node_ip)
+                try:
+                    socket.inet_pton(socket.AF_INET6, node_ip)
+                    self.ipv_type = "ipv6"
+                except socket.error:
+                    log_exit("The invalid IP address : %s is not ipv4 or ipv6 format." % node_ip)
 
         if self.ipv_type == "ipv6":
             ping_cmd = "ping6"
@@ -1341,6 +1342,8 @@ class Installer:
                      "ret_code : %s, stdout : %s, stderr : %s" % (node_ip, ret_code, stdout, stderr))
 
         if all_zero_addr_after_ping(node_ip):
+            ip_is_found = 1
+        elif get_value("cantian_in_container") != 0:
             ip_is_found = 1
         elif len(node_ip) != 0:
             ip_cmd = "/usr/sbin/ip addr | grep -w %s | wc -l" % node_ip

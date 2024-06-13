@@ -1440,7 +1440,7 @@ static inline void cm_try_delete_end_slash(char *str)
 #define CT_MIN_LRU_SEARCH_THRESHOLD (uint32_t)1
 #define CT_MAX_LRU_SEARCH_THRESHOLD (uint32_t)100
 
-#define CT_MIN_PAGE_CLEAN_RATIO (double)0.1
+#define CT_MIN_PAGE_CLEAN_RATIO (double)0.0001
 #define CT_MAX_PAGE_CLEAN_RATIO (double)1
 
 #define OLD_PREFIX_SYS_PART_NAME "SYS_P"
@@ -1574,6 +1574,9 @@ static inline bool32 cm_is_odd(int32 val)
 
 #define CT_MQ_MAX_COOL_TIME (uint32)0xffffffff
 #define CT_MQ_MIN_COOL_TIME (uint32)0
+
+#define CT_MAX_RCY_NODE_BUF_SIZE (uint32)10
+#define CT_MIN_RCY_NODE_BUF_SIZE (uint32)2
 
 #ifndef EXTER_ATTACK
 #define EXTER_ATTACK

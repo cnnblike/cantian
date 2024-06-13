@@ -2052,13 +2052,15 @@ static status_t vw_tablespaces_fetch_one_space(knl_handle_t session, knl_cursor_
     CT_RETURN_IFERR(row_put_str(&row, SPACE_IS_AUTOPURGE(space) ? "TRUE" : "FALSE"));
     CT_RETURN_IFERR(row_put_int32(&row, (int32)space->ctrl->extent_size));
 
-    space_head_t *head = SPACE_HEAD_RESIDENT(session, space);
-    if (head != NULL) {
-        segment_count = (int32)(head->segment_count);
-        datafile_count = (int32)(head->datafile_count);
-        punched_size =
-            (int64)(spc_get_punch_extents(&se->knl_session, space)) * space->ctrl->extent_size *
-            DEFAULT_PAGE_SIZE(session);
+    if (SPACE_IS_ONLINE(space)) {
+        space_head_t *head = SPACE_HEAD_RESIDENT(session, space);
+        if (head != NULL) {
+            segment_count = (int32)(head->segment_count);
+            datafile_count = (int32)(head->datafile_count);
+            punched_size =
+                (int64)(spc_get_punch_extents(&se->knl_session, space)) * space->ctrl->extent_size *
+                DEFAULT_PAGE_SIZE(session);
+        }
     }
     CT_RETURN_IFERR(row_put_int32(&row, segment_count));
     CT_RETURN_IFERR(row_put_int32(&row, datafile_count));
@@ -2112,7 +2114,12 @@ static status_t vw_tablespaces_fetch_core(knl_handle_t session, knl_cursor_t *cu
 
 static status_t vw_tablespaces_fetch(knl_handle_t session, knl_cursor_t *cursor)
 {
-    return vw_fetch_for_tenant(vw_tablespaces_fetch_core, session, cursor);
+    if (knl_ddl_latch_sx(session, NULL) != CT_SUCCESS) {
+        return CT_ERROR;
+    }
+    status_t status = vw_fetch_for_tenant(vw_tablespaces_fetch_core, session, cursor);
+    knl_ddl_unlatch_x(session);
+    return status;
 }
 
 static status_t vw_archived_log_fetch_row(knl_handle_t session, knl_cursor_t *cursor, arch_ctrl_t *ctrl)
