@@ -43,6 +43,7 @@ deploy_user=`python3 ${CURRENT_PATH}/../get_config_info.py "deploy_user"`
 deploy_group=`python3 ${CURRENT_PATH}/../get_config_info.py "deploy_group"`
 mes_ssl_switch=`python3 ${CURRENT_PATH}/get_config_info.py "mes_ssl_switch"`
 cantian_in_container=`python3 ${CURRENT_PATH}/get_config_info.py "cantian_in_container"`
+mysql_metadata_in_cantian=`python3 ${CURRENT_PATH}/get_config_info.py "mysql_metadata_in_cantian"`
 primary_keystore="/opt/cantian/common/config/primary_keystore_bak.ks"
 standby_keystore="/opt/cantian/common/config/standby_keystore_bak.ks"
 VERSION_PATH="/mnt/dbdata/remote/metadata_${storage_metadata_fs}"
@@ -185,6 +186,54 @@ function set_version_file() {
     fi
 }
 
+function check_mysql_pkg() {
+    if [[ "${cantian_in_container}" == "1" ]]; then
+        # 归一
+        MYSQLD_PKG=/ctdb/cantian_install/Cantian_connector_mysql_*
+        if [ "${mysql_metadata_in_cantian,,}" == "false" ];then
+            # 非归一 
+            MYSQLD_PKG=/ctdb/cantian_install/mysql_*
+        fi 
+        if [ ! -f ${MYSQLD_PKG} ]; then 
+            logAndEchoError "mysql_metadata_in_cantian is ${mysql_metadata_in_cantian}, ${MYSQLD_PKG} is not exist!"
+            exit_with_log
+        fi
+    fi
+}
+
+function install_mysqld() {
+    logAndEchoInfo "Begin to install mysqld. [Line:${LINENO}, File:${SCRIPT_NAME}]"
+    if [ -e /usr/bin/mysql ]; then
+        # 已经安装mysql
+        return 0
+    fi
+    cd /opt/cantian/image/cantian_connector/cantian-connector-mysql/mysql_bin/
+    tar -zxf ${MYSQLD_PKG}
+    if [ "${mysql_metadata_in_cantian,,}" == "true" ];then
+        cp -arf mysql/lib/plugin/meta/ha_ctc.so Cantian_connector_mysql/mysql/lib/plugin/
+        rm -rf mysql && mv Cantian_connector_mysql/mysql .
+    else
+        tar -zxf ${MYSQLD_PKG} -C /opt/cantian/mysql/install
+    fi
+    cp -arf mysql /opt/cantian/mysql/install/
+    chown ${deploy_user}:${deploy_group} /opt/cantian/mysql/install/mysql -R
+    cp -pf /opt/cantian/mysql/install/mysql/bin/mysql /usr/bin/
+    cp -prf /opt/cantian/mysql/install/mysql /usr/local/
+}
+
+function start_mysqld() {
+    logAndEchoInfo "Begin to start mysqld. [Line:${LINENO}, File:${SCRIPT_NAME}]"
+    su -s /bin/bash - ${deploy_user} -c "python3 -B \
+        /opt/cantian/image/cantian_connector/CantianKernel/Cantian-DATABASE-CENTOS-64bit/install.py \
+        -U ${deploy_user}:${deploy_group} -l /home/${deploy_user}/logs/install.log \
+        -M mysqld -m /opt/cantian/image/cantian_connector/cantian-connector-mysql/scripts/my.cnf -g withoutroot"
+    if [ $? -ne 0 ]; then
+        logAndEchoError "start mysqld failed"
+        exit_with_log
+    fi
+    logAndEchoInfo "start mysqld success. [Line:${LINENO}, File:${SCRIPT_NAME}]"
+}
+
 function init_start() {
     # Cantian启动前执行init流程，更新各个模块配置文件，初始化cms
     sh ${SCRIPT_PATH}/appctl.sh init_container
@@ -201,6 +250,9 @@ function init_start() {
     fi
     logAndEchoInfo "pre-check the parameters success."
 
+    # 检查MySQL包
+    check_mysql_pkg
+
     # Cantian启动前先执行升级流程
     sh ${CURRENT_PATH}/container_upgrade.sh
     if [ $? -ne 0 ]; then
@@ -216,18 +268,10 @@ function init_start() {
 
     set_version_file
 
-    # 拉起MySQL
+    # 安装并拉起MySQL
     if [[ "${cantian_in_container}" == "1" ]]; then
-        logAndEchoInfo "Begin to start mysqld. [Line:${LINENO}, File:${SCRIPT_NAME}]"
-        su -s /bin/bash - ${deploy_user} -c "python3 -B \
-            /opt/cantian/image/cantian_connector/CantianKernel/Cantian-DATABASE-CENTOS-64bit/install.py \
-            -U ${deploy_user}:${deploy_group} -l /home/${deploy_user}/logs/install.log \
-            -M mysqld -m /opt/cantian/image/cantian_connector/cantian-connector-mysql/scripts/my.cnf -g withoutroot"
-        if [ $? -ne 0 ]; then
-            logAndEchoError "start mysqld failed. [Line:${LINENO}, File:${SCRIPT_NAME}]"
-            exit_with_log
-        fi
-        logAndEchoInfo "start mysqld success. [Line:${LINENO}, File:${SCRIPT_NAME}]"
+        install_mysqld
+        start_mysqld
     fi
 
     # 创建就绪探针
