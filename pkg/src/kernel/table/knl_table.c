@@ -13981,6 +13981,10 @@ status_t db_analyze_all_table_partitions(knl_session_t *session, knl_dictionary_
     bool32 analyzed = CT_FALSE;
     stats_load_info_t  load_info;
 
+    if (lock_table_shared_directly(session, dc) != CT_SUCCESS) {
+        return CT_ERROR;
+    }
+
     if (stats_analyze_normal_table(session, dc, stats_option, is_dynamic, &analyzed) != CT_SUCCESS) {
         stats_rollback(session, is_dynamic);
         stats_set_analyzed(session, dc, analyzed);
@@ -13995,9 +13999,6 @@ status_t db_analyze_all_table_partitions(knl_session_t *session, knl_dictionary_
         return CT_SUCCESS;
     }
 
-    if (lock_table_shared_directly(session, dc) != CT_SUCCESS) {
-        return CT_ERROR;
-    }
     stats_set_load_info(&load_info, DC_ENTITY(dc), CT_TRUE, CT_INVALID_ID32);
     stats_flush_logic_log(session, dc, &load_info);
     if (stats_refresh_dc(session, dc, load_info) != CT_SUCCESS) {
