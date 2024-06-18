@@ -467,6 +467,7 @@ knl_global_syncpoint_def g_knl_syncpoint[] = {
     { TSE_MES_OVERVIEW_SEND_FAIL, CT_FALSE, "TSE_MES_OVERVIEW_SEND_FAIL", 0, knl_syncpoint_inject_errcode, 0 },
     { TSE_MES_OVERVIEW_RECV_FAIL, CT_FALSE, "TSE_MES_OVERVIEW_RECV_FAIL", 0, knl_syncpoint_inject_errcode, 0 },
     { TSE_LOCK_TABLE_REMOTE_ABORT, CT_FALSE, "TSE_LOCK_TABLE_REMOTE_ABORT", 0, knl_syncpoint_inject_abort, 0 },
+    { TSE_UNLOCK_MDL_KEY_REMOTE_ABORT, CT_FALSE, "TSE_UNLOCK_MDL_KEY_REMOTE_ABORT", 0, knl_syncpoint_inject_abort, 0 },
     { TSE_EXECUTE_DDL_REMOTE_ABORT, CT_FALSE, "TSE_EXECUTE_DDL_REMOTE_ABORT", 0, knl_syncpoint_inject_abort, 0 },
     { TSE_UNLOCK_REMOTE_ABORT, CT_FALSE, "TSE_UNLOCK_REMOTE_ABORT", 0, knl_syncpoint_inject_abort, 0 },
     { TSE_CLOSE_CONN_ABORT, CT_FALSE, "TSE_CLOSE_CONN_ABORT", 0, knl_syncpoint_inject_abort, 0 },

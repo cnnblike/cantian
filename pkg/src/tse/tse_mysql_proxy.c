@@ -148,6 +148,25 @@ EXTER_ATTACK int tse_ddl_execute_unlock_tables(tianchi_handler_t *tch, uint32_t 
     return result;
 }
 
+EXTER_ATTACK int tse_ddl_execute_unlock_mdl_key(tianchi_handler_t *tch, uint32_t mysql_inst_id)
+{
+    void* shm_inst = get_upstream_shm_inst();
+    struct tse_unlock_mdl_key_request *req =
+        (struct tse_unlock_mdl_key_request *)alloc_share_mem(shm_inst, sizeof(struct tse_unlock_mdl_key_request));
+    if (req == NULL) {
+        return ERR_GENERIC_INTERNAL_ERROR;
+    }
+    req->tch = *tch;
+    req->mysql_inst_id = mysql_inst_id;
+    int result = ERR_GENERIC_INTERNAL_ERROR;
+    int ret = tse_mq_deal_func(shm_inst, TSE_FUNC_TYPE_UNLOCK_MDL_KEY, req);
+    if (ret == CT_SUCCESS) {
+        result = req->result;
+    }
+    free_share_mem(shm_inst, req);
+    return result;
+}
+
 EXTER_ATTACK int tse_invalidate_mysql_dd_cache(tianchi_handler_t *tch, tse_invalidate_broadcast_request *broadcast_req, int *err_code)
 {
     void* shm_inst = get_upstream_shm_inst();

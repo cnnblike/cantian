@@ -350,6 +350,7 @@ enum TSE_FUNC_TYPE {
     TSE_FUNC_TYPE_INVALIDATE_OBJECTS,
     TSE_FUNC_TYPE_INVALIDATE_ALL_OBJECTS,
     TSE_FUNC_TYPE_UPDATE_DDCACHE,
+    TSE_FUNC_TYPE_UNLOCK_MDL_KEY,
     /* the number of total funcs */
     TSE_FUNC_TYPE_NUMBER,
 };
@@ -609,6 +610,7 @@ int tse_get_serial_value(tianchi_handler_t *tch, uint64_t *value, dml_flag_t fla
 int close_mysql_connection(uint32_t thd_id, uint32_t mysql_inst_id);
 int tse_ddl_execute_lock_tables(tianchi_handler_t *tch, char *db_name, tse_lock_table_info *lock_info, int *err_code);
 int tse_ddl_execute_unlock_tables(tianchi_handler_t *tch, uint32_t mysql_inst_id, tse_lock_table_info *lock_info);
+int tse_ddl_execute_unlock_mdl_key(tianchi_handler_t *tch, uint32_t mysql_inst_id);
 EXTER_ATTACK int tse_ddl_execute_update(uint32_t thd_id, tse_ddl_broadcast_request *broadcast_req, bool *allow_fail);
 EXTER_ATTACK int tse_execute_mysql_ddl_sql(tianchi_handler_t *tch, tse_ddl_broadcast_request *broadcast_req, bool allow_fail);
 int tse_execute_rewrite_open_conn(uint32_t thd_id, tse_ddl_broadcast_request *broadcast_req);

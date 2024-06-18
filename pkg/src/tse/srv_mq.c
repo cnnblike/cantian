@@ -1554,6 +1554,22 @@ static void tse_mq_lock_tables_callback(int proc_id, void *rsp, bool *is_continu
     }
 }
 
+static void tse_mq_unlock_mdl_key_callback(int proc_id, void *rsp, bool *is_continue_broadcast)
+{
+    *is_continue_broadcast = true;
+    if (rsp == NULL) {
+        CT_LOG_RUN_ERR("[TSE_UNLOCK_MDL_KEY]:rsp is null.");
+        return;
+    }
+
+    struct tse_unlock_mdl_key_request *tmp_rsp = (struct tse_unlock_mdl_key_request *)rsp;
+    if (tmp_rsp->result != CT_SUCCESS) {
+        CT_LOG_RUN_ERR("[TSE_UNLOCK_MDL_KEY]:remove client, proc_id = %d", proc_id);
+        remove_bad_client(proc_id);
+        tmp_rsp->result = CT_SUCCESS;
+    }
+}
+
 struct mq_send_msg_callback_map {
     enum TSE_FUNC_TYPE func_type;
     void (*send_msg_callback)(int proc_id, void *rsp, bool *is_continue_broadcast);
@@ -1564,6 +1580,7 @@ static struct mq_send_msg_callback_map g_mq_send_msg_callback[] = {
     {TSE_FUNC_TYPE_UNLOCK_TABLES,                tse_mq_unlock_tables_callback},
     {TSE_FUNC_TYPE_LOCK_TABLES,                  tse_mq_lock_tables_callback},
     {TSE_FUNC_TYPE_EXECUTE_REWRITE_OPEN_CONN,    tse_mq_rewrite_open_conn_callback},
+    {TSE_FUNC_TYPE_UNLOCK_MDL_KEY,                tse_mq_unlock_mdl_key_callback},
 };
 
 void mq_send_msg_callback(enum TSE_FUNC_TYPE func_type, int proc_id, void *rsp, bool *is_continue_broadcast)

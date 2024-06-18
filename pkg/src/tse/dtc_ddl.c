@@ -369,3 +369,45 @@ void dtc_proc_msg_tse_invalidate_dd_req(void *sess, mes_message_t *msg)
  
     mes_release_message_buf(msg->buffer);
 }
+
+void dtc_proc_msg_tse_unlock_mdl_key(void *sess, mes_message_t *msg)
+{
+    msg_unlock_mdl_key_req_t *req = (msg_unlock_mdl_key_req_t *)msg->buffer;
+    msg_ddl_rsp_t rsp = {0};
+    knl_session_t *session = (knl_session_t *)sess;
+
+    if (sizeof(msg_unlock_mdl_key_req_t) != msg->head->size) {
+        CT_LOG_RUN_ERR("proc msg tse unlock mdl key req msg size is invalid, msg size %u, struct size:%d",
+            msg->head->size, sizeof(msg_unlock_mdl_key_req_t));
+        dtc_tse_ddl_msg_struct_not_match(&(req->head), MES_CMD_UNLOCK_MDL_KEY_RSP, session);
+        mes_release_message_buf(msg->buffer);
+        return;
+    }
+
+    if (is_exist_repeat_msg(&(req->head), session, MES_CMD_UNLOCK_MDL_KEY_RSP, req->msg_num)) {
+        CT_LOG_RUN_ERR("[TSE_UNLOCK_MDL_KEY]: repeat msg, conn_id=%u, tse_instance_id=%u",
+                       req->tch.thd_id, req->tch.inst_id);
+        mes_release_message_buf(msg->buffer);
+        return;
+    }
+
+    mes_init_ack_head(&(req->head), &(rsp.head), MES_CMD_UNLOCK_MDL_KEY_RSP, sizeof(msg_ddl_rsp_t), session->id);
+    int ret = tse_ddl_execute_unlock_mdl_key(&(req->tch), req->mysql_inst_id);
+    if (ret != CT_SUCCESS) {
+        CT_LOG_RUN_ERR("[TSE_UNLOCK_MDL_KEY]: remote node execute unlock mdl key failed,"
+                       "ret=%d, err_code=%u, conn_id=%u, tse_instance_id=%u",
+                       ret, rsp.err_code, req->tch.thd_id, req->tch.inst_id);
+    }
+    
+    SYNC_POINT_GLOBAL_START(TSE_UNLOCK_MDL_KEY_REMOTE_ABORT, NULL, 0);
+    SYNC_POINT_GLOBAL_END;
+
+    cm_atomic_set(&g_tse_msg_result_arr[req->head.src_inst].err_code, rsp.err_code);
+    
+    if (mes_send_data(&rsp) != CT_SUCCESS) {
+        CT_LOG_RUN_ERR("[TSE_UNLOCK_MDL_KEY]: mes_send_data failed, "
+                       "conn_id=%u, tse_instance_id=%u", req->tch.thd_id, req->tch.inst_id);
+    }
+
+    mes_release_message_buf(msg->buffer);
+}

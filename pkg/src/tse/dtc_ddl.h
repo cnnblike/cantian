@@ -90,6 +90,13 @@ typedef struct st_msg_close_connection_req_t {
     uint32_t                  msg_num;
 } msg_close_connection_req_t;
 
+typedef struct st_msg_unlock_mdl_key_req_t {
+    mes_message_head_t        head;
+    tianchi_handler_t         tch;
+    uint32_t                  mysql_inst_id;
+    uint32_t                  msg_num;
+} msg_unlock_mdl_key_req_t;
+
 typedef struct st_msg_invalid_dd_req_t {
     mes_message_head_t                  head;
     tse_invalidate_broadcast_request    broadcast_req;
@@ -116,6 +123,7 @@ EXTER_ATTACK void dtc_proc_msg_tse_commit_ddl_req(void *sess, mes_message_t *msg
 EXTER_ATTACK void dtc_proc_msg_tse_close_mysql_conn_req(void *sess, mes_message_t *msg);
 EXTER_ATTACK void dtc_proc_msg_tse_execute_rewrite_open_conn_req(void *sess, mes_message_t *msg);
 EXTER_ATTACK void dtc_proc_msg_tse_invalidate_dd_req(void *sess, mes_message_t *msg);
+EXTER_ATTACK void dtc_proc_msg_tse_unlock_mdl_key(void *sess, mes_message_t *msg);
 status_t tse_is_inst_alive(uint8 dst_inst);
 status_t tse_send_data_retry(const void *msg_data, uint8 dst_inst);
 msg_rsp_res_pair *get_tse_msg_result_arr(void);
