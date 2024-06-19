@@ -73,7 +73,11 @@ function wait_config_done() {
     # 等待pod网络配置完成
     logAndEchoInfo "Begin to wait network done. cms_ip: ${node_domain}"
     resolve_times=1
-    ping ${node_domain} -c 1 -w 1
+    if [[ "$node_domain" == "$node_id" ]];then
+        ping $(./get_pod_ip_info.py ${node_domain} | awk '{split($1,arr,":");print arr[1]}'`) -c 1 -w 1
+    else
+        ping ${node_domain} -c 1 -w 1
+    fi
     while [ $? -ne 0 ]
     do
         let resolve_times++
@@ -83,7 +87,11 @@ function wait_config_done() {
             exit_with_log
         fi
         logAndEchoInfo "wait cms_ip: ${node_domain} ready, it has been ping ${resolve_times} times."
-        ping ${node_domain} -c 1 -w 1
+        if [[ "$node_domain" == "$node_id" ]];then
+            ping $(./get_pod_ip_info.py ${node_domain} | awk '{split($1,arr,":");print arr[1]}'`) -c 1 -w 1
+        else
+            ping ${node_domain} -c 1 -w 1
+        fi
     done
 }
 

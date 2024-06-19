@@ -128,6 +128,12 @@ static status_t cm_ipport_to_sockaddr_ipv6(const char *host, int port, sock_addr
 
 status_t cm_ipport_to_sockaddr(const char *host, int port, sock_addr_t *sock_addr)
 {
+    int nodeid;
+    if (cm_str2int(host, &nodeid) == CT_SUCCESS) {
+        char ip[CM_MAX_IP_LEN] = {0};
+        CT_RETURN_IFERR(cm_get_ip_by_node_id_from_env(nodeid, ip));
+        return cm_ipport_to_sockaddr(ip, port, sock_addr);
+    }
     int sa_family = cm_get_ip_version(host);
     switch (sa_family) {
         case AF_INET: {
@@ -792,6 +798,10 @@ status_t cm_str_to_cidr(char *cidr_str, cidr_t *cidr, uint32 cidr_str_len)
 
 bool32 cm_check_ip_valid(const char *ip)
 {
+    int nodeid;
+    if (cm_str2int(ip, &nodeid) == CT_SUCCESS) {
+        return CT_FALSE;
+    }
     sock_addr_t sock_addr;
     int sa_family = cm_get_ip_version(ip);
     switch (sa_family) {
@@ -882,6 +892,12 @@ status_t cm_domain_to_ip(const char *hostname, char *hostip)
         CT_LOG_RUN_ERR("domain to ip failed, intput param invalid.");
         return CT_ERROR;
     }
+
+    int nodeid;
+    if (cm_str2int(hostname, &nodeid) == CT_SUCCESS && nodeid < 64) {
+        cm_get_ip_by_node_id_from_env(nodeid, hostip);
+        return CT_SUCCESS;
+    }
     
     int status;
     struct addrinfo hints, *res;
@@ -924,4 +940,47 @@ status_t cm_domain_to_ip(const char *hostname, char *hostip)
         return CT_ERROR;
     }
     return lookupstatus;
+}
+
+status_t cm_get_ip_by_node_id_from_env(int32 nodeid, char *ip)
+{
+    if (nodeid >= 64) {
+        CT_LOG_RUN_ERR("nodeid %d is not allowed", nodeid);
+        return CT_FALSE;
+    }
+
+    char* dirname = getenv("CTDB_HOME");
+    CT_RETURN_IFERR(chdir(dirname));
+    
+    char cmd[CT_FILE_NAME_BUFFER_SIZE] = { 0 };
+    PRTS_RETURN_IFERR(sprintf_s(cmd, CT_FILE_NAME_BUFFER_SIZE, "sudo ./../../action/docker/get_pod_ip_info.py %d", nodeid));
+    FILE* fp = popen(cmd, "r");
+    if (fp == NULL) {
+        CT_LOG_RUN_ERR("popen failed, cmd=%s", cmd);
+        return CT_ERROR;
+    }
+    char cmd_out[CT_MAX_CMD_LEN];
+    size_t size = 0;
+    size = fread(cmd_out, 1, CT_MAX_CMD_LEN, fp);
+    if (size == 0) {
+        CT_LOG_RUN_ERR("No result from looking up ip and port of nodeid %d, output: %s", nodeid, cmd_out);
+        return CT_ERROR;
+    }
+    // Deal with output ending with \n
+    if (cmd_out[size - 1] == '\n') {
+        cmd_out[size - 1] = '\0';
+        --size;
+    }
+    char *colon = strstr(cmd_out, ":");
+    if (colon == NULL) {
+        CT_LOG_RUN_ERR("Return message from looking up ip and port of nodeid %d is unrecognizeable, output: %s", nodeid, cmd_out);
+        return CT_ERROR;
+    }
+    *colon = '\0';
+    if (!cm_check_ip_valid(cmd_out)) {
+        CT_LOG_RUN_ERR("Invalid ip before colon: %s", cmd_out);
+        return CT_ERROR;
+    }
+    CT_RETURN_IFERR(memcpy_s(ip, CM_MAX_IP_LEN, cmd_out, CM_MAX_IP_LEN));
+    return CT_SUCCESS;
 }

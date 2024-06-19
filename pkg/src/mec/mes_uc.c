@@ -1069,9 +1069,14 @@ int32_t mes_uc_server(mes_uc_config_t *uc_config, char *ip, uint16 port)
 {
     uint32 ip_cnt = 0;
     dpuc_addr eid_addr[CM_INST_MAX_IP_NUM];
+    char lsnr_host[CT_MAX_INST_IP_LEN] = { 0 };
     if (mes_uc_connect_init_addr(eid_addr, ip, port, &ip_cnt) != CT_SUCCESS) {
-        CT_LOG_RUN_ERR("init client eid addr failed ip(%s) ip_cnt(%u) port(%d).", ip, ip_cnt, port);
-        return CT_ERROR;
+        CT_LOG_RUN_INF("get client ip and port from config file failed, trying to get from env");
+        CT_RETURN_IFERR(cm_get_ip_by_node_id_from_env(g_mes.profile.inst_id, lsnr_host));
+        if (mes_uc_connect_init_addr(eid_addr, lsnr_host, port, &ip_cnt) != CT_SUCCESS) {
+            CT_LOG_RUN_ERR("init client eid addr failed ip(%s) ip_cnt(%u).", lsnr_host, ip_cnt);
+            return CT_ERROR;
+        }
     }
     // 设置server(本地)监听的ip和端口
     int32_t ret = mes_global_handle()->dpuc_set_src_eid_addr(uc_config->eid_obj, eid_addr,
@@ -1133,22 +1138,31 @@ status_t mes_uc_connect(uint32 inst_id)
 
     // 设置本地的ip和地址
     dpuc_addr client_eid_addr[CM_INST_MAX_IP_NUM];
-    char *lsnr_host = MES_HOST_NAME(g_mes.profile.inst_id);
+    char lsnr_host[CT_MAX_INST_IP_LEN] = { 0 };
+    CT_RETURN_IFERR(memcpy_s(lsnr_host, CT_MAX_INST_IP_LEN, MES_HOST_NAME(g_mes.profile.inst_id), CT_MAX_INST_IP_LEN));
     uint16 port = g_mes.profile.inst_arr[g_mes.profile.inst_id].port;
     uint32 client_ip_cnt = 0;
     if (mes_uc_connect_init_addr(client_eid_addr, lsnr_host, port, &client_ip_cnt) != CT_SUCCESS) {
-        CT_LOG_RUN_ERR("init client eid addr failed ip(%s) ip_cnt(%u).", lsnr_host, client_ip_cnt);
-        return CT_ERROR;
+        CT_LOG_RUN_INF("get client ip and port from config file failed, trying to get from env");
+        CT_RETURN_IFERR(cm_get_ip_by_node_id_from_env(g_mes.profile.inst_id, lsnr_host));
+        if (mes_uc_connect_init_addr(client_eid_addr, lsnr_host, port, &client_ip_cnt) != CT_SUCCESS) {
+            CT_LOG_RUN_ERR("init client eid addr failed ip(%s) ip_cnt(%u).", lsnr_host, client_ip_cnt);
+            return CT_ERROR;
+        }
     }
 
     // 设置需要连接的server的eid, ip和地址
     dpuc_addr server_eid_addr[CM_INST_MAX_IP_NUM];
-    lsnr_host = MES_HOST_NAME(inst_id);
+    CT_RETURN_IFERR(memcpy_s(lsnr_host, CT_MAX_INST_IP_LEN, MES_HOST_NAME(inst_id), CT_MAX_INST_IP_LEN));
     port = g_mes.profile.inst_arr[inst_id].port;
     uint32 server_ip_cnt = 0;
     if (mes_uc_connect_init_addr(server_eid_addr, lsnr_host, port, &server_ip_cnt) != CT_SUCCESS) {
-        CT_LOG_RUN_ERR("init server eid addr failed ip(%s) ip_cnt(%u).", lsnr_host, server_ip_cnt);
-        return CT_ERROR;
+        CT_LOG_RUN_INF("get server ip and port from config file failed, trying to get from env");
+        CT_RETURN_IFERR(cm_get_ip_by_node_id_from_env(inst_id, lsnr_host));
+        if (mes_uc_connect_init_addr(server_eid_addr, lsnr_host, port, &server_ip_cnt) != CT_SUCCESS) {
+            CT_LOG_RUN_ERR("init server eid addr failed ip(%s) ip_cnt(%u).", lsnr_host, server_ip_cnt);
+            return CT_ERROR;
+        }
     }
     ret = mes_global_handle()->dpuc_set_dst_eid_addr(g_mes_uc_config.com_mgr, g_mes_uc_config.dst_eid[inst_id],
                                 server_eid_addr, server_ip_cnt, __FUNCTION__);
