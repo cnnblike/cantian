@@ -210,7 +210,9 @@ dc_entity_t *rd_invalid_entity(knl_session_t *session, dc_entry_t *entry)
 {
     dc_entity_t *entity = NULL;
 
-    dc_wait_till_load_finish(session, entry);
+    if (dtc_dcs_readable(session) == CT_FALSE){
+        dc_wait_till_load_finish(session, entry);
+    }
 
     if (entry->entity != NULL) {
         table_t *table = &entry->entity->table;
