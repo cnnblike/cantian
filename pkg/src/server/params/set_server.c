@@ -29,7 +29,7 @@
 #include "srv_param_common.h"
 #include "knl_spm.h"
 #include "dtc_context.h"
-
+extern uint32 g_cantian_container_nums;
 #ifdef __cplusplus
 extern "C" {
 #endif
