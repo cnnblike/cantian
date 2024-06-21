@@ -198,8 +198,9 @@ class DRDeploy(object):
         """
         LOG.info("Start to do lock instance for backup.")
         mysql_cmd = self.mysql_cmd.split(' ')
-        cmd = ["-u%s" % self.mysql_user, "-p%s" % self.mysql_pwd, "-e", LOCK_INSTANCE]
+        cmd = ["-u%s" % self.mysql_user, "-p%s", "-e", LOCK_INSTANCE]
         cmd = mysql_cmd + cmd
+        cmd = ["echo", "-e", "%s" % self.mysql_pwd, "|"] + cmd
         self.record_deploy_process("do_lock_instance_for_backup", "start")
         try:
             pobj = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
@@ -234,6 +235,11 @@ class DRDeploy(object):
             LOG.error(err_msg)
             self.record_deploy_process("do_unlock_instance_for_backup", "failed", code=-1, description=err_msg)
             raise Exception(err_msg)
+        # mysql容器场景需要登录mysql容器内kill锁进程
+        if "kubectl" in self.mysql_cmd:
+            kill_cmd = self.mysql_cmd.split(" ")[:-1]
+            kill_cmd = " ".join(kill_cmd) + "bash -c \"ps -ef | grep -v grep | grep '%s'| awk '{print \$2}' | xargs kill -9\"" % LOCK_INSTANCE
+            exec_popen(kill_cmd)
         self.backup_lock_pid = None
         LOG.info("Success to do unlock instance for backup.")
         self.record_deploy_process("do_unlock_instance_for_backup", "success")
