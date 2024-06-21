@@ -868,6 +868,7 @@ cp -rfp ${CURRENT_PATH}/../config /opt/cantian/
 cp -rfp ${CURRENT_PATH}/../common /opt/cantian/
 cp -rfp ${CURRENT_PATH}/wsr_report /opt/cantian/action
 cp -rfp ${CURRENT_PATH}/dbstor /opt/cantian/action
+cp -rfp ${CURRENT_PATH}/docker /opt/cantian/action
 
 # 适配开源场景，使用file，不使用dbstore，提前安装参天rpm包
 install_rpm

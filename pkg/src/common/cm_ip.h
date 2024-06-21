@@ -243,6 +243,7 @@ status_t cm_split_host_ip(char host[][CM_MAX_IP_LEN], const char *value);
 status_t cm_split_host_port(uint16 ports[], const char *port_addr);
 bool32 cm_check_user(white_context_t *ctx, const char *ip_str, const char *user, bool32 *hostssl);
 status_t cm_domain_to_ip(const char *hostname, char *hostip);
+status_t cm_get_ip_by_node_id_from_env(int32 nodeid, char *ip);
 #ifdef __cplusplus
 }
 #endif
