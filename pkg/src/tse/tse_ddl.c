@@ -2895,7 +2895,7 @@ static int tse_alter_table_atomic_impl(TcDb__TseDDLAlterTableDef *req, ddl_ctrl_
     if (status != CT_SUCCESS) {
         return status;
     }
-    start_def->contains_vircol = (ddl_ctrl->table_flags & TSE_TABLE_CONTAINS_VIRCOL) ? CT_TRUE : CT_FALSE;
+    start_def->contains_vircol |= (ddl_ctrl->table_flags & TSE_TABLE_CONTAINS_VIRCOL) ? CT_TRUE : CT_FALSE;
 
     uint32 def_count = ((uint64)def - (uint64)start_def) / sizeof(knl_altable_def_t);
     tse_context_t *tse_context = tse_get_ctx_by_addr(ddl_ctrl->tch.ctx_addr);
