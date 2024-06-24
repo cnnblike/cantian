@@ -351,8 +351,8 @@ class DRRecover(SwitchOver):
               "grep -v STAT | awk '{print \$1, \$3}'\""
         wait_time = 30
         wait_time_step = 2
-        while check_time:
-            check_time -= wait_time_step
+        while wait_time:
+            wait_time -= wait_time_step
             return_code, output, stderr = exec_popen(cmd, timeout=10)
             if return_code:
                 err_msg = "Execute cmd[%s] failed, details:%s" % (cmd, stderr)
@@ -385,7 +385,8 @@ class DRRecover(SwitchOver):
                 LOG.info("cms offline success")
                 return
         else:
-            LOG.info("cantian stop time out")
+            LOG.error("cantian stop time out")
+            raise Exception(err_msg)
 
     def execute(self):
         """
