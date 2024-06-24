@@ -46,7 +46,7 @@ class SwitchOver(object):
             err_msg = "Current cluster status is abnormal, output:%s, stderr:%s" % (output, stderr)
             LOG.error(err_msg)
             raise Exception(err_msg)
-        return outputs,output, stderr
+        return outputs, output, stderr
     
     @staticmethod
     def check_cluster_status(target_node=None, log_type="error", check_time=100):
