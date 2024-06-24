@@ -191,6 +191,8 @@ typedef enum en_mes_command {
     MES_CMD_INVALID_DD_REQ,
     MES_CMD_INVALID_DD_RSP,
     MES_CMD_BROADCAST_INVALIDATE_DC,
+    MES_CMD_UNLOCK_MDL_KEY_REQ,
+    MES_CMD_UNLOCK_MDL_KEY_RSP, 
 
     // dummy, to compile extproc
     MES_CMD_RPC_REQ,

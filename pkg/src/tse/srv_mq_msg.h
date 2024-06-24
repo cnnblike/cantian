@@ -379,6 +379,12 @@ struct tse_unlock_tables_request {
     tse_lock_table_info lock_info;
 };
 
+struct tse_unlock_mdl_key_request {
+    tianchi_handler_t tch;
+    int result;
+    uint32_t mysql_inst_id;
+};
+
 struct check_table_exists_request {
     char db[SMALL_RECORD_SIZE];
     char name[SMALL_RECORD_SIZE];

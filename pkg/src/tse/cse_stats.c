@@ -107,6 +107,7 @@ io_record_event_desc_t g_tse_io_record_event_desc[TSE_FUNC_TYPE_NUMBER] = {
     {"TSE_FUNC_TYPE_INVALIDATE_OBJECTS", ""},
     {"TSE_FUNC_TYPE_INVALIDATE_ALL_OBJECTS", ""},
     {"TSE_FUNC_TYPE_UPDATE_DDCACHE", ""},
+    {"TSE_FUNC_TYPE_UNLOCK_MDL_KEY", ""},
 };
 
 void tse_record_io_state_reset(void)

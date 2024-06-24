@@ -372,6 +372,10 @@ status_t dtc_register_proc(void)
                                              "MES_CMD_INVALID_DD_REQ"));
     knl_securec_check(dtc_register_proc_func(MES_CMD_INVALID_DD_RSP, tse_process_broadcast_ack_ex, CT_FALSE,
                                              "MES_CMD_INVALID_DD_RSP"));
+    knl_securec_check(dtc_register_proc_func(MES_CMD_UNLOCK_MDL_KEY_REQ, dtc_proc_msg_tse_unlock_mdl_key, CT_TRUE,
+                                            "MES_CMD_UNLOCK_MDL_KEY")); 
+    knl_securec_check(dtc_register_proc_func(MES_CMD_UNLOCK_MDL_KEY_RSP,tse_process_broadcast_ack_ex, CT_FALSE, 
+                                            "MES_CMD_UNLOCK_MDL_KEY_RSP"));
     knl_securec_check(
         dtc_register_proc_func(MES_CMD_RECOVERY_LOCK_RES, drc_process_recovery_lock_res, CT_TRUE, "send page info"));
     knl_securec_check(dtc_register_proc_func(MES_CMD_RECOVERY_LOCK_RES_ACK, drc_process_remaster_recovery_task_ack,
