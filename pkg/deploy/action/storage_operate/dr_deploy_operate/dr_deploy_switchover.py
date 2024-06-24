@@ -35,6 +35,20 @@ class SwitchOver(object):
         self.metadata_in_cantian = self.dr_deploy_info.get("mysql_metadata_in_cantian")
 
     @staticmethod
+    def query_cluster_status(cmd, timeout=100):
+        return_code, output, stderr = exec_popen(cmd, timeout=timeout)
+        if return_code:
+            err_msg = "Execute cmd[%s] failed, details:%s" % (cmd, stderr)
+            LOG.error(err_msg)
+            raise Exception(err_msg)
+        outputs = output.split("\n")
+        if len(outputs) < 2:
+            err_msg = "Current cluster status is abnormal, output:%s, stderr:%s" % (output, stderr)
+            LOG.error(err_msg)
+            raise Exception(err_msg)
+        return outputs,output, stderr
+    
+    @staticmethod
     def check_cluster_status(target_node=None, log_type="error", check_time=100):
         """
         cms 命令拉起参天后检查集群状态
@@ -46,33 +60,46 @@ class SwitchOver(object):
         LOG.info("Check cantian status.")
         cmd = "su -s /bin/bash - cantian -c \"cms stat | " \
               "grep -v STAT | awk '{print \$1, \$3, \$6}'\""
+        cmd_srv = "su -s /bin/bash - cantian -c \"cms stat -server | " \
+              "grep -v SRV_READY | awk '{print \$1, \$2}'\""
+        cmd_voting = "su -s /bin/bash - cantian -c \"cms node -connected | " \
+              "grep -v VOTING | awk '{print \$1, \$NF}'\""
         check_time_step = check_time // check_count
         while check_time:
-            time.sleep(check_time_step)
             check_time -= check_time_step
-            return_code, output, stderr = exec_popen(cmd, timeout=100)
-            if return_code:
-                err_msg = "Execute cmd[%s] failed, details:%s" % (cmd, stderr)
-                LOG.error(err_msg)
-                raise Exception(err_msg)
-            cms_stat = output.split("\n")
-            if len(cms_stat) < 2:
-                err_msg = "Current cluster status is abnormal, output:%s, stderr:%s" % (output, stderr)
-                LOG.error(err_msg)
-                raise Exception(err_msg)
+            cms_stat, output, stderr = SwitchOver.query_cluster_status(cmd)
             online_flag = True
             for node_stat in cms_stat:
                 node_id, online, work_stat = node_stat.split(" ")
-                if (online != "ONLINE" or work_stat != "1") and target_node is None:
-                    online_flag = False
                 # 只检查当前节点，不影响容灾切换
-                if (online != "ONLINE" or work_stat != "1") and node_id == target_node:
+                if (online != "ONLINE" or work_stat != "1") and (target_node is None or node_id == target_node):
                     online_flag = False
             if not online_flag:
                 LOG.info("Current cluster status is abnormal, output:%s, stderr:%s", output, stderr)
+                time.sleep(check_time_step)
                 continue
-            else:
-                break
+            srv_stat, output, stderr = SwitchOver.query_cluster_status(cmd_srv)
+            ready_flag = True
+            for node_stat in srv_stat:
+                node_id, ready_stat = node_stat.split(" ")
+                if ready_stat == "FALSE" and (target_node is None or node_id == target_node):
+                    ready_flag = False
+            if not ready_flag:
+                LOG.info("Current cms server status is NOT ready, output:%s, stderr:%s", output, stderr)
+                time.sleep(check_time_step)
+                continue
+            srv_stat, output, stderr = SwitchOver.query_cluster_status(cmd_voting)
+            voting_flag = False
+            for node_stat in srv_stat:
+                node_id, ready_stat = node_stat.split(" ")
+                if ready_stat == "TRUE" and (target_node is None or node_id == target_node):
+                    ready_flag = True
+            if voting_flag:
+                LOG.info("Current cms is voting, output:%s, stderr:%s", output, stderr)
+                time.sleep(check_time_step)
+                continue
+
+            break
         else:
             err_msg = "Check cluster status timeout."
             if log_type == "info":
@@ -322,7 +349,10 @@ class DRRecover(SwitchOver):
     def wait_res_stop(self):
         cmd = "su -s /bin/bash - cantian -c \"cms stat | " \
               "grep -v STAT | awk '{print \$1, \$3}'\""
-        while True:
+        wait_time = 30
+        wait_time_step = 2
+        while check_time:
+            check_time -= wait_time_step
             return_code, output, stderr = exec_popen(cmd, timeout=10)
             if return_code:
                 err_msg = "Execute cmd[%s] failed, details:%s" % (cmd, stderr)
@@ -343,17 +373,19 @@ class DRRecover(SwitchOver):
                 if (stat == "UNKNOWN"):
                     unknown_flag = True
             if online_flag:
-                time.sleep(2)
+                time.sleep(wait_time_step)
                 LOG.info("waiting for cantian stop")
                 continue
             elif unknown_flag:
                 LOG.info("waiting for io fence")
-                time.sleep(2)
+                time.sleep(wait_time_step)
                 LOG.info("cms offline success")
                 return
             else:
                 LOG.info("cms offline success")
                 return
+        else:
+            LOG.info("cantian stop time out")
 
     def execute(self):
         """
@@ -394,6 +426,8 @@ class DRRecover(SwitchOver):
                     self.hyper_domain_id, DomainAccess.ReadAndWrite)
                 self.dr_deploy_opt.swap_role_fs_hyper_metro_domain(self.hyper_domain_id)
             try:
+                node_id = self.dr_deploy_info.get("node_id")
+                self.check_cluster_status(target_node=node_id)
                 self.standby_cms_res_stop()
                 self.wait_res_stop()
             except Exception as _er:
