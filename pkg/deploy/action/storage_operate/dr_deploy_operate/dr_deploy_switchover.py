@@ -88,12 +88,12 @@ class SwitchOver(object):
                 LOG.info("Current cms server status is NOT ready, output:%s, stderr:%s", output, stderr)
                 time.sleep(check_time_step)
                 continue
-            srv_stat, output, stderr = SwitchOver.query_cluster_status(cmd_voting)
+            voteing_stat, output, stderr = SwitchOver.query_cluster_status(cmd_voting)
             voting_flag = False
-            for node_stat in srv_stat:
-                node_id, ready_stat = node_stat.split(" ")
-                if ready_stat == "TRUE" and (target_node is None or node_id == target_node):
-                    ready_flag = True
+            for node_stat in voteing_stat:
+                node_id, voting_stat = node_stat.split(" ")
+                if voting_stat == "TRUE" and (target_node is None or node_id == target_node):
+                    voting_flag = True
             if voting_flag:
                 LOG.info("Current cms is voting, output:%s, stderr:%s", output, stderr)
                 time.sleep(check_time_step)
@@ -101,7 +101,7 @@ class SwitchOver(object):
 
             break
         else:
-            err_msg = "Check cluster status timeout."
+            err_msg = "Cluster status normalization timed out."
             if log_type == "info":
                 LOG.info(err_msg)
             else:
@@ -426,9 +426,9 @@ class DRRecover(SwitchOver):
                 self.dr_deploy_opt.change_fs_hyper_metro_domain_second_access(
                     self.hyper_domain_id, DomainAccess.ReadAndWrite)
                 self.dr_deploy_opt.swap_role_fs_hyper_metro_domain(self.hyper_domain_id)
-            try:
                 node_id = self.dr_deploy_info.get("node_id")
                 self.check_cluster_status(target_node=node_id)
+            try:
                 self.standby_cms_res_stop()
                 self.wait_res_stop()
             except Exception as _er:
