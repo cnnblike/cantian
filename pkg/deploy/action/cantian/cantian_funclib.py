@@ -170,6 +170,7 @@ class DefaultConfigValue(object):
         "SHM_MQ_MSG_RECV_THD_NUM": 40,
         "MYSQL_METADATA_IN_CANTIAN": "TRUE",
         "SHM_MEMORY_REDUCTION_RATIO": "1",
+        "DTC_RCY_PARAL_BUF_LIST_SIZE": "256",
         "MYSQL_DEPLOY_GROUP_ID": mysql_group_id
     }
     
@@ -239,6 +240,7 @@ class DefaultConfigValue(object):
         "MES_SSL_CRT_KEY_PATH": "/opt/cantian/certificate",
         "KMC_KEY_FILES": None,
         "SHM_MEMORY_REDUCTION_RATIO": "1",
+        "DTC_RCY_PARAL_BUF_LIST_SIZE": "256",
         "MYSQL_DEPLOY_GROUP_ID": mysql_group_id
     }
     MES_CONFIG = {
