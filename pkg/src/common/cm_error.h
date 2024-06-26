@@ -177,6 +177,7 @@ typedef enum en_errno {
     ERR_SKLIST_NOT_INIT = 143,
     ERR_SKLIST_NOT_EXIST = 144,
     ERR_SKLIST_EXIST = 145,
+    ERR_LOCK_USER_TIME_OUT = 146,
 
     /* invalid configuration errors: 200 - 299 */
     ERR_FILE_SIZE_TOO_LARGE = 200,
