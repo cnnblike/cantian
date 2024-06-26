@@ -4190,7 +4190,9 @@ status_t pcrb_compare_mtrl_key(mtrl_segment_t *segment, char *data1, char *data2
 
     if (!cmp_rowid) {
         if (IS_COMPATIBLE_MYSQL_INST) {
-            CT_THROW_ERROR(ERR_DUPLICATE_ENTRY, index->entity->table.desc.name,
+            knl_index_desc_t *desc = &index->desc;
+            knl_column_t *column = dc_get_column(index->entity, desc->columns[0]);
+            CT_THROW_ERROR(ERR_DUPLICATE_ENTRY, column->name, index->entity->table.desc.name,
                            index->desc.primary ? "PRIMARY" : index->desc.name);
         } else {
             CT_THROW_ERROR(ERR_DUPLICATE_KEY, "");
