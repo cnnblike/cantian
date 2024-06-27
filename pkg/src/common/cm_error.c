@@ -152,6 +152,7 @@ const char *g_error_desc[] = {
     [ERR_SKLIST_NOT_INIT] = "sklist is not initial",
     [ERR_SKLIST_NOT_EXIST] = "sklist is not existed",
     [ERR_SKLIST_EXIST] = "sklist is already exist",
+    [ERR_LOCK_USER_TIME_OUT] = "Locking timed out while the operation was waiting.",
 
     /* invalid configuration errors */
     [ERR_FILE_SIZE_TOO_LARGE] = "The size of config file %s is too large",
