@@ -18666,19 +18666,19 @@ static status_t db_delete_table_segments(knl_session_t *session, knl_cursor_t *c
 
 void db_drop_table_drop_dc(knl_session_t *session, knl_dictionary_t *dc, table_t *table)
 {
-    if (db_garbage_segment_handle(session, dc->uid, dc->oid, CT_FALSE) != CT_SUCCESS) {
-        cm_spin_lock(&session->kernel->rmon_ctx.mark_mutex, NULL);
-        session->kernel->rmon_ctx.delay_clean_segments = CT_TRUE;
-        cm_spin_unlock(&session->kernel->rmon_ctx.mark_mutex);
-        CT_LOG_RUN_ERR("failed to handle garbage segment");
-    }
-
     // Send rd log to drop trigger
     g_knl_callback.pl_drop_triggers_entry(session, dc);
 
     // Only after transaction committed, can dc be dropped.
     dc_drop_object_privs(&session->kernel->dc_ctx, table->desc.uid, table->desc.name, OBJ_TYPE_TABLE);
     dc_drop(session, DC_ENTITY(dc));
+
+    if (db_garbage_segment_handle(session, dc->uid, dc->oid, CT_FALSE) != CT_SUCCESS) {
+        cm_spin_lock(&session->kernel->rmon_ctx.mark_mutex, NULL);
+        session->kernel->rmon_ctx.delay_clean_segments = CT_TRUE;
+        cm_spin_unlock(&session->kernel->rmon_ctx.mark_mutex);
+        CT_LOG_RUN_ERR("failed to handle garbage segment");
+    }
 
     session->stat->table_drops++;
 }
