@@ -24,8 +24,10 @@ max_arch_files_size=`python3 ${CURRENT_PATH}/get_config_info.py "MAX_ARCH_FILES_
 cms_ip=`python3 ${CURRENT_PATH}/get_config_info.py "cms_ip"`
 mes_ssl_switch=`python3 ${CURRENT_PATH}/get_config_info.py "mes_ssl_switch"`
 mysql_metadata_in_cantian=`python3 ${CURRENT_PATH}/get_config_info.py "mysql_metadata_in_cantian"`
+storage_metadata_fs=`python3 ${CURRENT_PATH}/get_config_info.py "storage_metadata_fs"`
 primary_keystore="/opt/cantian/common/config/primary_keystore_bak.ks"
 standby_keystore="/opt/cantian/common/config/standby_keystore_bak.ks"
+mysql_data_dir="/mnt/dbdata/remote/metadata_${storage_metadata_fs}/node${node_id}"
 
 function set_ctsql_config() {
     sys_password=`cat ${DORADO_CONF_PATH}/${SYS_PASS}`
@@ -70,6 +72,8 @@ function set_cantian_config() {
     sed -i -r "s:(DBSTOR_NAMESPACE = ).*:\1${cluster_name}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
     sed -i -r "s:(INSTANCE_ID = ).*:\1${node_id}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
     sed -i -r "s:(NODE_ID = ).*:\1${node_id}:g" ${CONFIG_PATH}/${CLUSTER_CONFIG_NAME}
+    sed -i -r "s:(MYSQL_DATA_DIR = ).*:\1${mysql_data_dir}:g" ${CONFIG_PATH}/${CLUSTER_CONFIG_NAME}
+    sed -i -r "s:(MYSQL_LOG_FILE = ).*:\1${mysql_data_dir}/mysql.log:g" ${CONFIG_PATH}/${CLUSTER_CONFIG_NAME}
     sed -i -r "s:(MAX_ARCH_FILES_SIZE = ).*:\1${max_arch_files_size}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
     sed -i -r "s:(MYSQL_METADATA_IN_CANTIAN = ).*:\1${mysql_metadata_in_cantian^^}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
     sed -i -r "s:(CLUSTER_ID = ).*:\1${cluster_id}:g" ${CONFIG_PATH}/${CANTIAN_CONFIG_NAME}
