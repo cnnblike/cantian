@@ -111,6 +111,10 @@ static status_t dtc_heap_read_prefetch_page(knl_session_t *session, knl_cursor_t
     buf_read_assist_t ra;
     uint8 options = ((cr_cursor->local_cr || *status == PCR_LOCAL_READ) ? ENTER_PAGE_NORMAL : ENTER_PAGE_TRY);
 
+    if (g_dtc->profile.remote_access_limit == 0) {
+        buf_set_force_request(session, page_id);
+    }
+
     dtc_read_init(&ra, page_id, LATCH_MODE_S, options, cr_cursor->query_scn, DTC_BUF_PREFETCH_EXT_NUM);
     if (dtc_read_page(session, &ra) != CT_SUCCESS) {
         return CT_ERROR;
@@ -254,6 +258,10 @@ static status_t dtc_heap_read_page(knl_session_t *session, knl_cursor_t *cursor,
 {
     buf_read_assist_t ra;
     uint8 options = (*status == PCR_LOCAL_READ ? ENTER_PAGE_NORMAL : ENTER_PAGE_TRY);
+
+    if (g_dtc->profile.remote_access_limit == 0) {
+        buf_set_force_request(session, page_id);
+    }
 
     dtc_read_init(&ra, page_id, LATCH_MODE_S, options, query_scn, DTC_BUF_READ_ONE);
     if (dtc_read_page(session, &ra) != CT_SUCCESS) {
