@@ -106,7 +106,7 @@ Cantian引擎编译过程所依赖的软件如[表1 环境构建依赖](#table16
     ```
     git clone https://gitee.com/data-migration-tools/logicrep.git
     ```
-### 2.3.2 标题
+### 2.3.2 准备数据库源
     mv mysql-server-mysql-8.0.26 mysql-source
     ```
     
