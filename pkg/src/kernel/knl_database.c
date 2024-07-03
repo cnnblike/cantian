@@ -646,7 +646,7 @@ status_t db_mount(knl_session_t *session)
     }
 
     knl_panic(db->status == DB_STATUS_NOMOUNT || db->status == DB_STATUS_CREATING);
-    kernel->undo_segid = 0;
+    kernel->undo_segid = kernel->id;
 
     if (db_register_iof(kernel) != CT_SUCCESS) {
         cm_spin_unlock(&kernel->lock);
