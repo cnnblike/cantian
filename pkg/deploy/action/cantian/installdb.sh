@@ -108,6 +108,9 @@ function start_cantiand() {
                                       --plugin_load="ctc_ddl_rewriter=ha_ctc.so;ctc=ha_ctc.so;" \
                                       --default-storage-engine=CTC --core-file >> ${MYSQL_LOG_FILE} 2>&1 &
     fi
+
+    touch ${SINGLE_FLAG}
+
     sleep 10
   else
     # 如果参天被cms抢占拉起，等待此参天拉起完成，并跳过安装部署的启动参天进程命令
@@ -218,6 +221,7 @@ function parse_parameter() {
   declare -g RUN_MODE=
   declare -g MYSQL_CONFIG_FILE=
   declare -g CLUSTER_CONFIG="${CTDB_DATA}/cfg/cluster.ini"
+  declare -g SINGLE_FLAG="/opt/cantian/cantian/cfg/single_flag"
   
   while true
   do

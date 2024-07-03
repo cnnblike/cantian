@@ -2600,19 +2600,62 @@ class Installer:
                 raise Exception("chown to %s:%s return: %s%s%s"
                                 % (self.user, self.group, str(ret_code),
                                    os.linesep, stderr))
+        if g_opts.running_mode in VALID_RUNNING_MODE and self.cantiand_configs.get("MYSQL_METADATA_IN_CANTIAN")==True:
+            try:
+                self.failed_pos = self.CREATE_DB_FAILED
+                cantian_check_share_logic_ip_isvalid(g_opts.share_logic_ip)
+                log("use cantiand creating cantian database...")
+                self.use_cantiand_createdb_then_stop()
+                self.start_cantiand()
+            except Exception as error:
+                log_exit(str(error))
 
-        try:
-            # 1.start dn process in nomount or mount mode
-            self.failed_pos = self.CREATE_DB_FAILED
-            cantian_check_share_logic_ip_isvalid(g_opts.share_logic_ip)
-            self.start_cantiand()
-            log("Creating cantian database...")
-            cantian_check_share_logic_ip_isvalid(g_opts.share_logic_ip)
-            self.create_db()
-        except Exception as error:
-            log_exit(str(error))
+        else:
+            try:
+                # 1.start dn process in nomount or mount mode
+                self.failed_pos = self.CREATE_DB_FAILED
+                cantian_check_share_logic_ip_isvalid(g_opts.share_logic_ip)
+                self.start_cantiand()
+                log("Creating cantian database...")
+                cantian_check_share_logic_ip_isvalid(g_opts.share_logic_ip)
+                self.create_db()
+            except Exception as error:
+                log_exit(str(error))
         self.check_db_status()
         log("Creating database succeed.")
+
+    def use_cantiand_createdb_then_stop(self):
+        flags = os.O_RDONLY
+        modes = stat.S_IWUSR | stat.S_IRUSR
+        with os.fdopen(os.open(CANTIAN_START_STATUS_FILE, flags, modes), 'r') as load_fp:
+            start_parameters = json.load(load_fp)
+        if start_parameters.setdefault('db_create_status', "default") != "default" or g_opts.node_id != 0:
+            return
+        
+        # 拉起cantiand
+        numactl_str = ("numactl -C 0-1,6-11,16-%s") % str(os.cpu_count()-1)
+        CTDB_HOME = os.environ.get('CTDB_HOME')
+        CTDB_DATA = os.environ.get('CTDB_DATA')
+        start_mode = self.NOMOUNT_MODE
+        log("Starting cantiand...")
+
+        cmd = ("nohup %s %s/bin/cantiand %s -D %s >>  2>&1 &"
+               % (numactl_str, CTDB_HOME, start_mode, CTDB_DATA, self.status_log))
+        return_code, _, stderr_data = _exec_popen(cmd)
+        if return_code:
+            raise Exception("Failed to start cantiand before create db, return: %s%s%s"
+                            % (str(return_code),os.linesep, stderr_data))
+        # 创库前检查
+        cantian_check_share_logic_ip_isvalid(g_opts.share_logic_ip)
+        # 创库
+        self.create_db()
+        # 停cantiand
+        cmd = "cms res -stop db"
+        return_code, _, stderr_data = _exec_popen(cmd)
+        if return_code:
+            raise Exception("Failed to stop cantiand, return: %s%s%s"
+                            % (str(return_code),os.linesep, stderr_data))
+
 
     def create_db(self):
         if skip_execute_in_node_1():
