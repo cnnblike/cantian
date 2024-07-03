@@ -5,17 +5,17 @@ dbuser=`whoami`
 loguser=`whoami`
 if [ "${dbuser}" = "root" ]
 then
-	dbuser=$(grep '"U_USERNAME_AND_GROUP"' /opt/caantian/action/cantian/install_config.json | cut -d '"' -f 4 | sed 's/:.*//')
+	dbuser=$(grep '"U_USERNAME_AND_GROUP"' /opt/cantian/action/cantian/install_config.json | cut -d '"' -f 4 | sed 's/:.*//')
 fi
 exit_num_file="/opt/cantian/cms/cfg/exit_num.txt"
 exit_num_dir="/opt/cantian/cms/cfg"
 single_mode="multiple"
-running_mode=$(grep '"M_RUNING_MODE"' /opt/caantian/action/cantian/install_config.json | cut -d '"' -f 4)
+running_mode=$(grep '"M_RUNING_MODE"' /opt/cantian/action/cantian/install_config.json | cut -d '"' -f 4)
 process_to_check="cantiand"
 process_path=${CTDB_DATA}
 if [ "$running_mode" = "cantiand_with_mysql" ] || 
-   [ "$running_mode" = "cantiand_with_mysql_incluster" ] || 
-   [ "$running_mode" = "cantiand_with_mysql_incluster_st" ]; then
+   [ "$running_mode" = "cantiand_with_mysql_in_cluster" ] || 
+   [ "$running_mode" = "cantiand_with_mysql_in_cluster_st" ]; then
 	single_mode="single"
 	process_to_check="mysqld"
 	process_path=$MYSQL_BIN_DIR

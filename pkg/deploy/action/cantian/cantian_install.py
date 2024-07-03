@@ -1839,14 +1839,6 @@ class Installer:
                 _file.write("export PATH=\"%s\":$PATH"
                             % os.path.join(self.install_path, "bin"))
                 _file.write(os.linesep)
-                _file.write("export MYSQL_BIN_DIR=\"%s\"" % MYSQL_BIN_DIR)
-                _file.write(os.linesep)
-                _file.write("export MYSQL_CODE_DIR=\"%s\"" % MYSQL_CODE_DIR)
-                _file.write(os.linesep)
-                _file.write("export MYSQL_DATA_DIR=\"%s\"" % MYSQL_DATA_DIR)
-                _file.write(os.linesep)
-                _file.write("export MYSQL_LOG_FILE=\"%s\"" % MYSQL_LOG_FILE)
-                _file.write(os.linesep)
                 if "LD_LIBRARY_PATH" in os.environ:
                     _file.write("export LD_LIBRARY_PATH=\"%s\":\"%s\""
                                 ":$LD_LIBRARY_PATH"
@@ -3144,6 +3136,24 @@ class Installer:
         ret_code, _, stderr = _exec_popen(cmd)
         if ret_code:
             log_exit("Can not link mysql lib, command: %s, output: %s" % (cmd, stderr))
+    
+    def export_mysql_env(self):
+        try:
+            flags = os.O_RDWR
+            modes = stat.S_IWUSR | stat.S_IRUSR
+            with os.fdopen(os.open(self.user_profile, flags, modes), 'a') as _file:
+                _file.write("export MYSQL_BIN_DIR=\"%s\"" % MYSQL_BIN_DIR)
+                _file.write(os.linesep)
+                _file.write("export MYSQL_CODE_DIR=\"%s\"" % MYSQL_CODE_DIR)
+                _file.write(os.linesep)
+                _file.write("export MYSQL_DATA_DIR=\"%s\"" % MYSQL_DATA_DIR)
+                _file.write(os.linesep)
+                _file.write("export MYSQL_LOG_FILE=\"%s\"" % MYSQL_LOG_FILE)
+                _file.write(os.linesep)
+                _file.flush()
+        except IOError as ex:
+            self.failed_pos = self.SET_ENV_FAILED
+            log_exit("Can not set user environment variables: %s" % str(ex))
 
     def prepare_mysql_for_single(self):
         if g_opts.running_mode.lower() not in VALID_SINGLE_MYSQL_RUNNING_MODE:
@@ -3153,6 +3163,7 @@ class Installer:
         self.prepare_mysql_data_dir()
         self.prepare_mysql_bin_dir()
         self.set_mysql_env()
+        self.export_mysql_env()
 
 
 def check_archive_dir():

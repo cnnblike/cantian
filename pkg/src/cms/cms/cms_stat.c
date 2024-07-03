@@ -477,11 +477,11 @@ status_t cms_exec_res_script(const char* script, const char* arg, uint32 timeout
     }
     if (strncmp(arg, "disable", CMS_MAX_FILE_NAME) == 0) {
         ret = sprintf_s(cmd, CMS_CMD_BUFFER_SIZE,
-            "echo 'script begin'; nohup timeout %.2f %s %s > /dev/null 2>&1 & echo $!;echo 'script end\n';",
+            "echo 'script begin';timeout %.2f %s %s;echo $?;echo 'script end\n';",
             (float)timeout_ms / CMS_TRANS_MS_TO_SECOND_FLOAT, script, arg);
     } else {
         ret = sprintf_s(cmd, CMS_CMD_BUFFER_SIZE,
-            "echo 'script begin'; nohup timeout %.2f %s %s %d > /dev/null 2>&1 & echo $!; echo 'script end\n';",
+            "echo 'script begin';timeout %.2f %s %s %d;echo $?;echo 'script end\n';",
             (float)timeout_ms / CMS_TRANS_MS_TO_SECOND_FLOAT, script, arg, (int32)g_cms_param->node_id);
     }
     PRTS_RETURN_IFERR(ret);
