@@ -38,13 +38,13 @@ function usage()
 
 function check_process()
 {
-	res_count=`ps -u ${dbuser} | grep cantiand|grep -vE '(grep|defunct)' |wc -l`
+	res_count=`ps -u ${dbuser} | grep $process_to_check |grep -vE '(grep|defunct)' |wc -l`
 	if [ "$res_count" -eq "0" ]; then
 		return 1
 	elif [ "$res_count" -eq "1" ]; then
 		return 0
 	else 
-		res_count=`ps -fu ${dbuser} | grep cantiand | grep ${CTDB_DATA} | grep -vE '(grep|defunct)' | wc -l`
+		res_count=`ps -fu ${dbuser} | grep $process_to_check | grep $process_path | grep -vE '(grep|defunct)' | wc -l`
 		if [ "$res_count" -eq "0" ]; then
 			return 1
 		elif [ "$res_count" -eq "1" ]; then
