@@ -5,10 +5,21 @@ dbuser=`whoami`
 loguser=`whoami`
 if [ "${dbuser}" = "root" ]
 then
-	dbuser="cantian"
+	dbuser=$(grep '"U_USERNAME_AND_GROUP"' /opt/caantian/action/cantian/install_config.json | cut -d '"' -f 4 | sed 's/:.*//')
 fi
 exit_num_file="/opt/cantian/cms/cfg/exit_num.txt"
 exit_num_dir="/opt/cantian/cms/cfg"
+single_mode="multiple"
+running_mode=$(grep '"M_RUNING_MODE"' /opt/caantian/action/cantian/install_config.json | cut -d '"' -f 4)
+process_to_check="cantiand"
+process_path=${CTDB_DATA}
+if [ "$running_mode" = "cantiand_with_mysql" ] || 
+   [ "$running_mode" = "cantiand_with_mysql_incluster" ] || 
+   [ "$running_mode" = "cantiand_with_mysql_incluster_st" ]; then
+	single_mode="single"
+	process_to_check="mysqld"
+	process_path=$MYSQL_BIN_DIR
+fi
 
 function usage()
 {
@@ -48,38 +59,58 @@ function check_process()
 
 function start_cantian() {
 	if [ "${loguser}" = "root" ]; then
-		sudo  -E -i -u ${dbuser} sh -c "nohup cantiand -D \${CTDB_DATA}  1>/dev/null 2>&1 &"
-		if [ $? -ne 0 ]; then 
-			echo "RES_FAILED"
-			exit 1
+		if [ $single_mode = "single" ];then
+			sudo -E -i -u ${dbuser} sh -c "export LD_LIBRARY_PATH=$MYSQL_BIN_DIR/lib:$MYSQL_CODE_DIR/daac_lib:$LD_LIBRARY_PATH && nohup $MYSQL_BIN_DIR/bin/mysqld \
+											--defaults-file=$MYSQL_CODE_DIR/scripts/my.cnf --datadir=$MYSQL_DATA_DIR --plugin-dir=$MYSQL_BIN_DIR/lib/plugin \
+											--plugin_load=\"ctc_ddl_rewriter=ha_ctc.so;ctc=ha_ctc.so;\" --default-storage-engin=CTC --core-file > $MYSQL_LOG_FILE 2>&1 &"
+			if [ $? -ne 0 ]; then 
+				echo "RES_FAILED"
+				exit 1
+			fi
+		else
+			sudo  -E -i -u ${dbuser} sh -c "nohup cantiand -D \${CTDB_DATA}  1>/dev/null 2>&1 &"
+			if [ $? -ne 0 ]; then 
+				echo "RES_FAILED"
+				exit 1
+			fi
 		fi
 	else
-		nohup cantiand -D ${CTDB_DATA}  1>/dev/null 2>&1 &
-		if [ $? -ne 0 ]; then 
-			echo "RES_FAILED"
-			exit 1
+		if [ $single_mode = "single" ];then
+			export LD_LIBRARY_PATH=$MYSQL_BIN_DIR/lib:$MYSQL_CODE_DIR/daac_lib:$LD_LIBRARY_PATH && nohup $MYSQL_BIN_DIR/bin/mysqld \
+											--defaults-file=$MYSQL_CODE_DIR/scripts/my.cnf --datadir=$MYSQL_DATA_DIR --plugin-dir=$MYSQL_BIN_DIR/lib/plugin \
+											--plugin_load="ctc_ddl_rewriter=ha_ctc.so;ctc=ha_ctc.so;" --default-storage-engin=CTC --core-file > $MYSQL_LOG_FILE 2>&1 &
+			if [ $? -ne 0 ]; then 
+				echo "RES_FAILED"
+				exit 1
+			fi
+		else
+			nohup cantiand -D ${CTDB_DATA}  1>/dev/null 2>&1 &
+			if [ $? -ne 0 ]; then 
+				echo "RES_FAILED"
+				exit 1
+			fi
 		fi
 	fi
 }
 
 function stop_cantian() {
-	res_count=`ps -u ${dbuser} | grep cantiand|grep -v grep |wc -l`
+	res_count=`ps -u ${dbuser} | grep $process_to_check |grep -v grep |wc -l`
 	echo "res_count = $res_count"
 	if [ "$res_count" -eq "0" ]; then
 		echo "RES_FAILED"
 		exit 1
 	elif [ "$res_count" -eq "1" ]; then
-		ps -u ${dbuser} | grep cantiand|grep -v grep | awk '{print "kill -9 " $1}' |sh
+		ps -u ${dbuser} | grep $process_to_check|grep -v grep | awk '{print "kill -9 " $1}' |sh
 		echo "RES_SUCCESS"
 		exit 0
 	else 
-		res_count=`ps -fu ${dbuser} | grep cantiand | grep ${CTDB_DATA} | grep -v grep | wc -l`
+		res_count=`ps -fu ${dbuser} | grep $process_to_check | grep $process_path | grep -v grep | wc -l`
 		echo "res_count is $res_count"
 		if [ "$res_count" -eq "0" ]; then
 			echo "RES_FAILED"
 			exit 1
 		elif [ "$res_count" -eq "1" ]; then
-			ps -fu ${dbuser} | grep cantiand | grep ${CTDB_DATA} | grep -v grep | awk '{print "kill -9 " $2}' |sh
+			ps -fu ${dbuser} | grep $process_to_check | grep $process_path | grep -v grep | awk '{print "kill -9 " $2}' |sh
 			echo "RES_SUCCESS"
 			exit 0
 		else
@@ -90,23 +121,23 @@ function stop_cantian() {
 }
 
 function stop_cantian_by_force() {
-	res_count=`ps -u ${dbuser} | grep cantiand|grep -v grep |wc -l`
+	res_count=`ps -u ${dbuser} | grep $process_to_check|grep -v grep |wc -l`
 	echo "res_count = $res_count"
 	if [ "$res_count" -eq "0" ]; then
 		echo "RES_SUCCESS"
 		exit 0
 	elif [ "$res_count" -eq "1" ]; then
-		ps -u ${dbuser} | grep cantiand|grep -v grep | awk '{print "kill -9 " $1}' |sh
+		ps -u ${dbuser} | grep $process_to_check|grep -v grep | awk '{print "kill -9 " $1}' |sh
 		echo "RES_SUCCESS"
 		exit 0
 	else
-		res_count=`ps -fu ${dbuser} | grep cantiand | grep ${CTDB_DATA} | grep -v grep | wc -l`
+		res_count=`ps -fu ${dbuser} | grep $process_to_check | grep $process_path | grep -v grep | wc -l`
 		echo "res_count is $res_count"
 		if [ "$res_count" -eq "0" ]; then
 			echo "RES_SUCCESS"
 			exit 0
 		elif [ "$res_count" -eq "1" ]; then
-			ps -fu ${dbuser} | grep cantiand | grep ${CTDB_DATA} | grep -v grep | awk '{print "kill -9 " $2}' |sh
+			ps -fu ${dbuser} | grep $process_to_check | grep $process_path | grep -v grep | awk '{print "kill -9 " $2}' |sh
 			echo "RES_SUCCESS"
 			exit 0
 		else

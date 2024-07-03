@@ -1839,6 +1839,14 @@ class Installer:
                 _file.write("export PATH=\"%s\":$PATH"
                             % os.path.join(self.install_path, "bin"))
                 _file.write(os.linesep)
+                _file.write("export MYSQL_BIN_DIR=\"%s\"" % MYSQL_BIN_DIR)
+                _file.write(os.linesep)
+                _file.write("export MYSQL_CODE_DIR=\"%s\"" % MYSQL_CODE_DIR)
+                _file.write(os.linesep)
+                _file.write("export MYSQL_DATA_DIR=\"%s\"" % MYSQL_DATA_DIR)
+                _file.write(os.linesep)
+                _file.write("export MYSQL_LOG_FILE=\"%s\"" % MYSQL_LOG_FILE)
+                _file.write(os.linesep)
                 if "LD_LIBRARY_PATH" in os.environ:
                     _file.write("export LD_LIBRARY_PATH=\"%s\":\"%s\""
                                 ":$LD_LIBRARY_PATH"
